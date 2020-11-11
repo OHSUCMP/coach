@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Loading</title>
+    <script type="text/javascript" src="js/fhir-client.js"></script>
+    <script type="text/javascript">
+        FHIR.oauth2.authorize({
+            "client_id": "ca3ead18-f913-4bfb-89a1-cea78080efd2",    // R4
+            "scope"    : "launch/patient patient/*.read user/*.read openid profile",
+            "redirect_uri" : "http://localhost:34567/index.html",
+            "iss" : "https://api.logicahealth.org/htnu18r4/data"
+        });
+    </script>
+</head>
+<body>
+    Loading...
+</body>
+</html>
