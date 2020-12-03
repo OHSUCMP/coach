@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="js/jquery-3.4.1.js"></script>
+    <script type="text/javascript" src="js/fhir-client.js"></script>
+    <script type="text/javascript">
+        const REDIRECT_URL = "index2";
+
+        async function setFHIRCredentials(client) {
+            let formData = new FormData();
+            formData.append("serverUrl", client.state.serverUrl);
+            formData.append("bearerToken", client.state.tokenResponse.access_token);
+            formData.append("patientId", client.getPatientId());
+            formData.append("userId", client.getUserId());
+            let response = await fetch("/session/setFHIRCredentials", {
+                method: "POST",
+                body: formData
+            });
+
+            if (response.status === 200) {
+                $('body').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
+                window.location.href = REDIRECT_URL;
+
+            } else {
+                $('body').html("Error - received response " + response.status + " status");
+            }
+        }
+
+        // see the following for FHIR API documentation:
+        // - https://github.com/smart-on-fhir/client-js/blob/master/dist/build/fhir-client.js
+        // - http://docs.smarthealthit.org/client-js/
+        // - http://docs.smarthealthit.org/client-js/api.html
+        // - http://docs.smarthealthit.org/client-js/client.html
+        // - http://docs.smarthealthit.org/client-js/request.html
+
+        $(document).ready(function () {
+            FHIR.oauth2.ready(function (client) {
+                setFHIRCredentials(client);
+            });
+        });
+    </script>
+</head>
+<body>
+    Completing handshake...
+</body>
+</html>

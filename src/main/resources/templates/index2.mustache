@@ -1,10 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Hypertension U18 Application</title>
+    <title>{{title}}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <script type="text/javascript" src="js/jquery-3.4.1.js"></script>
+    <script type="text/javascript" src="js/jquery-ui-1.12.1/jquery-ui.js"></script>
+    <link rel="stylesheet" href="js/jquery-ui-1.12.1/jquery-ui.css"/>
+
+    <!-- chartjs - see: https://www.chartjs.org/docs/latest/getting-started/installation.html -->
+    <!-- chartjs-plugin-annotation - see: https://github.com/chartjs/chartjs-plugin-annotation -->
+    <script type="text/javascript" src="node_modules/regression/dist/regression.js"></script>
+    <script type="text/javascript" src="node_modules/moment/moment.js"></script>
+    <script type="text/javascript" src="node_modules/chart.js/dist/Chart.bundle.js"></script>
+    <script type="text/javascript" src="node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.js"></script>
+
+    <link rel="stylesheet" href="css/app.css"/>
+    <script type="text/javascript" src="js/app.js"></script>
+    <script type="text/javascript" src="js/app-ui.js"></script>
 </head>
 <body>
-
+<div id="content">
+    Patient ID: {{patientId}}<br/>
+    User ID: {{userId}}<br/>
+    Server URL: {{serverUrl}}<br/>
+    Session ID: {{sessionId}}<br/>
+    Bearer Token: {{bearerToken}}
+</div>
 </body>
 </html>
