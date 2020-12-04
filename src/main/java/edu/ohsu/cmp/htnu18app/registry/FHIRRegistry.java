@@ -3,7 +3,8 @@ package edu.ohsu.cmp.htnu18app.registry;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
-import edu.ohsu.cmp.htnu18app.model.FHIRCredentials;
+import edu.ohsu.cmp.htnu18app.registry.model.FHIRCredentials;
+import edu.ohsu.cmp.htnu18app.registry.model.FHIRCredentialsWithClient;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,25 +65,5 @@ public class FHIRRegistry {
         client.registerInterceptor(authInterceptor);
 
         return client;
-    }
-
-////////////////////////////////////////////////////////////////////////
-
-    private static final class FHIRCredentialsWithClient {
-        private FHIRCredentials credentials;
-        private IGenericClient client;
-
-        public FHIRCredentialsWithClient(FHIRCredentials credentials, IGenericClient client) {
-            this.credentials = credentials;
-            this.client = client;
-        }
-
-        public FHIRCredentials getCredentials() {
-            return credentials;
-        }
-
-        public IGenericClient getClient() {
-            return client;
-        }
     }
 }

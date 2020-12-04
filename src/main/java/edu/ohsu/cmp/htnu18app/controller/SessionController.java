@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
-import edu.ohsu.cmp.htnu18app.model.FHIRCredentials;
+import edu.ohsu.cmp.htnu18app.registry.model.FHIRCredentials;
 import edu.ohsu.cmp.htnu18app.registry.FHIRRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,9 +25,11 @@ public class SessionController {
         FHIRRegistry registry = FHIRRegistry.getInstance();
 
         if (registry.exists(session.getId())) {
+            logger.info("session " + session.getId() + " has already been registered");
             return ResponseEntity.ok("FHIR credentials already set");
 
         } else {
+            logger.info("registering session " + session.getId());
             registry.set(session.getId(), new FHIRCredentials(serverUrl, bearerToken, patientId, userId));
             return ResponseEntity.ok("FHIR credentials set successfully");
         }

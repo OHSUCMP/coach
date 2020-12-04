@@ -18,14 +18,46 @@
     <link rel="stylesheet" href="css/app.css"/>
     <script type="text/javascript" src="js/app.js"></script>
     <script type="text/javascript" src="js/app-ui.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            enableHover('.tab');
+            $(document).on('click', '#tabs .tab', function () {
+                markTabSelected(this);
+                renderSelectedTabDiv();
+            });
+
+            fetchBloodPressureData(function(observations, data) {
+                $('#loadingTextInfo').addClass('hidden');
+                $('#textInfo').removeClass('hidden');
+                populateSummaryDiv(data, document.getElementById("summaryDiv"));
+                populateBPList(data, document.getElementById('bpList'));
+
+                $('#loadingChart').addClass('hidden');
+                $('#chart').removeClass('hidden');
+                window.chartData = data;
+                buildChart(data);
+                buildChartSlider(data);
+            });
+
+            populatePlanDefinitions(function() {
+                $('#loadingHooks').addClass('hidden');
+                $('#hooks').removeClass('hidden');
+            });
+        });
+    </script>
 </head>
 <body>
 <div id="content">
-    Patient ID: {{patientId}}<br/>
-    User ID: {{userId}}<br/>
-    Server URL: {{serverUrl}}<br/>
-    Session ID: {{sessionId}}<br/>
-    Bearer Token: {{bearerToken}}
+    <div id="header">
+        Blood Pressure readings for {{patient.name}}
+
+        <ul>
+            {{#bp}}
+                <li>{{systolic.value}} / {{diastolic.value}}</li>
+            {{/bp}}
+        </ul>
+    </div>
 </div>
 </body>
 </html>

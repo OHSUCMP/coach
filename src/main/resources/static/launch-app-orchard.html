@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Loading</title>
+    <script type="text/javascript" src="js/fhir-client.js"></script>
+    <script type="text/javascript">
+        FHIR.oauth2.authorize({
+            "client_id": "bd53da9c-0529-4f2c-90cc-3d96e266d4f3",    // R4
+            "scope": "launch patient/*.read user/*.read openid profile",
+            "redirect_uri": "http://localhost:8080/fhir-complete-handshake.html"
+        });
+    </script>
+</head>
+<body>
+Loading...
+</body>
+</html>
