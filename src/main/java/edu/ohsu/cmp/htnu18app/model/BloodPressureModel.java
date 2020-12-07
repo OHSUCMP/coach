@@ -31,12 +31,10 @@ public class BloodPressureModel {
 
     public BloodPressureModel(Observation o) throws DataException {
         for (Observation.ObservationComponentComponent occ : o.getComponent()) {
-            logger.info("processing component: id=" + occ.getId());
             ValueType valueType = ValueType.UNKNOWN;
 
             CodeableConcept cc = occ.getCode();
             for (Coding c : cc.getCoding()) {
-                logger.info("processing coding: system=" + c.getSystem() + ", code=" + c.getCode());
                 if (c.getSystem().equals(SYSTEM) && c.getCode().equals(SYSTOLIC_CODE)) {
                     valueType = ValueType.SYSTOLIC;
                     break;

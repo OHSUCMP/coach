@@ -38,12 +38,8 @@ public class FHIRRegistry {
         return false;
     }
 
-    public FHIRCredentials getCredentials(String sessionId) {
-        return map.get(sessionId).getCredentials();
-    }
-
-    public IGenericClient getClient(String sessionId) {
-        return map.get(sessionId).getClient();
+    public FHIRCredentialsWithClient get(String sessionId) {
+        return map.get(sessionId);
     }
 
     public boolean exists(String sessionId) {

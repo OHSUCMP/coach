@@ -18,8 +18,29 @@
     <link rel="stylesheet" href="css/app.css"/>
     <script type="text/javascript" src="js/app.js"></script>
     <script type="text/javascript" src="js/app-ui.js"></script>
-
     <script type="text/javascript">
+        function loadBPData(_callback) {
+            $.ajax({
+                "url": "/patient/bpList",
+                "type": "GET",
+                "dataType": "json",
+                "contentType": "application/json; charset=utf-8",
+                "success": function (bpdata) {
+                    bpdata.forEach(function(item) {
+                        item.timestamp = new Date(Date.parse(item.timestamp));
+                    });
+
+                    // dates come back unsorted, but they need to be sorted by date
+                    function SortByDate(a, b) {
+                        return a.timestamp < b.timestamp ? -1 : (a.timestamp > b.timestamp ? 1 : 0);
+                    }
+                    bpdata.sort(SortByDate);
+
+                    _callback(bpdata);
+                }
+            });
+        }
+
         $(document).ready(function () {
             enableHover('.tab');
             $(document).on('click', '#tabs .tab', function () {
@@ -27,36 +48,65 @@
                 renderSelectedTabDiv();
             });
 
-            fetchBloodPressureData(function(observations, data) {
-                $('#loadingTextInfo').addClass('hidden');
-                $('#textInfo').removeClass('hidden');
-                populateSummaryDiv(data, document.getElementById("summaryDiv"));
-                populateBPList(data, document.getElementById('bpList'));
+            loadBPData(function(bpdata) {
+                window.bpdata = bpdata;
+                populateSummaryDiv(document.getElementById("summaryDiv"));
+                populateDetailsDiv(document.getElementById('detailsDiv'));
 
                 $('#loadingChart').addClass('hidden');
                 $('#chart').removeClass('hidden');
-                window.chartData = data;
-                buildChart(data);
-                buildChartSlider(data);
+                buildChart(document.getElementById('chart'));
+                buildChartSlider(document.getElementById('chartRangeSlider'));
             });
 
-            populatePlanDefinitions(function() {
-                $('#loadingHooks').addClass('hidden');
-                $('#hooks').removeClass('hidden');
-            });
+            // populatePlanDefinitions(function() {
+            //     $('#loadingHooks').addClass('hidden');
+            //     $('#hooks').removeClass('hidden');
+            // });
         });
     </script>
 </head>
 <body>
 <div id="content">
     <div id="header">
-        Blood Pressure readings for {{patient.name}}
+        <a href="{{patient.id}}">{{patient.name}}</a>
+    </div>
 
-        <ul>
-            {{#bp}}
-                <li>{{systolic.value}} / {{diastolic.value}}</li>
-            {{/bp}}
-        </ul>
+    <div id="textInfoContainer">
+        <div id="textInfo">
+            <div id="tabs">
+                <div class="tab selected" data-assocDivID="summaryDiv">Summary</div>
+                <div class="tab" data-assocDivID="detailsDiv">Details</div>
+            </div>
+            <div id="tabData">
+                <div id="summaryDiv"></div>
+                <div id="detailsDiv" class="hidden"></div>
+            </div>
+        </div>
+    </div>
+    <div id="chartContainer">
+        <div id="loadingChart" class="loading">Loading Chart ...</div>
+        <canvas id="chart" class="hidden" width="800" height="400"></canvas>
+        <div id="sliderContainer">
+            <input type="text" id="sliderRangeFrom" readonly size="4"/>
+            <div style="width: 10px;"></div>
+            <div id="chartRangeSlider"></div>
+            <div style="width: 10px;"></div>
+            <input type="text" id="sliderRangeTo" readonly size="4"/>
+        </div>
+    </div>
+    <div id="hooksContainer">
+        <div id="loadingHooks" class="loading">Loading Hooks ...</div>
+        <div id="hooks" class="hidden">
+            <select id="planSelect" onchange="planDefinitionChanged();">
+            </select>
+            <input id="executeHookButton" type="button" value="Execute PlanDefinition"
+                   onclick="executeSelectedPlanDefinition();" disabled/>
+        </div>
+        <div id="plans">
+        </div>
+        <div id="cards">
+        </div>
     </div>
 </div>
 </body>

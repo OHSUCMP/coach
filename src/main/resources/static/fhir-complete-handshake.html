@@ -7,6 +7,29 @@
     <script type="text/javascript">
         const REDIRECT_URL = "index2";
 
+        // function setFHIRCredentials(client) {
+        //     let data = {};
+        //     data['serverUrl'] = client.state.serverUrl;
+        //     data['bearerToken'] = client.state.tokenResponse.access_token;
+        //     data['patientId'] = client.getPatientId();
+        //     data['userId'] = client.getUserId();
+        //
+        //     $.ajax({
+        //         "url": "/session/setFHIRCredentials",
+        //         "type": "POST",
+        //         "data": JSON.stringify(data),
+        //         "dataType": "json",
+        //         "contentType": "application/json; charset=utf-8",
+        //         "success": function (response) {
+        //             $('body').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
+        //             window.location.href = REDIRECT_URL;
+        //         },
+        //         "error": function(response) {
+        //             $('body').html("Error - received response " + response.status + " status");
+        //         }
+        //     });
+        // }
+
         async function setFHIRCredentials(client) {
             let formData = new FormData();
             formData.append("serverUrl", client.state.serverUrl);

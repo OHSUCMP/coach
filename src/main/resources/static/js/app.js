@@ -96,7 +96,8 @@ function getCoding(codings, system) {
     return undefined;
 }
 
-function populateSummaryDiv(data, el) {
+function populateSummaryDiv(el) {
+    let data = window.bpdata;
     let totalSystolic = 0;
     let totalDiastolic = 0;
     let avgSystolic = 0;
@@ -104,8 +105,8 @@ function populateSummaryDiv(data, el) {
 
     if (Array.isArray(data) && data.length > 0) {
         data.forEach(function (o) {
-            totalSystolic += o.systolic;
-            totalDiastolic += o.diastolic;
+            totalSystolic += o.systolic.value;
+            totalDiastolic += o.diastolic.value;
         });
 
         avgSystolic = Math.round(totalSystolic / data.length);
@@ -118,15 +119,17 @@ function populateSummaryDiv(data, el) {
     $(el).html("<div id='avgBP'>Average BP:<br/>" + avgSystolic + "/" + avgDiastolic + "</div>");
 }
 
-function populateBPList(data, el) {
+function populateDetailsDiv(el) {
+    let data = window.bpdata;
     let success = false;
 
     if (Array.isArray(data) && data.length > 0) {
-        el.innerHTML = "";
+        el.innerHTML = "<ul>";
         data.forEach(function (o) {
-            el.innerHTML += "<li>" + o.systolic + "/" + o.diastolic + " on " + o.date.toLocaleDateString() + "</li>";
+            el.innerHTML += "<li>" + o.systolic.value + "/" + o.diastolic.value + " on " + o.timestamp + "</li>";
             success = true;
         });
+        el.innerHTML += "</ul>";
     }
 
     if (!success) {
@@ -134,9 +137,10 @@ function populateBPList(data, el) {
     }
 }
 
-function buildChartSlider(data) {
-    let minYear = data[0].date.getFullYear();
-    let maxYear = data[data.length - 1].date.getFullYear();
+function buildChartSlider(el) {
+    let data = window.bpdata;
+    let minYear = data[0].timestamp.getFullYear();
+    let maxYear = data[data.length - 1].timestamp.getFullYear();
 
     $('#chartRangeSlider').slider({
         range: true,
@@ -147,7 +151,7 @@ function buildChartSlider(data) {
             $('#sliderRangeFrom').val(ui.values[0]);
             $('#sliderRangeTo').val(ui.values[1]);
             let truncatedData = truncateData(window.chartData, ui.values[0], ui.values[1]);
-            populateBPList(truncatedData, document.getElementById('bpList'));
+            populateDetailsDiv(truncatedData, document.getElementById('bpList'));
             updateChart(truncatedData);
         }
     });
@@ -157,7 +161,7 @@ function buildChartSlider(data) {
 
 function truncateData(data, minYear, maxYear) {
     let truncatedData = jQuery.grep(data, function (item) {
-        let y = item.date.getFullYear();
+        let y = item.timestamp.getFullYear();
         return y >= minYear && y <= maxYear;
     });
     return truncatedData;
@@ -169,10 +173,10 @@ function updateChart(data) {
     buildChart(data);
 }
 
-function buildChart(data) {
-    var ctx = $('#chart');
+function buildChart(el) {
+    let data = window.bpdata;
 
-    var chart = new Chart(ctx, {
+    let chart = new Chart(el, {
         type: 'line',
         data: {
             datasets: [{
@@ -268,9 +272,9 @@ function buildChart(data) {
 function toScatterData(data, type) {
     let arr = [];
     data.forEach(function (item) {
-        let val = type == 'systolic' ? item.systolic : item.diastolic;
+        let val = type == 'systolic' ? item.systolic.value : item.diastolic.value;
         arr.push({
-            x: moment(item.date),
+            x: moment(item.timestamp),
             y: val
         });
     });
@@ -292,15 +296,15 @@ function toTrendLineData(data, type) {
     let diffArr = [];
 
     data.forEach(function (item) {
-        let val = type == 'systolic' ? item.systolic : item.diastolic;
+        let val = type == 'systolic' ? item.systolic.value : item.diastolic.value;
 
         if (lastDate !== null) {
-            let diff = item.date.getTime() - lastDate.getTime();
+            let diff = item.timestamp.getTime() - lastDate.getTime();
             diffArr.push(diff);
             let avgDiff = Math.round(diffArr.reduce((a, b) => a + b, 0) / diffArr.length);
 
             if (diff > threshold || (diffArr.length > 1 && diff > avgDiff * groupingFactor)) {
-                let lastDates = tempArr.map(o => o.date.getTime());
+                let lastDates = tempArr.map(o => o.timestamp.getTime());
                 let lastDateAvg = Math.round(lastDates.reduce((a, b) => a + b, 0) / lastDates.length);
                 let lastVals = tempArr.map(o => o.val);
                 let lastValsAvg = Math.round(lastVals.reduce((a, b) => a + b, 0) / lastVals.length);
@@ -314,14 +318,14 @@ function toTrendLineData(data, type) {
         }
 
         tempArr.push({
-            date: item.date,
+            timestamp: item.timestamp,
             val: val
         });
-        lastDate = item.date;
+        lastDate = item.timestamp;
     });
 
     if (tempArr.length > 0) {   // process final records
-        let lastDates = tempArr.map(o => o.date.getTime());
+        let lastDates = tempArr.map(o => o.timestamp.getTime());
         let lastDateAvg = Math.round(lastDates.reduce((a, b) => a + b, 0) / lastDates.length);
         let lastVals = tempArr.map(o => o.val);
         let lastValsAvg = Math.round(lastVals.reduce((a, b) => a + b, 0) / lastVals.length);
@@ -339,7 +343,7 @@ function getDateRange(data) {
     var maxDate = null;
 
     data.forEach(function (item) {
-        let d = item.date;
+        let d = item.timestamp;
         if (minDate == null || d < minDate) {
             minDate = d;
         }
@@ -370,9 +374,9 @@ function toRegressionData(data, type) {
     // is a number between 0 and 100 that represents the relative position of the date in the range
     var arr = [];
     data.forEach(function (item, i) {
-        let val = type == 'systolic' ? item.systolic : item.diastolic;
+        let val = type == 'systolic' ? item.systolic.value : item.diastolic.value;
         arr.push([
-            ((item.date.getTime() - minTime) / (maxTime - minTime)) * 100,
+            ((item.timestamp.getTime() - minTime) / (maxTime - minTime)) * 100,
             val
         ]);
     });
@@ -385,7 +389,7 @@ function toRegressionData(data, type) {
     var r = [];
     result.points.forEach(function (item, i) {
         r.push({
-            x: moment(data[i].date),
+            x: moment(data[i].timestamp),
             y: item[1]
         });
     });

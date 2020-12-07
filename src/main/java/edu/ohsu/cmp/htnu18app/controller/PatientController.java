@@ -1,17 +1,18 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
-import ca.uhn.fhir.rest.client.api.IGenericClient;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.PatientModel;
 import edu.ohsu.cmp.htnu18app.registry.FHIRRegistry;
-import edu.ohsu.cmp.htnu18app.registry.model.FHIRCredentials;
+import edu.ohsu.cmp.htnu18app.registry.model.FHIRCredentialsWithClient;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,7 +35,7 @@ public class PatientController {
 
         FHIRRegistry registry = FHIRRegistry.getInstance();
         if (registry.exists(session.getId())) {
-            model.addAttribute("fhirCredentials", registry.getCredentials(session.getId()));
+            model.addAttribute("fhirCredentials", registry.get(session.getId()).getCredentials());
         }
 
         return "index";
@@ -47,17 +48,56 @@ public class PatientController {
         logger.info("requesting data for session " + session.getId());
         FHIRRegistry registry = FHIRRegistry.getInstance();
         if (registry.exists(session.getId())) {
-            FHIRCredentials credentials = registry.getCredentials(session.getId());
-            IGenericClient client = registry.getClient(session.getId());
+            FHIRCredentialsWithClient fcc = registry.get(session.getId());
 
-            Patient p = client.read().resource(Patient.class).withId(credentials.getPatientId()).execute();
+            Patient p = fcc.getClient()
+                    .read()
+                    .resource(Patient.class)
+                    .withId(fcc.getCredentials().getPatientId())
+                    .execute();
+
             PatientModel pd = new PatientModel(p);
             model.addAttribute("patient", pd);
 
-            Bundle buCon = client
+//            Bundle buCon = fcc.getClient()
+//                    .search()
+//                    .forResource((Observation.class))
+//                    .and(Observation.PATIENT.hasId(fcc.getCredentials().getPatientId()))
+//                    .and(Observation.CODE.exactly().systemAndCode(BloodPressureModel.SYSTEM, BloodPressureModel.CODE))
+//                    .returnBundle(Bundle.class)
+//                    .execute();
+//
+//            List<BloodPressureModel> bpList = new ArrayList<BloodPressureModel>();
+//            for (Bundle.BundleEntryComponent entryCon: buCon.getEntry()) {
+//                Observation o = (Observation) entryCon.getResource();
+//                try {
+//                    bpList.add(new BloodPressureModel(o));
+//
+//                } catch (DataException e) {
+//                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+//                }
+//            }
+//
+//            model.addAttribute("bp", bpList);
+
+        } else {
+            // todo: redirect the user to the standalone launch page
+        }
+
+        return "index2";
+    }
+
+    @GetMapping("/patient/bpList")
+    public ResponseEntity<List<BloodPressureModel>> getBPData(HttpSession session) {
+        logger.info("requesting data for session " + session.getId());
+        FHIRRegistry registry = FHIRRegistry.getInstance();
+        if (registry.exists(session.getId())) {
+            FHIRCredentialsWithClient fcc = registry.get(session.getId());
+
+            Bundle buCon = fcc.getClient()
                     .search()
                     .forResource((Observation.class))
-                    .and(Observation.PATIENT.hasId(credentials.getPatientId()))
+                    .and(Observation.PATIENT.hasId(fcc.getCredentials().getPatientId()))
                     .and(Observation.CODE.exactly().systemAndCode(BloodPressureModel.SYSTEM, BloodPressureModel.CODE))
                     .returnBundle(Bundle.class)
                     .execute();
@@ -73,12 +113,10 @@ public class PatientController {
                 }
             }
 
-            model.addAttribute("bp", bpList);
+            return new ResponseEntity<>(bpList, HttpStatus.OK);
 
         } else {
-            // todo: redirect the user to the standalone launch page
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-
-        return "index2";
     }
 }
