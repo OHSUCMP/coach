@@ -74,25 +74,25 @@
     width: 800px;
 }
 
-#hooksContainer {
+#recommendationsContainer {
     display: block;
 }
 
-#hooks {
-    height: 20;
-}
+/*#recommendations {*/
+/*    height: 20px;*/
+/*}*/
 
-#plans {
+#recommendationInfo {
     display: inline-block;
     margin: 5px;
 }
 
-div.plan {
+div.recommendation {
     border: 1px solid black;
     padding: 5px;
 }
 
-span.planTitle {
+span.recommendationTitle {
     display: block;
     font-weight: bold;
     font-size: large;

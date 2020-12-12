@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="css/app.css"/>
     <script type="text/javascript" src="js/app.js"></script>
     <script type="text/javascript" src="js/app-ui.js"></script>
+    <script type="text/javascript" src="js/recommendations.js"></script>
     <script type="text/javascript">
         function loadBPData(_callback) {
             $.ajax({
@@ -27,14 +28,12 @@
                 "contentType": "application/json; charset=utf-8",
                 "success": function (bpdata) {
                     bpdata.forEach(function(item) {
-                        item.timestamp = new Date(Date.parse(item.timestamp));
+                        item.timestamp = new Date(item.timestamp);
                     });
 
-                    // dates come back unsorted, but they need to be sorted by date
-                    function SortByDate(a, b) {
-                        return a.timestamp < b.timestamp ? -1 : (a.timestamp > b.timestamp ? 1 : 0);
-                    }
-                    bpdata.sort(SortByDate);
+                    bpdata.sort(function (a, b) {
+                        return a.timestamp - b.timestamp;
+                    });
 
                     _callback(bpdata);
                 }
@@ -50,19 +49,16 @@
 
             loadBPData(function(bpdata) {
                 window.bpdata = bpdata;
-                populateSummaryDiv(document.getElementById("summaryDiv"));
-                populateDetailsDiv(document.getElementById('detailsDiv'));
-
-                $('#loadingChart').addClass('hidden');
-                $('#chart').removeClass('hidden');
-                buildChart(document.getElementById('chart'));
-                buildChartSlider(document.getElementById('chartRangeSlider'));
+                populateSummaryDiv();
+                populateDetailsDiv();
+                buildChart();
+                buildChartSlider();
             });
 
-            // populatePlanDefinitions(function() {
-            //     $('#loadingHooks').addClass('hidden');
-            //     $('#hooks').removeClass('hidden');
-            // });
+            populateRecommendations(function() {
+                $('#loadingRecommendations').addClass('hidden');
+                $('#recommendations').removeClass('hidden');
+            });
         });
     </script>
 </head>
@@ -95,15 +91,15 @@
             <input type="text" id="sliderRangeTo" readonly size="4"/>
         </div>
     </div>
-    <div id="hooksContainer">
-        <div id="loadingHooks" class="loading">Loading Hooks ...</div>
-        <div id="hooks" class="hidden">
-            <select id="planSelect" onchange="planDefinitionChanged();">
+    <div id="recommendationsContainer">
+        <div id="loadingRecommendations" class="loading">Loading Recommendations ...</div>
+        <div id="recommendations" class="hidden">
+            <select id="recommendationsSelect" onchange="recommendationChanged();">
             </select>
-            <input id="executeHookButton" type="button" value="Execute PlanDefinition"
-                   onclick="executeSelectedPlanDefinition();" disabled/>
+            <input id="executeRecommendationButton" type="button" value="Execute Recommendation"
+                   onclick="executeSelectedRecommendation();" disabled/>
         </div>
-        <div id="plans">
+        <div id="recommendationInfo">
         </div>
         <div id="cards">
         </div>

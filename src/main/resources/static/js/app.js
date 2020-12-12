@@ -1,102 +1,5 @@
-const LOINC = "http://loinc.org";
-
-function extractPatientName(p) {
-    if (p.name) {
-        let names = p.name.map(function (name) {
-            return name.given.join(" ") + " " + name.family;
-        });
-        return names.join(" / ");
-    } else {
-        return "anonymous";
-    }
-}
-
-// fetchBloodPressureData adapted from https://docs.smarthealthit.org/client-js/fhirjs-equivalents
-function fetchBloodPressureData(client, _callback) {
-    let loincCodes = ['85354-9', '55284-4']; //, '55284-4', '8462-4', '8480-6'];
-    let query = new URLSearchParams();
-    query.set("patient", client.patient.id);
-//    query.set("_count", 100); // Try this to fetch fewer pages
-
-    query.set("code", loincCodes.map(item => "http://loinc.org|" + item).join(","));
-
-    client.request("Observation?" + query, {
-        pageLimit: 0,   // get all pages
-        flat: true // return flat array of Observation resources
-    }).then(function (observations) {
-        let arr = [];
-
-        observations.forEach(function (o) {
-            let effectiveDate = new Date(o.effectiveDateTime);
-            let coding = getCoding(o.code.coding, LOINC);
-            let systolicVal = getSystolic(o);
-            let diastolicVal = getDiastolic(o);
-
-            if (systolicVal !== null && diastolicVal !== null) {
-                arr.push({
-                    date: effectiveDate,
-                    code: coding.code,
-                    systolic: systolicVal,
-                    diastolic: diastolicVal
-                });
-            }
-        });
-
-        arr.sort(function (a, b) {
-            return a.date - b.date
-        });
-        _callback(observations, arr);
-    });
-}
-
-function getSystolic(o) {
-    let code = getCoding(o.code.coding, LOINC).code;
-    if (code === "85354-9" || code === "55284-4") {
-        return getComponent(o.component, "8480-6").valueQuantity.value;
-
-    } else if (code === "8480-6") {
-        return o.valueQuantity.value;
-
-    } else {
-        return null;
-    }
-}
-
-function getDiastolic(o) {
-    let code = getCoding(o.code.coding, LOINC).code;
-    if (code === "85354-9" || code === "55284-4") {
-        return getComponent(o.component, "8462-4").valueQuantity.value;
-
-    } else if (code === "8462-4") {
-        return o.valueQuantity.value;
-
-    } else {
-        return null;
-    }
-}
-
-function getComponent(components, loincCode) {
-    for (let i = 0; i < components.length; i++) {
-        let component = components[i];
-        let coding = getCoding(component.code.coding, LOINC);
-        if (coding && coding.code === loincCode) {
-            return component;
-        }
-    }
-    return undefined;
-}
-
-function getCoding(codings, system) {
-    for (let i = 0; i < codings.length; i++) {
-        let coding = codings[i];
-        if (coding.system === system) {
-            return coding;
-        }
-    }
-    return undefined;
-}
-
-function populateSummaryDiv(el) {
+function populateSummaryDiv() {
+    let el = $('#summaryDiv');
     let data = window.bpdata;
     let totalSystolic = 0;
     let totalDiastolic = 0;
@@ -119,7 +22,8 @@ function populateSummaryDiv(el) {
     $(el).html("<div id='avgBP'>Average BP:<br/>" + avgSystolic + "/" + avgDiastolic + "</div>");
 }
 
-function populateDetailsDiv(el) {
+function populateDetailsDiv() {
+    let el = $('#detailsDiv');
     let data = window.bpdata;
     let success = false;
 
@@ -137,46 +41,15 @@ function populateDetailsDiv(el) {
     }
 }
 
-function buildChartSlider(el) {
-    let data = window.bpdata;
-    let minYear = data[0].timestamp.getFullYear();
-    let maxYear = data[data.length - 1].timestamp.getFullYear();
-
-    $('#chartRangeSlider').slider({
-        range: true,
-        min: minYear,
-        max: maxYear,
-        values: [minYear, maxYear],
-        slide: function (event, ui) {
-            $('#sliderRangeFrom').val(ui.values[0]);
-            $('#sliderRangeTo').val(ui.values[1]);
-            let truncatedData = truncateData(window.chartData, ui.values[0], ui.values[1]);
-            populateDetailsDiv(truncatedData, document.getElementById('bpList'));
-            updateChart(truncatedData);
-        }
-    });
-    $('#sliderRangeFrom').val($('#chartRangeSlider').slider("values", 0));
-    $('#sliderRangeTo').val($('#chartRangeSlider').slider("values", 1));
-}
-
-function truncateData(data, minYear, maxYear) {
-    let truncatedData = jQuery.grep(data, function (item) {
-        let y = item.timestamp.getFullYear();
-        return y >= minYear && y <= maxYear;
-    });
-    return truncatedData;
-}
-
-function updateChart(data) {
-    // calling buildChart() without first replacing the DOM element creates wonkiness
-    $('#chart').replaceWith('<canvas id="chart" width="800" height="400"></canvas>');
-    buildChart(data);
-}
-
-function buildChart(el) {
+function buildChart() {
     let data = window.bpdata;
 
-    let chart = new Chart(el, {
+    $('#loadingChart').addClass('hidden');
+
+    let el = $('#chart');
+    $(el).removeClass('hidden');
+
+    return new Chart(el, {
         type: 'line',
         data: {
             datasets: [{
@@ -269,10 +142,47 @@ function buildChart(el) {
     });
 }
 
+function updateChart(data) {
+    // calling buildChart() without first replacing the DOM element creates wonkiness
+    $('#chart').replaceWith('<canvas id="chart" width="800" height="400"></canvas>');
+    buildChart(data);
+}
+
+function buildChartSlider() {
+    let el = $('#chartRangeSlider');
+    let data = window.bpdata;
+    let minYear = data[0].timestamp.getFullYear();
+    let maxYear = data[data.length - 1].timestamp.getFullYear();
+
+    $(el).slider({
+        range: true,
+        min: minYear,
+        max: maxYear,
+        values: [minYear, maxYear],
+        slide: function (event, ui) {
+            $('#sliderRangeFrom').val(ui.values[0]);
+            $('#sliderRangeTo').val(ui.values[1]);
+            let truncatedData = truncateData(window.chartData, ui.values[0], ui.values[1]);
+            populateDetailsDiv(truncatedData, document.getElementById('bpList'));
+            updateChart(truncatedData);
+        }
+    });
+    $('#sliderRangeFrom').val($(el).slider("values", 0));
+    $('#sliderRangeTo').val($(el).slider("values", 1));
+}
+
+function truncateData(data, minYear, maxYear) {
+    let truncatedData = jQuery.grep(data, function (item) {
+        let y = item.timestamp.getFullYear();
+        return y >= minYear && y <= maxYear;
+    });
+    return truncatedData;
+}
+
 function toScatterData(data, type) {
     let arr = [];
     data.forEach(function (item) {
-        let val = type == 'systolic' ? item.systolic.value : item.diastolic.value;
+        let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
         arr.push({
             x: moment(item.timestamp),
             y: val
@@ -282,12 +192,12 @@ function toScatterData(data, type) {
 }
 
 function toTrendLineData(data, type) {
-    var chunks = 20;
-    var groupingFactor = 10;
-    var dateRange = getDateRange(data);
-    var minTime = dateRange.min.getTime();
-    var maxTime = dateRange.max.getTime();
-    var threshold = Math.round((maxTime - minTime) / chunks);
+    let chunks = 20;
+    let groupingFactor = 10;
+    let dateRange = getDateRange(data);
+    let minTime = dateRange.min.getTime();
+    let maxTime = dateRange.max.getTime();
+    let threshold = Math.round((maxTime - minTime) / chunks);
 
     let arr = [];
     let tempArr = [];
@@ -296,7 +206,7 @@ function toTrendLineData(data, type) {
     let diffArr = [];
 
     data.forEach(function (item) {
-        let val = type == 'systolic' ? item.systolic.value : item.diastolic.value;
+        let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
 
         if (lastDate !== null) {
             let diff = item.timestamp.getTime() - lastDate.getTime();
@@ -374,7 +284,7 @@ function toRegressionData(data, type) {
     // is a number between 0 and 100 that represents the relative position of the date in the range
     var arr = [];
     data.forEach(function (item, i) {
-        let val = type == 'systolic' ? item.systolic.value : item.diastolic.value;
+        let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
         arr.push([
             ((item.timestamp.getTime() - minTime) / (maxTime - minTime)) * 100,
             val

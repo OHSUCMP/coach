@@ -1,54 +1,54 @@
-const CQF_RULER_URL = "http://localhost:8080/cqf-ruler-r4";
-const CDS_SERVICES_URL = CQF_RULER_URL + "/cds-services";
+// const CQF_RULER_URL = "http://localhost:8080/cqf-ruler-r4";
+// const CDS_SERVICES_URL = CQF_RULER_URL + "/cds-services";
 
-function populatePlanDefinitions(_callback) {
+function populateRecommendations(_callback) {
     $.ajax({
-        "url": CDS_SERVICES_URL,
+        "url": "http://localhost:8082/recommendation/list",
         "type": "GET",
         "dataType": "json",
         "contentType": "application/json; charset=utf-8",
 //        "data": buildRulerRequest(fhirServer, bearerToken),
-        "success": function (msg) {
-            populatePlanDefinitionSelect(msg.services);
+        "success": function (data) {
+            populateRecommendationsSelect(data);
             _callback();
         }
     });
 }
 
-function populatePlanDefinitionSelect(arr) {
-    var options = "<option value='' selected>-- Select PlanDefinition --</option>\n";
-    var info = '';
+function populateRecommendationsSelect(arr) {
+    let options = "<option value='' selected>-- Select Recommendation --</option>\n";
+    let info = '';
 
     arr.forEach(function (item) {
         let trimmedTitle = item.title;
-        if (trimmedTitle.indexOf("PlanDefinition - ") == 0) {
+        if (trimmedTitle.indexOf("Recommendation - ") === 0) {
             trimmedTitle = trimmedTitle.substring(17);
         }
 
         options += "<option value='" + item.id + "'>" + item.title + "</option>\n";
-        info += "<div class='plan hidden' data-plan-id='" + item.id +
-            "'>\n<span class='planTitle'>" + item.title +
-            "</span>\n<span class='planDesc'>" + item.description +
+        info += "<div class='recommendation hidden' data-recommendation-id='" + item.id +
+            "'>\n<span class='recommendationTitle'>" + item.title +
+            "</span>\n<span class='recommendationDesc'>" + item.description +
             "</span></div>\n";
     });
 
-    $('#planSelect').html(options);
-    $('#plans').html(info);
+    $('#recommendationsSelect').html(options);
+    $('#recommendationInfo').html(info);
 }
 
-function planDefinitionChanged() {
-    let button = $('#executeHookButton');
-    let planId = $('#planSelect').children('option:selected').attr('value');
-    if (planId == '') {
+function recommendationChanged() {
+    let button = $('#executeRecommendationButton');
+    let recId = $('#recommendationsSelect').children('option:selected').attr('value');
+    if (recId === '') {
         $(button).prop('disabled', true);
-        $('div.plan').not('.hidden').each(function () {
+        $('div.recommendation').not('.hidden').each(function () {
             $(this).addClass('hidden');
         });
 
     } else {
         $(button).prop('disabled', false);
-        $('div.plan').each(function () {
-            if ($(this).attr('data-plan-id') == planId) {
+        $('div.recommendation').each(function () {
+            if ($(this).attr('data-recommendation-id') === recId) {
                 $(this).removeClass('hidden');
             } else {
                 $(this).addClass('hidden');
@@ -59,7 +59,7 @@ function planDefinitionChanged() {
     $('#cards').html('');
 }
 
-function executeSelectedPlanDefinition() {
+function executeSelectedRecommendation() {
     let fhirServer = getFHIRServer();
     let bearerToken = getFHIRBearerToken();
     let user = getFHIRUser();
@@ -67,9 +67,7 @@ function executeSelectedPlanDefinition() {
     let observations = getFHIRObservations();
     let planId = $('#planSelect').children("option:selected").attr("value");
 
-    let data = planId.startsWith("opioidcds") ?
-        buildOpioidRulerRequest(fhirServer, bearerToken, patient.id) :
-        buildHTNRulerRequest("55284-4"); // todo: don't hardcode this
+    let data = buildHTNRulerRequest("55284-4"); // todo: don't hardcode this
 
     let dataStr = JSON.stringify(data, null, 2);
     console.log(dataStr);

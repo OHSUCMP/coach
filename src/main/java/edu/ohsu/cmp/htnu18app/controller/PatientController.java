@@ -23,7 +23,7 @@ import java.util.List;
 
 
 @Controller
-public class PatientController {
+public class PatientController extends AuthenticatedController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("Hypertension U18 Application")
@@ -59,27 +59,6 @@ public class PatientController {
             PatientModel pd = new PatientModel(p);
             model.addAttribute("patient", pd);
 
-//            Bundle buCon = fcc.getClient()
-//                    .search()
-//                    .forResource((Observation.class))
-//                    .and(Observation.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-//                    .and(Observation.CODE.exactly().systemAndCode(BloodPressureModel.SYSTEM, BloodPressureModel.CODE))
-//                    .returnBundle(Bundle.class)
-//                    .execute();
-//
-//            List<BloodPressureModel> bpList = new ArrayList<BloodPressureModel>();
-//            for (Bundle.BundleEntryComponent entryCon: buCon.getEntry()) {
-//                Observation o = (Observation) entryCon.getResource();
-//                try {
-//                    bpList.add(new BloodPressureModel(o));
-//
-//                } catch (DataException e) {
-//                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
-//                }
-//            }
-//
-//            model.addAttribute("bp", bpList);
-
         } else {
             // todo: redirect the user to the standalone launch page
         }
@@ -89,7 +68,7 @@ public class PatientController {
 
     @GetMapping("/patient/bpList")
     public ResponseEntity<List<BloodPressureModel>> getBPData(HttpSession session) {
-        logger.info("requesting data for session " + session.getId());
+        logger.info("requesting blood pressures for session " + session.getId());
         FHIRRegistry registry = FHIRRegistry.getInstance();
         if (registry.exists(session.getId())) {
             FHIRCredentialsWithClient fcc = registry.get(session.getId());

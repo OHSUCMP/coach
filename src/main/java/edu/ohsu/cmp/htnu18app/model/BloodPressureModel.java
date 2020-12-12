@@ -5,10 +5,6 @@ import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Quantity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Date;
 
 public class BloodPressureModel {
     public static final String SYSTEM = "http://loinc.org";
@@ -16,11 +12,9 @@ public class BloodPressureModel {
     public static final String SYSTOLIC_CODE = "8480-6";
     public static final String DIASTOLIC_CODE = "8462-4";
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
     private QuantityModel systolic;
     private QuantityModel diastolic;
-    private Date timestamp;
+    private Long timestamp;
 
     private enum ValueType {
         SYSTOLIC,
@@ -55,13 +49,13 @@ public class BloodPressureModel {
         }
 
         if (o.getEffectiveDateTimeType() != null) {
-            this.timestamp = o.getEffectiveDateTimeType().getValue();
+            this.timestamp = o.getEffectiveDateTimeType().getValue().getTime();
 
         } else if (o.getEffectiveInstantType() != null) {
-            this.timestamp = o.getEffectiveInstantType().getValue();
+            this.timestamp = o.getEffectiveInstantType().getValue().getTime();
 
         } else if (o.getEffectivePeriod() != null) {
-            this.timestamp = o.getEffectivePeriod().getEnd();
+            this.timestamp = o.getEffectivePeriod().getEnd().getTime();
 
         } else {
             throw new DataException("missing timestamp");
@@ -76,7 +70,7 @@ public class BloodPressureModel {
         return diastolic;
     }
 
-    public Date getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 }
