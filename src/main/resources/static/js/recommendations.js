@@ -1,6 +1,3 @@
-// const CQF_RULER_URL = "http://localhost:8080/cqf-ruler-r4";
-// const CDS_SERVICES_URL = CQF_RULER_URL + "/cds-services";
-
 function populateRecommendations(_callback) {
     $.ajax({
         "url": "http://localhost:8082/recommendation/list",
@@ -92,8 +89,36 @@ function executeSelectedRecommendation() {
     });
 }
 
+async function executeSelectedRecommendation2() {
+    let recommendationId = $('#recommendationsSelect').children("option:selected").attr("value");
+    let button = $('#executeRecommendationButton');
+    let body = $('body');
+
+    $(body).css('cursor', 'wait');
+    $(button).attr('disabled', true);
+
+    let formData = new FormData();
+    formData.append("id", recommendationId);
+    let response = await fetch("/recommendation/execute", {
+        method: "POST",
+        body: formData
+    });
+
+    if (response.status === 200) {
+        $(button).removeAttr('disabled');
+
+        $(body).css('cursor', 'auto');
+        console.log("Success - received response: " + response.body);
+
+        populateCards(response.body);
+
+    } else {
+        $(body).html("Error - received response " + response.status + " status");
+    }
+}
+
 function populateCards(cards) {
-    html = "";
+    let html = "";
     cards.forEach(function (card) {
         html += "<div class='card " + card.indicator +
             "'>\n<span class='cardTitle'>" + card.summary +

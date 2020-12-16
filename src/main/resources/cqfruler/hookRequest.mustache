@@ -1,0 +1,20 @@
+{
+    "hookInstance": "{{hookInstanceUUID}}",
+    "fhirServer": "{{fhirServerURL}}",
+    "hook": "patient-view",
+    "applyCql": true,
+    "fhirAuthorization": {
+        "access_token": "{{bearerToken}}",
+        "token_type": "Bearer",
+        "expires_in": 300,
+        "scope": "patient/Patient.read patient/Observation.read",
+        "subject": "cds-service4"
+    },
+    "context": {
+        "userId": "Practitioner/{{userId}}",
+        "patientId": "Patient/{{patientId}}"
+    }{{#prefetch}},
+    "prefetch": {
+{{{prefetch}}}
+    }{{/prefetch}}
+}

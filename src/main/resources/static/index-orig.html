@@ -6,7 +6,7 @@
 
     <script type="text/javascript" src="js/jquery-3.4.1.js"></script>
     <script type="text/javascript" src="js/jquery-ui-1.12.1/jquery-ui.js"></script>
-    <link rel="stylesheet" href="js/jquery-ui-1.12.1/jquery-ui.css"/>
+    <link rel="stylesheet" href="js/jquery-ui-1.12.1/jquery-ui.css" />
 
     <script type="text/javascript" src="js/fhir-client.js"></script>
 
@@ -17,10 +17,10 @@
     <script type="text/javascript" src="node_modules/chart.js/dist/Chart.bundle.js"></script>
     <script type="text/javascript" src="node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.js"></script>
 
-    <link rel="stylesheet" href="css/app.css"/>
-    <script type="text/javascript" src="js/app.js"></script>
-    <script type="text/javascript" src="js/app-ui.js"></script>
-    <script type="text/javascript" src="js/cqf-ruler.js"></script>
+    <link rel="stylesheet" href="css/app.css" />
+    <script type="text/javascript" src="js/app-orig.js"></script>
+    <script type="text/javascript" src="js/app-ui-orig.js"></script>
+    <script type="text/javascript" src="js/cqf-ruler-orig.js"></script>
     <script type="text/javascript">
         function getFHIRServer() {
             return window.fhirServer;
@@ -42,22 +42,6 @@
             return window.fhirObservations;
         }
 
-        // example snagged from https://www.theserverside.com/blog/Coffee-Talk-Java-News-Stories-and-Opinions/file-upload-Spring-Boot-Ajax-example
-
-        async function setFHIRCredentials(serverUrl, bearerToken) {
-            let formData = new FormData();
-            formData.append("serverUrl", serverUrl);
-            formData.append("bearerToken", bearerToken);
-            let response = await fetch("/session/setFHIRCredentials", {
-                method: "POST",
-                body: formData
-            });
-
-            if (response.status === 200) {
-                alert(response);
-            }
-        }
-
         // see the following for FHIR API documentation:
         // - https://github.com/smart-on-fhir/client-js/blob/master/dist/build/fhir-client.js
         // - http://docs.smarthealthit.org/client-js/
@@ -65,32 +49,30 @@
         // - http://docs.smarthealthit.org/client-js/client.html
         // - http://docs.smarthealthit.org/client-js/request.html
 
-        $(document).ready(function () {
+        $(document).ready(function() {
             enableHover('.tab');
             $(document).on('click', '#tabs .tab', function () {
                 markTabSelected(this);
                 renderSelectedTabDiv();
             });
 
-            FHIR.oauth2.ready(function (client) {
+            FHIR.oauth2.ready(function(client) {
                 window.fhirServer = client.state.serverUrl;
                 window.fhirBearerToken = client.state.tokenResponse.access_token;
-
-                setFHIRCredentials(window.fhirServer, window.fhirBearerToken);
 
                 $('#loadingContent').addClass('hidden');
                 $('#content').removeClass('hidden');
 
-                client.patient.read().then(function (p) {
+                client.patient.read().then(function(p) {
                     window.fhirPatient = p;
                     document.getElementById('name').innerHTML = extractPatientName(p);
                 });
 
-                client.user.read().then(function (u) {
+                client.user.read().then(function(u) {
                     window.fhirUser = u;
                 });
 
-                fetchBloodPressureData(client, function (observations, data) {
+                fetchBloodPressureData(client, function(observations, data) {
                     window.fhirObservations = observations;
                     $('#loadingTextInfo').addClass('hidden');
                     $('#textInfo').removeClass('hidden');
@@ -103,7 +85,7 @@
                     buildChart(data);
                     buildChartSlider(data);
 
-                    populatePlanDefinitions(function () {
+                    populatePlanDefinitions(function() {
                         $('#loadingHooks').addClass('hidden');
                         $('#hooks').removeClass('hidden');
                     });
@@ -141,20 +123,19 @@
         <div id="loadingChart" class="loading">Loading Chart ...</div>
         <canvas id="chart" class="hidden" width="800" height="400"></canvas>
         <div id="sliderContainer">
-            <input type="text" id="sliderRangeFrom" readonly size="4"/>
-            <div style="width: 10px;"></div>
+            <input type="text" id="sliderRangeFrom" readonly size="4" />
+            <div style="width: 10px;" ></div>
             <div id="chartRangeSlider"></div>
-            <div style="width: 10px;"></div>
+            <div style="width: 10px;" ></div>
             <input type="text" id="sliderRangeTo" readonly size="4"/>
         </div>
     </div>
     <div id="hooksContainer">
         <div id="loadingHooks" class="loading">Loading Hooks ...</div>
         <div id="hooks" class="hidden">
-            <select id="planSelect" onchange="recommendationChanged();">
+            <select id="planSelect" onchange="planDefinitionChanged();">
             </select>
-            <input id="executeHookButton" type="button" value="Execute PlanDefinition"
-                   onclick="executeSelectedRecommendation();" disabled/>
+            <input id="executeHookButton" type="button" value="Execute PlanDefinition" onclick="executeSelectedPlanDefinition();" disabled />
         </div>
         <div id="plans">
         </div>

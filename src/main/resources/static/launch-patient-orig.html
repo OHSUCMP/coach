@@ -7,8 +7,9 @@
     <script type="text/javascript">
         FHIR.oauth2.authorize({
             "client_id": "174acda9-efdb-4f86-bfed-28574124bcd1",    // R4
-            "scope": "launch patient/*.read user/*.read openid profile",
-            "redirect_uri": "http://localhost:8080/"
+            "scope": "launch/patient patient/*.read user/*.read openid profile",
+            "redirect_uri": "http://localhost:8082/index-orig.html",
+            "iss": "https://api.logicahealth.org/htnu18r4/data"
         });
     </script>
 </head>
