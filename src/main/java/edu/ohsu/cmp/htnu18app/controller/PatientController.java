@@ -34,20 +34,20 @@ public class PatientController extends AuthenticatedController {
     @Autowired
     private PatientService patientService;
 
+//    @GetMapping(value = {"/", "index"})
+//    public String index(HttpSession session, Model model) {
+//        model.addAttribute("title", title);
+//
+//        FHIRRegistry registry = FHIRRegistry.getInstance();
+//        if (registry.exists(session.getId())) {
+//            model.addAttribute("fhirCredentials", registry.get(session.getId()).getCredentials());
+//        }
+//
+//        return "index";
+//    }
+
     @GetMapping(value = {"/", "index"})
     public String index(HttpSession session, Model model) {
-        model.addAttribute("title", title);
-
-        FHIRRegistry registry = FHIRRegistry.getInstance();
-        if (registry.exists(session.getId())) {
-            model.addAttribute("fhirCredentials", registry.get(session.getId()).getCredentials());
-        }
-
-        return "index";
-    }
-
-    @GetMapping(value = "index2")
-    public String index2(HttpSession session, Model model) {
         model.addAttribute("title", title);
 
         logger.info("requesting data for session " + session.getId());
@@ -70,7 +70,7 @@ public class PatientController extends AuthenticatedController {
             // todo: redirect the user to the standalone launch page
         }
 
-        return "index2";
+        return "index";
     }
 
     @GetMapping("/patient/bpList")
