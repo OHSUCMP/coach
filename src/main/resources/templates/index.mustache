@@ -31,16 +31,9 @@
             }
 
             $(document).ready(function () {
-                enableHover('.tab');
-                $(document).on('click', '#tabs .tab', function () {
-                    markTabSelected(this);
-                    renderSelectedTabDiv();
-                });
-
                 loadBPData(function(bpdata) {
                     window.bpdata = bpdata;
                     populateSummaryDiv();
-                    populateDetailsDiv();
                     buildChart();
                     buildChartSlider();
                 });
@@ -63,18 +56,11 @@
         </div>
         <div id="textInfoContainer">
             <div id="textInfo">
-                <div id="tabs">
-                    <div class="tab selected" data-assocDivID="summaryDiv">Summary</div>
-                    <div class="tab" data-assocDivID="detailsDiv">Details</div>
-                </div>
-                <div id="tabData">
-                    <div id="summaryDiv"></div>
-                    <div id="detailsDiv" class="hidden"></div>
-                </div>
+                <div id="summaryDiv"></div>
             </div>
         </div>
         <div id="chartContainer">
-            <div id="loadingChart" class="loading">Loading Chart ...</div>
+            <div id="loadingChart">Loading Chart ...</div>
             <canvas id="chart" class="hidden" width="800" height="400"></canvas>
             <div id="sliderContainer">
                 <input type="text" id="sliderRangeFrom" readonly size="4"/>
@@ -85,7 +71,7 @@
             </div>
         </div>
         <div id="recommendationsContainer">
-            <div id="loadingRecommendations" class="loading">Loading Recommendations ...</div>
+            <div id="loadingRecommendations">Loading Recommendations ...</div>
             <div id="recommendations" class="hidden">
                 <select id="recommendationsSelect" onchange="recommendationChanged();">
                 </select>

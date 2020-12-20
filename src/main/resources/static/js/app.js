@@ -14,31 +14,9 @@ function populateSummaryDiv() {
 
         avgSystolic = Math.round(totalSystolic / data.length);
         avgDiastolic = Math.round(totalDiastolic / data.length);
-
-//        avgSystolic = Math.round(totalSystolic / data.length);
-//        avgDiastolic = Math.round(totalDiastolic / data.length);
     }
 
     $(el).html("<div id='avgBP'>Average BP:<br/>" + avgSystolic + "/" + avgDiastolic + "</div>");
-}
-
-function populateDetailsDiv() {
-    let el = $('#detailsDiv');
-    let data = window.bpdata;
-    let success = false;
-
-    if (Array.isArray(data) && data.length > 0) {
-        el.innerHTML = "<ul>";
-        data.forEach(function (o) {
-            el.innerHTML += "<li>" + o.systolic.value + "/" + o.diastolic.value + " on " + o.timestamp + "</li>";
-            success = true;
-        });
-        el.innerHTML += "</ul>";
-    }
-
-    if (!success) {
-        el.innerHTML = "No observations found for the selected patient";
-    }
 }
 
 function buildChart() {
@@ -163,7 +141,6 @@ function buildChartSlider() {
             $('#sliderRangeFrom').val(ui.values[0]);
             $('#sliderRangeTo').val(ui.values[1]);
             let truncatedData = truncateData(window.chartData, ui.values[0], ui.values[1]);
-            populateDetailsDiv(truncatedData, document.getElementById('bpList'));
             updateChart(truncatedData);
         }
     });
@@ -172,11 +149,10 @@ function buildChartSlider() {
 }
 
 function truncateData(data, minYear, maxYear) {
-    let truncatedData = jQuery.grep(data, function (item) {
+    return jQuery.grep(data, function (item) {
         let y = item.timestamp.getFullYear();
         return y >= minYear && y <= maxYear;
     });
-    return truncatedData;
 }
 
 function toScatterData(data, type) {
