@@ -12,7 +12,6 @@ import org.hl7.fhir.r4.model.Patient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -28,38 +27,15 @@ import java.util.List;
 public class PatientController extends AuthenticatedController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("Hypertension U18 Application")
-    private String title;
-
     @Autowired
     private PatientService patientService;
 
-//    @GetMapping(value = {"/", "index"})
-//    public String index(HttpSession session, Model model) {
-//        model.addAttribute("title", title);
-//
-//        FHIRRegistry registry = FHIRRegistry.getInstance();
-//        if (registry.exists(session.getId())) {
-//            model.addAttribute("fhirCredentials", registry.get(session.getId()).getCredentials());
-//        }
-//
-//        return "index";
-//    }
-
     @GetMapping(value = {"/", "index"})
     public String index(HttpSession session, Model model) {
-        model.addAttribute("title", title);
-
         logger.info("requesting data for session " + session.getId());
         FHIRRegistry registry = FHIRRegistry.getInstance();
         if (registry.exists(session.getId())) {
             FHIRCredentialsWithClient fcc = registry.get(session.getId());
-
-//            Patient p = fcc.getClient()
-//                    .read()
-//                    .resource(Patient.class)
-//                    .withId(fcc.getCredentials().getPatientId())
-//                    .execute();
 
             Patient p = patientService.getPatient(fcc.getClient(), fcc.getCredentials().getPatientId());
 
@@ -79,14 +55,6 @@ public class PatientController extends AuthenticatedController {
         FHIRRegistry registry = FHIRRegistry.getInstance();
         if (registry.exists(session.getId())) {
             FHIRCredentialsWithClient fcc = registry.get(session.getId());
-
-//            Bundle buCon = fcc.getClient()
-//                    .search()
-//                    .forResource((Observation.class))
-//                    .and(Observation.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-//                    .and(Observation.CODE.exactly().systemAndCode(BloodPressureModel.SYSTEM, BloodPressureModel.CODE))
-//                    .returnBundle(Bundle.class)
-//                    .execute();
 
             Bundle buCon = patientService.getBloodPressureObservations(fcc.getClient(), fcc.getCredentials().getPatientId());
 
