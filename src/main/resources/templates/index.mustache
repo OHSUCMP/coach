@@ -1,6 +1,6 @@
 {{#layout}}
     {{#title}}Test Index Page{{/title}}
-    {{#headers}}
+    {{#head}}
         <!-- chartjs - see: https://www.chartjs.org/docs/latest/getting-started/installation.html -->
         <!-- chartjs-plugin-annotation - see: https://github.com/chartjs/chartjs-plugin-annotation -->
         <script type="text/javascript" src="node_modules/regression/dist/regression.js"></script>
@@ -44,16 +44,16 @@
                 });
             });
         </script>
-    {{/headers}}
+    {{/head}}
     {{#menuItems}}
         <li>Item 1</li>
         <li>Item 2</li>
         <li>Item 3</li>
     {{/menuItems}}
+    {{#patientInfo}}
+        <a href="{{patient.id}}">{{patient.name}}</a>
+    {{/patientInfo}}
     {{#content}}
-        <div id="header">
-            <a href="{{patient.id}}">{{patient.name}}</a>
-        </div>
         <div id="textInfoContainer">
             <div id="textInfo">
                 <div id="summaryDiv"></div>
@@ -76,7 +76,7 @@
                 <select id="recommendationsSelect" onchange="recommendationChanged();">
                 </select>
                 <input id="executeRecommendationButton" type="button" value="Execute Recommendation"
-                       onclick="executeSelectedRecommendation2();" disabled/>
+                       onclick="executeSelectedRecommendation();" disabled/>
             </div>
             <div id="recommendationInfo">
             </div>

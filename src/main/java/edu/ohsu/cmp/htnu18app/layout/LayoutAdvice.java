@@ -23,32 +23,35 @@ public class LayoutAdvice {
     @ModelAttribute("title")
     public Mustache.Lambda title(@ModelAttribute Layout layout) {
         return (frag, out) -> {
-            String title = frag.execute();
-            layout.setTitle(title);
+            layout.setTitle(frag.execute());
         };
     }
 
-    @ModelAttribute("headers")
-    public Mustache.Lambda headers(@ModelAttribute Layout layout) {
+    @ModelAttribute("head")
+    public Mustache.Lambda head(@ModelAttribute Layout layout) {
         return (frag, out) -> {
-            String headers = frag.execute();
-            layout.setHeaders(headers);
+            layout.setHead(frag.execute());
         };
     }
 
     @ModelAttribute("menuItems")
     public Mustache.Lambda menuItems(@ModelAttribute Layout layout) {
         return (frag, out) -> {
-            String menuItems = frag.execute();
-            layout.setMenuItems(menuItems);
+            layout.setMenuItems(frag.execute());
+        };
+    }
+
+    @ModelAttribute("patientInfo")
+    public Mustache.Lambda patientInfo(@ModelAttribute Layout layout) {
+        return (frag, out) -> {
+            layout.setPatientInfo(frag.execute());
         };
     }
 
     @ModelAttribute("content")
     public Mustache.Lambda content(@ModelAttribute Layout layout) {
         return (frag, out) -> {
-            String content = frag.execute();
-            layout.setContent(content);
+            layout.setContent(frag.execute());
         };
     }
 }
