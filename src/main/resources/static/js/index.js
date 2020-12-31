@@ -1,5 +1,4 @@
 function populateSummaryDiv() {
-    let el = $('#summaryDiv');
     let data = window.bpdata;
     let totalSystolic = 0;
     let totalDiastolic = 0;
@@ -15,8 +14,44 @@ function populateSummaryDiv() {
         avgSystolic = Math.round(totalSystolic / data.length);
         avgDiastolic = Math.round(totalDiastolic / data.length);
     }
+    $('#avgSystolic').html(avgSystolic);
+    $('#avgDiastolic').html(avgDiastolic);
 
-    $(el).html("<div id='avgBP'>Average BP:<br/>" + avgSystolic + "/" + avgDiastolic + "</div>");
+    // build the BP icon and other Hypertension classification stuff based on avgSystolic and avgDiastolic above
+    let iconColor = 'green';
+    let iconHTML = '&nbsp;';
+    let bpLabel = 'NORMAL';
+
+    if (avgSystolic > 180 || avgDiastolic > 120) { // crisis
+        iconColor = 'red';
+        iconHTML = '!!!';
+        bpLabel = 'Hypertension Crisis';
+
+    } else if (avgSystolic >= 140 || avgDiastolic >= 90) { // stage 2
+        iconColor = 'red';
+        iconHTML = '!!';
+        bpLabel = 'Hypertension Stage 2';
+
+    } else if ((avgSystolic >= 130 && avgSystolic < 140) || (avgDiastolic >= 80 && avgDiastolic < 90)) { // stage 1
+        iconColor = 'yellow';
+        iconHTML = '!';
+        bpLabel = 'Hypertension Stage 1';
+
+    } else if (avgSystolic >= 120 && avgSystolic < 130 && avgDiastolic < 80) { // elevated
+        iconColor = 'yellow';
+        iconHTML = '!';
+        bpLabel = 'Elevated';
+
+    } else if (avgSystolic < 120 && avgDiastolic < 80) { // normal
+        iconColor = 'green';
+        iconHTML = '&nbsp;';
+        bpLabel = 'Normal';
+    }
+
+    let icon = $('#bpIcon');
+    $(icon).attr('style', 'background-color: ' + iconColor);
+    $(icon).html(iconHTML);
+    $('#bpLabel').html(bpLabel + ':');
 }
 
 function buildChart() {
@@ -122,7 +157,7 @@ function buildChart() {
 
 function updateChart(data) {
     // calling buildChart() without first replacing the DOM element creates wonkiness
-    $('#chart').replaceWith('<canvas id="chart" width="800" height="400"></canvas>');
+    $('#chart').replaceWith('<canvas id="chart" width="500" height="250"></canvas>');
     buildChart(data);
 }
 

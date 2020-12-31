@@ -8,20 +8,24 @@
     <script type="text/javascript" src="js/jquery-ui-1.12.1/jquery-ui.js"></script>
     <link rel="stylesheet" href="js/jquery-ui-1.12.1/jquery-ui.css"/>
 
-    <script type="text/javascript" src="js/app.js"></script>
     <script type="text/javascript" src="js/app-ui.js"></script>
     <link rel="stylesheet" href="css/app.css"/>
+    <link rel="stylesheet" href="css/layout.css"/>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            enableHover('#menu li');
+        });
+    </script>
 
     {{{layout.head}}}
 </head>
 <body>
 <div id="menu">
-    <ul>
+    <div id="topLeftEmptyBlock"></div>
+    <ul style="margin-top: 80px">
         {{{layout.menuItems}}}
     </ul>
-</div>
-<div id="header">
-    {{{layout.patientInfo}}}
 </div>
 <div id="content">
     {{{layout.content}}}

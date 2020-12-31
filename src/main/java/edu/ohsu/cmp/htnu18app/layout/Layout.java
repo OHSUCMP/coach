@@ -14,7 +14,6 @@ public class Layout implements Mustache.Lambda {
     private String title;
     private String head;
     private String menuItems;
-    private String patientInfo;
     private String content;
 
     public Layout(Mustache.Compiler compiler) {
@@ -49,14 +48,6 @@ public class Layout implements Mustache.Lambda {
 
     public void setMenuItems(String menuItems) {
         this.menuItems = menuItems;
-    }
-
-    public String getPatientInfo() {
-        return patientInfo;
-    }
-
-    public void setPatientInfo(String patientInfo) {
-        this.patientInfo = patientInfo;
     }
 
     public String getContent() {

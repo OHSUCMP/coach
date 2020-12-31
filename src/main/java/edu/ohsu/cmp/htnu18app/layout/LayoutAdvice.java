@@ -41,13 +41,6 @@ public class LayoutAdvice {
         };
     }
 
-    @ModelAttribute("patientInfo")
-    public Mustache.Lambda patientInfo(@ModelAttribute Layout layout) {
-        return (frag, out) -> {
-            layout.setPatientInfo(frag.execute());
-        };
-    }
-
     @ModelAttribute("content")
     public Mustache.Lambda content(@ModelAttribute Layout layout) {
         return (frag, out) -> {

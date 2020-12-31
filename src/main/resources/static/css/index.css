@@ -1,0 +1,124 @@
+#patientInfo {
+    display: block;
+    font-weight: bold;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+    /*border-bottom: 1px solid black;*/
+}
+
+#highBPSummary {
+    /*position: absolute;*/
+    /*top: 80px;*/
+    /*left: 150px;*/
+    display: inline-block;
+    width: 200px;
+}
+
+#chartContainer {
+    /*position: absolute;*/
+    /*top: 80px;*/
+    /*left: 200px;*/
+    display: inline-block;
+    height: 300px;
+    width: 500px;
+}
+
+#loadingChart {
+    height: 250px;
+    width: 500px;
+}
+
+#recommendationsContainer {
+    /*position: absolute;*/
+    /*top: 300px;*/
+    /*left: 150px;*/
+    display: block;
+}
+
+#recommendationInfo {
+    display: inline-block;
+    margin: 5px;
+}
+
+div.recommendation {
+    border: 1px solid black;
+    padding: 5px;
+}
+
+span.recommendationTitle {
+    display: block;
+    font-weight: bold;
+    font-size: large;
+}
+
+#cards {
+    display: inline-block;
+    margin: 5px;
+}
+
+div.card, div.card.info {
+    display: block;
+    border: 3px solid #33cc33;
+    background-color: #ccffcc;
+    padding: 5px;
+}
+
+div.card.warning {
+    border: 3px solid #ff6600;
+    background-color: #ffcc99;
+}
+
+div.card.hard-stop {
+    border: 3px solid #ff0000;
+    background-color: #ffaaaa;
+}
+
+span.cardTitle {
+    display: block;
+    font-weight: bold;
+    font-size: large;
+}
+
+span.cardDetail {
+    display: block;
+    color: red;
+    font-weight: bold;
+}
+
+#sliderContainer {
+    margin-top: 5px;
+    height: 25px;
+    vertical-align: middle !important;
+}
+
+#sliderContainer * {
+    display: inline-block;
+    vertical-align: middle !important;
+}
+
+#sliderRangeFrom {
+    margin-left: 37px;
+    width: 40px;
+    text-align: center;
+}
+
+#chartRangeSlider {
+    margin-top: 3px;
+    width: 300px;
+}
+
+#sliderRangeTo {
+    width: 40px;
+    text-align: center;
+}
+
+#avgSystolic, #avgDiastolic {
+    font-size: large;
+    font-weight: bold;
+}
+
+#bpLabel {
+    font-size: small;
+    font-weight: bold;
+    white-space: nowrap;
+}

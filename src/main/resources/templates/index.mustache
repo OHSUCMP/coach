@@ -8,6 +8,9 @@
         <script type="text/javascript" src="node_modules/chart.js/dist/Chart.bundle.js"></script>
         <script type="text/javascript" src="node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.js"></script>
 
+        <link rel="stylesheet" href="css/index.css"/>
+        <script type="text/javascript" src="js/index.js"></script>
+
         <script type="text/javascript" src="js/recommendations.js"></script>
         <script type="text/javascript">
             function loadBPData(_callback) {
@@ -46,42 +49,107 @@
         </script>
     {{/head}}
     {{#menuItems}}
-        <li>Item 1</li>
-        <li>Item 2</li>
-        <li>Item 3</li>
+        <li class="selected"><a href="/">Patient Portal</a></li>
+        <li><a href="/"</li>
+        <li><a href="/goals">My Goals</a></li>
+        <li><a href="/feedback">Provider Feedback</a></li>
     {{/menuItems}}
-    {{#patientInfo}}
-        <a href="{{patient.id}}">{{patient.name}}</a>
-    {{/patientInfo}}
     {{#content}}
-        <div id="textInfoContainer">
-            <div id="textInfo">
-                <div id="summaryDiv"></div>
-            </div>
-        </div>
-        <div id="chartContainer">
-            <div id="loadingChart">Loading Chart ...</div>
-            <canvas id="chart" class="hidden" width="800" height="400"></canvas>
-            <div id="sliderContainer">
-                <input type="text" id="sliderRangeFrom" readonly size="4"/>
-                <div style="width: 10px;"></div>
-                <div id="chartRangeSlider"></div>
-                <div style="width: 10px;"></div>
-                <input type="text" id="sliderRangeTo" readonly size="4"/>
-            </div>
-        </div>
-        <div id="recommendationsContainer">
-            <div id="loadingRecommendations">Loading Recommendations ...</div>
-            <div id="recommendations" class="hidden">
-                <select id="recommendationsSelect" onchange="recommendationChanged();">
-                </select>
-                <input id="executeRecommendationButton" type="button" value="Execute Recommendation"
-                       onclick="executeSelectedRecommendation();" disabled/>
-            </div>
-            <div id="recommendationInfo">
-            </div>
-            <div id="cards">
-            </div>
-        </div>
+        <table>
+            <tr>
+                <td id="patientInfo">
+                    <table style="margin-left: 50px">
+                        <tr>
+                            <td rowspan="2">
+                                <span class="circle" style="background-color: #b3fff0">&nbsp;</span>
+                            </td>
+                            <td colspan="2">
+                                <span style="font-size: x-large">{{patient.name}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>patient.age</td>
+                            <td>patient.gender</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td class="heading">
+                    High Blood Pressure Control
+                </td>
+            </tr>
+            <tr>
+                <td id="highBPControlContainer">
+                    <table width="100%">
+                        <tr>
+                            <td width="300" style="vertical-align: top">
+                                <span style="font-weight: bold; white-space: nowrap">Your blood pressure:</span>
+                                <br/>
+                                <div style="margin-top: 10px">
+                                    <table align="center">
+                                        <tr>
+                                            <td colspan="3">
+                                                <span id="bpLabel"></span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td rowspan="3">
+                                                <span id="bpIcon" class="circle"></span>
+                                            </td>
+                                            <td id="avgSystolic" align="center">X</td>
+                                            <td style="vertical-align: bottom; font-size: small">systolic</td>
+                                        </tr>
+                                        <tr>
+                                            <td width="50"><hr/></td>
+                                            <td>&nbsp;</td>
+                                        </tr>
+                                        <tr>
+                                            <td id="avgDiastolic" align="center">Y</td>
+                                            <td style="vertical-align: top; font-size: small">diastolic</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                            <td width="500">
+                                <div id="chartContainer">
+                                    <div id="loadingChart">Loading Chart ...</div>
+                                    <canvas id="chart" class="hidden" width="500" height="250"></canvas>
+                                    <div id="sliderContainer">
+                                        <input type="text" id="sliderRangeFrom" readonly size="4"/>
+                                        <div style="width: 10px;"></div>
+                                        <div id="chartRangeSlider"></div>
+                                        <div style="width: 10px;"></div>
+                                        <input type="text" id="sliderRangeTo" readonly size="4"/>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td class="heading">
+                    Recommendations
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="recommendationsContainer">
+                        <div id="loadingRecommendations">Loading Recommendations ...</div>
+                        <div id="recommendations" class="hidden">
+                            <select id="recommendationsSelect" onchange="recommendationChanged();">
+                            </select>
+                            <input id="executeRecommendationButton" type="button" value="Execute Recommendation"
+                                   onclick="executeSelectedRecommendation();" disabled/>
+                        </div>
+                        <div id="recommendationInfo">
+                        </div>
+                        <div id="cards">
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
     {{/content}}
 {{/layout}}
