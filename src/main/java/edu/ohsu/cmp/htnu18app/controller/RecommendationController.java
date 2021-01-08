@@ -3,7 +3,6 @@ package edu.ohsu.cmp.htnu18app.controller;
 import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.Card;
-import edu.ohsu.cmp.htnu18app.registry.FHIRRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +21,6 @@ import java.util.List;
 @Controller
 @RequestMapping("recommendation")
 public class RecommendationController extends AuthenticatedController {
-    private static final String CONFIG_URL_KEY = "cqfruler.cdshooks.endpoint.url";
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -46,20 +43,14 @@ public class RecommendationController extends AuthenticatedController {
     @PostMapping("execute")
     public ResponseEntity<?> execute(HttpSession session,
                                      @RequestParam("id") String hookId) {
+        try {
+            List<Card> cards = cqfRulerService.executeHook(session.getId(), hookId);
+            logger.info("got cards " + cards);
+            return ResponseEntity.ok("success!");
 
-        FHIRRegistry registry = FHIRRegistry.getInstance();
-        if (registry.exists(session.getId())) {
-            try {
-                List<Card> cards = cqfRulerService.executeHook(registry.get(session.getId()), hookId);
-                logger.info("got cards " + cards);
-                return ResponseEntity.ok("success!");
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-            }
-        } else {
-            return ResponseEntity.status(HttpStatus.NETWORK_AUTHENTICATION_REQUIRED).build();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 }

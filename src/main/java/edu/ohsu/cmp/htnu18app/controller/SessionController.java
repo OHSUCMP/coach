@@ -1,9 +1,15 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
-import edu.ohsu.cmp.htnu18app.registry.FHIRRegistry;
-import edu.ohsu.cmp.htnu18app.registry.model.FHIRCredentials;
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
+import edu.ohsu.cmp.htnu18app.cache.SessionCache;
+import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentials;
+import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.htnu18app.service.PatientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,23 +23,41 @@ import javax.servlet.http.HttpSession;
 public class SessionController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @PostMapping("/setFHIRCredentials")
-    public ResponseEntity<?> setFHIRCredentials(HttpSession session,
-                                                @RequestParam("serverUrl") String serverUrl,
-                                                @RequestParam("bearerToken") String bearerToken,
-                                                @RequestParam("patientId") String patientId,
-                                                @RequestParam("userId") String userId) {
+    @Autowired
+    private PatientService patientService;
 
-        FHIRRegistry registry = FHIRRegistry.getInstance();
+    @PostMapping("/prepareSession")
+    public ResponseEntity<?> prepareSession(HttpSession session,
+                                            @RequestParam("serverUrl") String serverUrl,
+                                            @RequestParam("bearerToken") String bearerToken,
+                                            @RequestParam("patientId") String patientId,
+                                            @RequestParam("userId") String userId) {
 
-        if (registry.exists(session.getId())) {
-            logger.info("session " + session.getId() + " has already been registered");
-            return ResponseEntity.ok("FHIR credentials already set");
+        SessionCache cache = SessionCache.getInstance();
+
+        if ( ! cache.exists(session.getId()) ) {
+            FHIRCredentials credentials = new FHIRCredentials(serverUrl, bearerToken, patientId, userId);
+            IGenericClient client = buildClient(credentials);
+            FHIRCredentialsWithClient credentialsWithClient = new FHIRCredentialsWithClient(credentials, client);
+
+            int internalPatientId = patientService.getInternalPatientId(patientId);
+
+            cache.set(session.getId(), credentialsWithClient, internalPatientId);
+
+            return ResponseEntity.ok("session configured successfully");
 
         } else {
-            logger.info("registering session " + session.getId());
-            registry.set(session.getId(), new FHIRCredentials(serverUrl, bearerToken, patientId, userId));
-            return ResponseEntity.ok("FHIR credentials set successfully");
+            return ResponseEntity.ok("session already configured");
         }
+    }
+
+    private IGenericClient buildClient(FHIRCredentials credentials) {
+        FhirContext ctx = FhirContext.forR4();
+        IGenericClient client = ctx.newRestfulGenericClient(credentials.getServerURL());
+
+        BearerTokenAuthInterceptor authInterceptor = new BearerTokenAuthInterceptor(credentials.getBearerToken());
+        client.registerInterceptor(authInterceptor);
+
+        return client;
     }
 }

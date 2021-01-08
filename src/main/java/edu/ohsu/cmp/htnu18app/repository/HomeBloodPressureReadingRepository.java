@@ -9,5 +9,5 @@ import java.util.List;
 
 public interface HomeBloodPressureReadingRepository extends CrudRepository<HomeBloodPressureReading, Long> {
     @Query("select bpr from HomeBloodPressureReading bpr where bpr.patId=:patId")
-    public List<HomeBloodPressureReading> listReadingsForPatient(@Param("patId") int patId);
+    public List<HomeBloodPressureReading> listReadings(@Param("patId") int patId);
 }

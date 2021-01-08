@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.htnu18app.registry.model;
+package edu.ohsu.cmp.htnu18app.model.fhir;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 

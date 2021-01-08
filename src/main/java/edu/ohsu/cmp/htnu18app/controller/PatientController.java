@@ -1,10 +1,9 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
 import edu.ohsu.cmp.htnu18app.exception.DataException;
+import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.PatientModel;
-import edu.ohsu.cmp.htnu18app.registry.FHIRRegistry;
-import edu.ohsu.cmp.htnu18app.registry.model.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
@@ -33,46 +32,36 @@ public class PatientController extends AuthenticatedController {
     @GetMapping(value = {"/", "index"})
     public String index(HttpSession session, Model model) {
         logger.info("requesting data for session " + session.getId());
-        FHIRRegistry registry = FHIRRegistry.getInstance();
-        if (registry.exists(session.getId())) {
-            FHIRCredentialsWithClient fcc = registry.get(session.getId());
 
-            Patient p = patientService.getPatient(fcc.getClient(), fcc.getCredentials().getPatientId());
+        try {
+            populatePatientModel(session.getId(), model);
 
-            PatientModel pd = new PatientModel(p);
-            model.addAttribute("patient", pd);
-
-        } else {
+        } catch (SessionMissingException e) {
+            logger.error("error populating patient model", e);
             // todo: redirect the user to the standalone launch page
         }
 
         return "index";
     }
 
+    protected void populatePatientModel(String sessionId, Model model) throws SessionMissingException {
+        Patient p = patientService.getPatient(sessionId);
+        model.addAttribute("patient", new PatientModel(p));
+    }
+
     @GetMapping("/patient/bpList")
     public ResponseEntity<List<BloodPressureModel>> getBPData(HttpSession session) {
-        logger.info("requesting blood pressures for session " + session.getId());
-        FHIRRegistry registry = FHIRRegistry.getInstance();
-        if (registry.exists(session.getId())) {
-            FHIRCredentialsWithClient fcc = registry.get(session.getId());
+        Bundle buCon = patientService.getBloodPressureObservations(session.getId());
+        List<BloodPressureModel> bpList = new ArrayList<BloodPressureModel>();
+        for (Bundle.BundleEntryComponent entryCon: buCon.getEntry()) {
+            Observation o = (Observation) entryCon.getResource();
+            try {
+                bpList.add(new BloodPressureModel(o));
 
-            Bundle buCon = patientService.getBloodPressureObservations(fcc.getClient(), fcc.getCredentials().getPatientId());
-
-            List<BloodPressureModel> bpList = new ArrayList<BloodPressureModel>();
-            for (Bundle.BundleEntryComponent entryCon: buCon.getEntry()) {
-                Observation o = (Observation) entryCon.getResource();
-                try {
-                    bpList.add(new BloodPressureModel(o));
-
-                } catch (DataException e) {
-                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
-                }
+            } catch (DataException e) {
+                logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
             }
-
-            return new ResponseEntity<>(bpList, HttpStatus.OK);
-
-        } else {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
+        return new ResponseEntity<>(bpList, HttpStatus.OK);
     }
 }

@@ -7,7 +7,7 @@
     <script type="text/javascript">
         const REDIRECT_URL = "/";
 
-        // function setFHIRCredentials(client) {
+        // function prepareSession(client) {
         //     let data = {};
         //     data['serverUrl'] = client.state.serverUrl;
         //     data['bearerToken'] = client.state.tokenResponse.access_token;
@@ -15,7 +15,7 @@
         //     data['userId'] = client.getUserId();
         //
         //     $.ajax({
-        //         "url": "/session/setFHIRCredentials",
+        //         "url": "/session/prepareSession",
         //         "type": "POST",
         //         "data": JSON.stringify(data),
         //         "dataType": "json",
@@ -30,13 +30,13 @@
         //     });
         // }
 
-        async function setFHIRCredentials(client) {
+        async function prepareSession(client) {
             let formData = new FormData();
             formData.append("serverUrl", client.state.serverUrl);
             formData.append("bearerToken", client.state.tokenResponse.access_token);
             formData.append("patientId", client.getPatientId());
             formData.append("userId", client.getUserId());
-            let response = await fetch("/session/setFHIRCredentials", {
+            let response = await fetch("/session/prepareSession", {
                 method: "POST",
                 body: formData
             });
@@ -59,7 +59,7 @@
 
         $(document).ready(function () {
             FHIR.oauth2.ready(function (client) {
-                setFHIRCredentials(client);
+                prepareSession(client);
             });
         });
     </script>

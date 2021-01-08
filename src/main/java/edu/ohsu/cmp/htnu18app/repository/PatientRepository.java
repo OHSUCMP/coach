@@ -12,4 +12,5 @@ public interface PatientRepository extends CrudRepository<Patient, Long> {
 
     @Query("select p from Patient p where p.patIdHash=:patIdHash")
     public List<Patient> findByPatIdHash(@Param("patIdHash") String patIdHash);
+    public Patient findOneByPatIdHash(@Param("patIdHash") String patIdHash);
 }

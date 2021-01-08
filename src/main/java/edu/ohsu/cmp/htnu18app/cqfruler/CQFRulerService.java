@@ -1,18 +1,18 @@
 package edu.ohsu.cmp.htnu18app.cqfruler;
 
-import ca.uhn.fhir.rest.client.api.IGenericClient;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import edu.ohsu.cmp.htnu18app.cache.CacheData;
+import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSServices;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.Card;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.HookRequest;
-import edu.ohsu.cmp.htnu18app.registry.model.FHIRCredentials;
-import edu.ohsu.cmp.htnu18app.registry.model.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
 import edu.ohsu.cmp.htnu18app.util.HttpUtil;
 import org.hl7.fhir.r4.model.Bundle;
@@ -55,14 +55,14 @@ public class CQFRulerService {
         return services.getHooks();
     }
 
-    public List<Card> executeHook(FHIRCredentialsWithClient credentialsWithClient, String hookId) throws IOException {
-        FHIRCredentials credentials = credentialsWithClient.getCredentials();
-        IGenericClient client = credentialsWithClient.getClient();
+    public List<Card> executeHook(String sessionId, String hookId) throws IOException {
+        Patient p = patientService.getPatient(sessionId);
+        Bundle bpBundle = patientService.getBloodPressureObservations(sessionId);
 
-        Patient p = patientService.getPatient(client, credentials.getPatientId());
-        Bundle bpBundle = patientService.getBloodPressureObservations(client, credentials.getPatientId());
+        CacheData cache = SessionCache.getInstance().get(sessionId);
+        FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
 
-        HookRequest request = new HookRequest(credentials, p, bpBundle);
+        HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle);
 
         MustacheFactory mf = new DefaultMustacheFactory();
         Mustache mustache = mf.compile("cqfruler/hookRequest.mustache");

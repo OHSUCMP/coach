@@ -2,7 +2,7 @@ package edu.ohsu.cmp.htnu18app.cqfruler.model;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import edu.ohsu.cmp.htnu18app.registry.model.FHIRCredentials;
+import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentials;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import java.util.UUID;

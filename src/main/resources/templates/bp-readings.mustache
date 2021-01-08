@@ -1,0 +1,90 @@
+{{#layout}}
+    {{#title}}Hypertension U18 App - Home Blood Pressure Readings{{/title}}
+    {{#head}}
+        <script type="text/javascript">
+            function loadBPReadings(_callback) {
+                $.ajax({
+                    "url": "/bp-readings/list",
+                    "type": "GET",
+                    "dataType": "json",
+                    "contentType": "application/json; charset=utf-8",
+                    "success": function (bpreadings) {
+                        _callback(bpreadings);
+                    }
+                });
+            }
+
+            $(document).ready(function () {
+                loadBPReadings(function(bpreadings) {
+                    populateTable();
+                });
+            });
+
+            function populateTable() {
+                let el = $('#bpreadingsTable');
+
+                let html = '<td>';
+
+                // todo : build rows
+
+                html += '</td>";'
+            }
+
+            function deleteReading(id) {
+                alert("deleting reading with id=" + id);
+            }
+        </script>
+    {{/head}}
+    {{#menuItems}}
+        <li><a href="/">Patient Portal</a></li>
+        <li><a href="/goals">My Goals</a></li>
+        <li class="selected"><a href="/bp-readings">Home BP Readings</a></li>
+        <li><a href="/feedback">Provider Feedback</a></li>
+    {{/menuItems}}
+    {{#content}}
+        <table>
+            <tr>
+                <td id="patientInfo">
+                    <table style="margin-left: 50px">
+                        <tr>
+                            <td rowspan="2">
+                                <span class="circle" style="background-color: #b3fff0">&nbsp;</span>
+                            </td>
+                            <td colspan="2">
+                                <span style="font-size: x-large">{{patient.name}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>patient.age</td>
+                            <td>patient.gender</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td class="heading">
+                    High Blood Pressure Control
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <table id="bpreadingsTable">
+                        <tr>
+                            <th>Measurement Timestamp</th>
+                            <th>Systolic (mm/Hg)</th>
+                            <th>Diastolic (mm/Hg)</th>
+                        </tr>
+                        {{#bpreadings}}
+                            <tr>
+                                <td>{{readingDate}}</td>
+                                <td>{{systolic}}</td>
+                                <td>{{diastolic}}</td>
+                                <td><span onclick="deleteReading({{id}}">Delete</span></td>
+                            </tr>
+                        {{/bpreadings}}
+                    </table>
+                </td>
+            </tr>
+        </table>
+    {{/content}}
+{{/layout}}
