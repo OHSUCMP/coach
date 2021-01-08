@@ -8,10 +8,6 @@ public class CDSServices {
     @SerializedName("services")
     private List<CDSHook> hooks;
 
-    public CDSServices(List<CDSHook> hooks) {
-        this.hooks = hooks;
-    }
-
     public List<CDSHook> getHooks() {
         return hooks;
     }

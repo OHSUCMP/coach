@@ -13,26 +13,6 @@
 
         <script type="text/javascript" src="js/recommendations.js"></script>
         <script type="text/javascript">
-            function loadBPData(_callback) {
-                $.ajax({
-                    "url": "/patient/bpList",
-                    "type": "GET",
-                    "dataType": "json",
-                    "contentType": "application/json; charset=utf-8",
-                    "success": function (bpdata) {
-                        bpdata.forEach(function(item) {
-                            item.timestamp = new Date(item.timestamp);
-                        });
-
-                        bpdata.sort(function (a, b) {
-                            return a.timestamp - b.timestamp;
-                        });
-
-                        _callback(bpdata);
-                    }
-                });
-            }
-
             $(document).ready(function () {
                 loadBPData(function(bpdata) {
                     window.bpdata = bpdata;
@@ -41,10 +21,7 @@
                     buildChartSlider();
                 });
 
-                populateRecommendations(function() {
-                    $('#loadingRecommendations').addClass('hidden');
-                    $('#recommendations').removeClass('hidden');
-                });
+                executeRecommendations();
             });
         </script>
     {{/head}}
@@ -135,19 +112,31 @@
             </tr>
             <tr>
                 <td>
-                    <div id="recommendationsContainer">
-                        <div id="loadingRecommendations">Loading Recommendations ...</div>
-                        <div id="recommendations" class="hidden">
-                            <select id="recommendationsSelect" onchange="recommendationChanged();">
-                            </select>
-                            <input id="executeRecommendationButton" type="button" value="Execute Recommendation"
-                                   onclick="executeSelectedRecommendation();" disabled/>
-                        </div>
-                        <div id="recommendationInfo">
-                        </div>
-                        <div id="cards">
-                        </div>
-                    </div>
+                    <table id="recommendations">
+                        {{#cdshooks}}
+                            <tr>
+                                <td class="heading">{{title}}</td>
+                            </tr>
+                            <tr>
+                                <td class="cards" data-recommendation-id="{{id}}">
+                                    Loading...
+                                </td>
+                            </tr>
+                        {{/cdshooks}}
+                    </table>
+<!--                    <div id="recommendationsContainer">-->
+<!--                        <div id="loadingRecommendations">Loading Recommendations ...</div>-->
+<!--                        <div id="recommendations" class="hidden">-->
+<!--                            <select id="recommendationsSelect" onchange="recommendationChanged();">-->
+<!--                            </select>-->
+<!--                            <input id="executeRecommendationButton" type="button" value="Execute Recommendation"-->
+<!--                                   onclick="executeSelectedRecommendation();" disabled/>-->
+<!--                        </div>-->
+<!--                        <div id="recommendationInfo">-->
+<!--                        </div>-->
+<!--                        <div id="cards">-->
+<!--                        </div>-->
+<!--                    </div>-->
                 </td>
             </tr>
         </table>

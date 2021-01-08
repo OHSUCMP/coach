@@ -1,37 +1,40 @@
 package edu.ohsu.cmp.htnu18app.cqfruler.model;
 
 public class Card {
+    private String summary;
     private String indicator;
-    private String title;
     private String detail;
-    private String sourceLabel;
-    private String sourceUrl;
+    private Source source;
 
-    public Card(String indicator, String title, String detail, String sourceLabel, String sourceUrl) {
-        this.indicator = indicator;
-        this.title = title;
-        this.detail = detail;
-        this.sourceLabel = sourceLabel;
-        this.sourceUrl = sourceUrl;
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
     }
 
     public String getIndicator() {
         return indicator;
     }
 
-    public String getTitle() {
-        return title;
+    public void setIndicator(String indicator) {
+        this.indicator = indicator;
     }
 
     public String getDetail() {
         return detail;
     }
 
-    public String getSourceLabel() {
-        return sourceLabel;
+    public void setDetail(String detail) {
+        this.detail = detail;
     }
 
-    public String getSourceUrl() {
-        return sourceUrl;
+    public Source getSource() {
+        return source;
+    }
+
+    public void setSource(Source source) {
+        this.source = source;
     }
 }

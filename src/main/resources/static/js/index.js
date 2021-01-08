@@ -1,3 +1,24 @@
+async function loadBPData(_callback) {
+    let response = await fetch("/patient/bpList", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    });
+
+    let bpdata = await response.json();
+
+    bpdata.forEach(function(item) {
+        item.timestamp = new Date(item.timestamp);
+    });
+
+    bpdata.sort(function (a, b) {
+        return a.timestamp - b.timestamp;
+    });
+
+    _callback(bpdata);
+}
+
 function populateSummaryDiv() {
     let data = window.bpdata;
     let totalSystolic = 0;

@@ -8,10 +8,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
-import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
-import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSServices;
-import edu.ohsu.cmp.htnu18app.cqfruler.model.Card;
-import edu.ohsu.cmp.htnu18app.cqfruler.model.HookRequest;
+import edu.ohsu.cmp.htnu18app.cqfruler.model.*;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
 import edu.ohsu.cmp.htnu18app.util.HttpUtil;
@@ -25,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,14 +70,12 @@ public class CQFRulerService {
         Map<String, String> headers = new HashMap<String, String>();
         headers.put("Content-Type", "application/json; charset=UTF-8");
 
-        String response = HttpUtil.post(cdsHooksEndpointURL + "/" + hookId, headers, writer.toString());
+        String json = HttpUtil.post(cdsHooksEndpointURL + "/" + hookId, headers, writer.toString());
+//        String json = "{  \"cards\": [    {      \"summary\": \"Hypertension Diagnosis\",      \"indicator\": \"info\",      \"source\": {        \"label\": \"Info for those with normal blood pressure\",        \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\"      }    },    {      \"summary\": \"Patient may have Stage 1 Hypertension.\",      \"indicator\": \"warning\",      \"detail\": \"Consider diagnosis of stage 1 HTN.\",      \"source\": {}    }  ]}";
 
-        logger.info("got response: " + response);
+        Gson gson = new GsonBuilder().create();
+        CDSHookResponse response = gson.fromJson(json, new TypeToken<CDSHookResponse>(){}.getType());
 
-        List<Card> list = new ArrayList<Card>();
-
-        // todo : populate cards
-
-        return list;
+        return response.getCards();
     }
 }

@@ -35,22 +35,22 @@ public class RecommendationController extends AuthenticatedController {
             return new ResponseEntity<>(list, HttpStatus.OK);
 
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            logger.error("caught " + e.getClass().getName() + " getting CDS Services", e);
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PostMapping("execute")
-    public ResponseEntity<?> execute(HttpSession session,
+    public ResponseEntity<List<Card>> execute(HttpSession session,
                                      @RequestParam("id") String hookId) {
         try {
             List<Card> cards = cqfRulerService.executeHook(session.getId(), hookId);
             logger.info("got cards " + cards);
-            return ResponseEntity.ok("success!");
+            return new ResponseEntity<>(cards, HttpStatus.OK);
 
         } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            logger.error("caught " + e.getClass().getName() + " executing hook '" + hookId + "'", e);
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

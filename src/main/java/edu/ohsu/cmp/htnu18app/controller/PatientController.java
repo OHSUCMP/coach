@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
+import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
+import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
@@ -29,6 +31,9 @@ public class PatientController extends AuthenticatedController {
     @Autowired
     private PatientService patientService;
 
+    @Autowired
+    private CQFRulerService cqfRulerService;
+
     @GetMapping(value = {"/", "index"})
     public String index(HttpSession session, Model model) {
         logger.info("requesting data for session " + session.getId());
@@ -36,8 +41,11 @@ public class PatientController extends AuthenticatedController {
         try {
             populatePatientModel(session.getId(), model);
 
-        } catch (SessionMissingException e) {
-            logger.error("error populating patient model", e);
+            List<CDSHook> list = cqfRulerService.getCDSHooks();
+            model.addAttribute("cdshooks", list);
+
+        } catch (Exception e) {
+            logger.error("caught " + e.getClass().getName() + " building index page", e);
             // todo: redirect the user to the standalone launch page
         }
 

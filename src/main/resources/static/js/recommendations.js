@@ -1,90 +1,28 @@
-function populateRecommendations(_callback) {
-    $.ajax({
-        "url": "http://localhost:8082/recommendation/list",
-        "type": "GET",
-        "dataType": "json",
-        "contentType": "application/json; charset=utf-8",
-//        "data": buildRulerRequest(fhirServer, bearerToken),
-        "success": function (data) {
-            populateRecommendationsSelect(data);
-            _callback();
-        }
+async function executeRecommendations() {
+    $("td.cards").each(function() {
+        let container = this;
+        let recommendationId = $(container).attr('data-recommendation-id');
+        executeRecommendation(recommendationId, function(cards) {
+            $(container).html(renderCards(cards));
+        });
     });
 }
 
-function populateRecommendationsSelect(arr) {
-    let options = "<option value='' selected>-- Select Recommendation --</option>\n";
-    let info = '';
-
-    arr.forEach(function (item) {
-        let trimmedTitle = item.title;
-        if (trimmedTitle.indexOf("Recommendation - ") === 0) {
-            trimmedTitle = trimmedTitle.substring(17);
-        }
-
-        options += "<option value='" + item.id + "'>" + item.title + "</option>\n";
-        info += "<div class='recommendation hidden' data-recommendation-id='" + item.id +
-            "'>\n<span class='recommendationTitle'>" + item.title +
-            "</span>\n<span class='recommendationDesc'>" + item.description +
-            "</span></div>\n";
-    });
-
-    $('#recommendationsSelect').html(options);
-    $('#recommendationInfo').html(info);
-}
-
-function recommendationChanged() {
-    let button = $('#executeRecommendationButton');
-    let recId = $('#recommendationsSelect').children('option:selected').attr('value');
-    if (recId === '') {
-        $(button).prop('disabled', true);
-        $('div.recommendation').not('.hidden').each(function () {
-            $(this).addClass('hidden');
-        });
-
-    } else {
-        $(button).prop('disabled', false);
-        $('div.recommendation').each(function () {
-            if ($(this).attr('data-recommendation-id') === recId) {
-                $(this).removeClass('hidden');
-            } else {
-                $(this).addClass('hidden');
-            }
-        });
-    }
-
-    $('#cards').html('');
-}
-
-async function executeSelectedRecommendation() {
-    let recommendationId = $('#recommendationsSelect').children("option:selected").attr("value");
-    let button = $('#executeRecommendationButton');
-    let body = $('body');
-
-    $(body).css('cursor', 'wait');
-    $(button).attr('disabled', true);
-
+async function executeRecommendation(id, _callback) {
     let formData = new FormData();
-    formData.append("id", recommendationId);
+    formData.append("id", id);
+
     let response = await fetch("/recommendation/execute", {
         method: "POST",
         body: formData
     });
 
-    if (response.status === 200) {
-        $(button).removeAttr('disabled');
+    let cards = await response.json();
 
-        $(body).css('cursor', 'auto');
-        console.log("Success - received response: " + response.body);
-
-        populateCards(response.body);
-
-    } else {
-        $(body).html("Error - received response " + response.status + " status");
-    }
+    _callback(cards);
 }
 
-function populateCards(cards) {
+function renderCards(cards) {
     let html = "";
     cards.forEach(function (card) {
         html += "<div class='card " + card.indicator +
@@ -99,5 +37,5 @@ function populateCards(cards) {
 
         html += "</div>\n";
     });
-    $('#cards').html(html);
+    return html;
 }
