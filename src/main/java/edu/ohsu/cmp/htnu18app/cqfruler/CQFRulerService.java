@@ -71,6 +71,8 @@ public class CQFRulerService {
         headers.put("Content-Type", "application/json; charset=UTF-8");
 
         String json = HttpUtil.post(cdsHooksEndpointURL + "/" + hookId, headers, writer.toString());
+
+// json object for testing w/o CQF ruler call
 //        String json = "{  \"cards\": [    {      \"summary\": \"Hypertension Diagnosis\",      \"indicator\": \"info\",      \"source\": {        \"label\": \"Info for those with normal blood pressure\",        \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\"      }    },    {      \"summary\": \"Patient may have Stage 1 Hypertension.\",      \"indicator\": \"warning\",      \"detail\": \"Consider diagnosis of stage 1 HTN.\",      \"source\": {}    }  ]}";
 
         Gson gson = new GsonBuilder().create();

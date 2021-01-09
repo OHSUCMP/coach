@@ -1,9 +1,9 @@
 async function executeRecommendations() {
-    $("td.cards").each(function() {
-        let container = this;
-        let recommendationId = $(container).attr('data-recommendation-id');
+    $(".recommendation").each(function() {
+        let recommendationId = $(this).attr('data-id');
+        let cardsContainer = $(this).find('.cardsContainer');
         executeRecommendation(recommendationId, function(cards) {
-            $(container).html(renderCards(cards));
+            $(cardsContainer).html(renderCards(cards));
         });
     });
 }
@@ -25,14 +25,18 @@ async function executeRecommendation(id, _callback) {
 function renderCards(cards) {
     let html = "";
     cards.forEach(function (card) {
-        html += "<div class='card " + card.indicator +
-            "'>\n<span class='cardTitle'>" + card.summary +
-            "</span>\n<span class='cardDetail'>" + card.detail +
-            "</span>\n";
+        html += "<div class='card " + card.indicator + "'>\n";
+        html += "<span class='summary'>" + card.summary + "</span>\n";
+
+        if (card.detail !== undefined) {
+            html += "<span class='details'>" + card.detail + "</span>\n";
+        }
 
         if (card.source.label !== undefined && card.source.url !== undefined) {
+            html += "<span class='source'>";
             html += "See: <a href='" + card.source.url + "' target='_blank' rel='noopener noreferrer'>" +
-                card.source.label + "</a>\n";
+                card.source.label + "</a>";
+            html += "</span>\n";
         }
 
         html += "</div>\n";

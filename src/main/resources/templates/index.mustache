@@ -32,7 +32,7 @@
         <li><a href="/feedback">Provider Feedback</a></li>
     {{/menuItems}}
     {{#content}}
-        <table>
+        <table class="no-spacing">
             <tr>
                 <td id="patientInfo">
                     <table style="margin-left: 50px">
@@ -111,32 +111,18 @@
                 </td>
             </tr>
             <tr>
-                <td>
-                    <table id="recommendations">
-                        {{#cdshooks}}
-                            <tr>
-                                <td class="heading">{{title}}</td>
-                            </tr>
-                            <tr>
-                                <td class="cards" data-recommendation-id="{{id}}">
-                                    Loading...
-                                </td>
-                            </tr>
-                        {{/cdshooks}}
-                    </table>
-<!--                    <div id="recommendationsContainer">-->
-<!--                        <div id="loadingRecommendations">Loading Recommendations ...</div>-->
-<!--                        <div id="recommendations" class="hidden">-->
-<!--                            <select id="recommendationsSelect" onchange="recommendationChanged();">-->
-<!--                            </select>-->
-<!--                            <input id="executeRecommendationButton" type="button" value="Execute Recommendation"-->
-<!--                                   onclick="executeSelectedRecommendation();" disabled/>-->
-<!--                        </div>-->
-<!--                        <div id="recommendationInfo">-->
-<!--                        </div>-->
-<!--                        <div id="cards">-->
-<!--                        </div>-->
-<!--                    </div>-->
+                <td id="recommendationsContainer">
+                    {{#cdshooks}}
+                        <div class="recommendation" data-id="{{id}}">
+                            <div class="heading">{{title}}</div>
+                            {{#description}}
+                                <div class="description">{{description}}</div>
+                            {{/description}}
+                            <div class="cardsContainer">
+                                Loading...
+                            </div>
+                        </div>
+                    {{/cdshooks}}
                 </td>
             </tr>
         </table>

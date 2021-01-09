@@ -9,11 +9,14 @@
 
 body {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    height: 100%;
 }
 
 .heading {
     background-color: #b3fff0;
-    padding-left: 5px;
+    font-weight: bold;
+    font-size: x-large;
+    padding: 5px;
     width: 900px;
 }
 
@@ -26,4 +29,17 @@ span.circle {
     text-align: center;
     font-size: large;
     font-weight: bold;
+}
+
+#patientInfo {
+    display: block;
+    font-weight: bold;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+    /*border-bottom: 1px solid black;*/
+}
+
+table.no-spacing {
+    border-spacing: 0;
+    border-collapse: collapse;
 }
