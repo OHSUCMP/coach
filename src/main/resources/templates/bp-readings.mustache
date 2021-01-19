@@ -10,6 +10,7 @@
 
         <script type="text/javascript">
             $(document).ready(function () {
+                enableHover('#bpreadingsTable .link');
                 enableDatePicker('#readingDate');
                 populateReadingTimesList('#readingTime');
                 populateSelect('#systolic', '--Select Systolic--', 0, 300);
@@ -115,11 +116,11 @@
                         </tr>
                         {{! note : keep this section synced with bp-readings.js:appendRecordToTable(obj) }}
                         {{#bpreadings}}
-                            <tr class='data' data-timestamp='{{readingDateTimestamp}}'>
+                            <tr class='data' data-id='{{id}}' data-timestamp='{{readingDateTimestamp}}'>
                                 <td>{{readingDateString}}</td>
                                 <td>{{systolic}}</td>
                                 <td>{{diastolic}}</td>
-                                <td><span class="link" onclick="deleteReading({{id}}">Delete</span></td>
+                                <td><span class="link" onclick="deleteRecord({{id}})">Delete</span></td>
                             </tr>
                         {{/bpreadings}}
                     </table>

@@ -38,7 +38,7 @@ public class PatientService {
         return p;
     }
 
-    public int getInternalPatientId(String fhirPatientId) {
+    public Long getInternalPatientId(String fhirPatientId) {
         String patIdHash = buildPatIdHash(fhirPatientId);
 
         edu.ohsu.cmp.htnu18app.entity.Patient p;

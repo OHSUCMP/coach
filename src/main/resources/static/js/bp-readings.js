@@ -76,11 +76,11 @@ function appendRecordToTable(obj) {
     let container = $('#bpreadingsTable');
     let unsortedData = $(container).find('tr');
 
-    let html = "<tr class='data' data-timestamp='" + obj.readingDateTimestamp + "'>" +
+    let html = "<tr class='data' data-id='" + obj.id + "' data-timestamp='" + obj.readingDateTimestamp + "'>" +
         "<td>" + obj.readingDateString + "</td>" +
         "<td>" + obj.systolic + "</td>" +
         "<td>" + obj.diastolic + "</td>" +
-        "<td><span class=\"link\" onclick=\"deleteReading(" + obj.id + ")\">Delete</span></td>" +
+        "<td><span class=\"link\" onclick=\"deleteRecord(" + obj.id + ")\">Delete</span></td>" +
         "</tr>\n";
 
     // now sort
@@ -95,6 +95,20 @@ function appendRecordToTable(obj) {
     $(container).html(sortedData);
 }
 
-function deleteRecord(id) {
-    alert("deleting reading with id=" + id);
+async function deleteRecord(id) {
+    let formData = new FormData();
+    formData.append("id", id);
+
+    let response = await fetch("/bp-readings/delete", {
+        method: "POST",
+        body: formData
+    });
+
+    if (response.status === 200) {
+        $("#bpreadingsTable tr.data[data-id='" + id + "']").remove();
+
+    } else {
+        let msg = await response.text();
+        alert(msg);
+    }
 }

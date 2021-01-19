@@ -11,12 +11,12 @@ import java.util.Map;
 
 public class CacheData {
     private FHIRCredentialsWithClient fhirCredentialsWithClient;
-    private int internalPatientId;
+    private Long internalPatientId;
     private Patient patient;
     private Bundle bpList;
     private Map<String, List<Card>> cards;
 
-    public CacheData(FHIRCredentialsWithClient fhirCredentialsWithClient, int internalPatientId) {
+    public CacheData(FHIRCredentialsWithClient fhirCredentialsWithClient, Long internalPatientId) {
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
         this.internalPatientId = internalPatientId;
         this.cards = new LinkedHashMap<String, List<Card>>();
@@ -30,11 +30,11 @@ public class CacheData {
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
     }
 
-    public int getInternalPatientId() {
+    public Long getInternalPatientId() {
         return internalPatientId;
     }
 
-    public void setInternalPatientId(int internalPatientId) {
+    public void setInternalPatientId(Long internalPatientId) {
         this.internalPatientId = internalPatientId;
     }
 

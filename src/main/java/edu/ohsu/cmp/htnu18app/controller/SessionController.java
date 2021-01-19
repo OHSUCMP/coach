@@ -40,7 +40,7 @@ public class SessionController {
             IGenericClient client = buildClient(credentials);
             FHIRCredentialsWithClient credentialsWithClient = new FHIRCredentialsWithClient(credentials, client);
 
-            int internalPatientId = patientService.getInternalPatientId(patientId);
+            Long internalPatientId = patientService.getInternalPatientId(patientId);
 
             cache.set(session.getId(), credentialsWithClient, internalPatientId);
 

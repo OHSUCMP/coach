@@ -26,7 +26,7 @@ public class SessionCache {
         return map.containsKey(sessionId);
     }
 
-    public synchronized void set(String sessionId, FHIRCredentialsWithClient fhirCredentialsWithClient, int internalPatientId) {
+    public synchronized void set(String sessionId, FHIRCredentialsWithClient fhirCredentialsWithClient, Long internalPatientId) {
         CacheData cacheData = new CacheData(fhirCredentialsWithClient, internalPatientId);
         map.put(sessionId, cacheData);
     }

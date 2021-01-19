@@ -27,4 +27,9 @@ public class HomeBloodPressureReadingService {
         bpreading.setCreatedDate(new Date());
         return repository.save(bpreading);
     }
+
+    public void delete(String sessionId, Long id) {
+        CacheData cache = SessionCache.getInstance().get(sessionId);
+        repository.deleteByIdForPatient(id, cache.getInternalPatientId());
+    }
 }

@@ -16,7 +16,7 @@ public class HomeBloodPressureReading {
     private Long id;
 
     @Column(name = "pat_id")
-    private Integer patId;
+    private Long patId;
 
     private Integer systolic;
     private Integer diastolic;
@@ -30,7 +30,7 @@ public class HomeBloodPressureReading {
     protected HomeBloodPressureReading() {
     }
 
-    public HomeBloodPressureReading(Integer patId, Integer systolic, Integer diastolic, Date readingDate) {
+    public HomeBloodPressureReading(Long patId, Integer systolic, Integer diastolic, Date readingDate) {
         this(systolic, diastolic, readingDate);
         this.patId = patId;
     }
@@ -49,11 +49,11 @@ public class HomeBloodPressureReading {
         this.id = id;
     }
 
-    public Integer getPatId() {
+    public Long getPatId() {
         return patId;
     }
 
-    public void setPatId(Integer patId) {
+    public void setPatId(Long patId) {
         this.patId = patId;
     }
 

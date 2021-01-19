@@ -58,4 +58,16 @@ public class BPReadingsController {
 
         return new ResponseEntity<>(bpreading, HttpStatus.OK);
     }
+
+    @PostMapping("delete")
+    public ResponseEntity<String> delete(HttpSession session,
+                                         @RequestParam("id") Long id) {
+        try {
+            hbprService.delete(session.getId(), id);
+            return new ResponseEntity<>("OK", HttpStatus.OK);
+
+        } catch (Exception e) {
+            return new ResponseEntity<>("Caught " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
