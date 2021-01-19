@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.htnu18app.model;
 
+import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
@@ -21,6 +22,12 @@ public class BloodPressureModel {
         DIASTOLIC,
         OTHER,
         UNKNOWN
+    }
+
+    public BloodPressureModel(HomeBloodPressureReading reading) {
+        systolic = new QuantityModel(reading.getSystolic(), "mmHg");
+        diastolic = new QuantityModel(reading.getDiastolic(), "mmHg");
+        timestamp = reading.getReadingDate().getTime();
     }
 
     public BloodPressureModel(Observation o) throws DataException {

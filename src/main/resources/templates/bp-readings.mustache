@@ -1,38 +1,35 @@
 {{#layout}}
     {{#title}}Hypertension U18 App - Home Blood Pressure Readings{{/title}}
     {{#head}}
-        <script type="text/javascript">
-            function loadBPReadings(_callback) {
-                $.ajax({
-                    "url": "/bp-readings/list",
-                    "type": "GET",
-                    "dataType": "json",
-                    "contentType": "application/json; charset=utf-8",
-                    "success": function (bpreadings) {
-                        _callback(bpreadings);
-                    }
-                });
-            }
+        <!-- datetimepicker: https://www.jqueryscript.net/time-clock/Clean-jQuery-Date-Time-Picker-Plugin-datetimepicker.html -->
+        <script type="text/javascript" src="js/jquery-ui-1.12.1/jquery-ui.js"></script>
+        <link rel="stylesheet" href="js/jquery-ui-1.12.1/jquery-ui.css" />
 
+        <script type="text/javascript" src="js/bp-readings.js"></script>
+        <link rel="stylesheet" href="css/bp-readings.css" />
+
+        <script type="text/javascript">
             $(document).ready(function () {
-                loadBPReadings(function(bpreadings) {
-                    populateTable();
+                enableDatePicker('#readingDate');
+                populateReadingTimesList('#readingTime');
+                populateSelect('#systolic', '--Select Systolic--', 0, 300);
+                populateSelect('#diastolic', '--Select Diastolic--', 0, 200);
+            });
+
+            $(document).on('click', '#createButton', function() {
+                let systolic = $('#systolic').val();
+                let diastolic = $('#diastolic').val();
+
+                let timestamp = $('#readingDate').datepicker('getDate');
+                let time = $('#readingTime').val().split(':');
+                timestamp.setHours(time[0]);
+                timestamp.setMinutes(time[1]);
+
+                createRecord(systolic, diastolic, timestamp, function(obj) {
+                    appendRecordToTable(obj);
                 });
             });
 
-            function populateTable() {
-                let el = $('#bpreadingsTable');
-
-                let html = '<td>';
-
-                // todo : build rows
-
-                html += '</td>";'
-            }
-
-            function deleteReading(id) {
-                alert("deleting reading with id=" + id);
-            }
         </script>
     {{/head}}
     {{#menuItems}}
@@ -42,7 +39,7 @@
         <li><a href="/feedback">Provider Feedback</a></li>
     {{/menuItems}}
     {{#content}}
-        <table>
+        <table class="no-spacing">
             <tr>
                 <td id="patientInfo">
                     <table style="margin-left: 50px">
@@ -55,31 +52,74 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>patient.age</td>
-                            <td>patient.gender</td>
+                            <td>{{patient.age}} years</td>
+                            <td>{{patient.gender}}</td>
                         </tr>
                     </table>
                 </td>
             </tr>
             <tr>
                 <td class="heading">
-                    High Blood Pressure Control
+                    Home Blood Pressure Readings
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="label">Enter a Home Blood Pressure reading:</span>
+                    <form action="/bp-readings/create">
+                        <table>
+                            <tr>
+                                <td>Systolic:</td>
+                                <td>
+                                    <select id="systolic" name="systolic">
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Diastolic:</td>
+                                <td>
+                                    <select id="diastolic" name="diastolic">
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Reading Timestamp:</td>
+                                <td>
+                                    <input id="readingDate" type="text" name="readingDate" placeholder="--Select Date--" readonly />
+                                    <select id="readingTime" name="readingTime">
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2">
+                                    <input id="createButton" type="button" value="Save" />
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td class="heading">
+                    Historical Home Blood Pressure Readings
                 </td>
             </tr>
             <tr>
                 <td>
                     <table id="bpreadingsTable">
-                        <tr>
+                        <tr id="bpreadingsTableHeader">
                             <th>Measurement Timestamp</th>
                             <th>Systolic (mm/Hg)</th>
                             <th>Diastolic (mm/Hg)</th>
+                            <th>&nbsp;</th>
                         </tr>
+                        {{! note : keep this section synced with bp-readings.js:appendRecordToTable(obj) }}
                         {{#bpreadings}}
-                            <tr>
-                                <td>{{readingDate}}</td>
+                            <tr class='data' data-timestamp='{{readingDateTimestamp}}'>
+                                <td>{{readingDateString}}</td>
                                 <td>{{systolic}}</td>
                                 <td>{{diastolic}}</td>
-                                <td><span onclick="deleteReading({{id}}">Delete</span></td>
+                                <td><span class="link" onclick="deleteReading({{id}}">Delete</span></td>
                             </tr>
                         {{/bpreadings}}
                     </table>

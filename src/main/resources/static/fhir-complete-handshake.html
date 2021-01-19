@@ -36,7 +36,7 @@
             formData.append("bearerToken", client.state.tokenResponse.access_token);
             formData.append("patientId", client.getPatientId());
             formData.append("userId", client.getUserId());
-            let response = await fetch("/session/prepareSession", {
+            let response = await fetch("/session/prepare", {
                 method: "POST",
                 body: formData
             });

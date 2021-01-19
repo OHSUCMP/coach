@@ -1,21 +1,25 @@
 package edu.ohsu.cmp.htnu18app.entity;
 
 import javax.persistence.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Entity
 @Table(name = "home_bp_reading")
 public class HomeBloodPressureReading {
 
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy h:mm a");
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "pat_id")
-    private Long patId;
+    private Integer patId;
 
-    private int systolic;
-    private int diastolic;
+    private Integer systolic;
+    private Integer diastolic;
 
     @Column(name = "reading_date")
     private Date readingDate;
@@ -26,8 +30,12 @@ public class HomeBloodPressureReading {
     protected HomeBloodPressureReading() {
     }
 
-    public HomeBloodPressureReading(Long patId, int systolic, int diastolic, Date readingDate) {
+    public HomeBloodPressureReading(Integer patId, Integer systolic, Integer diastolic, Date readingDate) {
+        this(systolic, diastolic, readingDate);
         this.patId = patId;
+    }
+
+    public HomeBloodPressureReading(Integer systolic, Integer diastolic, Date readingDate) {
         this.systolic = systolic;
         this.diastolic = diastolic;
         this.readingDate = readingDate;
@@ -41,32 +49,40 @@ public class HomeBloodPressureReading {
         this.id = id;
     }
 
-    public Long getPatId() {
+    public Integer getPatId() {
         return patId;
     }
 
-    public void setPatId(Long patId) {
+    public void setPatId(Integer patId) {
         this.patId = patId;
     }
 
-    public int getSystolic() {
+    public Integer getSystolic() {
         return systolic;
     }
 
-    public void setSystolic(int systolic) {
+    public void setSystolic(Integer systolic) {
         this.systolic = systolic;
     }
 
-    public int getDiastolic() {
+    public Integer getDiastolic() {
         return diastolic;
     }
 
-    public void setDiastolic(int diastolic) {
+    public void setDiastolic(Integer diastolic) {
         this.diastolic = diastolic;
     }
 
     public Date getReadingDate() {
         return readingDate;
+    }
+
+    public String getReadingDateString() {
+        return DATE_FORMAT.format(readingDate);
+    }
+
+    public Long getReadingDateTimestamp() {
+        return readingDate.getTime();
     }
 
     public void setReadingDate(Date readingTimestamp) {

@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.List;
 
 @Controller
-@RequestMapping("recommendation")
+@RequestMapping("/recommendation")
 public class RecommendationController extends AuthenticatedController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -42,7 +42,7 @@ public class RecommendationController extends AuthenticatedController {
 
     @PostMapping("execute")
     public ResponseEntity<List<Card>> execute(HttpSession session,
-                                     @RequestParam("id") String hookId) {
+                                              @RequestParam("id") String hookId) {
         try {
             List<Card> cards = cqfRulerService.executeHook(session.getId(), hookId);
             logger.info("got cards " + cards);

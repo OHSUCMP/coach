@@ -1,11 +1,11 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
-import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
-import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
+import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.PatientModel;
+import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.List;
 
 
 @Controller
+@RequestMapping("/patient")
 public class PatientController extends AuthenticatedController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -32,44 +34,35 @@ public class PatientController extends AuthenticatedController {
     private PatientService patientService;
 
     @Autowired
-    private CQFRulerService cqfRulerService;
-
-    @GetMapping(value = {"/", "index"})
-    public String index(HttpSession session, Model model) {
-        logger.info("requesting data for session " + session.getId());
-
-        try {
-            populatePatientModel(session.getId(), model);
-
-            List<CDSHook> list = cqfRulerService.getCDSHooks();
-            model.addAttribute("cdshooks", list);
-
-        } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " building index page", e);
-            // todo: redirect the user to the standalone launch page
-        }
-
-        return "index";
-    }
+    private HomeBloodPressureReadingService hbprService;
 
     protected void populatePatientModel(String sessionId, Model model) throws SessionMissingException {
         Patient p = patientService.getPatient(sessionId);
         model.addAttribute("patient", new PatientModel(p));
     }
 
-    @GetMapping("/patient/bpList")
+    @GetMapping("bpList")
     public ResponseEntity<List<BloodPressureModel>> getBPData(HttpSession session) {
-        Bundle buCon = patientService.getBloodPressureObservations(session.getId());
-        List<BloodPressureModel> bpList = new ArrayList<BloodPressureModel>();
-        for (Bundle.BundleEntryComponent entryCon: buCon.getEntry()) {
+        List<BloodPressureModel> list = new ArrayList<BloodPressureModel>();
+
+        // first add BP observations from configured FHIR server
+        Bundle bundle = patientService.getBloodPressureObservations(session.getId());
+        for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
             Observation o = (Observation) entryCon.getResource();
             try {
-                bpList.add(new BloodPressureModel(o));
+                list.add(new BloodPressureModel(o));
 
             } catch (DataException e) {
                 logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
             }
         }
-        return new ResponseEntity<>(bpList, HttpStatus.OK);
+
+        // now incorporate Home Blood Pressure Readings that the user entered themself into the system
+        List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(session.getId());
+        for (HomeBloodPressureReading item : hbprList) {
+            list.add(new BloodPressureModel(item));
+        }
+
+        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 }

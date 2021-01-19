@@ -28,11 +28,11 @@ function renderCards(cards) {
         html += "<div class='card " + card.indicator + "'>\n";
         html += "<span class='summary'>" + card.summary + "</span>\n";
 
-        if (card.detail !== undefined) {
+        if (card.detail !== null) {
             html += "<span class='details'>" + card.detail + "</span>\n";
         }
 
-        if (card.source.label !== undefined && card.source.url !== undefined) {
+        if (card.source.label !== null && card.source.url !== null) {
             html += "<span class='source'>";
             html += "See: <a href='" + card.source.url + "' target='_blank' rel='noopener noreferrer'>" +
                 card.source.label + "</a>";

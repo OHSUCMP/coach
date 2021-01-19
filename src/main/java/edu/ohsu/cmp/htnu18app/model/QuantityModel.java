@@ -13,6 +13,11 @@ public class QuantityModel {
         this.unit = q.getUnit();
     }
 
+    public QuantityModel(Integer value, String unit) {
+        this.value = new BigDecimal(value);
+        this.unit = unit;
+    }
+
     public BigDecimal getValue() {
         return value;
     }

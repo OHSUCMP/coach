@@ -12,8 +12,8 @@ drop table if exists home_bp_reading;
 create table home_bp_reading (
     id int not null auto_increment primary key,
     pat_id int not null,
-    systolic int,
-    diastolic int,
+    systolic int not null,
+    diastolic int not null,
     reading_date datetime not null,
-    created_date datetime not null default current_timestamp
+    created_date datetime not null
 );

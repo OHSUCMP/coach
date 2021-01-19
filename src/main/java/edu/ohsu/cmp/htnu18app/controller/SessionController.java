@@ -26,7 +26,7 @@ public class SessionController {
     @Autowired
     private PatientService patientService;
 
-    @PostMapping("/prepareSession")
+    @PostMapping("prepare")
     public ResponseEntity<?> prepareSession(HttpSession session,
                                             @RequestParam("serverUrl") String serverUrl,
                                             @RequestParam("bearerToken") String bearerToken,

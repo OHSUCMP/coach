@@ -8,6 +8,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface HomeBloodPressureReadingRepository extends CrudRepository<HomeBloodPressureReading, Long> {
-    @Query("select bpr from HomeBloodPressureReading bpr where bpr.patId=:patId")
-    public List<HomeBloodPressureReading> listReadings(@Param("patId") int patId);
+    @Query("select bpr from HomeBloodPressureReading bpr where bpr.patId=:patId order by bpr.readingDate desc")
+    public List<HomeBloodPressureReading> findAllByPatId(@Param("patId") int patId);
 }

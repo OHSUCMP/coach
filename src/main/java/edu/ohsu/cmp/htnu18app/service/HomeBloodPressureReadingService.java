@@ -7,6 +7,7 @@ import edu.ohsu.cmp.htnu18app.repository.HomeBloodPressureReadingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -17,9 +18,13 @@ public class HomeBloodPressureReadingService {
 
     public List<HomeBloodPressureReading> getHomeBloodPressureReadings(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
+        return repository.findAllByPatId(cache.getInternalPatientId());
+    }
 
-        // todo: implement this
-
-        return null;
+    public HomeBloodPressureReading create(String sessionId, HomeBloodPressureReading bpreading) {
+        CacheData cache = SessionCache.getInstance().get(sessionId);
+        bpreading.setPatId(cache.getInternalPatientId());
+        bpreading.setCreatedDate(new Date());
+        return repository.save(bpreading);
     }
 }

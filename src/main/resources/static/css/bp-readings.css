@@ -1,0 +1,25 @@
+#bpreadingsTable {
+    border: 1px solid black;
+    border-spacing: 0;
+    margin: 5px;
+}
+
+#bpreadingsTable th {
+    background-color: #1d5987;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 5px;
+}
+
+#bpreadingsTable tr:nth-child(even) {
+    background-color: #e6f7ff;
+}
+
+#bpreadingsTable tr:nth-child(odd) {
+    background-color: #ccefff;
+}
+
+#bpreadingsTable td {
+    border: 1px solid black;
+    padding: 5px;
+}
