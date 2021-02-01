@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
+import edu.ohsu.cmp.htnu18app.cache.CacheData;
+import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
@@ -56,6 +58,9 @@ public class BPReadingsController {
         HomeBloodPressureReading bpreading = new HomeBloodPressureReading(systolic, diastolic, date);
         bpreading = hbprService.create(session.getId(), bpreading);
 
+        CacheData cache = SessionCache.getInstance().get(session.getId());
+        cache.deleteAllCards();
+
         return new ResponseEntity<>(bpreading, HttpStatus.OK);
     }
 
@@ -64,6 +69,10 @@ public class BPReadingsController {
                                          @RequestParam("id") Long id) {
         try {
             hbprService.delete(session.getId(), id);
+
+            CacheData cache = SessionCache.getInstance().get(session.getId());
+            cache.deleteAllCards();
+
             return new ResponseEntity<>("OK", HttpStatus.OK);
 
         } catch (Exception e) {

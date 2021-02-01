@@ -73,4 +73,8 @@ public class CacheData {
         }
         return false;
     }
+
+    public void deleteAllCards() {
+        cards.clear();
+    }
 }

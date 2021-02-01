@@ -7,15 +7,44 @@ import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Quantity;
 
-public class BloodPressureModel {
+import java.util.Objects;
+
+public class BloodPressureModel implements Comparable<BloodPressureModel> {
     public static final String SYSTEM = "http://loinc.org";
     public static final String CODE = "55284-4";
     public static final String SYSTOLIC_CODE = "8480-6";
     public static final String DIASTOLIC_CODE = "8462-4";
+    public static final String VALUE_SYSTEM = "http://unitsofmeasure.org";
+    public static final String VALUE_CODE = "mm[Hg]";
+    public static final String VALUE_UNIT = "mmHg";
 
     private QuantityModel systolic;
     private QuantityModel diastolic;
     private Long timestamp;
+
+    @Override
+    public int compareTo(BloodPressureModel o) {
+        return timestamp.compareTo(o.timestamp) * -1; // reverse chronological order, most recent first
+    }
+
+// adapted from https://stackoverflow.com/questions/5038204/apache-commons-equals-hashcode-builder
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(systolic, diastolic, timestamp);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof BloodPressureModel) {
+            final BloodPressureModel other = (BloodPressureModel) obj;
+            return Objects.equals(systolic, other.systolic)
+                    && Objects.equals(diastolic, other.diastolic)
+                    && Objects.equals(timestamp, other.timestamp);
+        } else {
+            return false;
+        }
+    }
 
     private enum ValueType {
         SYSTOLIC,

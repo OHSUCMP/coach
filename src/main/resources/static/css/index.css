@@ -62,7 +62,7 @@
     background-color: #ffcc99;
 }
 
-.card.hard-stop {
+.card.critical {
     border: 3px solid #ff0000;
     background-color: #ffaaaa;
 }

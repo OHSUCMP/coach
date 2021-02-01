@@ -10,6 +10,7 @@ import edu.ohsu.cmp.htnu18app.service.PatientService;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 
 @Controller
@@ -43,26 +46,32 @@ public class PatientController extends AuthenticatedController {
 
     @GetMapping("bpList")
     public ResponseEntity<List<BloodPressureModel>> getBPData(HttpSession session) {
-        List<BloodPressureModel> list = new ArrayList<BloodPressureModel>();
+        Set<BloodPressureModel> set = new TreeSet<BloodPressureModel>();
 
         // first add BP observations from configured FHIR server
         Bundle bundle = patientService.getBloodPressureObservations(session.getId());
         for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
-            Observation o = (Observation) entryCon.getResource();
-            try {
-                list.add(new BloodPressureModel(o));
+            if (entryCon.getResource() instanceof Observation) {
+                Observation o = (Observation) entryCon.getResource();
+                try {
+                    set.add(new BloodPressureModel(o));
 
-            } catch (DataException e) {
-                logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+                } catch (DataException e) {
+                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+                }
+
+            } else {
+                Resource r = entryCon.getResource();
+                logger.warn("ignoring " + r.getClass().getName() + " (id=" + r.getId() + ") while building Observations");
             }
         }
 
         // now incorporate Home Blood Pressure Readings that the user entered themself into the system
         List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(session.getId());
         for (HomeBloodPressureReading item : hbprList) {
-            list.add(new BloodPressureModel(item));
+            set.add(new BloodPressureModel(item));
         }
 
-        return new ResponseEntity<>(list, HttpStatus.OK);
+        return new ResponseEntity<>(new ArrayList<>(set), HttpStatus.OK);
     }
 }

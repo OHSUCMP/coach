@@ -2,33 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script type="text/javascript" src="js/jquery-3.4.1.js"></script>
+    <script type="text/javascript" src="js/jquery-3.5.1.js"></script>
     <script type="text/javascript" src="js/fhir-client.js"></script>
     <script type="text/javascript">
         const REDIRECT_URL = "/";
-
-        // function prepareSession(client) {
-        //     let data = {};
-        //     data['serverUrl'] = client.state.serverUrl;
-        //     data['bearerToken'] = client.state.tokenResponse.access_token;
-        //     data['patientId'] = client.getPatientId();
-        //     data['userId'] = client.getUserId();
-        //
-        //     $.ajax({
-        //         "url": "/session/prepareSession",
-        //         "type": "POST",
-        //         "data": JSON.stringify(data),
-        //         "dataType": "json",
-        //         "contentType": "application/json; charset=utf-8",
-        //         "success": function (response) {
-        //             $('body').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
-        //             window.location.href = REDIRECT_URL;
-        //         },
-        //         "error": function(response) {
-        //             $('body').html("Error - received response " + response.status + " status");
-        //         }
-        //     });
-        // }
 
         async function prepareSession(client) {
             let formData = new FormData();
@@ -36,7 +13,7 @@
             formData.append("bearerToken", client.state.tokenResponse.access_token);
             formData.append("patientId", client.getPatientId());
             formData.append("userId", client.getUserId());
-            let response = await fetch("/session/prepare", {
+            let response = await fetch("/prepare-session", {
                 method: "POST",
                 body: formData
             });
@@ -65,6 +42,6 @@
     </script>
 </head>
 <body>
-    Completing handshake...
+Completing handshake...
 </body>
 </html>

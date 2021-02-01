@@ -66,7 +66,7 @@ public class PatientService {
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
             b = fcc.getClient()
                     .search()
-                    .forResource((Observation.class))
+                    .forResource(Observation.class)
                     .and(Observation.PATIENT.hasId(fcc.getCredentials().getPatientId()))
                     .and(Observation.CODE.exactly().systemAndCode(BloodPressureModel.SYSTEM, BloodPressureModel.CODE))
                     .returnBundle(Bundle.class)

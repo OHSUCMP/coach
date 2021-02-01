@@ -1,13 +1,22 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
+import ca.uhn.fhir.rest.client.api.IGenericClient;
+import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
+import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentials;
+import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.htnu18app.service.PatientService;
+import edu.ohsu.cmp.htnu18app.util.FhirUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
 import java.util.List;
@@ -20,23 +29,55 @@ public class HomeController {
     private PatientController patientController;
 
     @Autowired
+    private PatientService patientService;
+
+    @Autowired
     private CQFRulerService cqfRulerService;
 
     @GetMapping(value = {"", "/", "index"})
     public String index(HttpSession session, Model model) {
-        logger.info("requesting data for session " + session.getId());
+        if (SessionCache.getInstance().exists(session.getId())) {
+            logger.info("requesting data for session " + session.getId());
 
-        try {
-            patientController.populatePatientModel(session.getId(), model);
+            try {
+                patientController.populatePatientModel(session.getId(), model);
 
-            List<CDSHook> list = cqfRulerService.getCDSHooks();
-            model.addAttribute("cdshooks", list);
+                List<CDSHook> list = cqfRulerService.getCDSHooks();
+                model.addAttribute("cdshooks", list);
 
-        } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " building index page", e);
-            // todo: redirect the user to the standalone launch page
+            } catch (Exception e) {
+                logger.error("caught " + e.getClass().getName() + " building index page", e);
+            }
+
+            return "index";
+
+        } else {
+            return "fhir-complete-handshake";
         }
+    }
 
-        return "index";
+    @PostMapping("prepare-session")
+    public ResponseEntity<?> prepareSession(HttpSession session,
+                                            @RequestParam("serverUrl") String serverUrl,
+                                            @RequestParam("bearerToken") String bearerToken,
+                                            @RequestParam("patientId") String patientId,
+                                            @RequestParam("userId") String userId) {
+
+        SessionCache cache = SessionCache.getInstance();
+
+        if ( ! cache.exists(session.getId()) ) {
+            FHIRCredentials credentials = new FHIRCredentials(serverUrl, bearerToken, patientId, userId);
+            IGenericClient client = FhirUtil.buildClient(credentials.getServerURL(), credentials.getBearerToken());
+            FHIRCredentialsWithClient credentialsWithClient = new FHIRCredentialsWithClient(credentials, client);
+
+            Long internalPatientId = patientService.getInternalPatientId(patientId);
+
+            cache.set(session.getId(), credentialsWithClient, internalPatientId);
+
+            return ResponseEntity.ok("session configured successfully");
+
+        } else {
+            return ResponseEntity.ok("session already configured");
+        }
     }
 }
