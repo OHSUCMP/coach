@@ -43,6 +43,13 @@
     text-decoration: none;
 }
 
+#logoutContainer {
+    position: absolute;
+    top: 35px;
+    left: 1015px;
+    z-index: 9;
+}
+
 #content {
     position: absolute;
     top: 0;

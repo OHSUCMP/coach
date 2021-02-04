@@ -46,10 +46,7 @@
     background-color: #ffffff;
     padding: 5px;
     margin: 2px 0 2px 0;
-}
-
-.card span {
-    display: block;
+    width: 600px;
 }
 
 .card.info {
@@ -67,15 +64,26 @@
     background-color: #ffaaaa;
 }
 
-span.summary {
+.card .summary {
     display: block;
     font-weight: bold;
 }
 
-.card.details {
+.card .rationale {
     display: block;
-    color: red;
     font-weight: bold;
+}
+
+.card .source {
+    display: block;
+}
+
+.card .suggestions {
+    display: block;
+}
+
+.card .selectionBehavior {
+    display: block;
 }
 
 #sliderContainer {

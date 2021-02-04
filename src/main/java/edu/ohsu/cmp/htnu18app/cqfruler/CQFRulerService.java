@@ -94,7 +94,7 @@ public class CQFRulerService {
             String json = HttpUtil.post(cdsHooksEndpointURL + "/" + hookId, headers, writer.toString());
 
 // json object for testing w/o CQF ruler call
-//            String json = "{  \"cards\": [    {      \"summary\": \"Hypertension Diagnosis\",      \"indicator\": \"info\",      \"source\": {        \"label\": \"Info for those with normal blood pressure\",        \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\"      }    },    {      \"summary\": \"Patient may have Stage 1 Hypertension.\",      \"indicator\": \"warning\",      \"detail\": \"Consider diagnosis of stage 1 HTN.\",      \"source\": {}    }  ]}";
+//            String json = "{ \"cards\": [ { \"summary\": \"Hypertension Diagnosis\", \"indicator\": \"info\", \"detail\": \"ConsiderHTNStage1 Patient\", \"source\": { \"label\": \"Info for those with normal blood pressure\", \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\" } }, { \"summary\": \"Recommend diagnosis of Stage 2 hypertension\", \"indicator\": \"warning\", \"detail\": \"You had a high blood pressure reading recently. Please see your provider to lower your blood pressure and reduce your risk of stroke or other adverse events. More severe hypertension, stage 2 hypertension is a systolic pressure of 140 mm Hg or higher or a diastolic pressure of 90 mm Hg or higher.;https://www.ahajournals.org/doi/10.1161/HYPERTENSIONAHA.120.15020;;at-most-one;https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings\", \"source\": {} } ] }";
 
             Gson gson = new GsonBuilder().create();
             CDSHookResponse response = gson.fromJson(json, new TypeToken<CDSHookResponse>(){}.getType());

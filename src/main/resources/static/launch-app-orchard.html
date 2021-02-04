@@ -3,12 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Loading</title>
+    <script type="text/javascript" src="js/jquery-3.5.1.js"></script>
     <script type="text/javascript" src="js/fhir-client.js"></script>
     <script type="text/javascript">
-        FHIR.oauth2.authorize({
-            "client_id": "bd53da9c-0529-4f2c-90cc-3d96e266d4f3",    // R4
-            "scope": "launch patient/*.read user/*.read openid profile",
-            "redirect_uri": "http://localhost:8082/"
+        async function clearSession(_callback) {
+            let response = await fetch("/clear-session", {
+                method: "POST"
+            });
+
+            if (response.status === 200) {
+                _callback();
+            }
+        }
+
+        $(document).ready(function() {
+            clearSession(function () {
+                FHIR.oauth2.authorize({
+                    "client_id": "bd53da9c-0529-4f2c-90cc-3d96e266d4f3",    // R4
+                    "scope": "launch patient/*.read user/*.read openid profile",
+                    "redirect_uri": "http://localhost:8082/"
+                });
+            });
         });
     </script>
 </head>

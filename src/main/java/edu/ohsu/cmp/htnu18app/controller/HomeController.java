@@ -80,4 +80,16 @@ public class HomeController {
             return ResponseEntity.ok("session already configured");
         }
     }
+
+    @GetMapping("logout")
+    public String logout(HttpSession session) {
+        SessionCache.getInstance().remove(session.getId());
+        return "logout";
+    }
+
+    @PostMapping("clear-session")
+    public ResponseEntity<?> clearSession(HttpSession session) {
+        SessionCache.getInstance().remove(session.getId());
+        return ResponseEntity.ok("session cleared");
+    }
 }
