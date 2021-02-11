@@ -1,0 +1,66 @@
+{{#layout}}
+    {{#title}}Hypertension U18 App - Preferences{{/title}}
+    {{#head}}
+        <!-- https://lhncbc.github.io/lforms/ -->
+        <!--
+            <script src="https://clinicaltables.nlm.nih.gov/lforms-versions/17.0.0/lforms.min.js"></script>
+            <link rel="stylesheet" href="https://clinicaltables.nlm.nih.gov/lforms-versions/17.0.0/styles/lforms.min.css"
+                  media="screen" />
+        -->
+
+<!--        <script type="text/javascript" src="https://clinicaltables.nlm.nih.gov/lforms-versions/26.3.1/lforms.min.js"></script>-->
+<!--        <script type="text/javascript" src="https://clinicaltables.nlm.nih.gov/lforms-versions/26.3.1/fhir/R4/lformsFHIR.min.js"></script>-->
+<!--        <link rel="stylesheet" href="https://clinicaltables.nlm.nih.gov/lforms-versions/26.3.1/styles/lforms.min.css"/>-->
+
+        <script type="text/javascript" src="js/lforms-26.3.1.min.js"></script>
+        <script type="text/javascript" src="js/lformsFHIR-R4-26.3.1.min.js"></script>
+        <link rel="stylesheet" href="css/lforms-26.3.1-custom.css"/>
+
+        <script type="text/javascript" src="js/preferences.js"></script>
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                LForms.Util.addFormToPage(getTestForm(), 'preferencesFormContainer', {prepopulate: true});
+            });
+        </script>
+    {{/head}}
+    {{#menuItems}}
+        <li><a href="/">Patient Portal</a></li>
+        <li><a href="/goals">My Goals</a></li>
+        <li><a href="/bp-readings">Home BP Readings</a></li>
+        <li class="selected"><a href="/preferences">My Preferences</a></li>
+        <li><a href="/feedback">Provider Feedback</a></li>
+    {{/menuItems}}
+    {{#content}}
+        <table class="no-spacing">
+            <tr>
+                <td id="patientInfo">
+                    <table style="margin-left: 50px">
+                        <tr>
+                            <td rowspan="2">
+                                <span class="circle" style="background-color: #b3fff0">&nbsp;</span>
+                            </td>
+                            <td colspan="2">
+                                <span style="font-size: x-large">{{patient.name}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>{{patient.age}} years</td>
+                            <td>{{patient.gender}}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td class="heading">
+                    High Blood Pressure Control
+                </td>
+            </tr>
+            <tr>
+                <td id="preferencesContainer">
+                    <div id="preferencesFormContainer" class="ohsu_lhc"></div>
+                </td>
+            </tr>
+        </table>
+    {{/content}}
+{{/layout}}

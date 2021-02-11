@@ -34,8 +34,6 @@ public class BPReadingsController {
 
     @GetMapping(value={"", "/"})
     public String bpReadings(HttpSession session, Model model) {
-        logger.info("requesting data for session " + session.getId());
-
         try {
             patientController.populatePatientModel(session.getId(), model);
             List<HomeBloodPressureReading> bpreadings = hbprService.getHomeBloodPressureReadings(session.getId());
