@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.htnu18app.cache;
 
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
+import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 
 import java.util.Map;
@@ -26,8 +27,10 @@ public class SessionCache {
         return map.containsKey(sessionId);
     }
 
-    public synchronized void set(String sessionId, FHIRCredentialsWithClient fhirCredentialsWithClient, Long internalPatientId) {
-        CacheData cacheData = new CacheData(fhirCredentialsWithClient, internalPatientId);
+    public synchronized void set(String sessionId, Audience audience,
+                                 FHIRCredentialsWithClient fhirCredentialsWithClient,
+                                 Long internalPatientId) {
+        CacheData cacheData = new CacheData(audience, fhirCredentialsWithClient, internalPatientId);
         map.put(sessionId, cacheData);
     }
 

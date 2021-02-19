@@ -4,6 +4,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
+import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
@@ -61,7 +62,8 @@ public class HomeController {
                                             @RequestParam("serverUrl") String serverUrl,
                                             @RequestParam("bearerToken") String bearerToken,
                                             @RequestParam("patientId") String patientId,
-                                            @RequestParam("userId") String userId) {
+                                            @RequestParam("userId") String userId,
+                                            @RequestParam("audience") String audienceStr) {
 
         SessionCache cache = SessionCache.getInstance();
 
@@ -72,7 +74,9 @@ public class HomeController {
 
             Long internalPatientId = patientService.getInternalPatientId(patientId);
 
-            cache.set(session.getId(), credentialsWithClient, internalPatientId);
+            Audience audience = Audience.valueOf(audienceStr.toUpperCase());
+
+            cache.set(session.getId(), audience, credentialsWithClient, internalPatientId);
 
             return ResponseEntity.ok("session configured successfully");
 

@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.htnu18app.cache;
 
-import edu.ohsu.cmp.htnu18app.cqfruler.model.Card;
+import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
+import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Patient;
@@ -10,16 +11,26 @@ import java.util.List;
 import java.util.Map;
 
 public class CacheData {
+    private Audience audience;
     private FHIRCredentialsWithClient fhirCredentialsWithClient;
     private Long internalPatientId;
     private Patient patient;
     private Bundle bpList;
     private Map<String, List<Card>> cards;
 
-    public CacheData(FHIRCredentialsWithClient fhirCredentialsWithClient, Long internalPatientId) {
+    public CacheData(Audience audience, FHIRCredentialsWithClient fhirCredentialsWithClient, Long internalPatientId) {
+        this.audience = audience;
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
         this.internalPatientId = internalPatientId;
         this.cards = new LinkedHashMap<String, List<Card>>();
+    }
+
+    public Audience getAudience() {
+        return audience;
+    }
+
+    public void setAudience(Audience audience) {
+        this.audience = audience;
     }
 
     public FHIRCredentialsWithClient getFhirCredentialsWithClient() {

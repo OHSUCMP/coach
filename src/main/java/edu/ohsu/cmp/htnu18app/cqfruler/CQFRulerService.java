@@ -12,6 +12,7 @@ import edu.ohsu.cmp.htnu18app.cqfruler.model.*;
 import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
 import edu.ohsu.cmp.htnu18app.util.HttpUtil;
@@ -95,11 +96,17 @@ public class CQFRulerService {
 
 // json object for testing w/o CQF ruler call
 //            String json = "{ \"cards\": [ { \"summary\": \"Hypertension Diagnosis\", \"indicator\": \"info\", \"detail\": \"ConsiderHTNStage1 Patient\", \"source\": { \"label\": \"Info for those with normal blood pressure\", \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\" } }, { \"summary\": \"Recommend diagnosis of Stage 2 hypertension\", \"indicator\": \"warning\", \"detail\": \"You had a high blood pressure reading recently. Please see your provider to lower your blood pressure and reduce your risk of stroke or other adverse events. More severe hypertension, stage 2 hypertension is a systolic pressure of 140 mm Hg or higher or a diastolic pressure of 90 mm Hg or higher.;https://www.ahajournals.org/doi/10.1161/HYPERTENSIONAHA.120.15020;;at-most-one;https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings\", \"source\": {} } ] }";
+//            String json = "{ \"cards\": [ { \"summary\": \"Hypertension Diagnosis\", \"indicator\": \"info\", \"detail\": \"ConsiderHTNStage1 Patient\", \"source\": { \"label\": \"Info for those with normal blood pressure\", \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\" } }, { \"summary\": \"Recommend diagnosis of Stage 2 hypertension\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Patient rationale{{/patient}}{{#provider}}Provider rationale{{/provider}};{{#patient}}https://source.com/patient{{/patient}}{{#provider}}https://source.com/provider{{/provider}};{{#patient}}https://suggestions.com/patient{{/patient}}{{#provider}}https://suggestions.com/provider{{/provider}};at-most-one;<ol>{{#patient}}<li>https://links.com/patient</li>{{/patient}}<li>https://links.com/providerAndPatient</li></ol>\", \"source\": {} } ] }";
 
             Gson gson = new GsonBuilder().create();
             CDSHookResponse response = gson.fromJson(json, new TypeToken<CDSHookResponse>(){}.getType());
 
-            cache.setCards(hookId, response.getCards());
+            List<Card> cards = new ArrayList<Card>();
+            for (CDSCard cdsCard : response.getCards()) {
+                cards.add(new Card(cache.getAudience(), cdsCard));
+            }
+
+            cache.setCards(hookId, cards);
         }
 
         return cache.getCards(hookId);

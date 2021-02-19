@@ -2,7 +2,7 @@ package edu.ohsu.cmp.htnu18app.controller;
 
 import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
-import edu.ohsu.cmp.htnu18app.cqfruler.model.Card;
+import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

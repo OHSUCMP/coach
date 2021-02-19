@@ -13,6 +13,7 @@
             formData.append("bearerToken", client.state.tokenResponse.access_token);
             formData.append("patientId", client.getPatientId());
             formData.append("userId", client.getUserId());
+            formData.append("audience", "patient");
             let response = await fetch("/prepare-session", {
                 method: "POST",
                 body: formData

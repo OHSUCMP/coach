@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.htnu18app.cqfruler.model;
 
-public class Card {
+public class CDSCard {
     private static final int RATIONALE = 0;
     private static final int SOURCE = 1;
     private static final int SUGGESTIONS = 2;

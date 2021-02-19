@@ -3,13 +3,13 @@ package edu.ohsu.cmp.htnu18app.cqfruler.model;
 import java.util.List;
 
 public class CDSHookResponse {
-    private List<Card> cards;
+    private List<CDSCard> cards;
 
-    public List<Card> getCards() {
+    public List<CDSCard> getCards() {
         return cards;
     }
 
-    public void setCards(List<Card> cards) {
+    public void setCards(List<CDSCard> cards) {
         this.cards = cards;
     }
 }
