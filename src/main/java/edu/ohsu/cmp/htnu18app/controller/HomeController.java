@@ -74,7 +74,7 @@ public class HomeController {
 
             Long internalPatientId = patientService.getInternalPatientId(patientId);
 
-            Audience audience = Audience.valueOf(audienceStr.toUpperCase());
+            Audience audience = Audience.fromTag(audienceStr);
 
             cache.set(session.getId(), audience, credentialsWithClient, internalPatientId);
 

@@ -89,7 +89,7 @@ public class Card {
         if (s.trim().isEmpty()) return "";
 
         Map<String, Object> map = new HashMap<String, Object>();
-        map.put(audience.name().toLowerCase(), true);
+        map.put(audience.getTag(), true);
 
         MustacheFactory mf = new DefaultMustacheFactory();
         Mustache m = mf.compile(new StringReader(s), "template" );
