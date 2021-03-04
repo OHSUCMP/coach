@@ -26,7 +26,7 @@ function renderCards(cards) {
     let html = "";
     cards.forEach(function (card) {
         html += "<div class='card " + card.indicator + "'>\n";
-        html += "<span class='summary'>" + card.summary + "</span>\n";
+        html += "<span class='summary heading'>" + card.summary + "</span>\n";
 
         if (card.rationale !== null) {
             html += "<span class='rationale'>" + card.rationale + "</span>\n";
@@ -50,7 +50,20 @@ function renderCards(cards) {
         }
 
         if (card.suggestions !== null) {
-            html += "<span class='suggestions'>" + card.suggestions + "</span>\n";
+            html += "<div class='suggestions'>";
+            card.suggestions.forEach(function(suggestion) {
+                html += "<div class='suggestion'>";
+                html += "<span class='heading'>" + suggestion.label + "</span>";
+                if (suggestion.actions !== null) {
+                    html += "<ul class='actions'>";
+                    suggestion.actions.forEach(function(action) {
+                        html += "<li class='action'>" + action + "</li>";
+                    });
+                    html += "</ul>";
+                }
+                html += "</div>\n";
+            });
+            html += "</div>\n";
         }
 
         if (card.selectionBehavior !== null) {

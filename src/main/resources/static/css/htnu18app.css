@@ -13,12 +13,10 @@ body {
 }
 
 .heading {
-    background-color: #b3fff0;
+    display: block;
     color: black;
+    font-size: large;
     font-weight: bold;
-    font-size: x-large;
-    padding: 5px;
-    width: 900px;
 }
 
 span.circle {

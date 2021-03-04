@@ -15,6 +15,13 @@
     width: 500px;
 }
 
+td.heading {
+    background-color: #b3fff0;
+    font-size: x-large;
+    padding: 5px;
+    width: 900px;
+}
+
 #recommendationsContainer {
     padding: 0;
 }
@@ -26,8 +33,7 @@
 
 .recommendation > .heading {
     background-color: #b3d9ff;
-    font-size: large;
-    margin: 2px 0 2px 0;
+    padding: 5px;
 }
 
 .recommendation > .description {
@@ -80,6 +86,21 @@
 
 .card .suggestions {
     display: block;
+}
+
+.card .suggestion {
+    margin: 5px 0 0 10px;
+    padding: 5px;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.card .suggestion .heading {
+    margin-top: 5px;
+}
+
+.card .suggestion .actions {
+    margin: 2px 0 2px 0;
+
 }
 
 .card .selectionBehavior {

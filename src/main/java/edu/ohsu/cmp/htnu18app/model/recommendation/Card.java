@@ -1,47 +1,48 @@
 package edu.ohsu.cmp.htnu18app.model.recommendation;
 
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSCard;
+import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSSuggestion;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.Source;
+import edu.ohsu.cmp.htnu18app.util.MustacheUtil;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Card {
-    private Audience audience;
-
     private String summary;
     private String indicator;
     private String detail;
     private Source source;
     private String rationale;
     private String source2;
-    private String suggestions;
+    private List<Suggestion> suggestions;
     private String selectionBehavior;
     private String links;
 
     public Card(Audience audience, CDSCard cdsCard) throws IOException {
-        this.audience = audience;
-
         this.summary = cdsCard.getSummary();
         this.indicator = cdsCard.getIndicator();
         this.detail = cdsCard.getDetail();
         this.source = cdsCard.getSource();
 
-        this.rationale = compileMustache(audience, cdsCard.getRationale());
-        this.source2 = compileMustache(audience, cdsCard.getSource2());
-        this.suggestions = compileMustache(audience, cdsCard.getSuggestions());
-        this.selectionBehavior = compileMustache(audience, cdsCard.getSelectionBehavior());
-        this.links = compileMustache(audience, cdsCard.getLinks());
-    }
+        this.rationale = MustacheUtil.compileMustache(audience, cdsCard.getRationale());
+        this.source2 = MustacheUtil.compileMustache(audience, cdsCard.getSource2());
 
-    public Audience getAudience() {
-        return audience;
+        this.suggestions = new ArrayList<Suggestion>();
+        Gson gson = new GsonBuilder().create();
+        List<CDSSuggestion> list = gson.fromJson(cdsCard.getSuggestions(), new TypeToken<ArrayList<CDSSuggestion>>(){}.getType());
+        if (list != null) {
+            for (CDSSuggestion cdsSuggestion : list) {
+                this.suggestions.add(new Suggestion(audience, cdsSuggestion));
+            }
+        }
+
+        this.selectionBehavior = MustacheUtil.compileMustache(audience, cdsCard.getSelectionBehavior());
+        this.links = MustacheUtil.compileMustache(audience, cdsCard.getLinks());
     }
 
     public String getSummary() {
@@ -68,7 +69,7 @@ public class Card {
         return source2;
     }
 
-    public String getSuggestions() {
+    public List<Suggestion> getSuggestions() {
         return suggestions;
     }
 
@@ -78,25 +79,5 @@ public class Card {
 
     public String getLinks() {
         return links;
-    }
-
-/////////////////////////////////////////////////////
-// private methods
-//
-
-    private String compileMustache(Audience audience, String s) throws IOException {
-        if (s == null) return null;
-        if (s.trim().isEmpty()) return "";
-
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put(audience.getTag(), true);
-
-        MustacheFactory mf = new DefaultMustacheFactory();
-        Mustache m = mf.compile(new StringReader(s), "template" );
-        StringWriter writer = new StringWriter();
-
-        m.execute(writer, map).flush();
-
-        return writer.toString();
     }
 }
