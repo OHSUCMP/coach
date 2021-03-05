@@ -19,14 +19,14 @@ import java.io.IOException;
 import java.util.List;
 
 @Controller
-@RequestMapping("/recommendation")
+@RequestMapping("/recommendations")
 public class RecommendationController extends AuthenticatedController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private CQFRulerService cqfRulerService;
 
-    @GetMapping("list")
+    @GetMapping(value={"", "/"})
     public ResponseEntity<List<CDSHook>> getList(HttpSession session) {
         logger.info("requesting cds-hooks for session " + session.getId());
 

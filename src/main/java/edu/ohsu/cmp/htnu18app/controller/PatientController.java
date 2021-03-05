@@ -44,8 +44,8 @@ public class PatientController extends AuthenticatedController {
         model.addAttribute("patient", new PatientModel(p));
     }
 
-    @GetMapping("bpList")
-    public ResponseEntity<List<BloodPressureModel>> getBPData(HttpSession session) {
+    @GetMapping("bp-list")
+    public ResponseEntity<List<BloodPressureModel>> getBPList(HttpSession session) {
         Set<BloodPressureModel> set = new TreeSet<BloodPressureModel>();
 
         // first add BP observations from configured FHIR server

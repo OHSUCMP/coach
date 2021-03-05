@@ -17,3 +17,15 @@ create table home_bp_reading (
     reading_date datetime not null,
     created_date datetime not null
 );
+
+drop table if exists goal;
+create table goal (
+  id int not null auto_increment primary key,
+  goal_id varchar(100) not null,
+  pat_id int not null,
+  follow_up_days int,
+  value varchar(255) not null,
+  created_date datetime not null
+);
+
+create unique index goalPatId on goal (goal_id, pat_id);

@@ -33,7 +33,7 @@ public class BPReadingsController {
     private HomeBloodPressureReadingService hbprService;
 
     @GetMapping(value={"", "/"})
-    public String bpReadings(HttpSession session, Model model) {
+    public String getBPReadings(HttpSession session, Model model) {
         try {
             patientController.populatePatientModel(session.getId(), model);
             List<HomeBloodPressureReading> bpreadings = hbprService.getHomeBloodPressureReadings(session.getId());

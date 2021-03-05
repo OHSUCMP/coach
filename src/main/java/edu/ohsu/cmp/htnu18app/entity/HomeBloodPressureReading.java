@@ -30,11 +30,6 @@ public class HomeBloodPressureReading {
     protected HomeBloodPressureReading() {
     }
 
-    public HomeBloodPressureReading(Long patId, Integer systolic, Integer diastolic, Date readingDate) {
-        this(systolic, diastolic, readingDate);
-        this.patId = patId;
-    }
-
     public HomeBloodPressureReading(Integer systolic, Integer diastolic, Date readingDate) {
         this.systolic = systolic;
         this.diastolic = diastolic;

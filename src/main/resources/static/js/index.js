@@ -1,5 +1,5 @@
 async function loadBPData(_callback) {
-    let response = await fetch("/patient/bpList", {
+    let response = await fetch("/patient/bp-list", {
         method: "GET",
         headers: {
             "Content-Type": "application/json; charset=utf-8"
