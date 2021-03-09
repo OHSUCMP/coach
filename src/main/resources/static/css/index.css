@@ -15,13 +15,6 @@
     width: 500px;
 }
 
-td.heading {
-    background-color: #b3fff0;
-    font-size: x-large;
-    padding: 5px;
-    width: 900px;
-}
-
 #recommendationsContainer {
     padding: 0;
 }
