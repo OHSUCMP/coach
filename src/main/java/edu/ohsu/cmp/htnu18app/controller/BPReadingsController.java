@@ -48,12 +48,17 @@ public class BPReadingsController {
 
     @PostMapping("create")
     public ResponseEntity<HomeBloodPressureReading> create(HttpSession session,
-                                                           @RequestParam("systolic") Integer systolic,
-                                                           @RequestParam("diastolic") Integer diastolic,
-                                                           @RequestParam("timestamp") Long timestamp) {
+                                                           @RequestParam("systolic1") Integer systolic1,
+                                                           @RequestParam("diastolic1") Integer diastolic1,
+                                                           @RequestParam("pulse1") Integer pulse1,
+                                                           @RequestParam("systolic2") Integer systolic2,
+                                                           @RequestParam("diastolic2") Integer diastolic2,
+                                                           @RequestParam("pulse2") Integer pulse2,
+                                                           @RequestParam("readingDateTS") Long readingDate,
+                                                           @RequestParam("confirm") Boolean followedInstructions) {
 
-        Date date = new Date(timestamp);
-        HomeBloodPressureReading bpreading = new HomeBloodPressureReading(systolic, diastolic, date);
+        Date date = new Date(readingDate);
+        HomeBloodPressureReading bpreading = new HomeBloodPressureReading(systolic1, diastolic1, pulse1, systolic2, diastolic2, pulse2, date, followedInstructions);
         bpreading = hbprService.create(session.getId(), bpreading);
 
         CacheData cache = SessionCache.getInstance().get(session.getId());

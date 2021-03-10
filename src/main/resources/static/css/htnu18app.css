@@ -4,7 +4,7 @@
     margin: 0;
     padding: 0;
     visibility: hidden;
-    display: none;
+    display: none !important;
 }
 
 body {
@@ -19,7 +19,7 @@ body {
     font-weight: bold;
 }
 
-span.circle {
+span.circle, div.circle {
     display: inline-block;
     width: 25px;
     height: 25px;
@@ -50,6 +50,22 @@ table.content > tbody > tr > td.heading {
     width: 900px;
 }
 
-table.content * {
-    max-width: 900px;
+select {
+    margin-bottom: 5px;
+}
+
+.success {
+    color: green;
+}
+
+.error {
+    color: red;
+}
+
+.field {
+    display: inline-block;
+}
+
+.field.error {
+    background-color: #ffe6e6;
 }

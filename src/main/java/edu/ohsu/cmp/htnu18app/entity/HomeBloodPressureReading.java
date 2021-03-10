@@ -18,11 +18,19 @@ public class HomeBloodPressureReading {
     @Column(name = "pat_id")
     private Long patId;
 
-    private Integer systolic;
-    private Integer diastolic;
+    private Integer systolic1;
+    private Integer diastolic1;
+    private Integer pulse1;
+
+    private Integer systolic2;
+    private Integer diastolic2;
+    private Integer pulse2;
 
     @Column(name = "reading_date")
     private Date readingDate;
+
+    @Column(name = "followed_instructions")
+    private Boolean followedInstructions;
 
     @Column(name = "created_date")
     private Date createdDate;
@@ -30,10 +38,17 @@ public class HomeBloodPressureReading {
     protected HomeBloodPressureReading() {
     }
 
-    public HomeBloodPressureReading(Integer systolic, Integer diastolic, Date readingDate) {
-        this.systolic = systolic;
-        this.diastolic = diastolic;
+    public HomeBloodPressureReading(Integer systolic1, Integer diastolic1, Integer pulse1,
+                                    Integer systolic2, Integer diastolic2, Integer pulse2,
+                                    Date readingDate, Boolean followedInstructions) {
+        this.systolic1 = systolic1;
+        this.diastolic1 = diastolic1;
+        this.pulse1 = pulse1;
+        this.systolic2 = systolic2;
+        this.diastolic2 = diastolic2;
+        this.pulse2 = pulse2;
         this.readingDate = readingDate;
+        this.followedInstructions = followedInstructions;
     }
 
     public Long getId() {
@@ -52,20 +67,52 @@ public class HomeBloodPressureReading {
         this.patId = patId;
     }
 
-    public Integer getSystolic() {
-        return systolic;
+    public Integer getSystolic1() {
+        return systolic1;
     }
 
-    public void setSystolic(Integer systolic) {
-        this.systolic = systolic;
+    public void setSystolic1(Integer systolic1) {
+        this.systolic1 = systolic1;
     }
 
-    public Integer getDiastolic() {
-        return diastolic;
+    public Integer getDiastolic1() {
+        return diastolic1;
     }
 
-    public void setDiastolic(Integer diastolic) {
-        this.diastolic = diastolic;
+    public void setDiastolic1(Integer diastolic1) {
+        this.diastolic1 = diastolic1;
+    }
+
+    public Integer getPulse1() {
+        return pulse1;
+    }
+
+    public void setPulse1(Integer pulse1) {
+        this.pulse1 = pulse1;
+    }
+
+    public Integer getSystolic2() {
+        return systolic2;
+    }
+
+    public void setSystolic2(Integer systolic2) {
+        this.systolic2 = systolic2;
+    }
+
+    public Integer getDiastolic2() {
+        return diastolic2;
+    }
+
+    public void setDiastolic2(Integer diastolic2) {
+        this.diastolic2 = diastolic2;
+    }
+
+    public Integer getPulse2() {
+        return pulse2;
+    }
+
+    public void setPulse2(Integer pulse2) {
+        this.pulse2 = pulse2;
     }
 
     public Date getReadingDate() {
@@ -82,6 +129,14 @@ public class HomeBloodPressureReading {
 
     public void setReadingDate(Date readingTimestamp) {
         this.readingDate = readingTimestamp;
+    }
+
+    public Boolean getFollowedInstructions() {
+        return followedInstructions;
+    }
+
+    public void setFollowedInstructions(Boolean followedInstructions) {
+        this.followedInstructions = followedInstructions;
     }
 
     public Date getCreatedDate() {

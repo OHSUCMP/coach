@@ -1,7 +1,8 @@
 #bpreadingsTable {
     border: 1px solid black;
     border-spacing: 0;
-    margin: 5px;
+    margin: 4px;
+    width: 900px;
 }
 
 #bpreadingsTable th {
@@ -45,6 +46,7 @@
 #bpEntryContainer form > .label {
     display: block;
     margin: 20px 0 20px 0;
+    max-width: 900px;
 }
 
 #bpEntryContainer form .container {
@@ -70,8 +72,13 @@
 }
 
 #createButton {
-    display: block;
+    display: inline-block;
     margin-top: 20px;
+}
+
+#saveMessage {
+    display: inline-block;
+    margin-left: 10px;
 }
 
 #showHideProtocol {
@@ -145,4 +152,8 @@
     top: 370px;
     left: 570px;
     font-size: small;
+}
+
+div.field {
+
 }

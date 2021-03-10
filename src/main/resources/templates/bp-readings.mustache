@@ -22,17 +22,35 @@
             });
 
             $(document).on('click', '#createButton', function() {
-                let systolic = $('#systolic').val();
-                let diastolic = $('#diastolic').val();
+                if (validateForm('#bpEntryContainer form', '#saveMessage')) {
+                    let systolic1 = $('#systolic1').val();
+                    let diastolic1 = $('#diastolic1').val();
+                    let pulse1 = $('#pulse1').val();
+                    let systolic2 = $('#systolic2').val();
+                    let diastolic2 = $('#diastolic2').val();
+                    let pulse2 = $('#pulse2').val();
 
-                let timestamp = $('#readingDate').datepicker('getDate');
-                let time = $('#readingTime').val().split(':');
-                timestamp.setHours(time[0]);
-                timestamp.setMinutes(time[1]);
+                    let readingDate = $('#readingDate').datepicker('getDate');
+                    let time = $('#readingTime').val().split(':');
+                    readingDate.setHours(time[0]);
+                    readingDate.setMinutes(time[1]);
 
-                createRecord(systolic, diastolic, timestamp, function(obj) {
-                    appendRecordToTable(obj);
-                });
+                    let confirm = $('input[type=radio][name=confirm]:checked').val() === 'yes';
+
+                    createRecord(systolic1, diastolic1, pulse1, systolic2, diastolic2, pulse2, readingDate, confirm, function(obj) {
+                        appendRecordToTable(obj);
+                        resetForm('#bpEntryContainer form');
+
+                        let el = $('#saveMessage');
+                        $(el).removeClass();
+                        $(el).addClass('success');
+                        $(el).html("Record created successfully.");
+                    });
+                }
+            });
+
+            $(document).on('blur', '.field', function() {
+                validateField(this);
             });
 
             $(document).on('click', '#showHideProtocol', function() {
@@ -46,7 +64,6 @@
                     $(this).html('Show Protocol');
                 }
             });
-
         </script>
     {{/head}}
     {{#menuItems}}
@@ -96,44 +113,65 @@
                             </span>
                             <div id="firstMeasurementContainer" class="container">
                                 <span class="heading">First Measurement</span>
-                                <label for="systolic1">SBP:</label>
-                                <input type="number" id="systolic1" /> mm Hg<br/>
-                                <label for="diastolic1">DBP:</label>
-                                <input type="number" id="diastolic1" /> mm Hg<br/>
-                                <label for="pulse1">Pulse:</label>
-                                <input type="number" id="pulse1" /> bpm
+                                <div class="field">
+                                    <label for="systolic1">SBP:</label>
+                                    <input type="number" id="systolic1" class="required" /> mm Hg<br/>
+                                </div>
+                                <div class="field">
+                                    <label for="diastolic1">DBP:</label>
+                                    <input type="number" id="diastolic1" class="required" /> mm Hg<br/>
+                                </div>
+                                <div class="field">
+                                    <label for="pulse1">Pulse:</label>
+                                    <input type="number" id="pulse1" class="required" /> bpm
+                                </div>
                             </div>
                             <div id="secondMeasurementContainer" class="container">
                                 <span class="heading">Second Measurement</span>
-                                <label for="systolic2">SBP:</label>
-                                <input type="number" id="systolic2" /> mm Hg<br/>
-                                <label for="diastolic2">DBP:</label>
-                                <input type="number" id="diastolic2" /> mm Hg<br/>
-                                <label for="pulse2">Pulse:</label>
-                                <input type="number" id="pulse2" /> bpm
+                                <div class="field">
+                                    <label for="systolic2">SBP:</label>
+                                    <input type="number" id="systolic2" /> mm Hg<br/>
+                                </div>
+                                <div class="field">
+                                    <label for="diastolic2">DBP:</label>
+                                    <input type="number" id="diastolic2" /> mm Hg<br/>
+                                </div>
+                                <div class="field">
+                                    <label for="pulse2">Pulse:</label>
+                                    <input type="number" id="pulse2" /> bpm
+                                </div>
                             </div>
                             <span class="label">
                                 Please enter the date and approximate time of these measurements:
                             </span>
                             <div id="dateContainer" class="container">
-                                <label for="readingDate">Date:</label>
-                                <input id="readingDate" type="text" name="readingDate" placeholder="--Select Date--" readonly />
+                                <div class="field">
+                                    <label for="readingDate">Date:</label>
+                                    <input id="readingDate" type="text" name="readingDate" placeholder="--Select Date--" readonly />
+                                </div>
                             </div>
                             <div id="timeContainer" class="container">
-                                <label for="readingTime">Time:</label>
-                                <select id="readingTime" name="readingTime">
-                                </select>
+                                <div class="field">
+                                    <label for="readingTime">Time:</label>
+                                    <select id="readingTime" name="readingTime">
+                                    </select>
+                                </div>
                             </div>
                             <span class="label">
                                 Did you follow the below instructions when measuring your blood pressure?
                             </span>
                             <div id="confirmContainer" class="container">
-                                <label for="confirmYes">Yes</label>
-                                <input id="confirmYes" type="radio" name="confirm" value="yes" />
-                                <label for="confirmNo">No</label>
-                                <input id="confirmNo" type="radio" name="confirm" value="No" />
+                                <div class="field">
+                                    <label for="confirmYes">Yes</label>
+                                    <input id="confirmYes" type="radio" name="confirm" value="yes" />
+                                    <label for="confirmNo">No</label>
+                                    <input id="confirmNo" type="radio" name="confirm" value="no" />
+                                </div>
                             </div>
-                            <input id="createButton" type="button" value="Save" />
+                            <div>
+                                <input id="createButton" type="button" value="Save" />
+                                <span id="saveMessage" class="hidden"></span>
+                            </div>
                         </form>
                         <div>
                             <span id="showHideProtocol">Show Protocol</span>
@@ -192,17 +230,25 @@
                     <td>
                         <table id="bpreadingsTable">
                             <tr id="bpreadingsTableHeader">
-                                <th>Measurement Timestamp</th>
-                                <th>Systolic (mm/Hg)</th>
-                                <th>Diastolic (mm/Hg)</th>
+                                <th>Reading Timestamp</th>
+                                <th>SBP1 (mm/Hg)</th>
+                                <th>DBP1 (mm/Hg)</th>
+                                <th>Pulse1 (bpm)</th>
+                                <th>SBP2 (mm/Hg)</th>
+                                <th>DBP2 (mm/Hg)</th>
+                                <th>Pulse2 (bpm)</th>
                                 <th>&nbsp;</th>
                             </tr>
                             {{! note : keep this section synced with bp-readings.js:appendRecordToTable(obj) }}
                             {{#bpreadings}}
                                 <tr class='data' data-id='{{id}}' data-timestamp='{{readingDateTimestamp}}'>
                                     <td>{{readingDateString}}</td>
-                                    <td>{{systolic}}</td>
-                                    <td>{{diastolic}}</td>
+                                    <td>{{systolic1}}</td>
+                                    <td>{{diastolic1}}</td>
+                                    <td>{{pulse1}}</td>
+                                    <td>{{systolic2}}</td>
+                                    <td>{{diastolic2}}</td>
+                                    <td>{{pulse2}}</td>
                                     <td><span class="link" onclick="deleteRecord({{id}})">Delete</span></td>
                                 </tr>
                             {{/bpreadings}}

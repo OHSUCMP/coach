@@ -72,7 +72,7 @@ public class CQFRulerService {
                 Encounter e = buildEncounter(uuid, p.getId(), item.getReadingDate());
                 bpBundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
 
-                Observation o = buildObservation(uuid, p.getId(), e.getId(), item);
+                Observation o = buildBloodPressureObservation(uuid, p.getId(), e.getId(), item);
 
                 // todo: should the URL be different?
                 bpBundle.addEntry().setFullUrl("http://hl7.org/fhir/Observation/" + o.getId()).setResource(o);
@@ -139,12 +139,12 @@ public class CQFRulerService {
         return e;
     }
 
-    private Observation buildObservation(String uuid, String patientId, String encounterId, HomeBloodPressureReading item) {
+    private Observation buildBloodPressureObservation(String uuid, String patientId, String encounterId, HomeBloodPressureReading item) {
         // adapted from https://www.programcreek.com/java-api-examples/?api=org.hl7.fhir.dstu3.model.Observation
 
         Observation o = new Observation();
 
-        o.setId("observation-" + uuid);
+        o.setId("observation-bp-" + uuid);
         o.setSubject(new Reference().setReference(patientId));
         o.setEncounter(new Reference().setReference(encounterId));
         o.setStatus(Observation.ObservationStatus.FINAL);
@@ -157,7 +157,9 @@ public class CQFRulerService {
         systolic.getValueQuantity().setCode(BloodPressureModel.VALUE_CODE);
         systolic.getValueQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
         systolic.getValueQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
-        systolic.getValueQuantity().setValue(item.getSystolic());
+
+        int meanSystolic = (int) Math.round((double)(item.getSystolic1() + item.getSystolic2()) / 2);
+        systolic.getValueQuantity().setValue(meanSystolic);
         o.getComponent().add(systolic);
 
         Observation.ObservationComponentComponent diastolic = new Observation.ObservationComponentComponent();
@@ -166,7 +168,9 @@ public class CQFRulerService {
         diastolic.getValueQuantity().setCode(BloodPressureModel.VALUE_CODE);
         diastolic.getValueQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
         diastolic.getValueQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
-        diastolic.getValueQuantity().setValue(item.getDiastolic());
+
+        int meanDiastolic = (int) Math.round((double)(item.getDiastolic1() + item.getDiastolic2()) / 2);
+        diastolic.getValueQuantity().setValue(meanDiastolic);
         o.getComponent().add(diastolic);
 
         return o;
