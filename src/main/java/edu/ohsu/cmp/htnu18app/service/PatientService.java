@@ -3,10 +3,12 @@ package edu.ohsu.cmp.htnu18app.service;
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
+import edu.ohsu.cmp.htnu18app.model.MedicationModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.repository.PatientRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.MedicationStatement;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.slf4j.Logger;
@@ -59,9 +61,9 @@ public class PatientService {
 
     public Bundle getBloodPressureObservations(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
-        Bundle b = cache.getBpList();
+        Bundle b = cache.getBloodPressureObservations();
         if (b == null) {
-            logger.info("requesting Blood Pressure data for session " + sessionId);
+            logger.info("requesting Blood Pressure Observations for session " + sessionId);
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
             b = fcc.getClient()
@@ -71,8 +73,27 @@ public class PatientService {
                     .and(Observation.CODE.exactly().systemAndCode(BloodPressureModel.SYSTEM, BloodPressureModel.CODE))
                     .returnBundle(Bundle.class)
                     .execute();
-            cache.setBpList(b);
+            cache.setBloodPressureObservations(b);
         }
+        return b;
+    }
+
+    public Bundle getMedicationStatements(String sessionId) {
+        CacheData cache = SessionCache.getInstance().get(sessionId);
+//        Bundle b = cache.getMedicationStatements();
+//        if (b == null) {
+            logger.info("requesting MedicationStatements for session " + sessionId);
+
+            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+            Bundle b = fcc.getClient()
+                    .search()
+                    .forResource(MedicationStatement.class)
+                    .and(MedicationStatement.PATIENT.hasId(fcc.getCredentials().getPatientId()))
+                    .and(MedicationStatement.CODE.exactly().systemAndCode(MedicationModel.SYSTEM, MedicationModel.CODE))
+                    .returnBundle(Bundle.class)
+                    .execute();
+//            cache.setMedicationStatements(b);
+//        }
         return b;
     }
 }

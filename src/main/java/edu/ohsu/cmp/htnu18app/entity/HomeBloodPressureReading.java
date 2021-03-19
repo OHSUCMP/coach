@@ -115,6 +115,14 @@ public class HomeBloodPressureReading {
         this.pulse2 = pulse2;
     }
 
+    public Integer getMeanSystolic() {
+        return (int) Math.round((double)(systolic1 + systolic2) / 2);
+    }
+
+    public Integer getMeanDiastolic() {
+        return (int) Math.round((double)(diastolic1 + diastolic2) / 2);
+    }
+
     public Date getReadingDate() {
         return readingDate;
     }

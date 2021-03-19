@@ -1,0 +1,80 @@
+.recommendation {
+    display: block;
+    margin: 0;
+}
+
+.recommendation > .heading {
+    background-color: #b3d9ff;
+    padding: 5px;
+}
+
+.recommendation > .description {
+    font-style: italic;
+    margin-bottom: 4px;
+}
+
+.cardsContainer {
+    display: block;
+    margin-left: 25px;
+}
+
+.card {
+    display: block;
+    border: 3px solid black;
+    background-color: #ffffff;
+    padding: 5px;
+    margin: 5px 0 5px 0;
+    width: 600px;
+}
+
+.card.info {
+    border: 3px solid #33cc33;
+    background-color: #ccffcc;
+}
+
+.card.warning {
+    border: 3px solid #ff6600;
+    background-color: #ffcc99;
+}
+
+.card.critical {
+    border: 3px solid #ff0000;
+    background-color: #ffaaaa;
+}
+
+.card .summary {
+    display: block;
+    font-weight: bold;
+}
+
+.card .rationale {
+    display: block;
+    font-weight: bold;
+}
+
+.card .source {
+    display: block;
+}
+
+.card .suggestions {
+    display: block;
+}
+
+.card .suggestion {
+    margin: 5px 0 0 10px;
+    padding: 5px;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.card .suggestion .heading {
+    margin-top: 5px;
+}
+
+.card .suggestion .actions {
+    margin: 2px 0 2px 0;
+
+}
+
+.card .selectionBehavior {
+    display: block;
+}

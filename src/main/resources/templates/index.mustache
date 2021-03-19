@@ -11,14 +11,21 @@
         <link rel="stylesheet" href="css/index.css"/>
         <script type="text/javascript" src="js/index.js"></script>
 
+        <link rel="stylesheet" href="css/recommendations.css"/>
         <script type="text/javascript" src="js/recommendations.js"></script>
         <script type="text/javascript">
             $(document).ready(function () {
-                loadBPData(function(bpdata) {
+                loadBloodPressureObservations(function(bpdata) {
                     window.bpdata = bpdata;
                     populateSummaryDiv();
                     buildChart();
                     buildChartSlider();
+                });
+
+                loadMedications(function(meds) {
+                    window.meds = meds;
+
+                    // todo: populate meds widget
                 });
 
                 executeRecommendations();
@@ -107,6 +114,9 @@
                             </td>
                         </tr>
                     </table>
+                    <span id="goalNote">
+                        Your GOAL: <em><strong>Below 130/80 (<u>American Heart Association</u>);</strong> Other goals might be</em> 140/90 (<u>European Society of Hypertension</u>)
+                    </span>
                 </td>
             </tr>
             <tr>
@@ -115,18 +125,27 @@
                 </td>
             </tr>
             <tr>
-                <td id="recommendationsContainer">
-                    {{#cdshooks}}
-                        <div class="recommendation" data-id="{{id}}">
-                            <div class="heading">{{title}}</div>
-                            {{#description}}
-                                <div class="description">{{description}}</div>
-                            {{/description}}
-                            <div class="cardsContainer">
-                                Loading...
-                            </div>
-                        </div>
-                    {{/cdshooks}}
+                <td>
+                    <table class="no-spacing">
+                        <tr>
+                            <td id="recommendationsContainer">
+                                {{#cdshooks}}
+                                    <div class="recommendation" data-id="{{id}}">
+                                        <div class="heading">{{title}}</div>
+                                        {{#description}}
+                                            <div class="description">{{description}}</div>
+                                        {{/description}}
+                                        <div class="cardsContainer">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                {{/cdshooks}}
+                            </td>
+                            <td id="medicationsContainer">
+                                These are the medications
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
         </table>

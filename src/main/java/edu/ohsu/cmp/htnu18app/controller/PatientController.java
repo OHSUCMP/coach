@@ -4,13 +4,11 @@ import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
+import edu.ohsu.cmp.htnu18app.model.MedicationModel;
 import edu.ohsu.cmp.htnu18app.model.PatientModel;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Patient;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +42,8 @@ public class PatientController extends AuthenticatedController {
         model.addAttribute("patient", new PatientModel(p));
     }
 
-    @GetMapping("bp-list")
-    public ResponseEntity<List<BloodPressureModel>> getBPList(HttpSession session) {
+    @GetMapping("blood-pressure-observations")
+    public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) {
         Set<BloodPressureModel> set = new TreeSet<BloodPressureModel>();
 
         // first add BP observations from configured FHIR server
@@ -62,7 +60,7 @@ public class PatientController extends AuthenticatedController {
 
             } else {
                 Resource r = entryCon.getResource();
-                logger.warn("ignoring " + r.getClass().getName() + " (id=" + r.getId() + ") while building Observations");
+                logger.warn("ignoring " + r.getClass().getName() + " (id=" + r.getId() + ") while building Blood Pressure Observations");
             }
         }
 
@@ -74,4 +72,30 @@ public class PatientController extends AuthenticatedController {
 
         return new ResponseEntity<>(new ArrayList<>(set), HttpStatus.OK);
     }
+
+    @GetMapping("medications")
+    public ResponseEntity<List<MedicationModel>> getMedications(HttpSession session) {
+        Set<MedicationModel> set = new TreeSet<MedicationModel>();
+
+        // first add BP observations from configured FHIR server
+        Bundle bundle = patientService.getMedicationStatements(session.getId());
+        for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
+            if (entryCon.getResource() instanceof MedicationStatement) {
+                MedicationStatement ms = (MedicationStatement) entryCon.getResource();
+                try {
+                    set.add(new MedicationModel(ms));
+
+                } catch (DataException e) {
+                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+                }
+
+            } else {
+                Resource r = entryCon.getResource();
+                logger.warn("ignoring " + r.getClass().getName() + " (id=" + r.getId() + ") while building Medications");
+            }
+        }
+
+        return new ResponseEntity<>(new ArrayList<>(set), HttpStatus.OK);
+    }
+
 }

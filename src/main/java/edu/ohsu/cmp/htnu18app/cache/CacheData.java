@@ -15,7 +15,8 @@ public class CacheData {
     private FHIRCredentialsWithClient fhirCredentialsWithClient;
     private Long internalPatientId;
     private Patient patient;
-    private Bundle bpList;
+    private Bundle bloodPressureObservations;
+    private Bundle medicationStatements;
     private Map<String, List<Card>> cards;
 
     public CacheData(Audience audience, FHIRCredentialsWithClient fhirCredentialsWithClient, Long internalPatientId) {
@@ -57,12 +58,20 @@ public class CacheData {
         this.patient = patient;
     }
 
-    public Bundle getBpList() {
-        return bpList;
+    public Bundle getBloodPressureObservations() {
+        return bloodPressureObservations;
     }
 
-    public void setBpList(Bundle bpList) {
-        this.bpList = bpList;
+    public void setBloodPressureObservations(Bundle bloodPressureObservations) {
+        this.bloodPressureObservations = bloodPressureObservations;
+    }
+
+    public Bundle getMedicationStatements() {
+        return medicationStatements;
+    }
+
+    public void setMedicationStatements(Bundle medicationStatements) {
+        this.medicationStatements = medicationStatements;
     }
 
     public boolean containsCards(String hookId) {

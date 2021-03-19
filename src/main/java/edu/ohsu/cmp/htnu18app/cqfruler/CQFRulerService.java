@@ -10,12 +10,13 @@ import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.*;
 import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
+import edu.ohsu.cmp.htnu18app.http.HttpRequest;
+import edu.ohsu.cmp.htnu18app.http.HttpResponse;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
-import edu.ohsu.cmp.htnu18app.util.HttpUtil;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,13 +47,13 @@ public class CQFRulerService {
     public List<CDSHook> getCDSHooks() throws IOException {
         logger.info("getting " + cdsHooksEndpointURL);
 
-        String json = HttpUtil.get(cdsHooksEndpointURL);
+        HttpResponse response = new HttpRequest().get(cdsHooksEndpointURL);
 
 // json object for testing w/o CQF ruler call
 //        String json = "{  \"services\": [    {      \"hook\": \"patient-view\",      \"name\": \"Hypertension\",      \"title\": \"OHSU Hypertension\",      \"description\": \"This PlanDefinition identifies hypertension\",      \"id\": \"plandefinition-Hypertension\",      \"prefetch\": {        \"item1\": \"Patient?_id\\u003d{{context.patientId}}\",        \"item2\": \"Observation?subject\\u003dPatient/{{context.patientId}}\\u0026code\\u003dhttp://loinc.org|55284-4\",        \"item3\": \"Encounter?patient\\u003dPatient/{{context.patientId}}\",        \"item4\": \"Condition?patient\\u003dPatient/{{context.patientId}}\\u0026code\\u003dhttp://snomed.info/sct|111438007,http://snomed.info/sct|123799005,http://snomed.info/sct|123800009,http://snomed.info/sct|14973001,http://snomed.info/sct|169465000,http://snomed.info/sct|194783001,http://snomed.info/sct|194785008,http://snomed.info/sct|194788005,http://snomed.info/sct|194791005,http://snomed.info/sct|199008003,http://snomed.info/sct|26078007,http://snomed.info/sct|28119000,http://snomed.info/sct|31992008,http://snomed.info/sct|39018007,http://snomed.info/sct|39727004,http://snomed.info/sct|427889009,http://snomed.info/sct|428575007,http://snomed.info/sct|48552006,http://snomed.info/sct|57684003,http://snomed.info/sct|73410007,http://snomed.info/sct|74451002,http://snomed.info/sct|89242004\",        \"item5\": \"Procedure?patient\\u003dPatient/{{context.patientId}}\\u0026code\\u003dhttp://snomed.info/sct|164783007,http://snomed.info/sct|413153004,http://snomed.info/sct|448489007,http://snomed.info/sct|448678005,http://www.ama-assn.org/go/cpt|93784,http://www.ama-assn.org/go/cpt|93786,http://www.ama-assn.org/go/cpt|93788,http://www.ama-assn.org/go/cpt|93790\"      }    }  ]}\n";
 
         Gson gson = new GsonBuilder().create();
-        CDSServices services = gson.fromJson(json, new TypeToken<CDSServices>(){}.getType());
+        CDSServices services = gson.fromJson(response.getResponseBody(), new TypeToken<CDSServices>(){}.getType());
 
         return services.getHooks();
     }
@@ -92,7 +93,7 @@ public class CQFRulerService {
             Map<String, String> headers = new HashMap<String, String>();
             headers.put("Content-Type", "application/json; charset=UTF-8");
 
-            String json = HttpUtil.post(cdsHooksEndpointURL + "/" + hookId, headers, writer.toString());
+            HttpResponse httpResponse  = new HttpRequest().post(cdsHooksEndpointURL + "/" + hookId, null, headers, writer.toString());
 
 // json object for testing w/o CQF ruler call
 //            String json = "{ \"cards\": [ { \"summary\": \"Hypertension Diagnosis\", \"indicator\": \"info\", \"detail\": \"ConsiderHTNStage1 Patient\", \"source\": { \"label\": \"Info for those with normal blood pressure\", \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\" } }, { \"summary\": \"Recommend diagnosis of Stage 2 hypertension\", \"indicator\": \"warning\", \"detail\": \"You had a high blood pressure reading recently. Please see your provider to lower your blood pressure and reduce your risk of stroke or other adverse events. More severe hypertension, stage 2 hypertension is a systolic pressure of 140 mm Hg or higher or a diastolic pressure of 90 mm Hg or higher.;https://www.ahajournals.org/doi/10.1161/HYPERTENSIONAHA.120.15020;;at-most-one;https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings\", \"source\": {} } ] }";
@@ -100,7 +101,7 @@ public class CQFRulerService {
 //            String json = "{ \"cards\": [ { \"summary\": \"Hypertension Diagnosis\", \"indicator\": \"info\", \"detail\": \"ConsiderHTNStage1 Patient\", \"source\": { \"label\": \"Info for those with normal blood pressure\", \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\" } }, { \"summary\": \"Recommend diagnosis of Stage 2 hypertension\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Patient rationale{{/patient}}{{#careTeam}}care team rationale{{/careTeam}};{{#patient}}https://source.com/patient{{/patient}}{{#careTeam}}https://source.com/careTeam{{/careTeam}};[ { \\\"label\\\": \\\"Enter Blood Pressure\\\", \\\"actions\\\": [ \\\"ServiceRequest for High Blood Pressure Monitoring\\\", \\\"{{#patient}}<a href='/bp-readings'>Click here to go to the Home Blood Pressure entry page</a>{{/patient}}\\\" ] }, { \\\"label\\\": \\\"Diet\\\", \\\"actions\\\": [ \\\"Try the DASH Diet\\\", \\\"{{#patient}}<input type='checkbox' class='goal' data-id='dashDiet'>Goal: DASH Diet</input>{{/patient}}\\\" ] } ];at-most-one;<ol>{{#patient}}<li>https://links.com/patient</li>{{/patient}}<li>https://links.com/careTeamAndPatient</li></ol>\", \"source\": {} } ] }";
 
             Gson gson = new GsonBuilder().create();
-            CDSHookResponse response = gson.fromJson(json, new TypeToken<CDSHookResponse>(){}.getType());
+            CDSHookResponse response = gson.fromJson(httpResponse.getResponseBody(), new TypeToken<CDSHookResponse>(){}.getType());
 
             List<Card> cards = new ArrayList<Card>();
             for (CDSCard cdsCard : response.getCards()) {
@@ -157,9 +158,7 @@ public class CQFRulerService {
         systolic.getValueQuantity().setCode(BloodPressureModel.VALUE_CODE);
         systolic.getValueQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
         systolic.getValueQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
-
-        int meanSystolic = (int) Math.round((double)(item.getSystolic1() + item.getSystolic2()) / 2);
-        systolic.getValueQuantity().setValue(meanSystolic);
+        systolic.getValueQuantity().setValue(item.getMeanSystolic());
         o.getComponent().add(systolic);
 
         Observation.ObservationComponentComponent diastolic = new Observation.ObservationComponentComponent();
@@ -168,9 +167,7 @@ public class CQFRulerService {
         diastolic.getValueQuantity().setCode(BloodPressureModel.VALUE_CODE);
         diastolic.getValueQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
         diastolic.getValueQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
-
-        int meanDiastolic = (int) Math.round((double)(item.getDiastolic1() + item.getDiastolic2()) / 2);
-        diastolic.getValueQuantity().setValue(meanDiastolic);
+        diastolic.getValueQuantity().setValue(item.getMeanDiastolic());
         o.getComponent().add(diastolic);
 
         return o;

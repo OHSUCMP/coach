@@ -1,5 +1,5 @@
-async function loadBPData(_callback) {
-    let response = await fetch("/patient/bp-list", {
+async function loadBloodPressureObservations(_callback) {
+    let response = await fetch("/patient/blood-pressure-observations", {
         method: "GET",
         headers: {
             "Content-Type": "application/json; charset=utf-8"
@@ -17,6 +17,19 @@ async function loadBPData(_callback) {
     });
 
     _callback(bpdata);
+}
+
+async function loadMedications(_callback) {
+    let response = await fetch("/patient/medications", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    });
+
+    let meds = await response.json();
+
+    _callback(meds);
 }
 
 function populateSummaryDiv() {
@@ -280,26 +293,6 @@ function toTrendLineData(data, type) {
     return arr;
 }
 
-function getDateRange(data) {
-    var minDate = null;
-    var maxDate = null;
-
-    data.forEach(function (item) {
-        let d = item.timestamp;
-        if (minDate == null || d < minDate) {
-            minDate = d;
-        }
-        if (maxDate == null || d > maxDate) {
-            maxDate = d;
-        }
-    });
-
-    return {
-        min: minDate,
-        max: maxDate
-    }
-}
-
 function toRegressionData(data, type) {
     // the regression library can't handle large X values (where "large" is not really that large at all),
     // so we need to finagle the data it consumes so that can process things correctly.  the way I've decided
@@ -336,4 +329,24 @@ function toRegressionData(data, type) {
         });
     });
     return r;
+}
+
+function getDateRange(data) {
+    let minDate = null;
+    let maxDate = null;
+
+    data.forEach(function (item) {
+        let d = item.timestamp;
+        if (minDate == null || d < minDate) {
+            minDate = d;
+        }
+        if (maxDate == null || d > maxDate) {
+            maxDate = d;
+        }
+    });
+
+    return {
+        min: minDate,
+        max: maxDate
+    }
 }
