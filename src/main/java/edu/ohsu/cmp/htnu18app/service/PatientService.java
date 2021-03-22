@@ -5,7 +5,7 @@ import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.MedicationModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
-import edu.ohsu.cmp.htnu18app.repository.PatientRepository;
+import edu.ohsu.cmp.htnu18app.repository.app.PatientRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.MedicationStatement;
@@ -43,12 +43,12 @@ public class PatientService {
     public Long getInternalPatientId(String fhirPatientId) {
         String patIdHash = buildPatIdHash(fhirPatientId);
 
-        edu.ohsu.cmp.htnu18app.entity.Patient p;
+        edu.ohsu.cmp.htnu18app.entity.app.Patient p;
         if (repository.existsPatientByPatIdHash(patIdHash)) {
             p = repository.findOneByPatIdHash(patIdHash);
 
         } else {
-            p = new edu.ohsu.cmp.htnu18app.entity.Patient(patIdHash);
+            p = new edu.ohsu.cmp.htnu18app.entity.app.Patient(patIdHash);
             p = repository.save(p);
         }
 

@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
-import edu.ohsu.cmp.htnu18app.entity.Goal;
+import edu.ohsu.cmp.htnu18app.entity.app.Goal;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
-import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
+import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;

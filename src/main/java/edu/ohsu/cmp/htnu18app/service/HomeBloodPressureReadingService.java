@@ -2,8 +2,8 @@ package edu.ohsu.cmp.htnu18app.service;
 
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
-import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
-import edu.ohsu.cmp.htnu18app.repository.HomeBloodPressureReadingRepository;
+import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
+import edu.ohsu.cmp.htnu18app.repository.app.HomeBloodPressureReadingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.htnu18app.entity;
+package edu.ohsu.cmp.htnu18app.entity.app;
 
 import javax.persistence.*;
 import java.text.DateFormat;
@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Entity
-@Table(name = "home_bp_reading")
+@Table(schema = "htnu18app", name = "home_bp_reading")
 public class HomeBloodPressureReading {
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy h:mm a");

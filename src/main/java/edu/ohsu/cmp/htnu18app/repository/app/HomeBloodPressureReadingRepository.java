@@ -1,15 +1,15 @@
-package edu.ohsu.cmp.htnu18app.repository;
+package edu.ohsu.cmp.htnu18app.repository.app;
 
-import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
+import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-public interface HomeBloodPressureReadingRepository extends CrudRepository<HomeBloodPressureReading, Long> {
+public interface HomeBloodPressureReadingRepository extends JpaRepository<HomeBloodPressureReading, Long> {
     @Query("select bpr from HomeBloodPressureReading bpr where bpr.patId=:patId order by bpr.readingDate desc")
     List<HomeBloodPressureReading> findAllByPatId(@Param("patId") Long patId);
 

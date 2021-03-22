@@ -2,8 +2,8 @@ package edu.ohsu.cmp.htnu18app.service;
 
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
-import edu.ohsu.cmp.htnu18app.entity.Goal;
-import edu.ohsu.cmp.htnu18app.repository.GoalRepository;
+import edu.ohsu.cmp.htnu18app.entity.app.Goal;
+import edu.ohsu.cmp.htnu18app.repository.app.GoalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -1,8 +1,9 @@
-package edu.ohsu.cmp.htnu18app.entity;
+package edu.ohsu.cmp.htnu18app.entity.app;
 
 import javax.persistence.*;
 
 @Entity
+@Table(schema = "htnu18app")
 public class Patient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

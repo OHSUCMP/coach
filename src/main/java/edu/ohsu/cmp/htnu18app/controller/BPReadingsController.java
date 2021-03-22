@@ -2,7 +2,7 @@ package edu.ohsu.cmp.htnu18app.controller;
 
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
-import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
+import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import org.slf4j.Logger;

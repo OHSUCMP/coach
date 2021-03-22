@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.htnu18app.model;
 
-import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
+import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;

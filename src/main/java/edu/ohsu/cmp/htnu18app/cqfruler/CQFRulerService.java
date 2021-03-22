@@ -9,7 +9,7 @@ import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.*;
-import edu.ohsu.cmp.htnu18app.entity.HomeBloodPressureReading;
+import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.http.HttpRequest;
 import edu.ohsu.cmp.htnu18app.http.HttpResponse;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;

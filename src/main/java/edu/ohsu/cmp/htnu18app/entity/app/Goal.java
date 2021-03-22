@@ -1,9 +1,10 @@
-package edu.ohsu.cmp.htnu18app.entity;
+package edu.ohsu.cmp.htnu18app.entity.app;
 
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
+@Table(schema = "htnu18app")
 public class Goal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
