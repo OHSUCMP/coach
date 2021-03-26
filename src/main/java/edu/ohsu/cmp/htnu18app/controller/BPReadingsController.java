@@ -57,11 +57,12 @@ public class BPReadingsController {
                                                            @RequestParam("readingDateTS") Long readingDate,
                                                            @RequestParam("confirm") Boolean followedInstructions) {
 
+        CacheData cache = SessionCache.getInstance().get(session.getId());
+
         Date date = new Date(readingDate);
         HomeBloodPressureReading bpreading = new HomeBloodPressureReading(systolic1, diastolic1, pulse1, systolic2, diastolic2, pulse2, date, followedInstructions);
         bpreading = hbprService.create(session.getId(), bpreading);
 
-        CacheData cache = SessionCache.getInstance().get(session.getId());
         cache.deleteAllCards();
 
         return new ResponseEntity<>(bpreading, HttpStatus.OK);
@@ -71,9 +72,10 @@ public class BPReadingsController {
     public ResponseEntity<String> delete(HttpSession session,
                                          @RequestParam("id") Long id) {
         try {
+            CacheData cache = SessionCache.getInstance().get(session.getId());
+
             hbprService.delete(session.getId(), id);
 
-            CacheData cache = SessionCache.getInstance().get(session.getId());
             cache.deleteAllCards();
 
             return new ResponseEntity<>("OK", HttpStatus.OK);

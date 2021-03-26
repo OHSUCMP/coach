@@ -2,6 +2,7 @@ package edu.ohsu.cmp.htnu18app.entity.vsac;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.Set;
 
 @Entity
 @Table(schema = "vsac")
@@ -17,6 +18,25 @@ public class Concept {
     private String displayName;
     private Date created;
     private Date updated;
+
+    // see: https://attacomsian.com/blog/spring-data-jpa-many-to-many-mapping
+    @ManyToMany(mappedBy = "concepts", fetch = FetchType.LAZY)
+    private Set<ValueSet> valueSets;
+
+    @Override
+    public String toString() {
+        return "Concept{" +
+                "id=" + id +
+                ", code='" + code + '\'' +
+                ", codeSystem='" + codeSystem + '\'' +
+                ", codeSystemName='" + codeSystemName + '\'' +
+                ", codeSystemVersion='" + codeSystemVersion + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", created=" + created +
+                ", updated=" + updated +
+//                ", valueSets=" + valueSets +
+                '}';
+    }
 
     public Long getId() {
         return id;
@@ -80,5 +100,13 @@ public class Concept {
 
     public void setUpdated(Date updated) {
         this.updated = updated;
+    }
+
+    public Set<ValueSet> getValueSets() {
+        return valueSets;
+    }
+
+    public void setValueSets(Set<ValueSet> valueSets) {
+        this.valueSets = valueSets;
     }
 }

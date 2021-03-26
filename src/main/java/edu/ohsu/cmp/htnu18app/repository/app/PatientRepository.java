@@ -11,6 +11,6 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     boolean existsPatientByPatIdHash(String patIdHash);
 
     @Query("select p from Patient p where p.patIdHash=:patIdHash")
-    public List<Patient> findByPatIdHash(@Param("patIdHash") String patIdHash);
-    public Patient findOneByPatIdHash(@Param("patIdHash") String patIdHash);
+    List<Patient> findByPatIdHash(@Param("patIdHash") String patIdHash);
+    Patient findOneByPatIdHash(@Param("patIdHash") String patIdHash);
 }

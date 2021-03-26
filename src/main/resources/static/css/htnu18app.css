@@ -41,6 +41,7 @@ span.circle, div.circle {
 table.content, table.no-spacing {
     border-spacing: 0;
     border-collapse: collapse;
+    width: 100%;
 }
 
 table.content > tbody > tr > td.heading {

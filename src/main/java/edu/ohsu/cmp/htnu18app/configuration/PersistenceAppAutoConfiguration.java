@@ -34,7 +34,7 @@ public class PersistenceAppAutoConfiguration {
     @Primary
     @Bean
     @ConfigurationProperties(prefix="spring.datasource")
-    public DataSource userDataSource() {
+    public DataSource appDataSource() {
         return DataSourceBuilder.create().build();
     }
 
@@ -42,7 +42,7 @@ public class PersistenceAppAutoConfiguration {
     @Bean
     public LocalContainerEntityManagerFactoryBean appEntityManager() {
         final LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
-        em.setDataSource(userDataSource());
+        em.setDataSource(appDataSource());
         em.setPackagesToScan("edu.ohsu.cmp.htnu18app.entity.app");
 
         final HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
@@ -57,7 +57,7 @@ public class PersistenceAppAutoConfiguration {
 
     @Primary
     @Bean
-    public PlatformTransactionManager userTransactionManager() {
+    public PlatformTransactionManager appTransactionManager() {
         final JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(appEntityManager().getObject());
         return transactionManager;

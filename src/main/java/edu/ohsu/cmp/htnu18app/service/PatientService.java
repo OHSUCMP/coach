@@ -2,6 +2,7 @@ package edu.ohsu.cmp.htnu18app.service;
 
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
+import edu.ohsu.cmp.htnu18app.entity.vsac.ValueSet;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.MedicationModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
@@ -16,12 +17,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
+
 @Service
 public class PatientService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private PatientRepository repository;
+
+    @Autowired
+    private ValueSetService valueSetService;
 
     public Patient getPatient(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
@@ -78,22 +84,25 @@ public class PatientService {
         return b;
     }
 
+    @Transactional
     public Bundle getMedicationStatements(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
-//        Bundle b = cache.getMedicationStatements();
-//        if (b == null) {
+        Bundle b = cache.getMedicationStatements();
+        if (b == null) {
             logger.info("requesting MedicationStatements for session " + sessionId);
 
+            ValueSet valueSet = valueSetService.getValueSet(MedicationModel.VALUE_SET_OID);
+            
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            Bundle b = fcc.getClient()
+            b = fcc.getClient()
                     .search()
                     .forResource(MedicationStatement.class)
                     .and(MedicationStatement.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-                    .and(MedicationStatement.CODE.exactly().systemAndCode(MedicationModel.SYSTEM, MedicationModel.CODE))
+                    .and(MedicationStatement.CODE.exactly().systemAndCode(MedicationModel.SYSTEM, MedicationModel.VALUE_SET_OID))
                     .returnBundle(Bundle.class)
                     .execute();
-//            cache.setMedicationStatements(b);
-//        }
+            cache.setMedicationStatements(b);
+        }
         return b;
     }
 }

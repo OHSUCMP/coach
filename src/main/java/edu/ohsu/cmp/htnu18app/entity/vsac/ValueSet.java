@@ -2,6 +2,7 @@ package edu.ohsu.cmp.htnu18app.entity.vsac;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.Set;
 
 @Entity
 @Table(schema = "vsac")
@@ -21,6 +22,36 @@ public class ValueSet {
     private Date revisionDate;
     private Date created;
     private Date updated;
+
+    // see: https://attacomsian.com/blog/spring-data-jpa-many-to-many-mapping
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinTable(name = "valuesetconcept",
+            joinColumns = {
+                    @JoinColumn(name = "valueSetId", referencedColumnName = "id",
+                            nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                    @JoinColumn(name = "conceptId", referencedColumnName = "id",
+                            nullable = false, updatable = false)})
+    private Set<Concept> concepts;
+
+    @Override
+    public String toString() {
+        return "ValueSet{" +
+                "id=" + id +
+                ", oid='" + oid + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", version='" + version + '\'' +
+                ", source='" + source + '\'' +
+                ", purpose='" + purpose + '\'' +
+                ", type='" + type + '\'' +
+                ", binding='" + binding + '\'' +
+                ", status='" + status + '\'' +
+                ", revisionDate=" + revisionDate +
+                ", created=" + created +
+                ", updated=" + updated +
+                ", concepts=" + concepts +
+                '}';
+    }
 
     public Long getId() {
         return id;
@@ -116,5 +147,13 @@ public class ValueSet {
 
     public void setUpdated(Date updated) {
         this.updated = updated;
+    }
+
+    public Set<Concept> getConcepts() {
+        return concepts;
+    }
+
+    public void setConcepts(Set<Concept> concepts) {
+        this.concepts = concepts;
     }
 }
