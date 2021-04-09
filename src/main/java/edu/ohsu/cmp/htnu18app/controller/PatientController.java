@@ -20,10 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 
 @Controller
@@ -75,7 +72,7 @@ public class PatientController extends AuthenticatedController {
 
     @GetMapping("medications")
     public ResponseEntity<List<MedicationModel>> getMedications(HttpSession session) {
-        Set<MedicationModel> set = new TreeSet<MedicationModel>();
+        Set<MedicationModel> set = new LinkedHashSet<MedicationModel>();
 
         // first add BP observations from configured FHIR server
         Bundle bundle = patientService.getMedicationStatements(session.getId());
@@ -83,7 +80,9 @@ public class PatientController extends AuthenticatedController {
             if (entryCon.getResource() instanceof MedicationStatement) {
                 MedicationStatement ms = (MedicationStatement) entryCon.getResource();
                 try {
-                    set.add(new MedicationModel(ms));
+                    MedicationModel model = new MedicationModel(ms);
+                    logger.info("got medication: " + model.getSystem() + "|" + model.getCode() + ": " + model.getDescription());
+                    set.add(model);
 
                 } catch (DataException e) {
                     logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
@@ -97,5 +96,4 @@ public class PatientController extends AuthenticatedController {
 
         return new ResponseEntity<>(new ArrayList<>(set), HttpStatus.OK);
     }
-
 }
