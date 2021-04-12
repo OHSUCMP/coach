@@ -24,8 +24,7 @@
 
                 loadMedications(function(meds) {
                     window.meds = meds;
-
-                    // todo: populate meds widget
+                    populateMedications();
                 });
 
                 executeRecommendations();
@@ -142,7 +141,10 @@
                                 {{/cdshooks}}
                             </td>
                             <td id="medicationsContainer">
-                                These are the medications
+                                <div class="heading">Medications</div>
+                                <div id="medications">
+                                    Loading...
+                                </div>
                             </td>
                         </tr>
                     </table>

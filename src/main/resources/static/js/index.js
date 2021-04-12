@@ -32,6 +32,22 @@ async function loadMedications(_callback) {
     _callback(meds);
 }
 
+function populateMedications() {
+    let data = window.meds;
+    let html = '';
+
+    if (Array.isArray(data) && data.length > 0) {
+        data.forEach(function (m) {
+            html += '<div class="medication" data-system="' + m.system + '" data-code="' + m.code + '">' +
+                m.description +
+                '</div>';
+
+        });
+    }
+
+    $('#medications').html(html);
+}
+
 function populateSummaryDiv() {
     let data = window.bpdata;
     let totalSystolic = 0;
