@@ -18,13 +18,9 @@ public class HomeBloodPressureReading {
     @Column(name = "pat_id")
     private Long patId;
 
-    private Integer systolic1;
-    private Integer diastolic1;
-    private Integer pulse1;
-
-    private Integer systolic2;
-    private Integer diastolic2;
-    private Integer pulse2;
+    private Integer systolic;
+    private Integer diastolic;
+    private Integer pulse;
 
     @Column(name = "reading_date")
     private Date readingDate;
@@ -38,15 +34,11 @@ public class HomeBloodPressureReading {
     protected HomeBloodPressureReading() {
     }
 
-    public HomeBloodPressureReading(Integer systolic1, Integer diastolic1, Integer pulse1,
-                                    Integer systolic2, Integer diastolic2, Integer pulse2,
+    public HomeBloodPressureReading(Integer systolic, Integer diastolic, Integer pulse,
                                     Date readingDate, Boolean followedInstructions) {
-        this.systolic1 = systolic1;
-        this.diastolic1 = diastolic1;
-        this.pulse1 = pulse1;
-        this.systolic2 = systolic2;
-        this.diastolic2 = diastolic2;
-        this.pulse2 = pulse2;
+        this.systolic = systolic;
+        this.diastolic = diastolic;
+        this.pulse = pulse;
         this.readingDate = readingDate;
         this.followedInstructions = followedInstructions;
     }
@@ -67,60 +59,28 @@ public class HomeBloodPressureReading {
         this.patId = patId;
     }
 
-    public Integer getSystolic1() {
-        return systolic1;
+    public Integer getSystolic() {
+        return systolic;
     }
 
-    public void setSystolic1(Integer systolic1) {
-        this.systolic1 = systolic1;
+    public void setSystolic(Integer systolic1) {
+        this.systolic = systolic1;
     }
 
-    public Integer getDiastolic1() {
-        return diastolic1;
+    public Integer getDiastolic() {
+        return diastolic;
     }
 
-    public void setDiastolic1(Integer diastolic1) {
-        this.diastolic1 = diastolic1;
+    public void setDiastolic(Integer diastolic1) {
+        this.diastolic = diastolic1;
     }
 
-    public Integer getPulse1() {
-        return pulse1;
+    public Integer getPulse() {
+        return pulse;
     }
 
-    public void setPulse1(Integer pulse1) {
-        this.pulse1 = pulse1;
-    }
-
-    public Integer getSystolic2() {
-        return systolic2;
-    }
-
-    public void setSystolic2(Integer systolic2) {
-        this.systolic2 = systolic2;
-    }
-
-    public Integer getDiastolic2() {
-        return diastolic2;
-    }
-
-    public void setDiastolic2(Integer diastolic2) {
-        this.diastolic2 = diastolic2;
-    }
-
-    public Integer getPulse2() {
-        return pulse2;
-    }
-
-    public void setPulse2(Integer pulse2) {
-        this.pulse2 = pulse2;
-    }
-
-    public Integer getMeanSystolic() {
-        return (int) Math.round((double)(systolic1 + systolic2) / 2);
-    }
-
-    public Integer getMeanDiastolic() {
-        return (int) Math.round((double)(diastolic1 + diastolic2) / 2);
+    public void setPulse(Integer pulse1) {
+        this.pulse = pulse1;
     }
 
     public Date getReadingDate() {

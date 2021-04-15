@@ -16,16 +16,16 @@
                 enableHover('#bpreadingsTable .link, #showHideProtocol');
                 enableDatePicker('#readingDate');
                 populateReadingTimesList('#readingTime');
-                populateSelect('#systolic1, #systolic2', '--Select Systolic--', 0, 300);
+                populateSelect('#systolic, #systolic2', '--Select Systolic--', 0, 300);
                 populateSelect('#diastolic1, #diastolic2', '--Select Diastolic--', 0, 200);
-                populateSelect('#pulse1, #pulse2', '--Select Pulse--', 0, 200);
+                populateSelect('#pulse, #pulse2', '--Select Pulse--', 0, 200);
             });
 
             $(document).on('click', '#createButton', function() {
                 if (validateForm('#bpEntryContainer form', '#saveMessage')) {
-                    let systolic1 = $('#systolic1').val();
+                    let systolic = $('#systolic').val();
                     let diastolic1 = $('#diastolic1').val();
-                    let pulse1 = $('#pulse1').val();
+                    let pulse = $('#pulse').val();
                     let systolic2 = $('#systolic2').val();
                     let diastolic2 = $('#diastolic2').val();
                     let pulse2 = $('#pulse2').val();
@@ -37,14 +37,16 @@
 
                     let confirm = $('input[type=radio][name=confirm]:checked').val() === 'yes';
 
-                    createRecord(systolic1, diastolic1, pulse1, systolic2, diastolic2, pulse2, readingDate, confirm, function(obj) {
-                        appendRecordToTable(obj);
-                        resetForm('#bpEntryContainer form');
+                    createRecord(systolic, diastolic1, pulse, systolic2, diastolic2, pulse2, readingDate, confirm, function(list) {
+                        $(list).each(function() {
+                            appendRecordToTable(this);
+                            resetForm('#bpEntryContainer form');
 
-                        let el = $('#saveMessage');
-                        $(el).removeClass();
-                        $(el).addClass('success');
-                        $(el).html("Record created successfully.");
+                            let el = $('#saveMessage');
+                            $(el).removeClass();
+                            $(el).addClass('success');
+                            $(el).html("Record created successfully.");
+                        });
                     });
                 }
             });
@@ -114,16 +116,16 @@
                             <div id="firstMeasurementContainer" class="container">
                                 <span class="heading">First Measurement</span>
                                 <div class="field">
-                                    <label for="systolic1">SBP:</label>
-                                    <input type="number" id="systolic1" class="required" /> mm Hg<br/>
+                                    <label for="systolic">SBP:</label>
+                                    <input type="number" id="systolic" class="required" /> mm Hg<br/>
                                 </div>
                                 <div class="field">
                                     <label for="diastolic1">DBP:</label>
                                     <input type="number" id="diastolic1" class="required" /> mm Hg<br/>
                                 </div>
                                 <div class="field">
-                                    <label for="pulse1">Pulse:</label>
-                                    <input type="number" id="pulse1" class="required" /> bpm
+                                    <label for="pulse">Pulse:</label>
+                                    <input type="number" id="pulse" class="required" /> bpm
                                 </div>
                             </div>
                             <div id="secondMeasurementContainer" class="container">
@@ -231,24 +233,18 @@
                         <table id="bpreadingsTable">
                             <tr id="bpreadingsTableHeader">
                                 <th>Reading Timestamp</th>
-                                <th>SBP1 (mm/Hg)</th>
-                                <th>DBP1 (mm/Hg)</th>
-                                <th>Pulse1 (bpm)</th>
-                                <th>SBP2 (mm/Hg)</th>
-                                <th>DBP2 (mm/Hg)</th>
-                                <th>Pulse2 (bpm)</th>
+                                <th>SBP (mm/Hg)</th>
+                                <th>DBP (mm/Hg)</th>
+                                <th>Pulse (bpm)</th>
                                 <th>&nbsp;</th>
                             </tr>
                             {{! note : keep this section synced with bp-readings.js:appendRecordToTable(obj) }}
                             {{#bpreadings}}
                                 <tr class='data' data-id='{{id}}' data-timestamp='{{readingDateTimestamp}}'>
                                     <td>{{readingDateString}}</td>
-                                    <td>{{systolic1}}</td>
-                                    <td>{{diastolic1}}</td>
-                                    <td>{{pulse1}}</td>
-                                    <td>{{systolic2}}</td>
-                                    <td>{{diastolic2}}</td>
-                                    <td>{{pulse2}}</td>
+                                    <td>{{systolic}}</td>
+                                    <td>{{diastolic}}</td>
+                                    <td>{{pulse}}</td>
                                     <td><span class="link" onclick="deleteRecord({{id}})">Delete</span></td>
                                 </tr>
                             {{/bpreadings}}

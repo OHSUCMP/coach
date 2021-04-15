@@ -12,12 +12,9 @@ drop table if exists home_bp_reading;
 create table home_bp_reading (
     id int not null auto_increment primary key,
     pat_id int not null,
-    systolic1 int not null,
-    diastolic1 int not null,
-    pulse1 int not null,
-    systolic2 int not null,
-    diastolic2 int not null,
-    pulse2 int not null,
+    systolic int not null,
+    diastolic int not null,
+    pulse int not null,
     reading_date datetime not null,
     followed_instructions tinyint(1) not null,
     created_date datetime not null

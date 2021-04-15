@@ -54,8 +54,8 @@ public class BloodPressureModel implements Comparable<BloodPressureModel> {
     }
 
     public BloodPressureModel(HomeBloodPressureReading reading) {
-        systolic = new QuantityModel(reading.getMeanSystolic(), "mmHg");
-        diastolic = new QuantityModel(reading.getMeanDiastolic(), "mmHg");
+        systolic = new QuantityModel(reading.getSystolic(), "mmHg");
+        diastolic = new QuantityModel(reading.getDiastolic(), "mmHg");
         timestamp = reading.getReadingDate().getTime();
     }
 

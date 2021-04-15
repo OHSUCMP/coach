@@ -147,9 +147,9 @@ async function createRecord(systolic1, diastolic1, pulse1, systolic2, diastolic2
         body: formData
     });
 
-    let bpreading = await response.json();
+    let bpreadings = await response.json();
 
-    _callback(bpreading);
+    _callback(bpreadings);
 }
 
 function appendRecordToTable(obj) {
@@ -160,12 +160,9 @@ function appendRecordToTable(obj) {
 
     let html = "<tr class='data' data-id='" + obj.id + "' data-timestamp='" + obj.readingDateTimestamp + "'>" +
         "<td>" + obj.readingDateString + "</td>" +
-        "<td>" + obj.systolic1 + "</td>" +
-        "<td>" + obj.diastolic1 + "</td>" +
-        "<td>" + obj.pulse1 + "</td>" +
-        "<td>" + obj.systolic2 + "</td>" +
-        "<td>" + obj.diastolic2 + "</td>" +
-        "<td>" + obj.pulse2 + "</td>" +
+        "<td>" + obj.systolic + "</td>" +
+        "<td>" + obj.diastolic + "</td>" +
+        "<td>" + obj.pulse + "</td>" +
         "<td><span class=\"link\" onclick=\"deleteRecord(" + obj.id + ")\">Delete</span></td>" +
         "</tr>\n";
 

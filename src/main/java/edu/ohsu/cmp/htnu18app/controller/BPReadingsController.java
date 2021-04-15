@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -47,25 +48,33 @@ public class BPReadingsController {
     }
 
     @PostMapping("create")
-    public ResponseEntity<HomeBloodPressureReading> create(HttpSession session,
-                                                           @RequestParam("systolic1") Integer systolic1,
-                                                           @RequestParam("diastolic1") Integer diastolic1,
-                                                           @RequestParam("pulse1") Integer pulse1,
-                                                           @RequestParam("systolic2") Integer systolic2,
-                                                           @RequestParam("diastolic2") Integer diastolic2,
-                                                           @RequestParam("pulse2") Integer pulse2,
-                                                           @RequestParam("readingDateTS") Long readingDate,
-                                                           @RequestParam("confirm") Boolean followedInstructions) {
+    public ResponseEntity<List<HomeBloodPressureReading>> create(HttpSession session,
+                                                                 @RequestParam("systolic1") Integer systolic1,
+                                                                 @RequestParam("diastolic1") Integer diastolic1,
+                                                                 @RequestParam("pulse1") Integer pulse1,
+                                                                 @RequestParam("systolic2") Integer systolic2,
+                                                                 @RequestParam("diastolic2") Integer diastolic2,
+                                                                 @RequestParam("pulse2") Integer pulse2,
+                                                                 @RequestParam("readingDateTS") Long readingDate,
+                                                                 @RequestParam("confirm") Boolean followedInstructions) {
 
         CacheData cache = SessionCache.getInstance().get(session.getId());
 
         Date date = new Date(readingDate);
-        HomeBloodPressureReading bpreading = new HomeBloodPressureReading(systolic1, diastolic1, pulse1, systolic2, diastolic2, pulse2, date, followedInstructions);
-        bpreading = hbprService.create(session.getId(), bpreading);
+
+        HomeBloodPressureReading bpreading1 = new HomeBloodPressureReading(systolic1, diastolic1, pulse1, date, followedInstructions);
+        bpreading1 = hbprService.create(session.getId(), bpreading1);
+
+        HomeBloodPressureReading bpreading2 = new HomeBloodPressureReading(systolic2, diastolic2, pulse2, date, followedInstructions);
+        bpreading2 = hbprService.create(session.getId(), bpreading2);
 
         cache.deleteAllCards();
 
-        return new ResponseEntity<>(bpreading, HttpStatus.OK);
+        List<HomeBloodPressureReading> list = new ArrayList<>();
+        list.add(bpreading1);
+        list.add(bpreading2);
+
+        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
     @PostMapping("delete")
