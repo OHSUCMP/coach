@@ -24,35 +24,35 @@ function enableDatePicker(sel) {
     });
 }
 
-function populateReadingTimesList(el) {
-    let min_arr = ['00', '15', '30', '45'];
-
-    let html = "<option value='' disabled selected>-- Select Time --</option>\n";
-    for (let hour = 0; hour <= 23; hour ++) {
-        let display_hour = hour <= 12 ? hour : hour - 12;
-        if (display_hour === 0) display_hour = 12;
-        let ampm = hour < 12 ? "AM" : "PM";
-
-        $(min_arr).each(function() {
-            let min = this;
-            let time = hour + ':' + min;
-            let display_time = display_hour + ':' + min + ' ' + ampm;
-            html += "<option value='" + time + "'>" + display_time + "</option>\n";
-        });
-    }
-
-    $(el).html(html);
-}
-
-function populateSelect(el, label, min, max) {
-    let html = "<option value='' disabled selected>" + label + "</option>\n";
-
-    for (let i = min; i <= max; i ++) {
-        html += "<option value='" + i + "'>" + i + "</option>\n";
-    }
-
-    $(el).html(html);
-}
+// function populateReadingTimesList(el) {
+//     let min_arr = ['00', '15', '30', '45'];
+//
+//     let html = "<option value='' disabled selected>-- Select Time --</option>\n";
+//     for (let hour = 0; hour <= 23; hour ++) {
+//         let display_hour = hour <= 12 ? hour : hour - 12;
+//         if (display_hour === 0) display_hour = 12;
+//         let ampm = hour < 12 ? "AM" : "PM";
+//
+//         $(min_arr).each(function() {
+//             let min = this;
+//             let time = hour + ':' + min;
+//             let display_time = display_hour + ':' + min + ' ' + ampm;
+//             html += "<option value='" + time + "'>" + display_time + "</option>\n";
+//         });
+//     }
+//
+//     $(el).html(html);
+// }
+//
+// function populateSelect(el, label, min, max) {
+//     let html = "<option value='' disabled selected>" + label + "</option>\n";
+//
+//     for (let i = min; i <= max; i ++) {
+//         html += "<option value='" + i + "'>" + i + "</option>\n";
+//     }
+//
+//     $(el).html(html);
+// }
 
 function resetForm(form) {
     $(form).find('input[type=number]').each(function() {
