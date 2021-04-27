@@ -5,11 +5,14 @@
         <script type="text/javascript" src="js/jquery-ui-1.12.1/jquery-ui.js"></script>
         <link rel="stylesheet" href="js/jquery-ui-1.12.1/jquery-ui.css" />
 
-        <script type="text/javascript" src="js/bp-readings.js"></script>
-        <link rel="stylesheet" href="css/bp-readings.css" />
+        <script type="text/javascript" src="js/form.js"></script>
+        <link rel="stylesheet" href="css/form.css" />
 
         <script type="text/javascript" src="js/tabs.js"></script>
         <link rel="stylesheet" href="css/tabs.css" />
+
+        <script type="text/javascript" src="js/bp-readings.js"></script>
+        <link rel="stylesheet" href="css/bp-readings.css" />
 
         <!-- https://www.npmjs.com/package/inputmask -->
         <script type="text/javascript" src="node_modules/inputmask/dist/jquery.inputmask.js"></script>
@@ -64,9 +67,9 @@
 
                     let confirm = $('input[type=radio][name=confirm]:checked').val() === 'yes';
 
-                    createRecord(systolic1, diastolic1, pulse1, systolic2, diastolic2, pulse2, readingDate, confirm, function(list) {
+                    createBPReading(systolic1, diastolic1, pulse1, systolic2, diastolic2, pulse2, readingDate, confirm, function(list) {
                         $(list).each(function() {
-                            appendRecordToTable(this);
+                            appendBPReadingToTable(this);
                             resetForm('#bpEntryContainer form');
 
                             let el = $('#saveMessage');
@@ -258,7 +261,7 @@
                 </tr>
                 <tr>
                     <td>
-                        <table id="bpreadingsTable">
+                        <table id="bpreadingsTable" class="data">
                             <tr id="bpreadingsTableHeader">
                                 <th>Reading Timestamp</th>
                                 <th>SBP (mm/Hg)</th>
@@ -273,7 +276,7 @@
                                     <td>{{systolic}}</td>
                                     <td>{{diastolic}}</td>
                                     <td>{{pulse}}</td>
-                                    <td><span class="link" onclick="deleteRecord({{id}})">Delete</span></td>
+                                    <td><span class="link" onclick="deleteBPReading({{id}})">Delete</span></td>
                                 </tr>
                             {{/bpreadings}}
                         </table>

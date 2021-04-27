@@ -16,21 +16,28 @@ public class Goal {
     @Column(name = "pat_id")
     private Long patId;
 
+    @Column(name = "goal_text")
+    private String goalText;
+
     @Column(name = "follow_up_days")
     private Integer followUpDays;
-
-    private String value;
 
     @Column(name = "created_date")
     private Date createdDate;
 
+    private Boolean completed;
+
+    @Column(name = "completed_date")
+    private Date completedDate;
+
     protected Goal() {
     }
 
-    public Goal(String goalId, Integer followUpDays, String value) {
+    public Goal(String goalId, String goalText, Integer followUpDays) {
         this.goalId = goalId;
+        this.goalText = goalText;
         this.followUpDays = followUpDays;
-        this.value = value;
+        this.completed = false;
     }
 
     public Long getId() {
@@ -57,6 +64,14 @@ public class Goal {
         this.patId = patId;
     }
 
+    public String getGoalText() {
+        return goalText;
+    }
+
+    public void setGoalText(String goalText) {
+        this.goalText = goalText;
+    }
+
     public Integer getFollowUpDays() {
         return followUpDays;
     }
@@ -65,19 +80,27 @@ public class Goal {
         this.followUpDays = followUpDays;
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
     public Date getCreatedDate() {
         return createdDate;
     }
 
     public void setCreatedDate(Date createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public Boolean getCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(Boolean completed) {
+        this.completed = completed;
+    }
+
+    public Date getCompletedDate() {
+        return completedDate;
+    }
+
+    public void setCompletedDate(Date archivedDate) {
+        this.completedDate = archivedDate;
     }
 }

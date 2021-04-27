@@ -8,24 +8,14 @@ async function executeRecommendations() {
             $(cardsContainer).html(renderCards(cards));
 
             goals.forEach(function(goal) {
-                $(cardsContainer).find('input.goal[data-id="' + goal.goalId + '"').each(function () {
+                $(cardsContainer).find('input.goal[data-goalid="' + goal.goalId + '"').each(function () {
                     if ($(this).attr('type') === 'checkbox') {
-                        $(this).prop('checked', goal.value === 'true');
+                        $(this).prop('checked', true);
                     }
                 });
             });
         });
     });
-}
-
-async function getRecordedGoals() {
-    let response = await fetch("/goals", {
-        method: "GET"
-    });
-
-    let goals = await response.json();
-
-    return goals;
 }
 
 async function executeRecommendation(id, _callback) {
@@ -46,6 +36,8 @@ function renderCards(cards) {
     let html = "";
     cards.forEach(function (card) {
         html += "<div class='card " + card.indicator + "'>\n";
+        html += "<div class='circle'><span>XX</span></div>\n"
+        html += "<div class='content'>\n";
         html += "<span class='summary heading'>" + card.summary + "</span>\n";
 
         if (card.rationale !== null) {
@@ -54,7 +46,7 @@ function renderCards(cards) {
 
         if (card.source.label !== null && card.source.url !== null) {
             html += "<span class='source'>";
-            html += "See: <a href='" + card.source.url + "' target='_blank' rel='noopener noreferrer'>" +
+            html += "<a href='" + card.source.url + "' target='_blank' rel='noopener noreferrer'>" +
                 card.source.label + "</a>";
             html += "</span>\n";
         }
@@ -64,7 +56,7 @@ function renderCards(cards) {
             let label = card.source2.substring(card.source2.lastIndexOf('/') + 1);
 
             html += "<span class='source'>";
-            html += "See: <a href='" + card.source2 + "' target='_blank' rel='noopener noreferrer'>" +
+            html += "<a href='" + card.source2 + "' target='_blank' rel='noopener noreferrer'>" +
                 label + "</a>";
             html += "</span>\n";
         }
@@ -73,7 +65,7 @@ function renderCards(cards) {
             html += "<div class='suggestions'>";
             card.suggestions.forEach(function(suggestion) {
                 html += "<div class='suggestion'>";
-                html += "<span class='heading'>" + suggestion.label + "</span>";
+                html += "<span class='heading'>Suggestion: " + suggestion.label + "</span>";
                 if (suggestion.actions !== null) {
                     html += "<ul class='actions'>";
                     suggestion.actions.forEach(function(action) {
@@ -86,37 +78,32 @@ function renderCards(cards) {
             html += "</div>\n";
         }
 
-        if (card.selectionBehavior !== null) {
-            html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>\n";
-        }
+        // if (card.selectionBehavior !== null) {
+        //     html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>\n";
+        // }
 
-        html += "</div>\n";
+        html += "</div></div>\n";
     });
     return html;
 }
 
-async function setGoal(goalId, followUpDays, value) {
-    let formData = new FormData();
-    formData.append("goalId", goalId);
-    formData.append("followUpDays", followUpDays || 0);
-    formData.append("value", value);
-
-    let response = await fetch("/goals/put", {
-        method: "PUT",
-        body: formData
-    });
-
-    let obj = await response.json();
-
-//    alert('toggled "' + goalId + '" - new value = "' + value + '" with followUpDays = "' + followUpDays + '".  obj="' + obj + '"');
-}
 
 $(document).ready(function() {
     $('#recommendationsContainer').on('change', 'input.goal[type="checkbox"]', function() {
 //         let recommendationId = $(this).closest('.recommendation').attr('data-id');
-        let goalId = $(this).attr('data-id');
+        let goalId = $(this).attr('data-goalid');
+        let goalText = $(this).next('label').text();
         let followUpDays = $(this).attr('data-followup-days');
-        let value = $(this).is(':checked');
-        setGoal(goalId, followUpDays, value);
+
+        if ($(this).is(':checked')) {
+            createGoal(goalId, goalText, followUpDays, function(goal) {
+                alert("created goal: " + goal.goalId);
+            });
+
+        } else {
+            deleteGoal(goalId, function(deletedGoalId) {
+                alert("deleted goal: " + deletedGoalId);
+            });
+        }
     });
 });

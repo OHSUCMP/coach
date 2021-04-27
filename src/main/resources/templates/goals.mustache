@@ -1,0 +1,125 @@
+{{#layout}}
+    {{#title}}Hypertension U18 App - Goals{{/title}}
+    {{#head}}
+        <script type="text/javascript" src="js/form.js"></script>
+        <link rel="stylesheet" href="css/form.css" />
+
+        <script type="text/javascript" src="js/goals.js"></script>
+        <link rel="stylesheet" href="css/goals.css"/>
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                enableHover('#goalsTable .link');
+            });
+
+            $(document).on('click', '#createButton', function() {
+                if (validateForm('form', '#saveMessage')) {
+                    let goalText = $('#goal').val();
+
+                    createBPReading(null, goalText, 0, function(obj) {
+                        appendGoalToTable(obj);
+                        resetForm('form');
+
+                        let el = $('#saveMessage');
+                        $(el).removeClass();
+                        $(el).addClass('success');
+                        $(el).html("Record created successfully.");
+                    });
+                }
+            });
+        </script>
+    {{/head}}
+    {{#menuItems}}
+        <li><a href="/">Patient Portal</a></li>
+        <li class="selected"><a href="/goals">My Goals</a></li>
+        <li><a href="/bp-readings">Home BP Readings</a></li>
+        <li><a href="/preferences">My Preferences</a></li>
+        <li><a href="/feedback">Provider Feedback</a></li>
+    {{/menuItems}}
+    {{#content}}
+        <table class="content">
+            <tr>
+                <td id="patientInfo">
+                    <table style="margin-left: 50px">
+                        <tr>
+                            <td rowspan="2">
+                                <span class="circle" style="background-color: #b3fff0">&nbsp;</span>
+                            </td>
+                            <td colspan="2">
+                                <span style="font-size: x-large">{{patient.name}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>{{patient.age}} years</td>
+                            <td>{{patient.gender}}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <table class="content">
+            <tr>
+                <td class="heading">
+                    Create a New Goal
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <form action="/goals/create">
+                        <span class="label">
+                            Use this form to create a new Goal.
+                        </span>
+                        <div class="field">
+                            <label for="goal">Goal:</label>
+                            <input type="text" id="goal" class="required" size="80" />
+                        </div>
+                        <div>
+                            <input id="createButton" type="button" value="Save" />
+                            <span id="saveMessage" class="hidden"></span>
+                        </div>
+                    </form>
+                </td>
+            </tr>
+        </table>
+
+        <table class="content">
+            <tr>
+                <td class="heading">
+                    My Goals
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <table id="goalsTable" class="data"`>
+                        <tr id="goalsTableHeader">
+                            <th>Goal</th>
+                            <th>Status</th>
+                            <th>Created Date</th>
+                            <th>&nbsp;</th>
+                        </tr>
+                        {{! note : keep this section synced with goals.js:appendRecordToTable(obj) }}
+                        {{#goals}}
+                            <tr class='data' data-goalid='{{goalId}}'>
+                                <td>{{goalText}}</td>
+                                <td class="status">
+                                    {{#completed}}Completed{{/completed}}
+                                    {{^completed}}Active{{/completed}}
+                                </td>
+                                <td>{{createdDate}}</td>
+                                <td class="actions">
+                                    {{#completed}}
+                                        <span class="link" onclick="setCompleted(this, false)">Mark Active</span>
+                                    {{/completed}}
+                                    {{^completed}}
+                                        <span class="link" onclick="setCompleted(this, true)">Mark Completed</span>
+                                    {{/completed}}
+                                </td>
+                            </tr>
+                        {{/goals}}
+                    </table>
+                </td>
+            </tr>
+        </table>
+    {{/content}}
+{{/layout}}

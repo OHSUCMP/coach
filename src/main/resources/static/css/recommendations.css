@@ -10,6 +10,7 @@
 
 .recommendation > .description {
     font-style: italic;
+    font-size: small;
     margin-bottom: 4px;
 }
 
@@ -20,40 +21,59 @@
 
 .card {
     display: block;
-    border: 3px solid black;
+    /*border: 3px solid black;*/
     background-color: #ffffff;
     padding: 5px;
     margin: 5px 0 5px 0;
+    width: 640px;
+    font-size: small;
+}
+
+.card .circle {
+    display: inline-block;
+    vertical-align: top;
+    margin-top: 5px;
+    padding: 4px;
+    font-size: small;
+}
+
+.card .circle span {
+
+}
+
+.card .content {
+    display: inline-block;
     width: 600px;
 }
 
-.card.info {
-    border: 3px solid #33cc33;
+.card.info .circle {
+    /*border: 3px solid #33cc33;*/
     background-color: #ccffcc;
 }
 
-.card.warning {
-    border: 3px solid #ff6600;
+.card.warning .circle {
+    /*border: 3px solid #ff6600;*/
     background-color: #ffcc99;
 }
 
-.card.critical {
-    border: 3px solid #ff0000;
+.card.critical .circle {
+    /*border: 3px solid #ff0000;*/
     background-color: #ffaaaa;
 }
 
 .card .summary {
     display: block;
     font-weight: bold;
+    font-size: medium;
+    margin-top: 8px;
 }
 
 .card .rationale {
-    display: block;
-    font-weight: bold;
+    display: inline-block;
 }
 
 .card .source {
-    display: block;
+    display: inline-block;
 }
 
 .card .suggestions {
@@ -62,12 +82,13 @@
 
 .card .suggestion {
     margin: 5px 0 0 10px;
-    padding: 5px;
-    background-color: rgba(0, 0, 0, 0.1);
+    padding: 0 5px 0 5px;
+    /*background-color: rgba(0, 0, 0, 0.1);*/
 }
 
 .card .suggestion .heading {
     margin-top: 5px;
+    font-size: small;
 }
 
 .card .suggestion .actions {

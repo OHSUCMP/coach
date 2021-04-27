@@ -37,12 +37,13 @@ public class BPReadingsController {
     public String getBPReadings(HttpSession session, Model model) {
         try {
             patientController.populatePatientModel(session.getId(), model);
-            List<HomeBloodPressureReading> bpreadings = hbprService.getHomeBloodPressureReadings(session.getId());
-            model.addAttribute("bpreadings", bpreadings);
 
         } catch (SessionMissingException e) {
             logger.error("error populating patient model", e);
         }
+
+        List<HomeBloodPressureReading> bpreadings = hbprService.getHomeBloodPressureReadings(session.getId());
+        model.addAttribute("bpreadings", bpreadings);
 
         return "bp-readings";
     }

@@ -70,3 +70,34 @@ select {
 .field.error {
     background-color: #ffe6e6;
 }
+
+table.data {
+    border: 1px solid black;
+    border-spacing: 0;
+    margin: 4px;
+    width: 900px;
+}
+
+table.data th {
+    background-color: #1d5987;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 5px;
+}
+
+table.data tr:nth-child(even) {
+    background-color: #e6f7ff;
+}
+
+table.data tr:nth-child(odd) {
+    background-color: #ccefff;
+}
+
+table.data td {
+    border: 1px solid black;
+    padding: 5px;
+}
+
+.hover {
+    cursor: pointer;
+}

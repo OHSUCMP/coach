@@ -12,10 +12,6 @@
     background-color: gray;
 }
 
-.tab.hover {
-    cursor: pointer;
-}
-
 .tab.selected {
     border-bottom: 1px solid white;
     background-color: white;

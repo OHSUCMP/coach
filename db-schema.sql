@@ -20,14 +20,18 @@ create table home_bp_reading (
     created_date datetime not null
 );
 
+create index patId on home_bp_reading (pat_id);
+
 drop table if exists goal;
 create table goal (
   id int not null auto_increment primary key,
   goal_id varchar(100) not null,
   pat_id int not null,
+  goal_text varchar(255) not null,
   follow_up_days int,
-  value varchar(255) not null,
-  created_date datetime not null
+  created_date datetime not null,
+  completed tinyint(1) not null default 0,
+  completed_date datetime
 );
 
 create unique index goalPatId on goal (goal_id, pat_id);

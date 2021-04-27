@@ -1,6 +1,8 @@
 package edu.ohsu.cmp.htnu18app.cqfruler.model;
 
 public class CDSCard {
+    private static final String DELIM_REGEX = "\\s*\\|\\s*";
+
     private static final int RATIONALE = 0;
     private static final int SOURCE = 1;
     private static final int SUGGESTIONS = 2;
@@ -68,7 +70,7 @@ public class CDSCard {
 
     private String getDetailItem(int index) {
         if (detailArr == null) {
-            detailArr = detail.split("\\s*;\\s*");
+            detailArr = detail.split(DELIM_REGEX);
         }
 
         return index < detailArr.length ?
