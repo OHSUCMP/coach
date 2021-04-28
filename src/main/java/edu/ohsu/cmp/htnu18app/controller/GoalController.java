@@ -3,6 +3,7 @@ package edu.ohsu.cmp.htnu18app.controller;
 import edu.ohsu.cmp.htnu18app.entity.app.Goal;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,17 +55,20 @@ public class GoalController extends AuthenticatedController {
                                        @RequestParam("goalText") String goalText,
                                        @RequestParam("followUpDays") Integer followUpDays) {
 
-        Goal goal = goalService.getGoal(session.getId(), goalId);
-        if (goal != null) {
-            goal.setGoalText(goalText);
-            goal = goalService.update(goal);
-
-        } else {
-            goal = new Goal(goalId, goalText, followUpDays);
-            goal = goalService.create(session.getId(), goal);
+        if (goalId.isEmpty()) {
+            // autogenerate goal ID
+            goalId = DigestUtils.sha256Hex(goalText);
         }
 
-        return new ResponseEntity<>(goal, HttpStatus.OK);
+        Goal goal = goalService.getGoal(session.getId(), goalId);
+        if (goal == null) {
+            goal = new Goal(goalId, goalText, followUpDays);
+            goal = goalService.create(session.getId(), goal);
+            return new ResponseEntity<>(goal, HttpStatus.OK);
+
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
+        }
     }
 
     @PutMapping("setCompleted")

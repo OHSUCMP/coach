@@ -16,7 +16,7 @@
                 if (validateForm('form', '#saveMessage')) {
                     let goalText = $('#goal').val();
 
-                    createBPReading(null, goalText, 0, function(obj) {
+                    createGoal('', goalText, 0, function(obj) {
                         appendGoalToTable(obj);
                         resetForm('form');
 
@@ -26,6 +26,14 @@
                         $(el).html("Record created successfully.");
                     });
                 }
+            });
+
+            $(document).on('click', '#goalsTable .markActive.link', function() {
+                setCompleted(this, false);
+            });
+
+            $(document).on('click', '#goalsTable .markCompleted.link', function() {
+                setCompleted(this, true);
             });
         </script>
     {{/head}}
@@ -109,10 +117,10 @@
                                 <td>{{createdDate}}</td>
                                 <td class="actions">
                                     {{#completed}}
-                                        <span class="link" onclick="setCompleted(this, false)">Mark Active</span>
+                                        <span class="markActive link">Mark Active</span>
                                     {{/completed}}
                                     {{^completed}}
-                                        <span class="link" onclick="setCompleted(this, true)">Mark Completed</span>
+                                        <span class="markCompleted link">Mark Completed</span>
                                     {{/completed}}
                                 </td>
                             </tr>

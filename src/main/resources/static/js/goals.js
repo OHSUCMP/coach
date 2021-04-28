@@ -28,15 +28,15 @@ async function createGoal(goalId, goalText, followUpDays, _callback) {
 function appendGoalToTable(goal) {
     let container = $('#goalsTable');
     let unsortedData = $(container).find('tr');
-    let status = goal.completed ? "Active" : "Completed";
+    let status = goal.completed ? 'Completed' : 'Active';
 
-    // note : keep this section synced with bp-readings.mustache
+    // note : keep this section synced with goals.mustache
 
     let html = "<tr class='data' data-goalid='" + goal.goalId + "'>" +
         "<td>" + goal.goalText + "</td>" +
-        "<td>" + status + "</td>" +
+        "<td class='status'>" + status + "</td>" +
         "<td>" + goal.createdDate + "</td>" +
-        "<td><span class=\"link\" onclick=\"deleteGoal(" + goal.id + ")\">Delete</span></td>" +
+        "<td class='actions'>" + buildActionLink(goal.created) + "</td>" +
         "</tr>\n";
 
     // now sort
@@ -70,13 +70,16 @@ async function setCompleted(el, completed) {
             let status = goal.completed ? 'Completed' : 'Active';
             $(row).children('td.status').html(status);
 
-            let action = goal.completed ?
-                '<span class="link" onclick="setCompleted(this, false)">Mark Active</span>' :
-                '<span class="link" onclick="setCompleted(this, true)">Mark Completed</span>';
+            let action = buildActionLink(goal.completed);
             $(row).children('td.actions').html(action);
         }
     }
+}
 
+function buildActionLink(goal_completed) {
+    return goal_completed ?
+        '<span class="markActive link">Mark Active</span>' :
+        '<span class="markCompleted link">Mark Completed</span>';
 }
 
 async function deleteGoal(goalId, _callback) {
