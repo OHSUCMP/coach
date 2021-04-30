@@ -109,28 +109,32 @@ function buildChart() {
 
     $('#loadingChart').addClass('hidden');
 
-    let el = $('#chart');
-    $(el).removeClass('hidden');
+    let ctx = $('#chart');
+    $(ctx).removeClass('hidden');
 
-    return new Chart(el, {
+    return new Chart(ctx, {
         type: 'line',
         data: {
             datasets: [{
-                type: 'scatter',
+                type: 'line',
                 label: 'Systolic',
-                backgroundColor: 'red',
-                data: toScatterData(data, 'systolic'),
-                pointBorderColor: 'red',
-                pointBackgroundColor: 'white'
+                pointRadius: 3,
+                fill: false,
+                borderColor: 'rgba(126, 194, 185, 0.6)',
+                borderWidth: 2,
+                pointBorderColor: 'rgba(126, 194, 185, 1)',
+                pointBackgroundColor: 'rgba(126, 194, 185, 0.6)',
+                tension: 0,
+                data: toScatterData(data, 'systolic')
             }, {
                 type: 'line',
                 label: 'Systolic Trend',
-                pointRadius: 1,
+                pointRadius: 0,
                 fill: false,
-                borderColor: 'rgba(255, 0, 0, 1)',
-                borderWidth: 1,
+                borderColor: 'rgba(0, 127, 109, 1)',
+                borderWidth: 2,
                 data: toTrendLineData(data, 'systolic')
-            }, {
+            }, /* {
                 type: 'line',
                 label: 'Systolic Regression',
                 pointRadius: 0,
@@ -138,22 +142,26 @@ function buildChart() {
                 borderColor: 'rgba(255, 0, 0, 0.3)',
                 borderWidth: 3,
                 data: toRegressionData(data, 'systolic')
-            }, {
-                type: 'scatter',
+            },*/ {
+                type: 'line',
                 label: 'Diastolic',
-                backgroundColor: 'blue',
-                data: toScatterData(data, 'diastolic'),
-                pointBorderColor: 'blue',
-                pointBackgroundColor: 'white'
+                pointRadius: 3,
+                fill: false,
+                borderColor: 'rgba(207, 178, 137, 0.6)',
+                borderWidth: 2,
+                pointBorderColor: 'rgba(207, 178, 137, 1)',
+                pointBackgroundColor: 'rgba(207, 178, 137, 0.6)',
+                tension: 0,
+                data: toScatterData(data, 'diastolic')
             }, {
                 type: 'line',
                 label: 'Diastolic Trend',
-                pointRadius: 1,
+                pointRadius: 0,
                 fill: false,
-                borderColor: 'rgba(0, 0, 255, 1)',
+                borderColor: 'rgba(153, 97, 36, 1)',
                 borderWidth: 1,
                 data: toTrendLineData(data, 'diastolic')
-            }, {
+            } /*, {
                 type: 'line',
                 label: 'Diastolic Regression',
                 pointRadius: 0,
@@ -161,44 +169,38 @@ function buildChart() {
                 borderColor: 'rgba(0, 0, 255, 0.3)',
                 borderWidth: 3,
                 data: toRegressionData(data, 'diastolic')
-            }]
+            }*/ ]
         },
         options: {
             title: {
                 text: "Blood Pressure"
             },
             scales: {
-                xAxes: [{
+                x: {
                     type: 'time'
-                }],
-                yAxes: [{
+                },
+                y: {
                     type: 'linear',
                     ticks: {
-                        suggestedMin: 50,
-                        suggestedMax: 160
+                        suggestedMin: 0,
+                        suggestedMax: 200
                     }
-                }]
+                }
             },
             annotation: {
                 drawTime: 'beforeDatasetsDraw',
                 annotations: [{
-                    id: 'max-systolic',
-                    type: 'line',
-                    mode: 'horizontal',
-                    scaleID: 'y-axis-0',
-                    value: '130',
-                    borderColor: 'rgba(255, 0, 0, 0.3)',
-                    borderDash: [5],
-                    borderWidth: 1
+                    id: 'target-systolic',
+                    type: 'box',
+                    yMin: 80,
+                    yMax: 140,
+                    backgroundColor: 'rgba(255, 0, 0, 0.3)'
                 }, {
-                    id: 'max-diastolic',
-                    type: 'line',
-                    mode: 'horizontal',
-                    scaleID: 'y-axis-0',
-                    value: '80',
-                    borderColor: 'rgba(0, 0, 255, 0.3)',
-                    borderDash: [5],
-                    borderWidth: 1
+                    id: 'target-diastolic',
+                    type: 'box',
+                    yMin: 60,
+                    yMax: 80,
+                    backgroundColor: 'rgba(0, 0, 255, 0.3)'
                 }]
             }
         }
@@ -211,6 +213,7 @@ function updateChart(data) {
     buildChart(data);
 }
 
+/*
 function buildChartSlider() {
     let el = $('#chartRangeSlider');
     let data = window.bpdata;
@@ -232,6 +235,7 @@ function buildChartSlider() {
     $('#sliderRangeFrom').val($(el).slider("values", 0));
     $('#sliderRangeTo').val($(el).slider("values", 1));
 }
+*/
 
 function truncateData(data, minYear, maxYear) {
     return jQuery.grep(data, function (item) {
@@ -245,7 +249,7 @@ function toScatterData(data, type) {
     data.forEach(function (item) {
         let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
         arr.push({
-            x: moment(item.timestamp),
+            x: new Date(item.timestamp),
             y: val
         });
     });
@@ -280,7 +284,7 @@ function toTrendLineData(data, type) {
                 let lastVals = tempArr.map(o => o.val);
                 let lastValsAvg = Math.round(lastVals.reduce((a, b) => a + b, 0) / lastVals.length);
                 arr.push({
-                    x: moment(new Date(lastDateAvg)),
+                    x: new Date(lastDateAvg),
                     y: lastValsAvg
                 });
                 diffArr = [];
@@ -301,7 +305,7 @@ function toTrendLineData(data, type) {
         let lastVals = tempArr.map(o => o.val);
         let lastValsAvg = Math.round(lastVals.reduce((a, b) => a + b, 0) / lastVals.length);
         arr.push({
-            x: moment(new Date(lastDateAvg)),
+            x: new Date(lastDateAvg),
             y: lastValsAvg
         });
     }
@@ -309,43 +313,44 @@ function toTrendLineData(data, type) {
     return arr;
 }
 
-function toRegressionData(data, type) {
-    // the regression library can't handle large X values (where "large" is not really that large at all),
-    // so we need to finagle the data it consumes so that can process things correctly.  the way I've decided
-    // to do this is to feed it *proportional* values (numbers between 0 and 100) that represent the relative
-    // position of those dates with respect to the min and max dates in the dataset.  so that's what's going
-    // on here.
-
-    // first calculate min and max dates in the dataset -
-    var dateRange = getDateRange(data);
-    var minTime = dateRange.min.getTime();
-    var maxTime = dateRange.max.getTime();
-
-    // now we craft an array of arrays that we'll feed to the regression engine, where the X value
-    // is a number between 0 and 100 that represents the relative position of the date in the range
-    var arr = [];
-    data.forEach(function (item, i) {
-        let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
-        arr.push([
-            ((item.timestamp.getTime() - minTime) / (maxTime - minTime)) * 100,
-            val
-        ]);
-    });
-
-    // calculate the regression (duh) -
-    var result = regression.linear(arr);
-
-    // then construct a new array of {x,y} objects where the X value is the original date used in the
-    // dataset (we don't care about the proportions anymore, that was just for calculating regression)
-    var r = [];
-    result.points.forEach(function (item, i) {
-        r.push({
-            x: moment(data[i].timestamp),
-            y: item[1]
-        });
-    });
-    return r;
-}
+// function toRegressionData(data, type) {
+//     // the regression library can't handle large X values (where "large" is not really that large at all),
+//     // so we need to finagle the data it consumes so that can process things correctly.  the way I've decided
+//     // to do this is to feed it *proportional* values (numbers between 0 and 100) that represent the relative
+//     // position of those dates with respect to the min and max dates in the dataset.  so that's what's going
+//     // on here.
+//
+//     // first calculate min and max dates in the dataset -
+//     var dateRange = getDateRange(data);
+//     var minTime = dateRange.min.getTime();
+//     var maxTime = dateRange.max.getTime();
+//
+//     // now we craft an array of arrays that we'll feed to the regression engine, where the X value
+//     // is a number between 0 and 100 that represents the relative position of the date in the range
+//     var arr = [];
+//     data.forEach(function (item, i) {
+//         let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
+//         arr.push([
+//             ((item.timestamp.getTime() - minTime) / (maxTime - minTime)) * 100,
+//             val
+//         ]);
+//     });
+//
+//     // calculate the regression (duh) -
+//     var result = regression.linear(arr);
+//
+//     // then construct a new array of {x,y} objects where the X value is the original date used in the
+//     // dataset (we don't care about the proportions anymore, that was just for calculating regression)
+//     var r = [];
+//     result.points.forEach(function (item, i) {
+//         r.push({
+//             x: new Date(data[i].timestamp),
+//             // x: moment(data[i].timestamp),
+//             y: item[1]
+//         });
+//     });
+//     return r;
+// }
 
 function getDateRange(data) {
     let minDate = null;

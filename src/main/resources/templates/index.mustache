@@ -4,9 +4,10 @@
         <!-- chartjs - see: https://www.chartjs.org/docs/latest/getting-started/installation.html -->
         <!-- chartjs-plugin-annotation - see: https://github.com/chartjs/chartjs-plugin-annotation -->
         <script type="text/javascript" src="node_modules/regression/dist/regression.js"></script>
-        <script type="text/javascript" src="node_modules/moment/moment.js"></script>
-        <script type="text/javascript" src="node_modules/chart.js/dist/Chart.bundle.js"></script>
-        <script type="text/javascript" src="node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.js"></script>
+<!--        <script type="text/javascript" src="node_modules/moment/moment.js"></script>-->
+        <script type="text/javascript" src="node_modules/chart.js/dist/chart.js"></script>
+        <script type="text/javascript" src="node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js"></script>
+        <script type="text/javascript" src="node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js"></script>
 
         <link rel="stylesheet" href="css/index.css"/>
         <script type="text/javascript" src="js/index.js"></script>
@@ -22,7 +23,7 @@
                     window.bpdata = bpdata;
                     populateSummaryDiv();
                     buildChart();
-                    buildChartSlider();
+                    // buildChartSlider();
                 });
 
                 loadMedications(function(meds) {
@@ -73,7 +74,7 @@
                 <td id="highBPControlContainer">
                     <table width="100%">
                         <tr>
-                            <td width="300" style="vertical-align: top">
+                            <td width="200" style="vertical-align: top">
                                 <span style="font-weight: bold; white-space: nowrap">Your blood pressure:</span>
                                 <br/>
                                 <div style="margin-top: 60px">
@@ -104,14 +105,20 @@
                             <td width="500">
                                 <div id="chartContainer">
                                     <div id="loadingChart">Loading Chart ...</div>
-                                    <canvas id="chart" class="hidden" width="500" height="250"></canvas>
-                                    <div id="sliderContainer">
-                                        <input type="text" id="sliderRangeFrom" readonly size="4"/>
-                                        <div style="width: 10px;"></div>
-                                        <div id="chartRangeSlider"></div>
-                                        <div style="width: 10px;"></div>
-                                        <input type="text" id="sliderRangeTo" readonly size="4"/>
+                                    <div id="chartTimelineContainer">
+                                        <span class="heading">Timeline</span>
+                                        <input type="button" value="2 months" />
+                                        <input type="button" value="2 years" />
+                                        <input type="button" value="All" />
                                     </div>
+                                    <canvas id="chart" class="hidden" width="700" height=250"></canvas>
+<!--                                    <div id="sliderContainer">-->
+<!--                                        <input type="text" id="sliderRangeFrom" readonly size="4"/>-->
+<!--                                        <div style="width: 10px;"></div>-->
+<!--                                        <div id="chartRangeSlider"></div>-->
+<!--                                        <div style="width: 10px;"></div>-->
+<!--                                        <input type="text" id="sliderRangeTo" readonly size="4"/>-->
+<!--                                    </div>-->
                                 </div>
                             </td>
                         </tr>
