@@ -112,6 +112,8 @@ function buildChart() {
     let ctx = $('#chart');
     $(ctx).removeClass('hidden');
 
+    let pointStyleArr = buildPointStyleArray(data);
+
     return new Chart(ctx, {
         type: 'line',
         data: {
@@ -119,6 +121,7 @@ function buildChart() {
                 type: 'line',
                 label: 'Systolic',
                 pointRadius: 3,
+                pointStyle: pointStyleArr,
                 fill: false,
                 borderColor: 'rgba(126, 194, 185, 0.6)',
                 borderWidth: 2,
@@ -133,6 +136,7 @@ function buildChart() {
                 fill: false,
                 borderColor: 'rgba(0, 127, 109, 1)',
                 borderWidth: 2,
+                tension: 0.1,
                 data: toTrendLineData(data, 'systolic')
             }, /* {
                 type: 'line',
@@ -146,6 +150,7 @@ function buildChart() {
                 type: 'line',
                 label: 'Diastolic',
                 pointRadius: 3,
+                pointStyle: pointStyleArr,
                 fill: false,
                 borderColor: 'rgba(207, 178, 137, 0.6)',
                 borderWidth: 2,
@@ -160,6 +165,7 @@ function buildChart() {
                 fill: false,
                 borderColor: 'rgba(153, 97, 36, 1)',
                 borderWidth: 1,
+                tension: 0.1,
                 data: toTrendLineData(data, 'diastolic')
             } /*, {
                 type: 'line',
@@ -175,36 +181,66 @@ function buildChart() {
             title: {
                 text: "Blood Pressure"
             },
+            legend: {
+                labels: {
+                    usePointStyle: true
+                }
+            },
             scales: {
                 x: {
                     type: 'time'
                 },
                 y: {
                     type: 'linear',
-                    ticks: {
-                        suggestedMin: 0,
-                        suggestedMax: 200
-                    }
+                    title: {
+                        text: 'Blood Pressure',
+                        display: true
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 200
                 }
             },
-            annotation: {
-                drawTime: 'beforeDatasetsDraw',
-                annotations: [{
-                    id: 'target-systolic',
-                    type: 'box',
-                    yMin: 80,
-                    yMax: 140,
-                    backgroundColor: 'rgba(255, 0, 0, 0.3)'
-                }, {
-                    id: 'target-diastolic',
-                    type: 'box',
-                    yMin: 60,
-                    yMax: 80,
-                    backgroundColor: 'rgba(0, 0, 255, 0.3)'
-                }]
+            plugins: {
+                annotation: {
+                    annotations: {
+                        targetSystolic: {
+                            drawTime: 'beforeDatasetsDraw',
+                            id: 'target-systolic',
+                            type: 'box',
+                            yScaleID: 'y',
+                            yMin: 90,
+                            yMax: 140,
+                            backgroundColor: 'rgba(172, 242, 233, 0.5)',
+                            borderWidth: 0
+                        },
+                        targetDiastolic: {
+                            drawTime: 'beforeDatasetsDraw',
+                            id: 'target-diastolic',
+                            type: 'box',
+                            yScaleID: 'y',
+                            yMin: 60,
+                            yMax: 90,
+                            backgroundColor: 'rgba(244, 225, 172, 0.5)',
+                            borderWidth: 0
+                        }
+                    }
+                }
             }
         }
     });
+}
+
+function buildPointStyleArray(data) {
+    // see https://www.chartjs.org/docs/latest/configuration/elements.html for options
+    let arr = [];
+    data.forEach(function(item) {
+        if (item.source === 'HOME') {
+            arr.push('circle');
+        } else if (item.source === 'OFFICE') {
+            arr.push('rect');
+        }
+    });
+    return arr;
 }
 
 function updateChart(data) {
@@ -267,7 +303,7 @@ function toTrendLineData(data, type) {
     let arr = [];
     let tempArr = [];
     let lastDate = null;
-    let distanceFromLastDate = null;
+    // let distanceFromLastDate = null;
     let diffArr = [];
 
     data.forEach(function (item) {

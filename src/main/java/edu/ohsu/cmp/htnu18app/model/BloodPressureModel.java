@@ -18,9 +18,15 @@ public class BloodPressureModel implements Comparable<BloodPressureModel> {
     public static final String VALUE_CODE = "mm[Hg]";
     public static final String VALUE_UNIT = "mmHg";
 
+    private Source source;
     private QuantityModel systolic;
     private QuantityModel diastolic;
     private Long timestamp;
+
+    public enum Source {
+        OFFICE,
+        HOME
+    }
 
     @Override
     public int compareTo(BloodPressureModel o) {
@@ -54,12 +60,14 @@ public class BloodPressureModel implements Comparable<BloodPressureModel> {
     }
 
     public BloodPressureModel(HomeBloodPressureReading reading) {
+        source = Source.HOME;
         systolic = new QuantityModel(reading.getSystolic(), "mmHg");
         diastolic = new QuantityModel(reading.getDiastolic(), "mmHg");
         timestamp = reading.getReadingDate().getTime();
     }
 
     public BloodPressureModel(Observation o) throws DataException {
+        source = Source.OFFICE;
         for (Observation.ObservationComponentComponent occ : o.getComponent()) {
             ValueType valueType = ValueType.UNKNOWN;
 
@@ -96,6 +104,10 @@ public class BloodPressureModel implements Comparable<BloodPressureModel> {
         } else {
             throw new DataException("missing timestamp");
         }
+    }
+
+    public Source getSource() {
+        return source;
     }
 
     public QuantityModel getSystolic() {
