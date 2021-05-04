@@ -104,9 +104,7 @@ function populateSummaryDiv() {
     $('#bpLabel').html(bpLabel + ':');
 }
 
-function buildChart() {
-    let data = window.bpdata;
-
+function buildChart(data, startDate) {
     $('#loadingChart').addClass('hidden');
 
     let ctx = $('#chart');
@@ -114,7 +112,7 @@ function buildChart() {
 
     let pointStyleArr = buildPointStyleArray(data);
 
-    return new Chart(ctx, {
+    let config = {
         type: 'line',
         data: {
             datasets: [{
@@ -188,7 +186,8 @@ function buildChart() {
             },
             scales: {
                 x: {
-                    type: 'time'
+                    type: 'time',
+                    suggestedMax: new Date()
                 },
                 y: {
                     type: 'linear',
@@ -227,7 +226,13 @@ function buildChart() {
                 }
             }
         }
-    });
+    };
+
+    if (startDate !== undefined) {
+        config.options.scales.x.suggestedMin = startDate;
+    }
+
+    return new Chart(ctx, config);
 }
 
 function buildPointStyleArray(data) {
@@ -243,10 +248,10 @@ function buildPointStyleArray(data) {
     return arr;
 }
 
-function updateChart(data) {
+function updateChart(data, startDate) {
     // calling buildChart() without first replacing the DOM element creates wonkiness
-    $('#chart').replaceWith('<canvas id="chart" width="500" height="250"></canvas>');
-    buildChart(data);
+    $('#chart').replaceWith('<canvas id="chart" width="700" height="250"></canvas>');
+    buildChart(data, startDate);
 }
 
 /*
@@ -273,10 +278,16 @@ function buildChartSlider() {
 }
 */
 
-function truncateData(data, minYear, maxYear) {
+// function truncateData(data, minYear, maxYear) {
+//     return jQuery.grep(data, function (item) {
+//         let y = item.timestamp.getFullYear();
+//         return y >= minYear && y <= maxYear;
+//     });
+// }
+
+function truncateData(data, startDate) {
     return jQuery.grep(data, function (item) {
-        let y = item.timestamp.getFullYear();
-        return y >= minYear && y <= maxYear;
+        return item.timestamp >= startDate;
     });
 }
 

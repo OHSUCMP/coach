@@ -6,6 +6,19 @@
 /*    width: 200px;*/
 /*}*/
 
+#chartTimelineContainer {
+    display: block;
+    text-align: right;
+}
+
+#chartTimelineContainer * {
+    display: inline-block !important;
+}
+
+#chartTimelineContainer input {
+    margin: 2px 0 2px 0;
+}
+
 #chartContainer {
     /*position: absolute;*/
     /*top: 80px;*/
