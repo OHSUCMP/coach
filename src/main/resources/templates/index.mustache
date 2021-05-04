@@ -38,6 +38,8 @@
             });
 
             $(document).ready(function () {
+                enableHover('#chartTimelineContainer .button');
+
                 loadBloodPressureObservations(function(bpdata) {
                     window.bpdata = bpdata;
                     populateSummaryDiv();
@@ -124,11 +126,30 @@
                             <td width="500">
                                 <div id="chartContainer">
                                     <div id="loadingChart">Loading Chart ...</div>
-                                    <div id="chartTimelineContainer">
+                                    <div id="chartKeyContainer" class="hidden">
+                                        <span class="heading">Key</span>
+                                        <div class="chartKeyItem">
+                                            <span id="chartKeyHomeBP"></span>
+                                            <label for="chartKeyHomeBP">Home BP</label>
+                                        </div>
+                                        <div class="chartKeyItem">
+                                            <span id="chartKeyOfficeBP"></span>
+                                            <label for="chartKeyOfficeBP">Office BP</label>
+                                        </div>
+                                        <div class="chartKeyItem">
+                                            <span id="chartKeySystolic"></span>
+                                            <label for="chartKeySystolic">Systolic BP</label>
+                                        </div>
+                                        <div class="chartKeyItem">
+                                            <span id="chartKeyDiastolic"></span>
+                                            <label for="chartKeyDiastolic">Diastolic BP</label>
+                                        </div>
+                                    </div>
+                                    <div id="chartTimelineContainer" class="hidden">
                                         <span class="heading">Timeline</span>
-                                        <input id="adjustTimeline2M" type="button" value="2 months" />
-                                        <input id="adjustTimeline2Y" type="button" value="2 years" />
-                                        <input id="adjustTimelineAll" type="button" value="All" />
+                                        <span id="adjustTimeline2M" class="button">2 months</span>
+                                        <span id="adjustTimeline2Y" class="button">2 years</span>
+                                        <span id="adjustTimelineAll" class="button">All</span>
                                     </div>
                                     <canvas id="chart" class="hidden" width="700" height=250"></canvas>
                                 </div>

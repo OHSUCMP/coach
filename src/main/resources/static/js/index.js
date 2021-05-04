@@ -109,8 +109,12 @@ function buildChart(data, startDate) {
 
     let ctx = $('#chart');
     $(ctx).removeClass('hidden');
+    $('#chartKeyContainer, #chartTimelineContainer').removeClass('hidden');
 
     let pointStyleArr = buildPointStyleArray(data);
+
+    let endDate = new Date();
+    endDate.setHours(23, 59, 59);
 
     let config = {
         type: 'line',
@@ -187,7 +191,7 @@ function buildChart(data, startDate) {
             scales: {
                 x: {
                     type: 'time',
-                    suggestedMax: new Date()
+                    suggestedMax: endDate
                 },
                 y: {
                     type: 'linear',
@@ -200,6 +204,9 @@ function buildChart(data, startDate) {
                 }
             },
             plugins: {
+                legend: {
+                    display: false
+                },
                 annotation: {
                     annotations: {
                         targetSystolic: {

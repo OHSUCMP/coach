@@ -6,7 +6,50 @@
 /*    width: 200px;*/
 /*}*/
 
+
+#chartKeyContainer {
+    position: absolute;
+    font-size: smaller;
+    margin-left: 25px;
+}
+
+#chartKeyContainer * {
+    display: inline-block;
+}
+
+div.chartKeyItem {
+    font-size: smaller;
+    margin: 0 5px 0 5px;
+}
+
+#chartKeyHomeBP {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: black;
+}
+
+#chartKeyOfficeBP {
+    width: 10px;
+    height: 10px;
+    background-color: black;
+}
+
+#chartKeySystolic {
+    width: 25px;
+    height: 10px;
+    background-color: #007f6d;
+}
+
+#chartKeyDiastolic {
+    width: 25px;
+    height: 10px;
+    background-color: #996124;
+}
+
 #chartTimelineContainer {
+    position: absolute;
+    right: 10px;
     display: block;
     text-align: right;
 }
@@ -15,8 +58,17 @@
     display: inline-block !important;
 }
 
-#chartTimelineContainer input {
-    margin: 2px 0 2px 0;
+#chartTimelineContainer .button {
+    font-size: smaller;
+    padding: 2px;
+    background-color: #ccc;
+    border: 1px solid #555;
+}
+
+#chartTimelineContainer .button.hover {
+    cursor: pointer;
+    background-color: #ddd;
+    border: 1px solid #00f;
 }
 
 #chartContainer {
@@ -26,6 +78,15 @@
     display: inline-block;
     height: 300px;
     width: 700px;
+}
+
+#chartContainer .heading {
+    font-size: medium;
+}
+
+#chart {
+    position: relative;
+    top: 25px;
 }
 
 #goalNote {
