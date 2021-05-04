@@ -18,7 +18,7 @@
 }
 
 div.chartKeyItem {
-    font-size: smaller;
+    font-size: 9pt;
     margin: 0 5px 0 5px;
 }
 
@@ -59,7 +59,7 @@ div.chartKeyItem {
 }
 
 #chartTimelineContainer .button {
-    font-size: smaller;
+    font-size: 9pt;
     padding: 2px;
     background-color: #ccc;
     border: 1px solid #555;
