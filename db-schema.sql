@@ -2,6 +2,10 @@ create database if not exists htnu18app;
 
 use htnu18app;
 
+drop user if exists 'htnu18app'@'%';
+create user 'htnu18app'@'%' identified by 'htnu18app';
+grant all on htnu18app.* to 'htnu18app'@'%';
+
 drop table if exists patient;
 create table patient (
     id int not null auto_increment primary key,
