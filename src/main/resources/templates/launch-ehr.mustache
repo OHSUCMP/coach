@@ -19,10 +19,9 @@
         $(document).ready(function() {
             clearSession(function() {
                 FHIR.oauth2.authorize({
-                    "client_id": "52f70f9c-0072-4965-b70c-ba828c050665",
-                    "scope": "launch/patient patient/*.read user/*.read openid profile",
-                    "redirect_uri": "http://localhost:8082/",
-                    "iss": "https://api.logicahealth.org/htnu18r42/data"
+                    "client_id": "{{clientId}}",
+                    "scope": "{{scope}}",
+                    "redirect_uri": "{{redirectUri}}"
                 });
             });
         });

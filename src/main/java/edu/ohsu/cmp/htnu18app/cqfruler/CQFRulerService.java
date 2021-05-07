@@ -123,7 +123,7 @@ public class CQFRulerService {
 
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " processing response for hookId=" + hookId + " - " + e.getMessage(), e);
-                logger.debug("JSON = " + json);
+                logger.error("\n\nJSON =\n" + json + "\n\n");
             }
         }
 

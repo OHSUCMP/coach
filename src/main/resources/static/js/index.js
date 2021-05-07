@@ -104,7 +104,7 @@ function populateSummaryDiv() {
     $('#bpLabel').html(bpLabel + ':');
 }
 
-function buildChart(data, startDate) {
+function buildChart(data, startDate, endDate) {
     $('#loadingChart').addClass('hidden');
 
     let ctx = $('#chart');
@@ -112,9 +112,6 @@ function buildChart(data, startDate) {
     $('#chartKeyContainer, #chartTimelineContainer').removeClass('hidden');
 
     let pointStyleArr = buildPointStyleArray(data);
-
-    let endDate = new Date();
-    endDate.setHours(23, 59, 59);
 
     let config = {
         type: 'line',
@@ -190,8 +187,7 @@ function buildChart(data, startDate) {
             },
             scales: {
                 x: {
-                    type: 'time',
-                    suggestedMax: endDate
+                    type: 'time'
                 },
                 y: {
                     type: 'linear',
@@ -239,6 +235,10 @@ function buildChart(data, startDate) {
         config.options.scales.x.suggestedMin = startDate;
     }
 
+    if (endDate !== undefined) {
+        config.options.scales.x.suggestedMax = endDate;
+    }
+
     return new Chart(ctx, config);
 }
 
@@ -255,10 +255,10 @@ function buildPointStyleArray(data) {
     return arr;
 }
 
-function updateChart(data, startDate) {
+function updateChart(data, startDate, endDate) {
     // calling buildChart() without first replacing the DOM element creates wonkiness
     $('#chart').replaceWith('<canvas id="chart" width="700" height="250"></canvas>');
-    buildChart(data, startDate);
+    buildChart(data, startDate, endDate);
 }
 
 /*

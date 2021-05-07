@@ -18,19 +18,27 @@
 
         <script type="text/javascript">
             $(document).on('click', '#adjustTimeline2M', function() {
-                let date = new Date();
-                date.setMonth(date.getMonth() - 2);
-                date.setHours(0, 0, 0);
-                let truncatedData = truncateData(window.bpdata, date);
-                updateChart(truncatedData, date);
+                let startDate = new Date();
+                startDate.setMonth(startDate.getMonth() - 2);
+                startDate.setHours(0, 0, 0);
+                let truncatedData = truncateData(window.bpdata, startDate);
+
+                let endDate = new Date();
+                endDate.setHours(23, 59, 59);
+
+                updateChart(truncatedData, startDate, endDate);
             });
 
             $(document).on('click', '#adjustTimeline2Y', function() {
-                let date = new Date();
-                date.setFullYear(date.getFullYear() - 2);
-                date.setHours(0, 0, 0);
-                let truncatedData = truncateData(window.bpdata, date);
-                updateChart(truncatedData, date);
+                let startDate = new Date();
+                startDate.setFullYear(startDate.getFullYear() - 2);
+                startDate.setHours(0, 0, 0);
+                let truncatedData = truncateData(window.bpdata, startDate);
+
+                let endDate = new Date();
+                endDate.setHours(23, 59, 59);
+
+                updateChart(truncatedData, startDate, endDate);
             });
 
             $(document).on('click', '#adjustTimelineAll', function() {
