@@ -78,6 +78,14 @@ function renderCards(cards) {
             html += "</div>\n";
         }
 
+        if (card.links !== null) {
+            html += "<div class='links'>";
+            card.links.forEach(function(link) {
+                html += "<a class='link' href='" + link.url + "'>" + link.label + "</a>\n";
+            });
+            html += "</div>\n";
+        }
+
         // if (card.selectionBehavior !== null) {
         //     html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>\n";
         // }

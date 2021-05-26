@@ -4,9 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSCard;
-import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSSuggestion;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.Source;
-import edu.ohsu.cmp.htnu18app.util.MustacheUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,28 +19,22 @@ public class Card {
     private String source2;
     private List<Suggestion> suggestions;
     private String selectionBehavior;
-    private String links;
+    private List<Link> links;
 
-    public Card(Audience audience, CDSCard cdsCard) throws IOException {
+    public Card(CDSCard cdsCard) throws IOException {
         this.summary = cdsCard.getSummary();
         this.indicator = cdsCard.getIndicator();
         this.detail = cdsCard.getDetail();
         this.source = cdsCard.getSource();
 
-        this.rationale = MustacheUtil.compileMustache(audience, cdsCard.getRationale());
-        this.source2 = MustacheUtil.compileMustache(audience, cdsCard.getSource2());
+        this.rationale = cdsCard.getRationale();
+        this.source2 = cdsCard.getSource2();
 
-        this.suggestions = new ArrayList<Suggestion>();
+        this.selectionBehavior = cdsCard.getSelectionBehavior();
+
         Gson gson = new GsonBuilder().create();
-        List<CDSSuggestion> list = gson.fromJson(cdsCard.getSuggestions(), new TypeToken<ArrayList<CDSSuggestion>>(){}.getType());
-        if (list != null) {
-            for (CDSSuggestion cdsSuggestion : list) {
-                this.suggestions.add(new Suggestion(audience, cdsSuggestion));
-            }
-        }
-
-        this.selectionBehavior = MustacheUtil.compileMustache(audience, cdsCard.getSelectionBehavior());
-        this.links = MustacheUtil.compileMustache(audience, cdsCard.getLinks());
+        this.suggestions = gson.fromJson(cdsCard.getSuggestions(), new TypeToken<ArrayList<Suggestion>>(){}.getType());
+        this.links = gson.fromJson(cdsCard.getLinks(), new TypeToken<ArrayList<Link>>(){}.getType());
     }
 
     public String getSummary() {
@@ -77,7 +69,7 @@ public class Card {
         return selectionBehavior;
     }
 
-    public String getLinks() {
+    public List<Link> getLinks() {
         return links;
     }
 }

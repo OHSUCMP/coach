@@ -99,3 +99,7 @@
 .card .selectionBehavior {
     display: block;
 }
+
+.card .link {
+    display: block;
+}

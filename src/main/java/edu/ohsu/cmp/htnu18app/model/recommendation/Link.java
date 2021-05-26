@@ -1,10 +1,8 @@
 package edu.ohsu.cmp.htnu18app.model.recommendation;
 
-import java.util.List;
-
-public class Suggestion {
+public class Link {
     private String label;
-    private List<String> actions;
+    private String url;
 
     public String getLabel() {
         return label;
@@ -14,11 +12,11 @@ public class Suggestion {
         this.label = label;
     }
 
-    public List<String> getActions() {
-        return actions;
+    public String getUrl() {
+        return url;
     }
 
-    public void setActions(List<String> actions) {
-        this.actions = actions;
+    public void setUrl(String url) {
+        this.url = url;
     }
 }
