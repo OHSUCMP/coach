@@ -31,7 +31,7 @@ import java.util.*;
 
 @Service
 public class CQFRulerService {
-    private static final boolean TESTING = false; // true: use hard-coded 'canned' responses from CQF Ruler (fast, cheap)
+    private static final boolean TESTING = true; // true: use hard-coded 'canned' responses from CQF Ruler (fast, cheap)
                                                   // false: make CQF Ruler calls (slow, expensive)
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -46,6 +46,14 @@ public class CQFRulerService {
 
     public CQFRulerService(@Value("${cqfruler.cdshooks.endpoint.url}") String cdsHooksEndpointURL) {
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
+    }
+
+    public void executeHooksDetached(String sessionId) {
+        CDSHookExecutor executor = new CDSHookExecutor(sessionId, cdsHooksEndpointURL, patientService, hbprService);
+        logger.info("created " + executor);
+
+        Thread t = new Thread(executor);
+        t.start();
     }
 
     public List<CDSHook> getCDSHooks() throws IOException {
@@ -69,64 +77,76 @@ public class CQFRulerService {
     public List<Card> executeHook(String sessionId, String hookId) throws IOException {
         CacheData cache = SessionCache.getInstance().get(sessionId);
         if ( ! cache.containsCards(hookId) ) {
-            Patient p = patientService.getPatient(sessionId);
+            cache.setCards(hookId, null); // placeholder so subsequent calls don't re-trigger the call
 
-            Bundle bpBundle = patientService.getBloodPressureObservations(sessionId);
-
-            // inject home blood pressure readings into Bundle for evaluation by CQF Ruler
-            List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
-            for (HomeBloodPressureReading item : hbprList) {
-                String uuid = UUID.randomUUID().toString();
-
-                Encounter e = buildEncounter(uuid, p.getId(), item.getReadingDate());
-                bpBundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
-
-                Observation o = buildBloodPressureObservation(uuid, p.getId(), e.getId(), item);
-
-                // todo: should the URL be different?
-                bpBundle.addEntry().setFullUrl("http://hl7.org/fhir/Observation/" + o.getId()).setResource(o);
-            }
-
-            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-
-            HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle);
-
-            MustacheFactory mf = new DefaultMustacheFactory();
-            Mustache mustache = mf.compile("cqfruler/hookRequest.mustache");
-            StringWriter writer = new StringWriter();
-            mustache.execute(writer, request).flush();
-
-            logger.info("hookRequest = " + writer.toString());
-
-            Map<String, String> headers = new HashMap<String, String>();
-            headers.put("Content-Type", "application/json; charset=UTF-8");
-
-            String json;
-            if (TESTING) {
-//                json = "{ \"cards\": [ { \"summary\": \"Hypertension Diagnosis\", \"indicator\": \"info\", \"detail\": \"ConsiderHTNStage1 Patient\", \"source\": { \"label\": \"Info for those with normal blood pressure\", \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\" } }, { \"summary\": \"Recommend diagnosis of Stage 2 hypertension\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Patient rationale{{/patient}}{{#careTeam}}care team rationale{{/careTeam}}|{{#patient}}https://source.com/patient{{/patient}}{{#careTeam}}https://source.com/careTeam{{/careTeam}}|[ { \\\"label\\\": \\\"Enter Blood Pressure\\\", \\\"actions\\\": [ \\\"ServiceRequest for High Blood Pressure Monitoring\\\", \\\"{{#patient}}<a href='/bp-readings'>Click here to go to the Home Blood Pressure entry page</a>{{/patient}}\\\" ] }, { \\\"label\\\": \\\"Diet\\\", \\\"actions\\\": [ \\\"Put the fork down!\\\", \\\"{{#patient}}<input type='checkbox' class='goal' data-goalid='dashDiet' /><label>Try the DASH Diet</label>{{/patient}}\\\" ] } ]|at-most-one|<ol>{{#patient}}<li>https://links.com/patient</li>{{/patient}}<li>https://links.com/careTeamAndPatient</li></ol>\", \"source\": {} } ] }";
-                json = "{ \"cards\": [ { \"summary\": \"Hypertension Diagnosis\", \"indicator\": \"info\", \"detail\": \"ConsiderHTNStage1 Patient\", \"source\": { \"label\": \"Info for those with normal blood pressure\", \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\" } }, { \"summary\": \"Recommend diagnosis of Stage 2 hypertension\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Patient rationale{{/patient}}{{#careTeam}}care team rationale{{/careTeam}}|{{#patient}}https://source.com/patient{{/patient}}{{#careTeam}}https://source.com/careTeam{{/careTeam}}|[ { \\\"label\\\": \\\"Enter Blood Pressure\\\", \\\"actions\\\": [ \\\"ServiceRequest for High Blood Pressure Monitoring\\\", \\\"{{#patient}}<a href='/bp-readings'>Click here to go to the Home Blood Pressure entry page</a>{{/patient}}\\\" ] }, { \\\"label\\\": \\\"Diet\\\", \\\"actions\\\": [ \\\"Put the fork down!\\\", \\\"{{#patient}}<input type='checkbox' class='goal' data-goalid='dashDiet' /><label>Try the DASH Diet</label>{{/patient}}\\\" ] } ]|at-most-one|[{{#patient}}{ \\\"label\\\": \\\"Patient Link\\\", \\\"url\\\": \\\"https://links.com/patient\\\" },{{/patient}} { \\\"label\\\": \\\"Care Team and Patient Link\\\", \\\"url\\\": \\\"https://links.com/careTeamAndPatient\\\" }]\", \"source\": {} } ] }";
-
-            } else {
-                HttpResponse httpResponse  = new HttpRequest().post(cdsHooksEndpointURL + "/" + hookId, null, headers, writer.toString());
-                json = httpResponse.getResponseBody();
-            }
-
-            Gson gson = new GsonBuilder().create();
             try {
-                json = MustacheUtil.compileMustache(cache.getAudience(), json);
-                CDSHookResponse response = gson.fromJson(json, new TypeToken<CDSHookResponse>() {
-                }.getType());
+                Patient p = patientService.getPatient(sessionId);
 
-                List<Card> cards = new ArrayList<Card>();
-                for (CDSCard cdsCard : response.getCards()) {
-                    cards.add(new Card(cdsCard));
+                Bundle bpBundle = patientService.getBloodPressureObservations(sessionId);
+
+                // inject home blood pressure readings into Bundle for evaluation by CQF Ruler
+                List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
+                for (HomeBloodPressureReading item : hbprList) {
+                    String uuid = UUID.randomUUID().toString();
+
+                    Encounter e = buildEncounter(uuid, p.getId(), item.getReadingDate());
+                    bpBundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
+
+                    Observation o = buildBloodPressureObservation(uuid, p.getId(), e.getId(), item);
+
+                    // todo: should the URL be different?
+                    bpBundle.addEntry().setFullUrl("http://hl7.org/fhir/Observation/" + o.getId()).setResource(o);
                 }
 
-                cache.setCards(hookId, cards);
+                FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+
+                HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle);
+
+                MustacheFactory mf = new DefaultMustacheFactory();
+                Mustache mustache = mf.compile("cqfruler/hookRequest.mustache");
+                StringWriter writer = new StringWriter();
+                mustache.execute(writer, request).flush();
+
+                logger.info("hookRequest = " + writer.toString());
+
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("Content-Type", "application/json; charset=UTF-8");
+
+                String json;
+                if (TESTING) {
+//                json = "{ \"cards\": [ { \"summary\": \"Hypertension Diagnosis\", \"indicator\": \"info\", \"detail\": \"ConsiderHTNStage1 Patient\", \"source\": { \"label\": \"Info for those with normal blood pressure\", \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\" } }, { \"summary\": \"Recommend diagnosis of Stage 2 hypertension\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Patient rationale{{/patient}}{{#careTeam}}care team rationale{{/careTeam}}|{{#patient}}https://source.com/patient{{/patient}}{{#careTeam}}https://source.com/careTeam{{/careTeam}}|[ { \\\"label\\\": \\\"Enter Blood Pressure\\\", \\\"actions\\\": [ \\\"ServiceRequest for High Blood Pressure Monitoring\\\", \\\"{{#patient}}<a href='/bp-readings'>Click here to go to the Home Blood Pressure entry page</a>{{/patient}}\\\" ] }, { \\\"label\\\": \\\"Diet\\\", \\\"actions\\\": [ \\\"Put the fork down!\\\", \\\"{{#patient}}<input type='checkbox' class='goal' data-goalid='dashDiet' /><label>Try the DASH Diet</label>{{/patient}}\\\" ] } ]|at-most-one|<ol>{{#patient}}<li>https://links.com/patient</li>{{/patient}}<li>https://links.com/careTeamAndPatient</li></ol>\", \"source\": {} } ] }";
+                    json = "{ \"cards\": [ { \"summary\": \"Hypertension Diagnosis\", \"indicator\": \"info\", \"detail\": \"ConsiderHTNStage1 Patient\", \"source\": { \"label\": \"Info for those with normal blood pressure\", \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\" } }, { \"summary\": \"Recommend diagnosis of Stage 2 hypertension\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Patient rationale{{/patient}}{{#careTeam}}care team rationale{{/careTeam}}|{{#patient}}https://source.com/patient{{/patient}}{{#careTeam}}https://source.com/careTeam{{/careTeam}}|[ { \\\"label\\\": \\\"Enter Blood Pressure\\\", \\\"actions\\\": [ \\\"ServiceRequest for High Blood Pressure Monitoring\\\", \\\"{{#patient}}<a href='/bp-readings'>Click here to go to the Home Blood Pressure entry page</a>{{/patient}}\\\" ] }, { \\\"label\\\": \\\"Diet\\\", \\\"actions\\\": [ \\\"Put the fork down!\\\", \\\"{{#patient}}<input type='checkbox' class='goal' data-goalid='dashDiet' /><label>Try the DASH Diet</label>{{/patient}}\\\" ] } ]|at-most-one|[{{#patient}}{ \\\"label\\\": \\\"Patient Link\\\", \\\"url\\\": \\\"https://links.com/patient\\\" },{{/patient}} { \\\"label\\\": \\\"Care Team and Patient Link\\\", \\\"url\\\": \\\"https://links.com/careTeamAndPatient\\\" }]\", \"source\": {} } ] }";
+
+                } else {
+                    HttpResponse httpResponse  = new HttpRequest().post(cdsHooksEndpointURL + "/" + hookId, null, headers, writer.toString());
+                    json = httpResponse.getResponseBody();
+                }
+
+                Gson gson = new GsonBuilder().create();
+                try {
+                    json = MustacheUtil.compileMustache(cache.getAudience(), json);
+                    CDSHookResponse response = gson.fromJson(json, new TypeToken<CDSHookResponse>() {}.getType());
+
+                    List<Card> cards = new ArrayList<Card>();
+                    for (CDSCard cdsCard : response.getCards()) {
+                        cards.add(new Card(cdsCard));
+                    }
+
+                    cache.setCards(hookId, cards);
+
+                } catch (Exception e) {
+                    logger.error("caught " + e.getClass().getName() + " processing response for hookId=" + hookId + " - " + e.getMessage(), e);
+                    logger.error("\n\nJSON =\n" + json + "\n\n");
+                    throw e;
+                }
 
             } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " processing response for hookId=" + hookId + " - " + e.getMessage(), e);
-                logger.error("\n\nJSON =\n" + json + "\n\n");
+                logger.error("caught " + e.getClass().getName() + " processing hookId=" + hookId + " - " + e.getMessage(), e);
+                cache.deleteCards(hookId);
+
+                if (e instanceof IOException) {
+                    throw (IOException) e;
+                }
             }
         }
 

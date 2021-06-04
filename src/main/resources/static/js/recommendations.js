@@ -1,19 +1,23 @@
-async function executeRecommendations() {
+async function applyGoals() {
     let goals = await getRecordedGoals();
+    $('.recommendation').each(function () {
+        let cardsContainer = $(this).find('.cardsContainer');
+        goals.forEach(function(goal) {
+            $(cardsContainer).find('input.goal[data-goalid="' + goal.goalId + '"').each(function () {
+                if ($(this).attr('type') === 'checkbox') {
+                    $(this).prop('checked', true);
+                }
+            });
+        });
+    });
+}
 
-    $(".recommendation").each(function () {
+async function executeRecommendations(_callback) {
+    $('.recommendation').each(function () {
         let recommendationId = $(this).attr('data-id');
         let cardsContainer = $(this).find('.cardsContainer');
         executeRecommendation(recommendationId, function (cards) {
-            $(cardsContainer).html(renderCards(cards));
-
-            goals.forEach(function(goal) {
-                $(cardsContainer).find('input.goal[data-goalid="' + goal.goalId + '"').each(function () {
-                    if ($(this).attr('type') === 'checkbox') {
-                        $(this).prop('checked', true);
-                    }
-                });
-            });
+            _callback(cardsContainer, cards);
         });
     });
 }
@@ -21,14 +25,33 @@ async function executeRecommendations() {
 async function executeRecommendation(id, _callback) {
     let formData = new FormData();
     formData.append("id", id);
-
     let response = await fetch("/recommendations/execute", {
         method: "POST",
         body: formData
     });
-
     let cards = await response.json();
+    _callback(cards);
+}
 
+async function getCachedRecommendations(_callback) {
+    $(".recommendation").each(function () {
+        let recommendationId = $(this).attr('data-id');
+        let cardsContainer = $(this).find('.cardsContainer');
+        getCachedRecommendation(recommendationId, function (cards) {
+            _callback(cardsContainer, cards);
+        });
+    });
+}
+
+// get a recommendation from cache, but do not execute it
+async function getCachedRecommendation(id, _callback) {
+    let formData = new FormData();
+    formData.append("id", id);
+    let response = await fetch("/recommendations/getCached", {
+        method: "POST",
+        body: formData
+    });
+    let cards = await response.json();
     _callback(cards);
 }
 
@@ -61,23 +84,6 @@ function renderCards(cards) {
             html += "</span>\n";
         }
 
-        if (card.suggestions !== null) {
-            html += "<div class='suggestions'>";
-            card.suggestions.forEach(function(suggestion) {
-                html += "<div class='suggestion'>";
-                html += "<span class='heading'>Suggestion: " + suggestion.label + "</span>";
-                if (suggestion.actions !== null) {
-                    html += "<ul class='actions'>";
-                    suggestion.actions.forEach(function(action) {
-                        html += "<li class='action'>" + action + "</li>";
-                    });
-                    html += "</ul>";
-                }
-                html += "</div>\n";
-            });
-            html += "</div>\n";
-        }
-
         if (card.links !== null) {
             html += "<div class='links'>";
             card.links.forEach(function(link) {
@@ -91,6 +97,33 @@ function renderCards(cards) {
         // }
 
         html += "</div></div>\n";
+    });
+    return html;
+}
+
+function renderSuggestions(cards) {
+    let html = "";
+    cards.forEach(function (card) {
+        if (card.suggestions !== null) {
+            html += "<div class='card " + card.indicator + "'>\n";
+            html += "<div class='circle'><span>XX</span></div>\n"
+            html += "<div class='content'>\n";
+            html += "<span class='summary heading'>" + card.summary + "</span>\n";
+            html += "<div class='suggestions'>";
+            card.suggestions.forEach(function(suggestion) {
+                html += "<div class='suggestion'>";
+                html += "<span class='heading'>" + suggestion.label + "</span>";
+                if (suggestion.actions !== null) {
+                    html += "<ul class='actions'>";
+                    suggestion.actions.forEach(function(action) {
+                        html += "<li class='action'>" + action + "</li>";
+                    });
+                    html += "</ul>";
+                }
+                html += "</div>\n";
+            });
+            html += "</div></div></div>\n";
+        }
     });
     return html;
 }

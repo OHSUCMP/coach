@@ -99,6 +99,8 @@ public class HomeController {
 
             cache.set(session.getId(), audience, credentialsWithClient, internalPatientId);
 
+            cqfRulerService.executeHooksDetached(session.getId());
+
             return ResponseEntity.ok("session configured successfully");
 
         } else {

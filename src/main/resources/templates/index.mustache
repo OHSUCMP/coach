@@ -60,7 +60,11 @@
                     populateMedications();
                 });
 
-                executeRecommendations();
+                getCachedRecommendations(function(container, cards) {
+                    if (cards) {
+                        $(container).html(renderCards(cards));
+                    }
+                });
             });
         </script>
     {{/head}}

@@ -1,7 +1,8 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
+import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
+import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.entity.app.Goal;
-import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -28,12 +29,18 @@ public class GoalController extends AuthenticatedController {
     @Autowired
     private GoalService goalService;
 
+    @Autowired
+    private CQFRulerService cqfRulerService;
+
     @GetMapping(value={"", "/"})
     public String getGoals(HttpSession session, Model model) {
         try {
             patientController.populatePatientModel(session.getId(), model);
 
-        } catch (SessionMissingException e) {
+            List<CDSHook> list = cqfRulerService.getCDSHooks();
+            model.addAttribute("cdshooks", list);
+
+        } catch (Exception e) {
             logger.error("error populating patient model", e);
         }
 

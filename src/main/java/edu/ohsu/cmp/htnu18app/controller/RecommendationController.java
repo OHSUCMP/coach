@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
+import edu.ohsu.cmp.htnu18app.cache.CacheData;
+import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
@@ -9,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -26,7 +27,7 @@ public class RecommendationController extends AuthenticatedController {
     @Autowired
     private CQFRulerService cqfRulerService;
 
-    @GetMapping(value={"", "/"})
+    @PostMapping("list")
     public ResponseEntity<List<CDSHook>> getList(HttpSession session) {
         logger.info("requesting cds-hooks for session " + session.getId());
 
@@ -52,5 +53,40 @@ public class RecommendationController extends AuthenticatedController {
             logger.error("caught " + e.getClass().getName() + " executing hook '" + hookId + "'", e);
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PostMapping("getCached")
+    public ResponseEntity<List<Card>> getCached(HttpSession session,
+                                                @RequestParam("id") String hookId) {
+
+        // attempt to get cached recommendations every 5 seconds for up to what, 5 minutes?
+
+        CacheData cache = SessionCache.getInstance().get(session.getId());
+
+        List<Card> cards = null;
+        HttpStatus status = HttpStatus.REQUEST_TIMEOUT;
+
+        for (int i = 0; i < 60; i ++) {
+            cards = cache.getCards(hookId);
+
+            if (cards != null) {
+                logger.info("got cards for hookId=" + hookId + "!");
+                status = HttpStatus.OK;
+                break;
+
+            } else {
+                try {
+                    Thread.sleep(5000);
+
+                } catch (InterruptedException e) {
+                    logger.error("caught " + e.getClass().getName() + " getting cached cards for hookId=" + hookId +
+                            " (attempt " + i + ")", e);
+                    status = HttpStatus.INTERNAL_SERVER_ERROR;
+                    break;
+                }
+            }
+        }
+
+        return new ResponseEntity<>(cards, status);
     }
 }

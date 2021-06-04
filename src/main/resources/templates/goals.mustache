@@ -4,12 +4,21 @@
         <script type="text/javascript" src="js/form.js"></script>
         <link rel="stylesheet" href="css/form.css" />
 
+        <link rel="stylesheet" href="css/recommendations.css"/>
+        <script type="text/javascript" src="js/recommendations.js"></script>
+
         <script type="text/javascript" src="js/goals.js"></script>
         <link rel="stylesheet" href="css/goals.css"/>
 
         <script type="text/javascript">
             $(document).ready(function () {
                 enableHover('#goalsTable .link');
+
+                executeRecommendations(function(container, cards) {
+                    if (cards) {
+                        $(container).html(renderSuggestions(cards));
+                    }
+                });
             });
 
             $(document).on('click', '#createButton', function() {
@@ -87,6 +96,29 @@
                             <span id="saveMessage" class="hidden"></span>
                         </div>
                     </form>
+                </td>
+            </tr>
+        </table>
+
+        <table class="content">
+            <tr>
+                <td class="heading">
+                    Suggestions and Goals
+                </td>
+            </tr>
+            <tr>
+                <td id="recommendationsContainer">
+                    {{#cdshooks}}
+                        <div class="recommendation" data-id="{{id}}">
+                            <div class="heading">{{title}}</div>
+                            {{#description}}
+                                <div class="description">{{description}}</div>
+                            {{/description}}
+                            <div class="cardsContainer">
+                                Loading...
+                            </div>
+                        </div>
+                    {{/cdshooks}}
                 </td>
             </tr>
         </table>
