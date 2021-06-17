@@ -9,33 +9,44 @@ grant all on htnu18app.* to 'htnu18app'@'%';
 drop table if exists patient;
 create table patient (
     id int not null auto_increment primary key,
-    pat_id_hash char(64) unique not null
+    patIdHash char(64) unique not null
 );
 
 drop table if exists home_bp_reading;
 create table home_bp_reading (
     id int not null auto_increment primary key,
-    pat_id int not null,
+    patId int not null,
     systolic int not null,
     diastolic int not null,
     pulse int not null,
-    reading_date datetime not null,
-    followed_instructions tinyint(1) not null,
-    created_date datetime not null
+    readingDate datetime not null,
+    followedInstructions tinyint(1) not null,
+    createdDate datetime not null
 );
 
-create index patId on home_bp_reading (pat_id);
+create index idxPatId on home_bp_reading (patId);
 
 drop table if exists goal;
 create table goal (
   id int not null auto_increment primary key,
-  goal_id varchar(100) not null,
-  pat_id int not null,
-  goal_text varchar(255) not null,
-  follow_up_days int,
-  created_date datetime not null,
+  patId int not null,
+  extGoalId varchar(100) not null,
+  goalText varchar(255) not null,
+  followUpDays int,
+  createdDate datetime not null,
   completed tinyint(1) not null default 0,
-  completed_date datetime
+  completedDate datetime
 );
 
-create unique index goalPatId on goal (goal_id, pat_id);
+create unique index idxPatGoalId on goal (patId, extGoalId);
+
+drop table if exists goal_history;
+create table goal_history (
+    id int not null auto_increment primary key,
+    goalId int not null,
+    lifecycleStatus varchar(20) not null,
+    achievementStatus varchar(20) not null,
+    createdDate datetime not null
+);
+
+create index idxGoalId on goal_history (goalId);

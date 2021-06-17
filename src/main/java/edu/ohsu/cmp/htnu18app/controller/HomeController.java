@@ -9,6 +9,7 @@ import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
 import edu.ohsu.cmp.htnu18app.util.FhirUtil;
+import org.hl7.fhir.r4.model.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,6 +101,9 @@ public class HomeController {
             cache.set(session.getId(), audience, credentialsWithClient, internalPatientId);
 
             cqfRulerService.executeHooksDetached(session.getId());
+
+            Bundle b = patientService.getMedicationStatements(session.getId());
+            logger.info("got medications : " + b);
 
             return ResponseEntity.ok("session configured successfully");
 

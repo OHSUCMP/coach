@@ -15,20 +15,12 @@ public class HomeBloodPressureReading {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "pat_id")
     private Long patId;
-
     private Integer systolic;
     private Integer diastolic;
     private Integer pulse;
-
-    @Column(name = "reading_date")
     private Date readingDate;
-
-    @Column(name = "followed_instructions")
     private Boolean followedInstructions;
-
-    @Column(name = "created_date")
     private Date createdDate;
 
     protected HomeBloodPressureReading() {

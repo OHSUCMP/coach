@@ -2,23 +2,24 @@ package edu.ohsu.cmp.htnu18app.service;
 
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
+import edu.ohsu.cmp.htnu18app.entity.vsac.Concept;
 import edu.ohsu.cmp.htnu18app.entity.vsac.ValueSet;
-import edu.ohsu.cmp.htnu18app.fhir.FHIRQuery;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.MedicationModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.repository.app.PatientRepository;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.MedicationStatement;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.*;
+import org.opencds.cqf.tooling.terminology.CodeSystemLookupDictionary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 @Service
 public class PatientService {
@@ -94,17 +95,52 @@ public class PatientService {
     public Bundle getMedicationStatements(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
 
-        Bundle bundle = cache.getMedicationStatements();
-        if (bundle == null) {
+        Bundle b = cache.getMedicationStatements();
+        if (b == null) {
             logger.info("requesting MedicationStatements for session " + sessionId);
 
-            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+            // build concept info as a simple set we can query to test inclusion
+            // (these are the meds we want to show)
             ValueSet valueSet = valueSetService.getValueSet(MedicationModel.VALUE_SET_OID);
-            bundle = new FHIRQuery(fcc).queryByValueSet(MedicationStatement.class, valueSet);
+            Set<String> concepts = new HashSet<>();
+            for (Concept c : valueSet.getConcepts()) {
+                String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
+                concepts.add(codeSystem + "|" + c.getCode());
+            }
 
-            cache.setMedicationStatements(bundle);
+            // get all the patient's meds (yes, all of them)
+            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+//            b = new FHIRQuery(fcc).queryByValueSet(MedicationStatement.class, valueSet);
+            b = fcc.getClient()
+                    .search()
+                    .forResource(MedicationStatement.class)
+                    .and(MedicationStatement.PATIENT.hasId(fcc.getCredentials().getPatientId()))
+                    .returnBundle(Bundle.class)
+                    .execute();
+
+            // filter out any of the patient's meds that aren't included in set we want to show
+            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+            while (iter.hasNext()) {
+                Bundle.BundleEntryComponent entry = iter.next();
+                boolean exists = false;
+                if (entry.getResource() instanceof MedicationStatement) {
+                    MedicationStatement ms = (MedicationStatement) entry.getResource();
+                    CodeableConcept cc = ms.getMedicationCodeableConcept();
+                    for (Coding c : cc.getCoding()) {
+                        if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                }
+                if ( ! exists ) {
+                    iter.remove();
+                }
+            }
+
+            cache.setMedicationStatements(b);
         }
 
-        return bundle;
+        return b;
     }
 }

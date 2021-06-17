@@ -92,23 +92,7 @@ function renderCards(cards) {
             html += "</div>\n";
         }
 
-        // if (card.selectionBehavior !== null) {
-        //     html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>\n";
-        // }
-
-        html += "</div></div>\n";
-    });
-    return html;
-}
-
-function renderSuggestions(cards) {
-    let html = "";
-    cards.forEach(function (card) {
         if (card.suggestions !== null) {
-            html += "<div class='card " + card.indicator + "'>\n";
-            html += "<div class='circle'><span>XX</span></div>\n"
-            html += "<div class='content'>\n";
-            html += "<span class='summary heading'>" + card.summary + "</span>\n";
             html += "<div class='suggestions'>";
             card.suggestions.forEach(function(suggestion) {
                 html += "<div class='suggestion'>";
@@ -122,12 +106,17 @@ function renderSuggestions(cards) {
                 }
                 html += "</div>\n";
             });
-            html += "</div></div></div>\n";
+            html += "</div>";
         }
+
+        // if (card.selectionBehavior !== null) {
+        //     html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>\n";
+        // }
+
+        html += "</div></div>\n";
     });
     return html;
 }
-
 
 $(document).ready(function() {
     $('#recommendationsContainer').on('change', 'input.goal[type="checkbox"]', function() {

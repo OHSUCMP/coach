@@ -179,30 +179,18 @@
                 </td>
             </tr>
             <tr>
-                <td>
-                    <table class="no-spacing">
-                        <tr>
-                            <td id="recommendationsContainer">
-                                {{#cdshooks}}
-                                    <div class="recommendation" data-id="{{id}}">
-                                        <div class="heading">{{title}}</div>
-                                        {{#description}}
-                                            <div class="description">{{description}}</div>
-                                        {{/description}}
-                                        <div class="cardsContainer">
-                                            Loading...
-                                        </div>
-                                    </div>
-                                {{/cdshooks}}
-                            </td>
-                            <td id="medicationsContainer">
-                                <div class="heading">Medications</div>
-                                <div id="medications">
-                                    Loading...
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                <td id="recommendationsContainer">
+                    {{#cdshooks}}
+                        <div class="recommendation" data-id="{{id}}">
+                            <div class="heading">{{title}}</div>
+                            {{#description}}
+                                <div class="description">{{description}}</div>
+                            {{/description}}
+                            <div class="cardsContainer">
+                                Loading...
+                            </div>
+                        </div>
+                    {{/cdshooks}}
                 </td>
             </tr>
         </table>

@@ -10,31 +10,19 @@ public class Goal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "goal_id")
-    private String goalId;
-
-    @Column(name = "pat_id")
     private Long patId;
-
-    @Column(name = "goal_text")
+    private String extGoalId;
     private String goalText;
-
-    @Column(name = "follow_up_days")
     private Integer followUpDays;
-
-    @Column(name = "created_date")
     private Date createdDate;
-
     private Boolean completed;
-
-    @Column(name = "completed_date")
     private Date completedDate;
 
     protected Goal() {
     }
 
-    public Goal(String goalId, String goalText, Integer followUpDays) {
-        this.goalId = goalId;
+    public Goal(String extGoalId, String goalText, Integer followUpDays) {
+        this.extGoalId = extGoalId;
         this.goalText = goalText;
         this.followUpDays = followUpDays;
         this.completed = false;
@@ -48,20 +36,20 @@ public class Goal {
         this.id = id;
     }
 
-    public String getGoalId() {
-        return goalId;
-    }
-
-    public void setGoalId(String goalId) {
-        this.goalId = goalId;
-    }
-
     public Long getPatId() {
         return patId;
     }
 
     public void setPatId(Long patId) {
         this.patId = patId;
+    }
+
+    public String getExtGoalId() {
+        return extGoalId;
+    }
+
+    public void setExtGoalId(String goalId) {
+        this.extGoalId = goalId;
     }
 
     public String getGoalText() {

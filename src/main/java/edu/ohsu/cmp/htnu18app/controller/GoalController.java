@@ -44,7 +44,7 @@ public class GoalController extends AuthenticatedController {
             logger.error("error populating patient model", e);
         }
 
-        List<Goal> list = goalService.getGoals(session.getId());
+        List<Goal> list = goalService.getGoalList(session.getId());
         model.addAttribute("goals", list);
 
         return "goals";
@@ -52,7 +52,7 @@ public class GoalController extends AuthenticatedController {
 
     @GetMapping("list")
     public ResponseEntity<List<Goal>> getGoalsList(HttpSession session) {
-        List<Goal> list = goalService.getGoals(session.getId());
+        List<Goal> list = goalService.getGoalList(session.getId());
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
 

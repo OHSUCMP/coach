@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
 import java.util.List;
 
 @Controller
@@ -41,19 +40,19 @@ public class RecommendationController extends AuthenticatedController {
         }
     }
 
-    @PostMapping("execute")
-    public ResponseEntity<List<Card>> execute(HttpSession session,
-                                              @RequestParam("id") String hookId) {
-        try {
-            List<Card> cards = cqfRulerService.executeHook(session.getId(), hookId);
-            logger.info("got cards " + cards);
-            return new ResponseEntity<>(cards, HttpStatus.OK);
-
-        } catch (IOException e) {
-            logger.error("caught " + e.getClass().getName() + " executing hook '" + hookId + "'", e);
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+//    @PostMapping("execute")
+//    public ResponseEntity<List<Card>> execute(HttpSession session,
+//                                              @RequestParam("id") String hookId) {
+//        try {
+//            List<Card> cards = cqfRulerService.executeHook(session.getId(), hookId);
+//            logger.info("got cards " + cards);
+//            return new ResponseEntity<>(cards, HttpStatus.OK);
+//
+//        } catch (IOException e) {
+//            logger.error("caught " + e.getClass().getName() + " executing hook '" + hookId + "'", e);
+//            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 
     @PostMapping("getCached")
     public ResponseEntity<List<Card>> getCached(HttpSession session,

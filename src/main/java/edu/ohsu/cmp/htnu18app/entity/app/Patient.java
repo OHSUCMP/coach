@@ -9,7 +9,6 @@ public class Patient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "pat_id_hash")
     private String patIdHash;
 
     protected Patient() {

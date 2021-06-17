@@ -25,31 +25,31 @@ async function createGoal(goalId, goalText, followUpDays, _callback) {
     }
 }
 
-function appendGoalToTable(goal) {
-    let container = $('#goalsTable');
-    let unsortedData = $(container).find('tr');
-    let status = goal.completed ? 'Completed' : 'Active';
-
-    // note : keep this section synced with goals.mustache
-
-    let html = "<tr class='data' data-goalid='" + goal.goalId + "'>" +
-        "<td>" + goal.goalText + "</td>" +
-        "<td class='status'>" + status + "</td>" +
-        "<td>" + goal.createdDate + "</td>" +
-        "<td class='actions'>" + buildActionLink(goal.created) + "</td>" +
-        "</tr>\n";
-
-    // now sort
-    // adapted from https://stackoverflow.com/questions/6133723/sort-divs-in-jquery-based-on-attribute-data-sort
-
-    let sortedData = $(unsortedData).add(html).sort(function(a,b) {
-        let tsA = $(a).data('timestamp');
-        let tsB = $(b).data('timestamp');
-        return (tsA < tsB) ? 1 : (tsA > tsB) ? -1 : 0;
-    });
-
-    $(container).html(sortedData);
-}
+// function appendGoalToTable(goal) {
+//     let container = $('#goalsTable');
+//     let unsortedData = $(container).find('tr');
+//     let status = goal.completed ? 'Completed' : 'Active';
+//
+//     // note : keep this section synced with goals.mustache
+//
+//     let html = "<tr class='data' data-goalid='" + goal.goalId + "'>" +
+//         "<td>" + goal.goalText + "</td>" +
+//         "<td class='status'>" + status + "</td>" +
+//         "<td>" + goal.createdDate + "</td>" +
+//         "<td class='actions'>" + buildActionLink(goal.created) + "</td>" +
+//         "</tr>\n";
+//
+//     // now sort
+//     // adapted from https://stackoverflow.com/questions/6133723/sort-divs-in-jquery-based-on-attribute-data-sort
+//
+//     let sortedData = $(unsortedData).add(html).sort(function(a,b) {
+//         let tsA = $(a).data('timestamp');
+//         let tsB = $(b).data('timestamp');
+//         return (tsA < tsB) ? 1 : (tsA > tsB) ? -1 : 0;
+//     });
+//
+//     $(container).html(sortedData);
+// }
 
 async function setCompleted(el, completed) {
     let goalId = $(el).closest('tr').attr('data-goalid');
@@ -70,13 +70,16 @@ async function setCompleted(el, completed) {
             let status = goal.completed ? 'Completed' : 'Active';
             $(row).children('td.status').html(status);
 
-            let action = buildActionLink(goal.completed);
+            let action = buildLifecycleStatusDiv(goal.completed);
             $(row).children('td.actions').html(action);
         }
     }
 }
 
-function buildActionLink(goal_completed) {
+function buildLifecycleStatusDiv(goal_completed) {
+
+    // todo : enhance this to show all available Goal statuses
+
     return goal_completed ?
         '<span class="markActive link">Mark Active</span>' :
         '<span class="markCompleted link">Mark Completed</span>';

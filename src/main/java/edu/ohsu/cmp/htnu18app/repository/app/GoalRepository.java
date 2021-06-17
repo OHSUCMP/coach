@@ -13,10 +13,10 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
     @Query("select g from Goal g where g.patId=:patId")
     List<Goal> findAllByPatId(@Param("patId") Long patId);
 
-    Goal findOneByPatIdAndGoalId(@Param("patId") Long patId, @Param("goalId") String goalId);
+    Goal findOneByPatIdAndExtGoalId(@Param("patId") Long patId, @Param("extGoalId") String extGoalId);
 
     @Modifying
     @Transactional
-    @Query("delete from Goal where goalId=:goalId and patId=:patId")
+    @Query("delete from Goal where extGoalId=:goalId and patId=:patId")
     void deleteByGoalIdForPatient(@Param("goalId") String goalId, @Param("patId") Long patId);
 }

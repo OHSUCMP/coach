@@ -16,14 +16,14 @@ public class GoalService {
     @Autowired
     private GoalRepository repository;
 
-    public List<Goal> getGoals(String sessionId) {
+    public List<Goal> getGoalList(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
         return repository.findAllByPatId(cache.getInternalPatientId());
     }
 
     public Goal getGoal(String sessionId, String goalId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
-        return repository.findOneByPatIdAndGoalId(cache.getInternalPatientId(), goalId);
+        return repository.findOneByPatIdAndExtGoalId(cache.getInternalPatientId(), goalId);
     }
 
     public Goal create(String sessionId, Goal goal) {
