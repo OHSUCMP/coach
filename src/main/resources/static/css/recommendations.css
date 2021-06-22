@@ -25,7 +25,6 @@
     background-color: #ffffff;
     padding: 5px;
     margin: 5px 0 5px 0;
-    width: 640px;
     font-size: small;
 }
 
@@ -43,7 +42,6 @@
 
 .card .content {
     display: inline-block;
-    width: 600px;
 }
 
 .card.info .circle {

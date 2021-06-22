@@ -1,10 +1,8 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
-import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
-import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.entity.app.Goal;
+import edu.ohsu.cmp.htnu18app.service.GoalHistoryService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,15 +28,18 @@ public class GoalController extends AuthenticatedController {
     private GoalService goalService;
 
     @Autowired
-    private CQFRulerService cqfRulerService;
+    private GoalHistoryService goalHistoryService;
+
+//    @Autowired
+//    private CQFRulerService cqfRulerService;
 
     @GetMapping(value={"", "/"})
     public String getGoals(HttpSession session, Model model) {
         try {
             patientController.populatePatientModel(session.getId(), model);
 
-            List<CDSHook> list = cqfRulerService.getCDSHooks();
-            model.addAttribute("cdshooks", list);
+//            List<CDSHook> list = cqfRulerService.getCDSHooks();
+//            model.addAttribute("cdshooks", list);
 
         } catch (Exception e) {
             logger.error("error populating patient model", e);
@@ -58,18 +59,22 @@ public class GoalController extends AuthenticatedController {
 
     @PostMapping("create")
     public ResponseEntity<Goal> create(HttpSession session,
-                                       @RequestParam("goalId") String goalId,
+                                       @RequestParam("extGoalId") String extGoalId,
+                                       @RequestParam("category") String category,
                                        @RequestParam("goalText") String goalText,
                                        @RequestParam("followUpDays") Integer followUpDays) {
 
-        if (goalId.isEmpty()) {
-            // autogenerate goal ID
-            goalId = DigestUtils.sha256Hex(goalText);
-        }
+// matt 6/22 : commented out, we don't want to autogenerate goal IDs anymore, as we aren't allowing the user to
+//             set their own arbitrary goals independent from generated Suggestions
 
-        Goal goal = goalService.getGoal(session.getId(), goalId);
+//        if (extGoalId.isEmpty()) {
+//            // autogenerate goal ID
+//            extGoalId = DigestUtils.sha256Hex(goalText);
+//        }
+
+        Goal goal = goalService.getGoal(session.getId(), extGoalId);
         if (goal == null) {
-            goal = new Goal(goalId, goalText, followUpDays);
+            goal = new Goal(extGoalId, category, goalText, followUpDays);
             goal = goalService.create(session.getId(), goal);
             return new ResponseEntity<>(goal, HttpStatus.OK);
 
@@ -80,10 +85,10 @@ public class GoalController extends AuthenticatedController {
 
     @PutMapping("setCompleted")
     public ResponseEntity<Goal> setCompleted(HttpSession session,
-                                             @RequestParam("goalId") String goalId,
+                                             @RequestParam("extGoalId") String extGoalId,
                                              @RequestParam("completed") Boolean completed) {
 
-        Goal goal = goalService.getGoal(session.getId(), goalId);
+        Goal goal = goalService.getGoal(session.getId(), extGoalId);
         if (goal != null) {
             goal.setCompleted(completed);
 
@@ -101,10 +106,10 @@ public class GoalController extends AuthenticatedController {
 
     @PostMapping("delete")
     public ResponseEntity<String> delete(HttpSession session,
-                                         @RequestParam("goalId") String goalId) {
+                                         @RequestParam("extGoalId") String extGoalId) {
         try {
-            goalService.delete(session.getId(), goalId);
-            return new ResponseEntity<>(goalId, HttpStatus.OK);
+            goalService.delete(session.getId(), extGoalId);
+            return new ResponseEntity<>(extGoalId, HttpStatus.OK);
 
         } catch (Exception e) {
             return new ResponseEntity<>("Caught " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

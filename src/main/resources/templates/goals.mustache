@@ -63,6 +63,7 @@
                 <td>
                     <table id="goalsTable" class="data">
                         <tr id="goalsTableHeader">
+                            <th>Category</th>
                             <th>Goal</th>
                             <th>Status</th>
                             <th>Created Date</th>
@@ -70,7 +71,8 @@
                         </tr>
                         {{! note : keep this section synced with goals.js:appendRecordToTable(obj) }}
                         {{#goals}}
-                            <tr class='data' data-goalid='{{goalId}}'>
+                            <tr class='data' data-extGoalId='{{extGoalId}}'>
+                                <td>{{category}}</td>
                                 <td>{{goalText}}</td>
                                 <td class="status">
                                     {{#completed}}Completed{{/completed}}
@@ -78,6 +80,7 @@
                                 </td>
                                 <td>{{createdDate}}</td>
                                 <td class="actions">
+                                    <!-- todo : update this to make available all AchievementStatus values.  maybe also LifecycleStatus? -->
                                     {{#completed}}
                                         <span class="markActive link">Mark Active</span>
                                     {{/completed}}

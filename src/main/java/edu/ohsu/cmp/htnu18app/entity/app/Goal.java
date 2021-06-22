@@ -12,6 +12,7 @@ public class Goal {
 
     private Long patId;
     private String extGoalId;
+    private String category;
     private String goalText;
     private Integer followUpDays;
     private Date createdDate;
@@ -21,8 +22,9 @@ public class Goal {
     protected Goal() {
     }
 
-    public Goal(String extGoalId, String goalText, Integer followUpDays) {
+    public Goal(String extGoalId, String category, String goalText, Integer followUpDays) {
         this.extGoalId = extGoalId;
+        this.category = category;
         this.goalText = goalText;
         this.followUpDays = followUpDays;
         this.completed = false;
@@ -50,6 +52,14 @@ public class Goal {
 
     public void setExtGoalId(String goalId) {
         this.extGoalId = goalId;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public String getGoalText() {

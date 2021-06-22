@@ -2,15 +2,20 @@ package edu.ohsu.cmp.htnu18app.model.recommendation;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSCard;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.Source;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Card {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     private String summary;
     private String indicator;
     private String detail;
@@ -33,8 +38,23 @@ public class Card {
         this.selectionBehavior = cdsCard.getSelectionBehavior();
 
         Gson gson = new GsonBuilder().create();
-        this.suggestions = gson.fromJson(cdsCard.getSuggestions(), new TypeToken<ArrayList<Suggestion>>(){}.getType());
-        this.links = gson.fromJson(cdsCard.getLinks(), new TypeToken<ArrayList<Link>>(){}.getType());
+        try {
+            this.suggestions = gson.fromJson(cdsCard.getSuggestions(), new TypeToken<ArrayList<Suggestion>>(){}.getType());
+
+        } catch (JsonSyntaxException e) {
+            logger.error("caught " + e.getClass().getName() + " processing suggestions - " + e.getMessage(), e);
+            logger.error("JSON=" + cdsCard.getSuggestions());
+            throw e;
+        }
+
+        try {
+            this.links = gson.fromJson(cdsCard.getLinks(), new TypeToken<ArrayList<Link>>(){}.getType());
+
+        } catch (JsonSyntaxException e) {
+            logger.error("caught " + e.getClass().getName() + " processing links - " + e.getMessage(), e);
+            logger.error("JSON=" + cdsCard.getLinks());
+            throw e;
+        }
     }
 
     public String getSummary() {

@@ -21,9 +21,9 @@ public class GoalService {
         return repository.findAllByPatId(cache.getInternalPatientId());
     }
 
-    public Goal getGoal(String sessionId, String goalId) {
+    public Goal getGoal(String sessionId, String extGoalId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
-        return repository.findOneByPatIdAndExtGoalId(cache.getInternalPatientId(), goalId);
+        return repository.findOneByPatIdAndExtGoalId(cache.getInternalPatientId(), extGoalId);
     }
 
     public Goal create(String sessionId, Goal goal) {
@@ -38,8 +38,8 @@ public class GoalService {
         return repository.save(goal);
     }
 
-    public void delete(String sessionId, String goalId) {
+    public void delete(String sessionId, String extGoalId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
-        repository.deleteByGoalIdForPatient(goalId, cache.getInternalPatientId());
+        repository.deleteByGoalIdForPatient(extGoalId, cache.getInternalPatientId());
     }
 }

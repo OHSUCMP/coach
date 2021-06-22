@@ -17,6 +17,6 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
 
     @Modifying
     @Transactional
-    @Query("delete from Goal where extGoalId=:goalId and patId=:patId")
-    void deleteByGoalIdForPatient(@Param("goalId") String goalId, @Param("patId") Long patId);
+    @Query("delete from Goal where extGoalId=:extGoalId and patId=:patId")
+    void deleteByGoalIdForPatient(@Param("extGoalId") String extGoalId, @Param("patId") Long patId);
 }

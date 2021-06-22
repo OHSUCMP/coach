@@ -8,9 +8,10 @@ async function getRecordedGoals() {
     return goals;
 }
 
-async function createGoal(goalId, goalText, followUpDays, _callback) {
+async function createGoal(extGoalId, category, goalText, followUpDays, _callback) {
     let formData = new FormData();
-    formData.append("goalId", goalId);
+    formData.append("extGoalId", extGoalId);
+    formData.append("category", category);
     formData.append("goalText", goalText);
     formData.append("followUpDays", followUpDays || 0);
 
@@ -52,10 +53,10 @@ async function createGoal(goalId, goalText, followUpDays, _callback) {
 // }
 
 async function setCompleted(el, completed) {
-    let goalId = $(el).closest('tr').attr('data-goalid');
+    let extGoalId = $(el).closest('tr').attr('data-extGoalId');
 
     let formData = new FormData();
-    formData.append("goalId", goalId);
+    formData.append("extGoalId", extGoalId);
     formData.append("completed", completed);
 
     let response = await fetch("/goals/setCompleted", {
@@ -65,7 +66,7 @@ async function setCompleted(el, completed) {
 
     let goal = await response.json();
     if (goal) {
-        let row = $('tr.data[data-goalid=' + goal.goalId + ']');
+        let row = $('tr.data[data-extGoalId=' + goal.extGoalId + ']');
         if (row) {
             let status = goal.completed ? 'Completed' : 'Active';
             $(row).children('td.status').html(status);
@@ -85,17 +86,17 @@ function buildLifecycleStatusDiv(goal_completed) {
         '<span class="markCompleted link">Mark Completed</span>';
 }
 
-async function deleteGoal(goalId, _callback) {
+async function deleteGoal(extGoalId, _callback) {
     let formData = new FormData();
-    formData.append("goalId", goalId);
+    formData.append("extGoalId", extGoalId);
 
     let response = await fetch("/goals/delete", {
         method: "POST",
         body: formData
     });
 
-    let deletedGoalId = await response.text();
-    if (deletedGoalId) {
-        _callback(deletedGoalId);
+    let deletedExtGoalId = await response.text();
+    if (deletedExtGoalId) {
+        _callback(deletedExtGoalId);
     }
 }
