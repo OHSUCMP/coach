@@ -63,6 +63,7 @@ public class GoalController extends AuthenticatedController {
                                        @RequestParam("referenceSystem") String referenceSystem,
                                        @RequestParam("referenceCode") String referenceCode,
                                        @RequestParam("goalText") String goalText,
+                                       @RequestParam("targetDateTS") Long targetDateTS,
                                        @RequestParam("followUpDays") Integer followUpDays) {
 
 // matt 6/22 : commented out, we don't want to autogenerate goal IDs anymore, as we aren't allowing the user to
@@ -73,9 +74,11 @@ public class GoalController extends AuthenticatedController {
 //            extGoalId = DigestUtils.sha256Hex(goalText);
 //        }
 
+        Date targetDate = new Date(targetDateTS);
+
         Goal goal = goalService.getGoal(session.getId(), extGoalId);
         if (goal == null) {
-            goal = new Goal(extGoalId, referenceSystem, referenceCode, goalText, followUpDays);
+            goal = new Goal(extGoalId, referenceSystem, referenceCode, goalText, targetDate, followUpDays);
             goal = goalService.create(session.getId(), goal);
             return new ResponseEntity<>(goal, HttpStatus.OK);
 

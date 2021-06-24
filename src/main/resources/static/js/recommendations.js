@@ -1,3 +1,19 @@
+function enableDatePicker(sel) {
+    let minDate = new Date();
+    minDate.setDate(minDate.getDate() + 1);
+
+    $(sel).datepicker({
+        changeMonth: true,
+        changeYear: true,
+        showButtonPanel: true,
+        showOn: 'focus', //'button',
+        constrainInput: true,
+        dateFormat: 'mm-dd-yy',
+        minDate: minDate,
+        gotoCurrent: true //,
+    });
+}
+
 async function applyGoals() {
     let goals = await getRecordedGoals();
     $('.recommendation').each(function () {
@@ -39,6 +55,7 @@ async function getCachedRecommendations(_callback) {
         let cardsContainer = $(this).find('.cardsContainer');
         getCachedRecommendation(recommendationId, function (cards) {
             _callback(cardsContainer, cards);
+            enableDatePicker($(cardsContainer).find('.goalTargetDate'));
         });
     });
 }
@@ -59,7 +76,7 @@ function renderCards(cards) {
     let html = "";
     cards.forEach(function (card) {
         html += "<div class='card " + card.indicator + "'>\n";
-        html += "<table width='100%'><tr><td>\n";
+        html += "<table style='width:100%'><tr><td>\n";
         html += "<div class='circle'><span>XX</span></div>\n"
         html += "</td><td>\n";
         html += "<div class='content'>\n";
@@ -137,30 +154,40 @@ function buildCounselingHTML(suggestions) {
 function buildGoalsHTML(suggestions) {
     let html = "";
     if (suggestions !== null) {
-        let i = 0;
         suggestions.forEach(function(s) {
             if (s.type === 'goal') {
                 html += "<div class='goal' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code=" + s.references.code + "'>";
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tr><td>";
-                if (s.actions !== null) {
 
-                    // todo : construct HTML inputs as required
+                if (s.actions === null || s.actions.length === 0) {
+                    // textbox input
+                    html += "<input type='text' class='action' placeholder='Describe your goal here'>";
 
-                    html += "<ul class='actions'>";
+                } else if (s.actions.length === 1) {
+                    // predefined single goal, this is all you get, this is a label
+                    html += "<div class='action'>" + s.actions[0].label + "</div>";
+
+                } else {
+                    // predefined multiple-choice goal, these are radio buttons
+                    let i = 0;
+                    let x = randomChars(5);
                     s.actions.forEach(function(action) {
-                        html += "<li class='action'>" + action.label + "</li>";
+                        html += "<input id='action" + x + "_" + i + "' class='action' type='radio' name='action" + x + "' value='" + action.label + "'>";
+                        html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label>\n";
+                        i ++;
                     });
-                    html += "</ul>";
                 }
+
                 html += "</td><td>";
-                html += "<span class='commitToGoalButton' data-extGoalId='" + s.id + "'>Commit to Goal</span></td>\n";
+
+                html += "<div class='commitToGoalButton'><span>Commit to Goal</span></div></td>\n";
                 html += "</td>";
                 html += "</tr><tr>";
 
-                let id = randomChars(5);
-                html += "<td><label for='goalTargetDate" + id + "'>When do you want to achieve this goal?</label></td>";
-                html += "<td><input id='goalTargetDate" + id + "' type='text' class='goalTargetDate' placeholder='--Select Date--' readOnly/></td>";
+                let y = randomChars(5);
+                html += "<td><label for='goalTargetDate" + y + "'>When do you want to achieve this goal?</label></td>";
+                html += "<td><input id='goalTargetDate" + y + "' type='text' class='goalTargetDate' placeholder='--Select Date--' readOnly/></td>";
 
                 html += "</tr></table>";
                 html += "</div>\n";
@@ -179,12 +206,27 @@ function buildGoalData(button) {
     g.referenceSystem = $(goal).attr('data-reference-system');
     g.referenceCode = $(goal).attr('data-reference-code');
     g.goalText = getGoalText(goal);
+    g.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
     g.followUpDays = 0;
     return g;
 }
 
-function getGoalText(suggestion) {
-    return ''; // todo : get the selected / entered goal text
+function getGoalText(goal) {
+    let action = $(goal).find('.action');
+
+    if ($(action).length === 1) {
+        if ($(action).is('input[type="text"]')) {
+            return $(action).val();
+
+        } else if ($(action).is('div')) {
+            return $(action).text();
+        }
+
+    } else if ($(action).length > 1) {
+        return $(action).filter(":checked").val();
+    }
+
+    return null;
 }
 
 function buildCounselingData(a) {
@@ -215,6 +257,8 @@ async function registerCounselingReceived(c, _callback) {
 }
 
 $(document).ready(function() {
+    enableHover('.commitToGoalButton');
+
     $(document).on('click', '.goalsContainer .goal .commitToGoalButton', function() {
         let g = buildGoalData(this);
 

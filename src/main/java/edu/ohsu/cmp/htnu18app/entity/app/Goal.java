@@ -15,6 +15,7 @@ public class Goal {
     private String referenceSystem;
     private String referenceCode;
     private String goalText;
+    private Date targetDate;
     private Integer followUpDays;
     private Date createdDate;
     private Boolean completed;
@@ -23,11 +24,12 @@ public class Goal {
     protected Goal() {
     }
 
-    public Goal(String extGoalId, String referenceSystem, String referenceCode, String goalText, Integer followUpDays) {
+    public Goal(String extGoalId, String referenceSystem, String referenceCode, String goalText, Date targetDate, Integer followUpDays) {
         this.extGoalId = extGoalId;
         this.referenceSystem = referenceSystem;
         this.referenceCode = referenceCode;
         this.goalText = goalText;
+        this.targetDate = targetDate;
         this.followUpDays = followUpDays;
         this.completed = false;
     }
@@ -78,6 +80,14 @@ public class Goal {
 
     public void setGoalText(String goalText) {
         this.goalText = goalText;
+    }
+
+    public Date getTargetDate() {
+        return targetDate;
+    }
+
+    public void setTargetDate(Date targetDate) {
+        this.targetDate = targetDate;
     }
 
     public Integer getFollowUpDays() {

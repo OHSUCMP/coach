@@ -34,6 +34,7 @@ create table goal (
   referenceSystem varchar(100) not null,
   referenceCode varchar(100) not null,
   goalText varchar(255) not null,
+  targetDate date not null,
   followUpDays int,
   createdDate datetime not null,
   completed tinyint(1) not null default 0,

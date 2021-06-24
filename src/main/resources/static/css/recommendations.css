@@ -74,24 +74,28 @@
     display: inline-block;
 }
 
-.card .suggestions {
-    display: block;
-}
+/*.card .suggestions {*/
+/*    display: block;*/
+/*}*/
 
-.card .suggestion {
-    margin: 5px 0 0 10px;
-    padding: 0 5px 0 5px;
-    /*background-color: rgba(0, 0, 0, 0.1);*/
-}
+/*.card .suggestion {*/
+/*    margin: 5px 0 0 10px;*/
+/*    padding: 0 5px 0 5px;*/
+/*    !*background-color: rgba(0, 0, 0, 0.1);*!*/
+/*}*/
 
-.card .suggestion .heading {
-    margin-top: 5px;
-    font-size: small;
-}
+/*.card .suggestion .heading {*/
+/*    margin-top: 5px;*/
+/*    font-size: small;*/
+/*}*/
 
-.card .suggestion .actions {
-    margin: 2px 0 2px 0;
+/*.card .suggestion .actions {*/
+/*    margin: 2px 0 2px 0;*/
 
+/*}*/
+
+.card table td {
+    vertical-align: top;
 }
 
 .card .selectionBehavior {
@@ -106,14 +110,44 @@
     font-size: small;
 }
 
-.counselingContainer .action ul {
+.counselingContainer ul.actions {
     margin-top: 0;
 }
 
+.goal {
+    background-color: #eff5ff;
+    padding: 5px;
+    margin-bottom: 5px;
+}
+
 .goalsContainer * {
-    font-size: medium;
+    font-size: small;
 }
 
 .goalsContainer .action ul {
     margin-top: 0;
+}
+
+.commitToGoalButton {
+    width: 120px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 5px 10px 5px 10px;
+    border: 1px solid black;
+    color: #fff;
+    background-color: #2e6e9e;
+}
+
+.commitToGoalButton.hover {
+    cursor: pointer;
+    background-color: #2f96b4;
+}
+
+.commitToGoalButton * {
+    font-size: medium;
+}
+
+.goal div.action {
+    margin-top: 5px;
 }

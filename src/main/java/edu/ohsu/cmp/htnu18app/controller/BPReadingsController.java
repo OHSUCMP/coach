@@ -56,17 +56,17 @@ public class BPReadingsController {
                                                                  @RequestParam("systolic2") Integer systolic2,
                                                                  @RequestParam("diastolic2") Integer diastolic2,
                                                                  @RequestParam("pulse2") Integer pulse2,
-                                                                 @RequestParam("readingDateTS") Long readingDate,
+                                                                 @RequestParam("readingDateTS") Long readingDateTS,
                                                                  @RequestParam("confirm") Boolean followedInstructions) {
 
         CacheData cache = SessionCache.getInstance().get(session.getId());
 
-        Date date = new Date(readingDate);
+        Date readingDate = new Date(readingDateTS);
 
-        HomeBloodPressureReading bpreading1 = new HomeBloodPressureReading(systolic1, diastolic1, pulse1, date, followedInstructions);
+        HomeBloodPressureReading bpreading1 = new HomeBloodPressureReading(systolic1, diastolic1, pulse1, readingDate, followedInstructions);
         bpreading1 = hbprService.create(session.getId(), bpreading1);
 
-        HomeBloodPressureReading bpreading2 = new HomeBloodPressureReading(systolic2, diastolic2, pulse2, date, followedInstructions);
+        HomeBloodPressureReading bpreading2 = new HomeBloodPressureReading(systolic2, diastolic2, pulse2, readingDate, followedInstructions);
         bpreading2 = hbprService.create(session.getId(), bpreading2);
 
         cache.deleteAllCards();
