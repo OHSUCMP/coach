@@ -101,3 +101,19 @@
 .card .link {
     display: block;
 }
+
+.counselingContainer * {
+    font-size: small;
+}
+
+.counselingContainer .action ul {
+    margin-top: 0;
+}
+
+.goalsContainer * {
+    font-size: medium;
+}
+
+.goalsContainer .action ul {
+    margin-top: 0;
+}

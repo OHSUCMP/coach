@@ -94,34 +94,11 @@ function renderCards(cards) {
             html += "</div>\n";
         }
 
+        html += buildCounselingHTML(card.suggestions);
+
         html += "</td><td>\n";
 
-        if (card.suggestions !== null) {
-            html += "<div class='suggestions'>";
-            let i = 0;
-            card.suggestions.forEach(function(suggestion) {
-                html += "<div class='suggestion' data-id='" + suggestion.id + "' data-category='" + suggestion.category + "' data-type='" + suggestion.type + "'>";
-                html += "<span class='heading'>" + suggestion.label + "</span>";
-                html += "<table><tr><td>";
-                if (suggestion.actions !== null) {
-                    html += "<ul class='actions'>";
-                    suggestion.actions.forEach(function(action) {
-                        html += "<li class='action'>" + action + "</li>";
-                    });
-                    html += "</ul>";
-                }
-                html += "</td>";
-                if (suggestion.type === 'goal') {
-                    html += "<td><span class='commitToGoalButton' data-extGoalId='" + suggestion.id + "'>Commit to Goal</span></td>\n";
-                    html += "</tr><tr>";
-                    html += "<td><label for='goalTargetDate" + i + "'>When do you want to achieve this goal?</label></td>";
-                    html += "<td><input id='goalTargetDate" + i + "' type='text' class='goalTargetDate' placeholder='--Select Date--' readOnly/></td>";
-                }
-                html += "</tr></table>";
-                html += "</div>\n";
-            });
-            html += "</div>";
-        }
+        html += buildGoalsHTML(card.suggestions);
 
         // if (card.selectionBehavior !== null) {
         //     html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>\n";
@@ -134,18 +111,76 @@ function renderCards(cards) {
     return html;
 }
 
-function buildGoalData(suggestion) {
-    if ($(suggestion).attr('data-type') === 'goal') {
-        let g = {};
-        g.extGoalId = $(suggestion).attr('data-id');
-        g.category = $(suggestion).attr('data-category');
-        g.goalText = getGoalText(suggestion);
-        g.followUpDays = 0;
-        return g;
-
-    } else {
-        return null;
+function buildCounselingHTML(suggestions) {
+    let html = "";
+    if (suggestions !== null) {
+        suggestions.forEach(function(s) {
+            if (s.type === 'counseling') {
+                html += "<div class='counseling' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
+                html += "<span class='heading'>" + s.label + "</span>";
+                if (s.actions !== null) {
+                    html += "<ul class='actions'>";
+                    s.actions.forEach(function(action) {
+                        html += "<li class='action'><a href='" + action.url + "'>" + action.label + "</a></li>";
+                    });
+                    html += "</ul>";
+                }
+                html += "</div>\n";
+            }
+        });
     }
+    return html !== "" ?
+        "<div class='counselingContainer'>" + html + "</div>" :
+        "";
+}
+
+function buildGoalsHTML(suggestions) {
+    let html = "";
+    if (suggestions !== null) {
+        let i = 0;
+        suggestions.forEach(function(s) {
+            if (s.type === 'goal') {
+                html += "<div class='goal' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code=" + s.references.code + "'>";
+                html += "<span class='heading'>" + s.label + "</span>";
+                html += "<table><tr><td>";
+                if (s.actions !== null) {
+
+                    // todo : construct HTML inputs as required
+
+                    html += "<ul class='actions'>";
+                    s.actions.forEach(function(action) {
+                        html += "<li class='action'>" + action.label + "</li>";
+                    });
+                    html += "</ul>";
+                }
+                html += "</td><td>";
+                html += "<span class='commitToGoalButton' data-extGoalId='" + s.id + "'>Commit to Goal</span></td>\n";
+                html += "</td>";
+                html += "</tr><tr>";
+
+                let id = randomChars(5);
+                html += "<td><label for='goalTargetDate" + id + "'>When do you want to achieve this goal?</label></td>";
+                html += "<td><input id='goalTargetDate" + id + "' type='text' class='goalTargetDate' placeholder='--Select Date--' readOnly/></td>";
+
+                html += "</tr></table>";
+                html += "</div>\n";
+            }
+        });
+    }
+    return html !== "" ?
+        "<div class='goalsContainer'>" + html + "</div>" :
+        "";
+}
+
+function buildGoalData(button) {
+    let goal = $(button).closest('.goal');
+    let g = {};
+    g.extGoalId = $(goal).attr('data-id');
+    g.referenceSystem = $(goal).attr('data-reference-system');
+    g.referenceCode = $(goal).attr('data-reference-code');
+    g.goalText = getGoalText(goal);
+    g.followUpDays = 0;
+    return g;
 }
 
 function getGoalText(suggestion) {
@@ -153,10 +188,11 @@ function getGoalText(suggestion) {
 }
 
 function buildCounselingData(a) {
-    let suggestion = $(a).closest('.suggestion');
+    let counseling = $(a).closest('.counseling');
     let c = {};
-    c.extCounselingId = $(suggestion).attr('data-id');
-    c.category = $(suggestion).attr('data-category');
+    c.extCounselingId = $(counseling).attr('data-id');
+    c.referenceSystem = $(counseling).attr('data-reference-system');
+    c.referenceCode = $(counseling).attr('data-reference-code');
     c.counselingText = a.innerText;
     return c;
 }
@@ -164,7 +200,8 @@ function buildCounselingData(a) {
 async function registerCounselingReceived(c, _callback) {
     let formData = new FormData();
     formData.append("extCounselingId", c.extCounselingId);
-    formData.append("category", c.category);
+    formData.append("referenceSystem", c.referenceSystem);
+    formData.append("referenceCode", c.referenceCode);
     formData.append("counselingText", c.counselingText);
 
     const response = await fetch("/counseling/create", {
@@ -178,22 +215,21 @@ async function registerCounselingReceived(c, _callback) {
 }
 
 $(document).ready(function() {
-    $(document).on('click', '#recommendationsContainer .suggestion[data-type="goal"] .commitToGoalButton', function() {
-        let g = buildGoalData($(this).closest('.suggestion'));
+    $(document).on('click', '.goalsContainer .goal .commitToGoalButton', function() {
+        let g = buildGoalData(this);
 
-        if ($(this).is(':checked')) {
-            createGoal(g.extGoalId, g.category, g.goalText, g.followUpDays, function(goal) {
-                alert("created goal: " + goal.extGoalId);
-            });
-
-        } else {
-            deleteGoal(g.extGoalId, function(deletedExtGoalId) {
-                alert("deleted goal: " + deletedExtGoalId);
-            });
-        }
+        createGoal(g, function(goal) {
+            alert("created goal: " + goal.extGoalId);
+        });
+        //
+        // } else {
+        //     deleteGoal(g.extGoalId, function(deletedExtGoalId) {
+        //         alert("deleted goal: " + deletedExtGoalId);
+        //     });
+        // }
     });
 
-    $(document).on('click', '#recommendationsContainer .suggestion[data-type="counseling"] .actions a', function(event) {
+    $(document).on('click', '.counselingContainer .counseling .actions a', function(event) {
         event.preventDefault();
         let a = $(this);
         let c = buildCounselingData(this);

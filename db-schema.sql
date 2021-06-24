@@ -31,7 +31,8 @@ create table goal (
   id int not null auto_increment primary key,
   patId int not null,
   extGoalId varchar(100) not null,
-  category varchar(100) not null,
+  referenceSystem varchar(100) not null,
+  referenceCode varchar(100) not null,
   goalText varchar(255) not null,
   followUpDays int,
   createdDate datetime not null,
@@ -57,7 +58,8 @@ create table counseling (
     id int not null auto_increment primary key,
     patId int not null,
     extCounselingId varchar(100) not null,
-    category varchar(100) not null,
+    referenceSystem varchar(100) not null,
+    referenceCode varchar(100) not null,
     counselingText varchar(255) not null,
     createdDate datetime not null
 );

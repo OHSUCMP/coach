@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface PatientRepository extends JpaRepository<Patient, Long> {
-    boolean existsPatientByPatIdHash(String patIdHash);
+    boolean existsPatientByPatIdHash(@Param("patIdHash") String patIdHash);
 
     @Query("select p from Patient p where p.patIdHash=:patIdHash")
     List<Patient> findByPatIdHash(@Param("patIdHash") String patIdHash);

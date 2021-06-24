@@ -4,10 +4,10 @@ import java.util.List;
 
 public class Suggestion {
     private String id;
-    private String category;
     private String type; // counseling, goal
+    private Reference references;
     private String label;
-    private List<String> actions;
+    private List<Action> actions;
 
     public String getId() {
         return id;
@@ -15,14 +15,6 @@ public class Suggestion {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
     }
 
     public String getType() {
@@ -33,6 +25,14 @@ public class Suggestion {
         this.type = type;
     }
 
+    public Reference getReferences() {
+        return references;
+    }
+
+    public void setReferences(Reference reference) {
+        this.references = reference;
+    }
+
     public String getLabel() {
         return label;
     }
@@ -41,11 +41,11 @@ public class Suggestion {
         this.label = label;
     }
 
-    public List<String> getActions() {
+    public List<Action> getActions() {
         return actions;
     }
 
-    public void setActions(List<String> actions) {
+    public void setActions(List<Action> actions) {
         this.actions = actions;
     }
 }

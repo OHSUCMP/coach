@@ -12,16 +12,18 @@ public class Counseling {
 
     private Long patId;
     private String extCounselingId;
-    private String category;
+    private String referenceSystem;
+    private String referenceCode;
     private String counselingText;
     private Date createdDate;
 
     protected Counseling() {
     }
 
-    public Counseling(String extCounselingId, String category, String counselingText) {
+    public Counseling(String extCounselingId, String referenceSystem, String referenceCode, String counselingText) {
         this.extCounselingId = extCounselingId;
-        this.category = category;
+        this.referenceSystem = referenceSystem;
+        this.referenceCode = referenceCode;
         this.counselingText = counselingText;
     }
 
@@ -49,12 +51,20 @@ public class Counseling {
         this.extCounselingId = extCounselingId;
     }
 
-    public String getCategory() {
-        return category;
+    public String getReferenceSystem() {
+        return referenceSystem;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public void setReferenceSystem(String referenceSystem) {
+        this.referenceSystem = referenceSystem;
+    }
+
+    public String getReferenceCode() {
+        return referenceCode;
+    }
+
+    public void setReferenceCode(String referenceCode) {
+        this.referenceCode = referenceCode;
     }
 
     public String getCounselingText() {

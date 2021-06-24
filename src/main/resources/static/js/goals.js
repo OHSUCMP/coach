@@ -8,12 +8,13 @@ async function getRecordedGoals() {
     return goals;
 }
 
-async function createGoal(extGoalId, category, goalText, followUpDays, _callback) {
+async function createGoal(g, _callback) {
     let formData = new FormData();
-    formData.append("extGoalId", extGoalId);
-    formData.append("category", category);
-    formData.append("goalText", goalText);
-    formData.append("followUpDays", followUpDays || 0);
+    formData.append("extGoalId", g.extGoalId);
+    formData.append("referenceSystem", g.referenceSystem);
+    formData.append("referenceCode", g.referenceCode);
+    formData.append("goalText", g.goalText);
+    formData.append("followUpDays", g.followUpDays || 0);
 
     let response = await fetch("/goals/create", {
         method: "POST",

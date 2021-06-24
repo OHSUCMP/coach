@@ -33,12 +33,13 @@ public class CounselingController extends AuthenticatedController {
     @PostMapping("create")
     public ResponseEntity<Counseling> create(HttpSession session,
                                        @RequestParam("extCounselingId") String extCounselingId,
-                                       @RequestParam("category") String category,
+                                       @RequestParam("referenceSystem") String referenceSystem,
+                                       @RequestParam("referenceCode") String referenceCode,
                                        @RequestParam("counselingText") String counselingText) {
 
         Counseling counseling = counselingService.getCounseling(session.getId(), extCounselingId);
         if (counseling == null) {
-            counseling = new Counseling(extCounselingId, category, counselingText);
+            counseling = new Counseling(extCounselingId, referenceSystem, referenceCode, counselingText);
             counseling = counselingService.create(session.getId(), counseling);
             return new ResponseEntity<>(counseling, HttpStatus.OK);
 

@@ -60,7 +60,8 @@ public class GoalController extends AuthenticatedController {
     @PostMapping("create")
     public ResponseEntity<Goal> create(HttpSession session,
                                        @RequestParam("extGoalId") String extGoalId,
-                                       @RequestParam("category") String category,
+                                       @RequestParam("referenceSystem") String referenceSystem,
+                                       @RequestParam("referenceCode") String referenceCode,
                                        @RequestParam("goalText") String goalText,
                                        @RequestParam("followUpDays") Integer followUpDays) {
 
@@ -74,7 +75,7 @@ public class GoalController extends AuthenticatedController {
 
         Goal goal = goalService.getGoal(session.getId(), extGoalId);
         if (goal == null) {
-            goal = new Goal(extGoalId, category, goalText, followUpDays);
+            goal = new Goal(extGoalId, referenceSystem, referenceCode, goalText, followUpDays);
             goal = goalService.create(session.getId(), goal);
             return new ResponseEntity<>(goal, HttpStatus.OK);
 
