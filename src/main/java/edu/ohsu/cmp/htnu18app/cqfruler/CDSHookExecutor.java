@@ -8,7 +8,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
-import edu.ohsu.cmp.htnu18app.cqfruler.model.*;
+import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSCard;
+import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
+import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHookResponse;
+import edu.ohsu.cmp.htnu18app.cqfruler.model.HookRequest;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.http.HttpRequest;
 import edu.ohsu.cmp.htnu18app.http.HttpResponse;
@@ -16,6 +19,7 @@ import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
+import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
 import edu.ohsu.cmp.htnu18app.util.MustacheUtil;
@@ -35,25 +39,30 @@ public class CDSHookExecutor implements Runnable {
     private String cdsHooksEndpointURL;
     private PatientService patientService;
     private HomeBloodPressureReadingService hbprService;
+    private GoalService goalService;
 
     public CDSHookExecutor(boolean testing, String sessionId,
                            String cdsHooksEndpointURL,
                            PatientService patientService,
-                           HomeBloodPressureReadingService hbprService) {
+                           HomeBloodPressureReadingService hbprService,
+                           GoalService goalService) {
         this.testing = testing;
         this.sessionId = sessionId;
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
         this.patientService = patientService;
         this.hbprService = hbprService;
+        this.goalService = goalService;
     }
 
     @Override
     public String toString() {
         return "CDSHookExecutor{" +
-                "sessionId='" + sessionId + '\'' +
+                "testing=" + testing +
+                ", sessionId='" + sessionId + '\'' +
                 ", cdsHooksEndpointURL='" + cdsHooksEndpointURL + '\'' +
                 ", patientService=" + patientService +
                 ", hbprService=" + hbprService +
+                ", goalService=" + goalService +
                 '}';
     }
 
@@ -146,8 +155,10 @@ public class CDSHookExecutor implements Runnable {
                 json = MustacheUtil.compileMustache(audience, json);
                 CDSHookResponse response = gson.fromJson(json, new TypeToken<CDSHookResponse>() {}.getType());
 
+                List<String> filterGoalIds = goalService.getExtGoalIdList(sessionId);
+
                 for (CDSCard cdsCard : response.getCards()) {
-                    cards.add(new Card(cdsCard));
+                    cards.add(new Card(cdsCard, filterGoalIds));
                 }
 
             } catch (Exception e) {

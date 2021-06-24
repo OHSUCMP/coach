@@ -8,28 +8,6 @@ async function getRecordedGoals() {
     return goals;
 }
 
-async function createGoal(g, _callback) {
-    let targetDateTS = $.datepicker.formatDate('@', g.targetDate);
-
-    let formData = new FormData();
-    formData.append("extGoalId", g.extGoalId);
-    formData.append("referenceSystem", g.referenceSystem);
-    formData.append("referenceCode", g.referenceCode);
-    formData.append("goalText", g.goalText);
-    formData.append("targetDateTS", targetDateTS);
-    formData.append("followUpDays", g.followUpDays || 0);
-
-    let response = await fetch("/goals/create", {
-        method: "POST",
-        body: formData
-    });
-
-    let goal = await response.json();
-    if (goal) {
-        _callback(goal);
-    }
-}
-
 // function appendGoalToTable(goal) {
 //     let container = $('#goalsTable');
 //     let unsortedData = $(container).find('tr');

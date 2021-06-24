@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
+import edu.ohsu.cmp.htnu18app.cache.CacheData;
+import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.Goal;
 import edu.ohsu.cmp.htnu18app.service.GoalHistoryService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
@@ -80,6 +82,11 @@ public class GoalController extends AuthenticatedController {
         if (goal == null) {
             goal = new Goal(extGoalId, referenceSystem, referenceCode, goalText, targetDate, followUpDays);
             goal = goalService.create(session.getId(), goal);
+
+            // remove goal from cache
+            CacheData cache = SessionCache.getInstance().get(session.getId());
+            cache.deleteSuggestion(extGoalId);
+
             return new ResponseEntity<>(goal, HttpStatus.OK);
 
         } else {

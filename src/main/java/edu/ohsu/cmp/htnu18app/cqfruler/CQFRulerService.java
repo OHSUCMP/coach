@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.htnu18app.cqfruler;
 
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
+import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
 import org.slf4j.Logger;
@@ -27,12 +28,15 @@ public class CQFRulerService {
     @Autowired
     private HomeBloodPressureReadingService hbprService;
 
+    @Autowired
+    private GoalService goalService;
+
     public CQFRulerService(@Value("${cqfruler.cdshooks.endpoint.url}") String cdsHooksEndpointURL) {
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
     }
 
     public void executeHooksDetached(String sessionId) {
-        CDSHookExecutor executor = new CDSHookExecutor(TESTING, sessionId, cdsHooksEndpointURL, patientService, hbprService);
+        CDSHookExecutor executor = new CDSHookExecutor(TESTING, sessionId, cdsHooksEndpointURL, patientService, hbprService, goalService);
         logger.info("created " + executor);
 
         Thread t = new Thread(executor);

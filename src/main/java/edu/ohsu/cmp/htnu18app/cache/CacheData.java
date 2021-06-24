@@ -1,11 +1,13 @@
 package edu.ohsu.cmp.htnu18app.cache;
 
-import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
-import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
+import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
+import edu.ohsu.cmp.htnu18app.model.recommendation.Suggestion;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Patient;
 
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,5 +98,22 @@ public class CacheData {
 
     public void deleteAllCards() {
         cards.clear();
+    }
+
+    public boolean deleteSuggestion(String id) {
+        boolean rval = false;
+        for (Map.Entry<String, List<Card>> entry : cards.entrySet()) {
+            for (Card c : entry.getValue()) {
+                Iterator<Suggestion> iter = c.getSuggestions().iterator();
+                while (iter.hasNext()) {
+                    Suggestion s = iter.next();
+                    if (s.getId().equals(id)) {
+                        iter.remove();
+                        rval = true;
+                    }
+                }
+            }
+        }
+        return rval;
     }
 }

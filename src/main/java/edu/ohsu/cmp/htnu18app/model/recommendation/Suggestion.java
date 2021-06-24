@@ -3,6 +3,9 @@ package edu.ohsu.cmp.htnu18app.model.recommendation;
 import java.util.List;
 
 public class Suggestion {
+    public static final String TYPE_GOAL = "goal";
+    public static final String TYPE_COUNSELING = "counseling";
+
     private String id;
     private String type; // counseling, goal
     private Reference references;

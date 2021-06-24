@@ -7,6 +7,7 @@ import edu.ohsu.cmp.htnu18app.repository.app.GoalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -15,6 +16,14 @@ public class GoalService {
 
     @Autowired
     private GoalRepository repository;
+
+    public List<String> getExtGoalIdList(String sessionId) {
+        List<String> list = new ArrayList<>();
+        for (Goal g : getGoalList(sessionId)) {
+            list.add(g.getExtGoalId());
+        }
+        return list;
+    }
 
     public List<Goal> getGoalList(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
