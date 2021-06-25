@@ -278,6 +278,10 @@ async function createGoal(g, _callback) {
     }
 }
 
+function hideGoal(extGoalId) {
+    $('.goal[data-id="' + extGoalId + '"]').fadeOut();
+}
+
 $(document).ready(function() {
     enableHover('.commitToGoalButton');
 
@@ -286,15 +290,9 @@ $(document).ready(function() {
 
         createGoal(g, function(status, goal) {
             if (status === 200) {
-                $('.goal[data-id="' + goal.extGoalId + '"]').fadeOut();
+                hideGoal(goal.extGoalId);
             }
         });
-        //
-        // } else {
-        //     deleteGoal(g.extGoalId, function(deletedExtGoalId) {
-        //         alert("deleted goal: " + deletedExtGoalId);
-        //     });
-        // }
     });
 
     $(document).on('click', '.counselingContainer .counseling .actions a', function(event) {

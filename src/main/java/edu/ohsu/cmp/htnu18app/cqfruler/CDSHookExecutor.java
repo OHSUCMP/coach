@@ -12,6 +12,8 @@ import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSCard;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHookResponse;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.HookRequest;
+import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
+import edu.ohsu.cmp.htnu18app.entity.app.Counseling;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.http.HttpRequest;
 import edu.ohsu.cmp.htnu18app.http.HttpResponse;
@@ -19,6 +21,7 @@ import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
+import edu.ohsu.cmp.htnu18app.service.CounselingService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
@@ -40,18 +43,21 @@ public class CDSHookExecutor implements Runnable {
     private PatientService patientService;
     private HomeBloodPressureReadingService hbprService;
     private GoalService goalService;
+    private CounselingService counselingService;
 
     public CDSHookExecutor(boolean testing, String sessionId,
                            String cdsHooksEndpointURL,
                            PatientService patientService,
                            HomeBloodPressureReadingService hbprService,
-                           GoalService goalService) {
+                           GoalService goalService,
+                           CounselingService counselingService) {
         this.testing = testing;
         this.sessionId = sessionId;
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
         this.patientService = patientService;
         this.hbprService = hbprService;
         this.goalService = goalService;
+        this.counselingService = counselingService;
     }
 
     @Override
@@ -63,6 +69,7 @@ public class CDSHookExecutor implements Runnable {
                 ", patientService=" + patientService +
                 ", hbprService=" + hbprService +
                 ", goalService=" + goalService +
+                ", counselingService=" + counselingService +
                 '}';
     }
 
@@ -109,23 +116,11 @@ public class CDSHookExecutor implements Runnable {
         try {
             Patient p = patientService.getPatient(sessionId);
 
-            Bundle bpBundle = patientService.getBloodPressureObservations(sessionId);
+            Bundle bpBundle = buildBPBundle(p.getId());
+            Bundle counselingBundle = buildCounselingBundle(p.getId());
+            Bundle goalsBundle = buildGoalsBundle(p.getId());
 
-            // inject home blood pressure readings into Bundle for evaluation by CQF Ruler
-            List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
-            for (HomeBloodPressureReading item : hbprList) {
-                String uuid = UUID.randomUUID().toString();
-
-                Encounter e = buildEncounter(uuid, p.getId(), item.getReadingDate());
-                bpBundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
-
-                Observation o = buildBloodPressureObservation(uuid, p.getId(), e.getId(), item);
-
-                // todo: should the URL be different?
-                bpBundle.addEntry().setFullUrl("http://hl7.org/fhir/Observation/" + o.getId()).setResource(o);
-            }
-
-            HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle);
+            HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle, counselingBundle, goalsBundle);
 
             MustacheFactory mf = new DefaultMustacheFactory();
             Mustache mustache = mf.compile("cqfruler/hookRequest.mustache");
@@ -139,10 +134,8 @@ public class CDSHookExecutor implements Runnable {
 
             String json;
             if (testing) {
-//                json = "{ \"cards\": [ { \"summary\": \"Hypertension Diagnosis\", \"indicator\": \"info\", \"detail\": \"ConsiderHTNStage1 Patient\", \"source\": { \"label\": \"Info for those with normal blood pressure\", \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\" } }, { \"summary\": \"Recommend diagnosis of Stage 2 hypertension\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Patient rationale{{/patient}}{{#careTeam}}care team rationale{{/careTeam}}|{{#patient}}https://source.com/patient{{/patient}}{{#careTeam}}https://source.com/careTeam{{/careTeam}}|[ { \\\"label\\\": \\\"Enter Blood Pressure\\\", \\\"actions\\\": [ \\\"ServiceRequest for High Blood Pressure Monitoring\\\", \\\"{{#patient}}<a href='/bp-readings'>Click here to go to the Home Blood Pressure entry page</a>{{/patient}}\\\" ] }, { \\\"label\\\": \\\"Diet\\\", \\\"actions\\\": [ \\\"Put the fork down!\\\", \\\"{{#patient}}<input type='checkbox' class='goal' data-goalid='dashDiet' /><label>Try the DASH Diet</label>{{/patient}}\\\" ] } ]|at-most-one|<ol>{{#patient}}<li>https://links.com/patient</li>{{/patient}}<li>https://links.com/careTeamAndPatient</li></ol>\", \"source\": {} } ] }";
-//                json = "{ \"cards\": [ { \"summary\": \"Hypertension Diagnosis\", \"indicator\": \"info\", \"detail\": \"ConsiderHTNStage1 Patient\", \"source\": { \"label\": \"Info for those with normal blood pressure\", \"url\": \"https://en.wikipedia.org/wiki/Blood_pressure\" } }, { \"summary\": \"Recommend diagnosis of Stage 2 hypertension\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Patient rationale{{/patient}}{{#careTeam}}care team rationale{{/careTeam}}|{{#patient}}https://source.com/patient{{/patient}}{{#careTeam}}https://source.com/careTeam{{/careTeam}}|[ { \\\"label\\\": \\\"Enter Blood Pressure\\\", \\\"actions\\\": [ \\\"ServiceRequest for High Blood Pressure Monitoring\\\", \\\"{{#patient}}<a href='/bp-readings'>Click here to go to the Home Blood Pressure entry page</a>{{/patient}}\\\" ] }, { \\\"label\\\": \\\"Diet\\\", \\\"actions\\\": [ \\\"Put the fork down!\\\", \\\"{{#patient}}<input type='checkbox' class='goal' data-goalid='dashDiet' /><label>Try the DASH Diet</label>{{/patient}}\\\" ] } ]|at-most-one|[{{#patient}}{ \\\"label\\\": \\\"Patient Link\\\", \\\"url\\\": \\\"https://links.com/patient\\\" },{{/patient}} { \\\"label\\\": \\\"Care Team and Patient Link\\\", \\\"url\\\": \\\"https://links.com/careTeamAndPatient\\\" }]\", \"source\": {} } ] }";
-//                json = "{ \"cards\": [ { \"summary\": \"Warning: Potential hypertensive emergency. Consult care team immediately.\", \"indicator\": \"critical\", \"detail\": \"{{#patient}}Your blood pressure is high (>180 systolic or >120 diastolic).  Contact your care team immediately, OR, if you do not feel well, seek care.  {{/patient}}{{#careTeam}}Patient's blood pressure is > 180 systolic or > 120 diastolic. Consider immediate evaluation for treatment or escalation of care.{{/careTeam}}|https://www.ahajournals.org/doi/10.1161/HYP.0000000000000065|[ { \\\"id\\\": \\\"testCounsel1\\\", \\\"references\\\": { \\\"system\\\":\\\"http://ohsu.edu/cmp\\\", \\\"code\\\":\\\"test123\\\" }, \\\"type\\\": \\\"counseling\\\", \\\"label\\\": \\\"Please review the counseling links below\\\", \\\"actions\\\": [ { \\\"label\\\":\\\"Click here to receive BP counseling\\\", \\\"url\\\":\\\"/bpcounseling\\\" } ] } ]|at-most-one|\", \"source\": {} } ] }";
                 json = "{ \"cards\": [{ \"summary\": \"Discuss Smoking Cessation\", \"indicator\": \"info\", \"detail\": \"{{#patient}}You have a hypertension (high blood pressure) diagnosis and reported smoking. Reducing smoking will help lower blood pressure, the risk of stroke, and other harmful events; talk to your care team about quitting smoking.{{/patient}}{{#careTeam}}Patient reports they smoke. Counsel about quitting according to your local protocol.{{/careTeam}}|https://www.ahajournals.org/doi/10.1161/HYP.0000000000000065#page=59| [ {\\\"id\\\": \\\"smoking-counseling\\\", \\\"type\\\":\\\"counseling\\\", \\\"references\\\": {\\\"system\\\":\\\"http://snomed.info/sct\\\", \\\"code\\\":\\\"225323000\\\"},\\\"label\\\": \\\"Suggested Reading\\\",\\\"actions\\\": [{\\\"url\\\":\\\"/SmokingCessation\\\", \\\"label\\\":\\\"Click here to learn more about tobacco cessation.\\\"}]}, { \\\"id\\\": \\\"smoking-freetext-goal\\\", \\\"type\\\":\\\"goal\\\", \\\"references\\\":{\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"smoking-cessation\\\"}, \\\"label\\\": \\\"Set a Tobacco Cessation goal (freetext):\\\", \\\"actions\\\": [] }, { \\\"id\\\": \\\"radio-smoking-goal\\\", \\\"type\\\": \\\"goal\\\", \\\"references\\\": {\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"smoking-cessation\\\"}, \\\"label\\\": \\\"Set a Tobacco Cessation goal (choice):\\\", \\\"actions\\\": [ {\\\"label\\\":\\\"Reduce my smoking by half\\\"}, {\\\"label\\\":\\\"Quit smoking completely\\\"} ] }, { \\\"id\\\": \\\"smoking-goal-checkbox1\\\", \\\"type\\\": \\\"goal\\\", \\\"references\\\": {\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"smoking-cessation\\\"}, \\\"label\\\": \\\"Set a Tobacco Cessation goal (prescribed):\\\", \\\"actions\\\": [ {\\\"label\\\":\\\"Reduce/quit smoking.\\\"} ] } ]|at-most-one|\", \"source\": {} }] }";
+
             } else {
                 HttpResponse httpResponse = new HttpRequest().post(cdsHooksEndpointURL + "/" + hookId, null, headers, writer.toString());
                 json = httpResponse.getResponseBody();
@@ -176,6 +169,90 @@ public class CDSHookExecutor implements Runnable {
         }
 
         return cards;
+    }
+
+    private Bundle buildCounselingBundle(String patientId) {
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.COLLECTION);
+
+        List<Counseling> counselingList = counselingService.getCounselingList(sessionId);
+        for (Counseling c : counselingList) {
+            String uuid = UUID.randomUUID().toString();
+
+            Encounter e = buildEncounter(uuid, patientId, c.getCreatedDate());
+            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
+
+            Procedure p = buildCounselingProcedure(uuid, patientId, e.getId(), c);
+            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Procedure/" + p.getId()).setResource(p);
+        }
+
+        return bundle;
+    }
+
+    private Procedure buildCounselingProcedure(String uuid, String patientId, String encounterId, Counseling c) {
+        Procedure p = new Procedure();
+
+        p.setId("procedure-" + uuid);
+        p.setSubject(new Reference().setReference(patientId));
+        p.setEncounter(new Reference().setReference(encounterId));
+        p.setStatus(Procedure.ProcedureStatus.COMPLETED);
+
+        // set counseling category.  see https://www.hl7.org/fhir/valueset-procedure-category.html
+        p.getCategory().addCoding().setCode("409063005").setSystem("http://snomed.info/sct");
+
+        p.getCode().addCoding().setCode(c.getReferenceCode()).setSystem(c.getReferenceSystem());
+
+        p.getPerformedDateTimeType().setValue(c.getCreatedDate());
+
+        return p;
+    }
+
+    private Bundle buildGoalsBundle(String patientId) {
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.COLLECTION);
+
+        List<edu.ohsu.cmp.htnu18app.entity.app.Goal> goalList = goalService.getGoalList(sessionId);
+        for (edu.ohsu.cmp.htnu18app.entity.app.Goal g : goalList) {
+            Goal goal = buildGoal(patientId, g);
+            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Goal/" + goal.getId()).setResource(goal);
+        }
+
+        return bundle;
+    }
+
+    private Goal buildGoal(String patientId, edu.ohsu.cmp.htnu18app.entity.app.Goal goal) {
+        Goal g = new Goal();
+
+        g.setId("goal-" + UUID.randomUUID().toString());
+        g.setSubject(new Reference().setReference(patientId));
+        g.setLifecycleStatus(Goal.GoalLifecycleStatus.ACTIVE);                          // todo : set this dynamically
+        g.getAchievementStatus().addCoding().setCode(AchievementStatus.IMPROVING.getFhirValue())
+                .setSystem("http://terminology.hl7.org/CodeSystem/goal-achievement");   // todo : set this dynamically
+        g.getCategoryFirstRep().addCoding().setCode(goal.getReferenceCode()).setSystem(goal.getReferenceSystem());
+        g.getDescription().setText(goal.getGoalText());
+        g.setStatusDate(goal.getCreatedDate()); // todo : set this from goalHistory most recent status
+
+        return g;
+    }
+
+    private Bundle buildBPBundle(String patientId) {
+        Bundle bundle = patientService.getBloodPressureObservations(sessionId);
+
+        // inject home blood pressure readings into Bundle for evaluation by CQF Ruler
+        List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
+        for (HomeBloodPressureReading item : hbprList) {
+            String uuid = UUID.randomUUID().toString();
+
+            Encounter e = buildEncounter(uuid, patientId, item.getReadingDate());
+            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
+
+            Observation o = buildBloodPressureObservation(uuid, patientId, e.getId(), item);
+
+            // todo: should the URL be different?
+            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Observation/" + o.getId()).setResource(o);
+        }
+
+        return bundle;
     }
 
     private Encounter buildEncounter(String uuid, String patientId, Date date) {
