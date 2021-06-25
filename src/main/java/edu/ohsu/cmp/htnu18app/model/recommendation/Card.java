@@ -43,11 +43,13 @@ public class Card {
             this.suggestions = gson.fromJson(cdsCard.getSuggestions(), new TypeToken<ArrayList<Suggestion>>(){}.getType());
 
             // filter goals that the user has already responded to
-            Iterator<Suggestion> iter = this.suggestions.iterator();
-            while (iter.hasNext()) {
-                Suggestion s = iter.next();
-                if (s.getType().equals(Suggestion.TYPE_GOAL) && filterGoalIds.contains(s.getId())) {
-                    iter.remove();
+            if (this.suggestions != null) {
+                Iterator<Suggestion> iter = this.suggestions.iterator();
+                while (iter.hasNext()) {
+                    Suggestion s = iter.next();
+                    if (s.getType().equals(Suggestion.TYPE_GOAL) && filterGoalIds.contains(s.getId())) {
+                        iter.remove();
+                    }
                 }
             }
 
