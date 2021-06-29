@@ -69,11 +69,11 @@ public class CDSCard {
     }
 
     private String getDetailItem(int index) {
-        if (detailArr == null) {
+        if (detailArr == null && detail != null) {
             detailArr = detail.split(DELIM_REGEX);
         }
 
-        return index < detailArr.length ?
+        return detailArr != null && index < detailArr.length ?
                 detailArr[index] :
                 null;
     }

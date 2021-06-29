@@ -104,12 +104,14 @@ public class CacheData {
         boolean rval = false;
         for (Map.Entry<String, List<Card>> entry : cards.entrySet()) {
             for (Card c : entry.getValue()) {
-                Iterator<Suggestion> iter = c.getSuggestions().iterator();
-                while (iter.hasNext()) {
-                    Suggestion s = iter.next();
-                    if (s.getId().equals(id)) {
-                        iter.remove();
-                        rval = true;
+                if (c.getSuggestions() != null) {
+                    Iterator<Suggestion> iter = c.getSuggestions().iterator();
+                    while (iter.hasNext()) {
+                        Suggestion s = iter.next();
+                        if (s.getId().equals(id)) {
+                            iter.remove();
+                            rval = true;
+                        }
                     }
                 }
             }
