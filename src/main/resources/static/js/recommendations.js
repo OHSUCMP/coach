@@ -117,6 +117,7 @@ function renderCards(cards) {
 
         html += buildGoalsHTML(card.suggestions);
 
+        html += buildLinksHTML(card.suggestions);
         // if (card.selectionBehavior !== null) {
         //     html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>\n";
         // }
@@ -190,6 +191,32 @@ function buildGoalsHTML(suggestions) {
                 html += "<td><input id='goalTargetDate" + y + "' type='text' class='goalTargetDate' placeholder='--Select Date--' readOnly/></td>";
 
                 html += "</tr></table>";
+                html += "</div>\n";
+            }
+        });
+    }
+    return html !== "" ?
+        "<div class='goalsContainer'>" + html + "</div>" :
+        "";
+}
+
+function buildLinksHTML(suggestions) {
+    let html = "";
+    if (suggestions !== null) {
+        suggestions.forEach(function(s) {
+            if (s.type === 'link') {
+                html += "<div class='goal'>";
+                html += "<span class='heading'>" + s.label + "</span>";
+                html += "<table><tbody>";
+
+                // Iterate through links
+                s.actions.forEach(function(action) {
+                	html += "<tr><td>";
+                	html += "<a href='" + action.url + "'>" + action.label + "</a>";
+                	html += "</td></tr>";
+                });
+ 
+                html += "</tbody></table>";
                 html += "</div>\n";
             }
         });
