@@ -4,7 +4,6 @@ import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.vsac.Concept;
 import edu.ohsu.cmp.htnu18app.entity.vsac.ValueSet;
-import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.MedicationModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.repository.app.PatientRepository;
@@ -72,21 +71,57 @@ public class PatientService {
         return DigestUtils.sha256Hex(patientId);
     }
 
-    public Bundle getBloodPressureObservations(String sessionId) {
+    public Bundle getObservations(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
-        Bundle b = cache.getBloodPressureObservations();
+        Bundle b = cache.getObservations();
         if (b == null) {
-            logger.info("requesting Blood Pressure Observations for session " + sessionId);
+            logger.info("requesting Observations for session " + sessionId);
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
             b = fcc.getClient()
                     .search()
                     .forResource(Observation.class)
                     .and(Observation.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-                    .and(Observation.CODE.exactly().systemAndCode(BloodPressureModel.SYSTEM, BloodPressureModel.CODE))
+//                    .and(Observation.CODE.exactly().systemAndCode(BloodPressureModel.SYSTEM, BloodPressureModel.CODE))
                     .returnBundle(Bundle.class)
                     .execute();
-            cache.setBloodPressureObservations(b);
+            cache.setObservations(b);
+        }
+        return b;
+    }
+
+    public Bundle getConditions(String sessionId) {
+        CacheData cache = SessionCache.getInstance().get(sessionId);
+        Bundle b = cache.getConditions();
+        if (b == null) {
+            logger.info("requesting Conditions for session " + sessionId);
+
+            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+            b = fcc.getClient()
+                    .search()
+                    .forResource(Condition.class)
+                    .and(Condition.PATIENT.hasId(fcc.getCredentials().getPatientId()))
+                    .returnBundle(Bundle.class)
+                    .execute();
+            cache.setConditions(b);
+        }
+        return b;
+    }
+
+    public Bundle getGoals(String sessionId) {
+        CacheData cache = SessionCache.getInstance().get(sessionId);
+        Bundle b = cache.getGoals();
+        if (b == null) {
+            logger.info("requesting Goals for session " + sessionId);
+
+            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+            b = fcc.getClient()
+                    .search()
+                    .forResource(Goal.class)
+                    .and(Goal.PATIENT.hasId(fcc.getCredentials().getPatientId()))
+                    .returnBundle(Bundle.class)
+                    .execute();
+            cache.setGoals(b);
         }
         return b;
     }

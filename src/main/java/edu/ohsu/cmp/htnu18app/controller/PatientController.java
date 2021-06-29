@@ -44,12 +44,14 @@ public class PatientController extends AuthenticatedController {
         Set<BloodPressureModel> set = new TreeSet<BloodPressureModel>();
 
         // first add BP observations from configured FHIR server
-        Bundle bundle = patientService.getBloodPressureObservations(session.getId());
+        Bundle bundle = patientService.getObservations(session.getId());
         for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
             if (entryCon.getResource() instanceof Observation) {
                 Observation o = (Observation) entryCon.getResource();
                 try {
-                    set.add(new BloodPressureModel(o));
+                    if (o.getCode().hasCoding(BloodPressureModel.SYSTEM, BloodPressureModel.CODE)) {
+                        set.add(new BloodPressureModel(o));
+                    }
 
                 } catch (DataException e) {
                     logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);

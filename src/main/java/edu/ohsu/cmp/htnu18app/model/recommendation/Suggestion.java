@@ -4,10 +4,11 @@ import java.util.List;
 
 public class Suggestion {
     public static final String TYPE_GOAL = "goal";
+    public static final String TYPE_UPDATE_GOAL = "update-goal";
     public static final String TYPE_COUNSELING = "counseling";
 
     private String id;
-    private String type; // counseling, goal
+    private String type; // counseling, goal, update-goal
     private Reference references;
     private String label;
     private List<Action> actions;

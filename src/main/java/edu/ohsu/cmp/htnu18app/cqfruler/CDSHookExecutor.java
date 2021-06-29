@@ -119,8 +119,9 @@ public class CDSHookExecutor implements Runnable {
             Bundle bpBundle = buildBPBundle(p.getId());
             Bundle counselingBundle = buildCounselingBundle(p.getId());
             Bundle goalsBundle = buildGoalsBundle(p.getId());
+            Bundle conditionsBundle = buildConditionsBundle(p.getId());
 
-            HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle, counselingBundle, goalsBundle);
+            HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle, counselingBundle, goalsBundle, conditionsBundle);
 
             MustacheFactory mf = new DefaultMustacheFactory();
             Mustache mustache = mf.compile("cqfruler/hookRequest.mustache");
@@ -141,7 +142,7 @@ public class CDSHookExecutor implements Runnable {
                 json = httpResponse.getResponseBody();
             }
 
-//            logger.info("got JSON=" + json);
+            logger.info("got JSON=" + json);
 
             Gson gson = new GsonBuilder().create();
             try {
@@ -169,6 +170,10 @@ public class CDSHookExecutor implements Runnable {
         }
 
         return cards;
+    }
+
+    private Bundle buildConditionsBundle(String patientId) {
+        return patientService.getConditions(sessionId);
     }
 
     private Bundle buildCounselingBundle(String patientId) {
@@ -208,8 +213,7 @@ public class CDSHookExecutor implements Runnable {
     }
 
     private Bundle buildGoalsBundle(String patientId) {
-        Bundle bundle = new Bundle();
-        bundle.setType(Bundle.BundleType.COLLECTION);
+        Bundle bundle = patientService.getGoals(sessionId);
 
         List<edu.ohsu.cmp.htnu18app.entity.app.Goal> goalList = goalService.getGoalList(sessionId);
         for (edu.ohsu.cmp.htnu18app.entity.app.Goal g : goalList) {
@@ -236,7 +240,7 @@ public class CDSHookExecutor implements Runnable {
     }
 
     private Bundle buildBPBundle(String patientId) {
-        Bundle bundle = patientService.getBloodPressureObservations(sessionId);
+        Bundle bundle = patientService.getObservations(sessionId);
 
         // inject home blood pressure readings into Bundle for evaluation by CQF Ruler
         List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);

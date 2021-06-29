@@ -191,6 +191,15 @@ function buildGoalsHTML(suggestions) {
 
                 html += "</tr></table>";
                 html += "</div>\n";
+
+            } else if (s.type === 'update-goal') {
+                html += "<div class='goal' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
+                html += "<span class='heading'>" + s.label + "</span>";
+                html += "<table><tr><td>";
+
+
+                html += "</td></tr></table>";
+                html += "</div>\n";
             }
         });
     }
