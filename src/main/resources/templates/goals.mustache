@@ -72,7 +72,7 @@
                         {{! note : keep this section synced with goals.js:appendRecordToTable(obj) }}
                         {{#goals}}
                             <tr class='data' data-extGoalId='{{extGoalId}}'>
-                                <td>{{reference}}</td>
+                                <td>{{referenceSystem}}|{{referenceCode}}</td>
                                 <td>{{goalText}}</td>
                                 <td class="status">
                                     {{#completed}}Completed{{/completed}}
