@@ -22,7 +22,6 @@ public class Card {
     private String detail;
     private Source source;
     private String rationale;
-    private String source2;
     private List<Suggestion> suggestions;
     private String selectionBehavior;
     private List<Link> links;
@@ -34,7 +33,6 @@ public class Card {
         this.source = cdsCard.getSource();
 
         this.rationale = cdsCard.getRationale();
-        this.source2 = cdsCard.getSource2();
 
         this.selectionBehavior = cdsCard.getSelectionBehavior();
 
@@ -87,10 +85,6 @@ public class Card {
 
     public String getRationale() {
         return rationale;
-    }
-
-    public String getSource2() {
-        return source2;
     }
 
     public List<Suggestion> getSuggestions() {

@@ -93,16 +93,6 @@ function renderCards(cards) {
             html += "</span>\n";
         }
 
-        if (card.source2 !== null) {
-            // label is just the tail path part of the URL
-            let label = card.source2.substring(card.source2.lastIndexOf('/') + 1);
-
-            html += "<span class='source'>";
-            html += "<a href='" + card.source2 + "' target='_blank' rel='noopener noreferrer'>" +
-                label + "</a>";
-            html += "</span>\n";
-        }
-
         if (card.links !== null) {
             html += "<div class='links'>";
             card.links.forEach(function(link) {
@@ -198,6 +188,7 @@ function buildGoalsHTML(suggestions) {
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tr><td>";
 
+                // todo: complete this
 
                 html += "</td></tr></table>";
                 html += "</div>\n";

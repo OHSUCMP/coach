@@ -4,10 +4,9 @@ public class CDSCard {
     private static final String DELIM_REGEX = "\\s*\\|\\s*";
 
     private static final int RATIONALE = 0;
-    private static final int SOURCE = 1;
-    private static final int SUGGESTIONS = 2;
-    private static final int SELECTION_BEHAVIOR = 3;
-    private static final int LINKS = 4;
+    private static final int SUGGESTIONS = 1;
+    private static final int SELECTION_BEHAVIOR = 2;
+    private static final int LINKS = 3;
 
     private String summary;
     private String indicator;
@@ -50,10 +49,6 @@ public class CDSCard {
 
     public String getRationale() {
         return getDetailItem(RATIONALE);
-    }
-
-    public String getSource2() {
-        return getDetailItem(SOURCE);
     }
 
     public String getSuggestions() {
