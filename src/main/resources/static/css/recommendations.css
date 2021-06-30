@@ -114,17 +114,17 @@
     margin-top: 0;
 }
 
-.goal {
+.goal, .link {
     background-color: #eff5ff;
     padding: 5px;
     margin-bottom: 5px;
 }
 
-.goalsContainer * {
+.goalsContainer *, .linksContainer * {
     font-size: small;
 }
 
-.goalsContainer .action ul {
+.goalsContainer .action ul, .linksContainer .action ul {
     margin-top: 0;
 }
 

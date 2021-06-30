@@ -63,8 +63,8 @@
                 <td>
                     <table id="goalsTable" class="data">
                         <tr id="goalsTableHeader">
-                            <th>Category</th>
                             <th>Goal</th>
+                            <th>Reference (System|Code)</th>
                             <th>Status</th>
                             <th>Created Date</th>
                             <th>&nbsp;</th>
@@ -72,8 +72,8 @@
                         {{! note : keep this section synced with goals.js:appendRecordToTable(obj) }}
                         {{#goals}}
                             <tr class='data' data-extGoalId='{{extGoalId}}'>
-                                <td>{{referenceSystem}}|{{referenceCode}}</td>
                                 <td>{{goalText}}</td>
+                                <td>{{referenceSystem}}|{{referenceCode}}</td>
                                 <td class="status">
                                     {{#completed}}Completed{{/completed}}
                                     {{^completed}}Active{{/completed}}

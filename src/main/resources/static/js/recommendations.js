@@ -214,7 +214,7 @@ function buildLinksHTML(suggestions) {
     if (suggestions !== null) {
         suggestions.forEach(function(s) {
             if (s.type === 'link') {
-                html += "<div class='goal'>";
+                html += "<div class='link'>";
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tbody>";
 
@@ -231,7 +231,7 @@ function buildLinksHTML(suggestions) {
         });
     }
     return html !== "" ?
-        "<div class='goalsContainer'>" + html + "</div>" :
+        "<div class='linksContainer'>" + html + "</div>" :
         "";
 }
 
