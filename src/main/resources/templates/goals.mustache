@@ -89,6 +89,28 @@
                                     {{/completed}}
                                 </td>
                             </tr>
+                            <tr class="history">
+                                <td colspan="5">
+                                    <table class="no-spacing">
+                                        <tr class="goalHistoryHeader">
+                                            <th>Lifecycle Status</th>
+                                            <th>Achievement Status</th>
+                                            <th>Date</th>
+                                        </tr>
+                                        {{#history}}
+                                            <tr>
+                                                <td>{{lifecycleStatus}}</td>
+                                                <td>{{achievementStatus}}</td>
+                                                <td>{{createdDate}}</td>
+                                            </tr>
+                                        {{/history}}
+                                    </table>
+                                </td>
+                            </tr>
+                            </tr>
+                            {{#history}}
+
+                            {{/history}}
                         {{/goals}}
                     </table>
                 </td>

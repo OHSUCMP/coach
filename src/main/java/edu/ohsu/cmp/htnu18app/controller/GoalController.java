@@ -2,7 +2,10 @@ package edu.ohsu.cmp.htnu18app.controller;
 
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
+import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
 import edu.ohsu.cmp.htnu18app.entity.app.Goal;
+import edu.ohsu.cmp.htnu18app.entity.app.GoalHistory;
+import edu.ohsu.cmp.htnu18app.entity.app.LifecycleStatus;
 import edu.ohsu.cmp.htnu18app.service.GoalHistoryService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import org.slf4j.Logger;
@@ -92,6 +95,21 @@ public class GoalController extends AuthenticatedController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
         }
+    }
+
+    @PostMapping("update")
+    public ResponseEntity<GoalHistory> update(HttpSession session,
+                                              @RequestParam("extGoalId") String extGoalId,
+                                              @RequestParam("lifecycleStatus") String lifecycleStatusStr,
+                                              @RequestParam("achievementStatus") String achievementStatusStr) {
+
+        Goal g = goalService.getGoal(session.getId(), extGoalId);
+        GoalHistory gh = new GoalHistory(LifecycleStatus.valueOf(lifecycleStatusStr),
+                AchievementStatus.valueOf(achievementStatusStr),
+                g);
+        gh = goalHistoryService.create(gh);
+
+        return new ResponseEntity<>(gh, HttpStatus.OK);
     }
 
     @PutMapping("setCompleted")

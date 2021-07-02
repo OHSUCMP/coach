@@ -1,17 +1,23 @@
 package edu.ohsu.cmp.htnu18app.model.recommendation;
 
+import edu.ohsu.cmp.htnu18app.entity.app.Goal;
+
 import java.util.List;
 
 public class Suggestion {
     public static final String TYPE_GOAL = "goal";
     public static final String TYPE_UPDATE_GOAL = "update-goal";
-    public static final String TYPE_COUNSELING = "counseling";
+    public static final String TYPE_SUGGESTION_LINK = "suggestion-link";
+    public static final String TYPE_COUNSELING_LINK = "counseling-link";
+    public static final String TYPE_BP_GOAL = "bp-goal";
+    public static final String TYPE_UPDATE_BP_GOAL = "update-bp-goal";
 
     private String id;
-    private String type; // counseling, goal, update-goal
+    private String type;
     private Reference references;
     private String label;
     private List<Action> actions;
+    private Goal goal;  // the patient's recorded goal when type is an 'update' variant
 
     public String getId() {
         return id;
@@ -51,5 +57,13 @@ public class Suggestion {
 
     public void setActions(List<Action> actions) {
         this.actions = actions;
+    }
+
+    public Goal getGoal() {
+        return goal;
+    }
+
+    public void setGoal(Goal goal) {
+        this.goal = goal;
     }
 }

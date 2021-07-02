@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.htnu18app.entity.app;
 
+import org.hl7.fhir.r4.model.Goal;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,5 +36,20 @@ public enum LifecycleStatus {
 
     public String getFhirValue() {
         return fhirValue;
+    }
+
+    public Goal.GoalLifecycleStatus toGoalLifecycleStatus() {
+        switch (this) {
+            case PROPOSED: return Goal.GoalLifecycleStatus.PROPOSED;
+            case PLANNED: return Goal.GoalLifecycleStatus.PLANNED;
+            case ACCEPTED: return Goal.GoalLifecycleStatus.ACCEPTED;
+            case ACTIVE: return Goal.GoalLifecycleStatus.ACTIVE;
+            case ON_HOLD: return Goal.GoalLifecycleStatus.ONHOLD;
+            case COMPLETED: return Goal.GoalLifecycleStatus.COMPLETED;
+            case CANCELLED: return Goal.GoalLifecycleStatus.CANCELLED;
+            case ENTERED_IN_ERROR: return Goal.GoalLifecycleStatus.ENTEREDINERROR;
+            case REJECTED: return Goal.GoalLifecycleStatus.REJECTED;
+            default: return null;
+        }
     }
 }

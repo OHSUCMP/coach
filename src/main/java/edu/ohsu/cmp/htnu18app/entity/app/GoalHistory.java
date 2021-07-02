@@ -11,17 +11,28 @@ public class GoalHistory {
     private Long id;
 
     private Long goalId;
+
+    @Enumerated(EnumType.STRING)
     private LifecycleStatus lifecycleStatus;
+
+    @Enumerated(EnumType.STRING)
     private AchievementStatus achievementStatus;
+
     private Date createdDate;
+
+//    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+//    @JoinColumn(name = "goalId", nullable = false)
+//    private Goal goal;
 
     protected GoalHistory() {
     }
 
-    public GoalHistory(Long goalId, LifecycleStatus lifecycleStatus, AchievementStatus achievementStatus) {
-        this.goalId = goalId;
+    public GoalHistory(LifecycleStatus lifecycleStatus, AchievementStatus achievementStatus, Goal goal) {
+        this.goalId = goal.getId();
         this.lifecycleStatus = lifecycleStatus;
         this.achievementStatus = achievementStatus;
+        this.createdDate = new Date();
+//        this.goal = goal;
     }
 
     public Long getId() {
@@ -63,4 +74,45 @@ public class GoalHistory {
     public void setCreatedDate(Date createdDate) {
         this.createdDate = createdDate;
     }
+
+//    public Goal getGoal() {
+//        return goal;
+//    }
+//
+//    public void setGoal(Goal goal) {
+//        this.goal = goal;
+//    }
+
+//    @Override
+//    public boolean equals(Object o) {
+//        if (o == null) return false;
+//        if (o == this) return true;
+//        if (o.getClass() != getClass()) return false;
+//
+//        GoalHistory gh = (GoalHistory) o;
+//        return new EqualsBuilder()
+////                .appendSuper(super.equals(o))
+//                .append(lifecycleStatus, gh.lifecycleStatus)
+//                .append(achievementStatus, gh.achievementStatus)
+//                .append(createdDate, gh.createdDate)
+//                .append(goal, gh.goal)
+//                .isEquals();
+//    }
+//
+//    @Override
+//    public int hashCode() {
+//        return new HashCodeBuilder(2467, 647)
+//                .append(lifecycleStatus)
+//                .append(achievementStatus)
+//                .append(createdDate)
+//                .append(goal)
+//                .toHashCode();
+//    }
+//
+//    @Override
+//    public int compareTo(@NotNull GoalHistory o) {
+//        return new CompareToBuilder()
+//                .append(this.createdDate, o.createdDate)
+//                .toComparison();
+//    }
 }

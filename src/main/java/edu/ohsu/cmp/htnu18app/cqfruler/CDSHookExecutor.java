@@ -12,7 +12,6 @@ import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSCard;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHookResponse;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.HookRequest;
-import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
 import edu.ohsu.cmp.htnu18app.entity.app.Counseling;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.http.HttpRequest;
@@ -21,6 +20,7 @@ import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
+import edu.ohsu.cmp.htnu18app.model.recommendation.Suggestion;
 import edu.ohsu.cmp.htnu18app.service.CounselingService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
@@ -152,7 +152,26 @@ public class CDSHookExecutor implements Runnable {
                 List<String> filterGoalIds = goalService.getExtGoalIdList(sessionId);
 
                 for (CDSCard cdsCard : response.getCards()) {
-                    cards.add(new Card(cdsCard, filterGoalIds));
+                    Card card = new Card(cdsCard);
+
+                    if (card.getSuggestions() != null) {
+                        Iterator<Suggestion> iter = card.getSuggestions().iterator();
+                        while (iter.hasNext()) {
+                            Suggestion s = iter.next();
+                            if (s.getType().equals(Suggestion.TYPE_GOAL) && filterGoalIds.contains(s.getId())) {
+                                iter.remove();
+                            }
+                        }
+
+                        for (Suggestion s : card.getSuggestions()) {
+                            if (s.getType().equals(Suggestion.TYPE_UPDATE_GOAL)) {
+                                edu.ohsu.cmp.htnu18app.entity.app.Goal goal = goalService.getGoal(sessionId, s.getId());
+                                s.setGoal(goal);
+                            }
+                        }
+                    }
+
+                    cards.add(card);
                 }
 
             } catch (Exception e) {
@@ -187,17 +206,17 @@ public class CDSHookExecutor implements Runnable {
             Encounter e = buildEncounter(uuid, patientId, c.getCreatedDate());
             bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
 
-            Procedure p = buildCounselingProcedure(uuid, patientId, e.getId(), c);
+            Procedure p = buildCounselingProcedure(patientId, e.getId(), c);
             bundle.addEntry().setFullUrl("http://hl7.org/fhir/Procedure/" + p.getId()).setResource(p);
         }
 
         return bundle;
     }
 
-    private Procedure buildCounselingProcedure(String uuid, String patientId, String encounterId, Counseling c) {
+    private Procedure buildCounselingProcedure(String patientId, String encounterId, Counseling c) {
         Procedure p = new Procedure();
 
-        p.setId("procedure-" + uuid);
+        p.setId(c.getExtCounselingId());
         p.setSubject(new Reference().setReference(patientId));
         p.setEncounter(new Reference().setReference(encounterId));
         p.setStatus(Procedure.ProcedureStatus.COMPLETED);
@@ -227,14 +246,14 @@ public class CDSHookExecutor implements Runnable {
     private Goal buildGoal(String patientId, edu.ohsu.cmp.htnu18app.entity.app.Goal goal) {
         Goal g = new Goal();
 
-        g.setId("goal-" + UUID.randomUUID().toString());
+        g.setId(goal.getExtGoalId());
         g.setSubject(new Reference().setReference(patientId));
-        g.setLifecycleStatus(Goal.GoalLifecycleStatus.ACTIVE);                          // todo : set this dynamically
-        g.getAchievementStatus().addCoding().setCode(AchievementStatus.IMPROVING.getFhirValue())
-                .setSystem("http://terminology.hl7.org/CodeSystem/goal-achievement");   // todo : set this dynamically
+        g.setLifecycleStatus(goal.getLifecycleStatus().toGoalLifecycleStatus());
+        g.getAchievementStatus().addCoding().setCode(goal.getAchievementStatus().getFhirValue())
+                .setSystem("http://terminology.hl7.org/CodeSystem/goal-achievement");
         g.getCategoryFirstRep().addCoding().setCode(goal.getReferenceCode()).setSystem(goal.getReferenceSystem());
         g.getDescription().setText(goal.getGoalText());
-        g.setStatusDate(goal.getCreatedDate()); // todo : set this from goalHistory most recent status
+        g.setStatusDate(goal.getStatusDate());
 
         return g;
     }

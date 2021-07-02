@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class Card {
@@ -26,7 +25,7 @@ public class Card {
     private String selectionBehavior;
     private List<Link> links;
 
-    public Card(CDSCard cdsCard, List<String> filterGoalIds) throws IOException {
+    public Card(CDSCard cdsCard) throws IOException {
         this.summary = cdsCard.getSummary();
         this.indicator = cdsCard.getIndicator();
         this.detail = cdsCard.getDetail();
@@ -39,17 +38,6 @@ public class Card {
         Gson gson = new GsonBuilder().create();
         try {
             this.suggestions = gson.fromJson(cdsCard.getSuggestions(), new TypeToken<ArrayList<Suggestion>>(){}.getType());
-
-            // filter goals that the user has already responded to
-            if (this.suggestions != null) {
-                Iterator<Suggestion> iter = this.suggestions.iterator();
-                while (iter.hasNext()) {
-                    Suggestion s = iter.next();
-                    if (s.getType().equals(Suggestion.TYPE_GOAL) && filterGoalIds.contains(s.getId())) {
-                        iter.remove();
-                    }
-                }
-            }
 
         } catch (JsonSyntaxException e) {
             logger.error("caught " + e.getClass().getName() + " processing suggestions - " + e.getMessage(), e);

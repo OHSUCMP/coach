@@ -128,7 +128,7 @@
     margin-top: 0;
 }
 
-.commitToGoalButton {
+.commitToGoalButton, .updateGoalButton {
     width: 120px;
     text-align: center;
     margin-left: auto;
@@ -139,12 +139,12 @@
     background-color: #2e6e9e;
 }
 
-.commitToGoalButton.hover {
+.commitToGoalButton.hover, .updateGoalButton.hover {
     cursor: pointer;
     background-color: #2f96b4;
 }
 
-.commitToGoalButton * {
+.commitToGoalButton *, .updateGoalButton * {
     font-size: medium;
 }
 

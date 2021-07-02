@@ -2,7 +2,11 @@ package edu.ohsu.cmp.htnu18app.service;
 
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
+import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
 import edu.ohsu.cmp.htnu18app.entity.app.Goal;
+import edu.ohsu.cmp.htnu18app.entity.app.GoalHistory;
+import edu.ohsu.cmp.htnu18app.entity.app.LifecycleStatus;
+import edu.ohsu.cmp.htnu18app.repository.app.GoalHistoryRepository;
 import edu.ohsu.cmp.htnu18app.repository.app.GoalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +19,10 @@ import java.util.List;
 public class GoalService {
 
     @Autowired
-    private GoalRepository repository;
+    private GoalRepository goalRepository;
+
+    @Autowired
+    private GoalHistoryRepository goalHistoryRepository;
 
     public List<String> getExtGoalIdList(String sessionId) {
         List<String> list = new ArrayList<>();
@@ -27,12 +34,12 @@ public class GoalService {
 
     public List<Goal> getGoalList(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
-        return repository.findAllByPatId(cache.getInternalPatientId());
+        return goalRepository.findAllByPatId(cache.getInternalPatientId());
     }
 
     public Goal getGoal(String sessionId, String extGoalId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
-        return repository.findOneByPatIdAndExtGoalId(cache.getInternalPatientId(), extGoalId);
+        return goalRepository.findOneByPatIdAndExtGoalId(cache.getInternalPatientId(), extGoalId);
     }
 
     public Goal create(String sessionId, Goal goal) {
@@ -40,15 +47,20 @@ public class GoalService {
         goal.setPatId(cache.getInternalPatientId());
         goal.setCreatedDate(new Date());
         goal.setCompleted(false);
-        return repository.save(goal);
+
+        Goal g = goalRepository.save(goal);
+
+        goalHistoryRepository.save(new GoalHistory(LifecycleStatus.ACTIVE, AchievementStatus.NO_PROGRESS, g));
+
+        return g;
     }
 
     public Goal update(Goal goal) {
-        return repository.save(goal);
+        return goalRepository.save(goal);
     }
 
     public void delete(String sessionId, String extGoalId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
-        repository.deleteByGoalIdForPatient(extGoalId, cache.getInternalPatientId());
+        goalRepository.deleteByGoalIdForPatient(extGoalId, cache.getInternalPatientId());
     }
 }

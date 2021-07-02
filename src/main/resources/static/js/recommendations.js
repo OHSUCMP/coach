@@ -74,6 +74,10 @@ async function getCachedRecommendation(id, _callback) {
 
 function renderCards(cards) {
     let html = "";
+    if (cards === undefined || cards === null || cards.length === 0) {
+        return html;
+    }
+
     cards.forEach(function (card) {
         html += "<div class='card " + card.indicator + "'>\n";
         html += "<table style='width:100%'><tr><td>\n";
@@ -123,7 +127,7 @@ function buildCounselingHTML(suggestions) {
     let html = "";
     if (suggestions !== null) {
         suggestions.forEach(function(s) {
-            if (s.type === 'counseling') {
+            if (s.type === 'counseling-link') {
                 html += "<div class='counseling' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
                 html += "<span class='heading'>" + s.label + "</span>";
                 if (s.actions !== null) {
@@ -188,7 +192,41 @@ function buildGoalsHTML(suggestions) {
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tr><td>";
 
-                // todo: complete this
+                let id = randomChars(5);
+
+                html += "<div><label for='lifecycleStatus" + id + "'>Lifecycle Status:</label> <select id='lifecycleStatus" + id + "' class='lifecycleStatus'>";
+
+                let l_arr = ['ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED'];
+                let l_status = s.goal.lifecycleStatus;
+                l_arr.forEach(function(value) {
+                    html += "<option value='" + value + "'";
+                    if (value === l_status) {
+                        html += " selected";
+                    }
+                    html += ">" + toLabel(value) + "</option>\n";
+                });
+
+                html += "</select></div>\n";
+
+                html += "<div><label for='achievementStatus" + id + "'>Achievement Status:</label> <select id='achievementStatus" + id + "' class='achievementStatus'>";
+
+                let a_arr = ['IN_PROGRESS', 'IMPROVING', 'WORSENING', 'NO_CHANGE', 'ACHIEVED', 'SUSTAINING', 'NOT_ACHIEVED', 'NO_PROGRESS', 'NOT_ATTAINABLE'];
+                let a_status = s.goal.achievementStatus;
+                a_arr.forEach(function(value) {
+                    html += "<option value='" + value + "'";
+                    if (value === a_status) {
+                        html += " selected";
+                    }
+                    html += ">" + toLabel(value) + "</option>\n";
+                });
+
+                html += "</select></div>\n";
+
+                html += "</td><td>";
+
+                html += "<div class='updateGoalButton'><span>Record Progress</span></div></td>\n";
+                html += "</td>";
+                html += "</tr><tr>";
 
                 html += "</td></tr></table>";
                 html += "</div>\n";
@@ -204,7 +242,7 @@ function buildLinksHTML(suggestions) {
     let html = "";
     if (suggestions !== null) {
         suggestions.forEach(function(s) {
-            if (s.type === 'link') {
+            if (s.type === 'suggestion-link') {
                 html += "<div class='link'>";
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tbody>";
@@ -235,6 +273,15 @@ function buildGoalData(button) {
     g.goalText = getGoalText(goal);
     g.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
     g.followUpDays = 0;
+    return g;
+}
+
+function buildGoalUpdateData(button) {
+    let goal = $(button).closest('.goal');
+    let g = {};
+    g.extGoalId = $(goal).attr('data-id');
+    g.lifecycleStatus = $(goal).find('.lifecycleStatus').find(':selected').val();
+    g.achievementStatus = $(goal).find('.achievementStatus').find(':selected').val();
     return g;
 }
 
@@ -299,25 +346,53 @@ async function createGoal(g, _callback) {
         body: formData
     });
 
-    let goal = await response.json();
-    if (goal) {
-        _callback(response.status, goal);
-    }
+    await response.text();
+
+    _callback(response.status);
 }
 
-function hideGoal(extGoalId) {
-    $('.goal[data-id="' + extGoalId + '"]').fadeOut();
+async function updateGoal(g, _callback) {
+    let formData = new FormData();
+    formData.append("extGoalId", g.extGoalId);
+    formData.append("lifecycleStatus", g.lifecycleStatus);
+    formData.append("achievementStatus", g.achievementStatus);
+
+    let response = await fetch("/goals/update", {
+        method: "POST",
+        body: formData
+    });
+
+    await response.text();
+
+    _callback(response.status);
+}
+
+function hideGoal(goalContainer) {
+    $(goalContainer).fadeOut();
 }
 
 $(document).ready(function() {
     enableHover('.commitToGoalButton');
+    enableHover('.updateGoalButton');
 
     $(document).on('click', '.goalsContainer .goal .commitToGoalButton', function() {
         let g = buildGoalData(this);
+        let container = $(this).closest('.goal');
 
-        createGoal(g, function(status, goal) {
+        createGoal(g, function(status) {
             if (status === 200) {
-                hideGoal(goal.extGoalId);
+                hideGoal(container);
+            }
+        });
+    });
+
+    $(document).on('click', '.goalsContainer .goal .updateGoalButton', function() {
+        let g = buildGoalUpdateData(this);
+        let container = $(this).closest('.goal');
+
+        updateGoal(g, function(status) {
+            if (status === 200) {
+                hideGoal(container);
             }
         });
     });

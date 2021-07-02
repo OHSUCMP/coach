@@ -2,6 +2,7 @@ package edu.ohsu.cmp.htnu18app.entity.app;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.Set;
 
 @Entity
 @Table(schema = "htnu18app")
@@ -20,6 +21,9 @@ public class Goal {
     private Date createdDate;
     private Boolean completed;
     private Date completedDate;
+
+    @OneToMany(mappedBy = "goalId", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Set<GoalHistory> history;
 
     protected Goal() {
     }
@@ -120,5 +124,47 @@ public class Goal {
 
     public void setCompletedDate(Date archivedDate) {
         this.completedDate = archivedDate;
+    }
+
+    public Set<GoalHistory> getHistory() {
+        return history;
+    }
+
+    public void setHistory(Set<GoalHistory> history) {
+        this.history = history;
+    }
+
+    public LifecycleStatus getLifecycleStatus() {
+        GoalHistory mostRecent = getMostRecentHistory();
+        return mostRecent != null ?
+                mostRecent.getLifecycleStatus() :
+                null;
+    }
+
+    public AchievementStatus getAchievementStatus() {
+        GoalHistory mostRecent = getMostRecentHistory();
+        return mostRecent != null ?
+                mostRecent.getAchievementStatus() :
+                null;
+    }
+
+    public Date getStatusDate() {
+        GoalHistory mostRecent = getMostRecentHistory();
+        return mostRecent != null ?
+                mostRecent.getCreatedDate() :
+                null;
+    }
+
+    private GoalHistory getMostRecentHistory() {
+        GoalHistory mostRecent = null;
+        for (GoalHistory gh : history) {
+            if (mostRecent == null) mostRecent = gh;
+            else {
+                if (gh.getCreatedDate().compareTo(mostRecent.getCreatedDate()) > 0) {
+                    mostRecent = gh;
+                }
+            }
+        }
+        return mostRecent;
     }
 }
