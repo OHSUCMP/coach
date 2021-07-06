@@ -11,9 +11,7 @@ import edu.ohsu.cmp.htnu18app.repository.app.GoalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class GoalService {
@@ -50,7 +48,10 @@ public class GoalService {
 
         Goal g = goalRepository.save(goal);
 
-        goalHistoryRepository.save(new GoalHistory(LifecycleStatus.ACTIVE, AchievementStatus.NO_PROGRESS, g));
+        GoalHistory gh = goalHistoryRepository.save(new GoalHistory(LifecycleStatus.ACTIVE, AchievementStatus.NO_PROGRESS, g));
+        Set<GoalHistory> set = new HashSet<>();
+        set.add(gh);
+        g.setHistory(set);
 
         return g;
     }
