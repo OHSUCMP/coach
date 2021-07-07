@@ -20,7 +20,7 @@ function enableHover(selector) {
 // pulled from https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
 function randomChars(length) {
     let result           = '';
-    let characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let charactersLength = characters.length;
     for ( let i = 0; i < length; i++ ) {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));

@@ -35,7 +35,7 @@ create table goal (
   referenceCode varchar(100) not null,
   goalText varchar(255) not null,
   targetDate date not null,
-  followUpDays int,
+--   followUpDays int,
   createdDate datetime not null,
   completed tinyint(1) not null default 0,
   completedDate datetime
@@ -47,7 +47,6 @@ drop table if exists goal_history;
 create table goal_history (
     id int not null auto_increment primary key,
     goalId int not null,
-    lifecycleStatus varchar(20) not null,
     achievementStatus varchar(20) not null,
     createdDate datetime not null
 );

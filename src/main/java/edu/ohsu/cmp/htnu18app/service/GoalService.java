@@ -5,7 +5,6 @@ import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
 import edu.ohsu.cmp.htnu18app.entity.app.Goal;
 import edu.ohsu.cmp.htnu18app.entity.app.GoalHistory;
-import edu.ohsu.cmp.htnu18app.entity.app.LifecycleStatus;
 import edu.ohsu.cmp.htnu18app.repository.app.GoalHistoryRepository;
 import edu.ohsu.cmp.htnu18app.repository.app.GoalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +47,7 @@ public class GoalService {
 
         Goal g = goalRepository.save(goal);
 
-        GoalHistory gh = goalHistoryRepository.save(new GoalHistory(LifecycleStatus.ACTIVE, AchievementStatus.NO_PROGRESS, g));
+        GoalHistory gh = goalHistoryRepository.save(new GoalHistory(AchievementStatus.IN_PROGRESS, g));
         Set<GoalHistory> set = new HashSet<>();
         set.add(gh);
         g.setHistory(set);

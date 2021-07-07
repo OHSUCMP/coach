@@ -5,7 +5,6 @@ import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
 import edu.ohsu.cmp.htnu18app.entity.app.Goal;
 import edu.ohsu.cmp.htnu18app.entity.app.GoalHistory;
-import edu.ohsu.cmp.htnu18app.entity.app.LifecycleStatus;
 import edu.ohsu.cmp.htnu18app.service.GoalHistoryService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import org.slf4j.Logger;
@@ -68,8 +67,7 @@ public class GoalController extends AuthenticatedController {
                                        @RequestParam("referenceSystem") String referenceSystem,
                                        @RequestParam("referenceCode") String referenceCode,
                                        @RequestParam("goalText") String goalText,
-                                       @RequestParam("targetDateTS") Long targetDateTS,
-                                       @RequestParam("followUpDays") Integer followUpDays) {
+                                       @RequestParam("targetDateTS") Long targetDateTS) {
 
 // matt 6/22 : commented out, we don't want to autogenerate goal IDs anymore, as we aren't allowing the user to
 //             set their own arbitrary goals independent from generated Suggestions
@@ -83,7 +81,7 @@ public class GoalController extends AuthenticatedController {
 
         Goal goal = goalService.getGoal(session.getId(), extGoalId);
         if (goal == null) {
-            goal = new Goal(extGoalId, referenceSystem, referenceCode, goalText, targetDate, followUpDays);
+            goal = new Goal(extGoalId, referenceSystem, referenceCode, goalText, targetDate);
             goal = goalService.create(session.getId(), goal);
 
             // remove goal from cache
@@ -100,13 +98,10 @@ public class GoalController extends AuthenticatedController {
     @PostMapping("update")
     public ResponseEntity<GoalHistory> update(HttpSession session,
                                               @RequestParam("extGoalId") String extGoalId,
-                                              @RequestParam("lifecycleStatus") String lifecycleStatusStr,
                                               @RequestParam("achievementStatus") String achievementStatusStr) {
 
         Goal g = goalService.getGoal(session.getId(), extGoalId);
-        GoalHistory gh = new GoalHistory(LifecycleStatus.valueOf(lifecycleStatusStr),
-                AchievementStatus.valueOf(achievementStatusStr),
-                g);
+        GoalHistory gh = new GoalHistory(AchievementStatus.valueOf(achievementStatusStr), g);
         gh = goalHistoryService.create(gh);
 
         return new ResponseEntity<>(gh, HttpStatus.OK);

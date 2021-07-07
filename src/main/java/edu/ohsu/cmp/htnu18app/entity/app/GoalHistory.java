@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.htnu18app.entity.app;
 
+import edu.ohsu.cmp.htnu18app.exception.CaseNotHandledException;
+
 import javax.persistence.*;
 import java.util.Date;
 
@@ -13,9 +15,6 @@ public class GoalHistory {
     private Long goalId;
 
     @Enumerated(EnumType.STRING)
-    private LifecycleStatus lifecycleStatus;
-
-    @Enumerated(EnumType.STRING)
     private AchievementStatus achievementStatus;
 
     private Date createdDate;
@@ -27,9 +26,8 @@ public class GoalHistory {
     protected GoalHistory() {
     }
 
-    public GoalHistory(LifecycleStatus lifecycleStatus, AchievementStatus achievementStatus, Goal goal) {
+    public GoalHistory(AchievementStatus achievementStatus, Goal goal) {
         this.goalId = goal.getId();
-        this.lifecycleStatus = lifecycleStatus;
         this.achievementStatus = achievementStatus;
         this.createdDate = new Date();
 //        this.goal = goal;
@@ -52,11 +50,12 @@ public class GoalHistory {
     }
 
     public LifecycleStatus getLifecycleStatus() {
-        return lifecycleStatus;
-    }
-
-    public void setLifecycleStatus(LifecycleStatus lifecycleStatus) {
-        this.lifecycleStatus = lifecycleStatus;
+        switch (achievementStatus) {
+            case IN_PROGRESS:   return LifecycleStatus.ACTIVE;
+            case ACHIEVED:      return LifecycleStatus.COMPLETED;
+            case NOT_ACHIEVED:  return LifecycleStatus.CANCELLED;
+            default: throw new CaseNotHandledException("couldn't determine Lifecycle Status for Achievement Status '" + achievementStatus + "'");
+        }
     }
 
     public AchievementStatus getAchievementStatus() {

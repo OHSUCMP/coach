@@ -157,21 +157,24 @@ function buildGoalsHTML(suggestions) {
 
                 if (s.actions === null || s.actions.length === 0) {
                     // textbox input
-                    html += "<input type='text' class='action' placeholder='Describe your goal here'>";
+                    html += "<div><input type='text' class='action' placeholder='Describe your goal here' /></div>";
 
-                } else if (s.actions.length === 1) {
-                    // predefined single goal, this is all you get, this is a label
-                    html += "<div class='action'>" + s.actions[0].label + "</div>";
+                // } else if (s.actions.length === 1) {
+                //     // predefined single goal, this is all you get, this is a label
+                //     html += "<div class='action'>" + s.actions[0].label + "</div>";
 
                 } else {
                     // predefined multiple-choice goal, these are radio buttons
                     let i = 0;
                     let x = randomChars(5);
                     s.actions.forEach(function(action) {
-                        html += "<input id='action" + x + "_" + i + "' class='action' type='radio' name='action" + x + "' value='" + action.label + "'>";
-                        html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label>\n";
+                        html += "<div><input id='action" + x + "_" + i + "' class='action' type='radio' name='action" + x + "' value='" + action.label + "' />";
+                        html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label></div>\n";
                         i ++;
                     });
+
+                    html += "<div><input id='action" + x + "_" + i + "' class='action freetext' type='radio' name='action" + x + "' />";
+                    html += "<input type='text' class='freetextResponse' placeholder='Describe your goal here' disabled/></div>";
                 }
 
                 html += "</td><td>";
@@ -194,23 +197,25 @@ function buildGoalsHTML(suggestions) {
 
                 let id = randomChars(5);
 
-                html += "<div><label for='lifecycleStatus" + id + "'>Lifecycle Status:</label> <select id='lifecycleStatus" + id + "' class='lifecycleStatus'>";
-
-                let l_arr = ['ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED'];
-                let l_status = s.goal.lifecycleStatus;
-                l_arr.forEach(function(value) {
-                    html += "<option value='" + value + "'";
-                    if (value === l_status) {
-                        html += " selected";
-                    }
-                    html += ">" + toLabel(value) + "</option>\n";
-                });
-
-                html += "</select></div>\n";
+                // html += "<div><label for='lifecycleStatus" + id + "'>Lifecycle Status:</label> <select id='lifecycleStatus" + id + "' class='lifecycleStatus'>";
+                //
+                // // let l_arr = ['PROPOSED', 'PLANNED', 'ACCEPTED', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED', 'ENTERED_IN_ERROR', 'REJECTED'];
+                // let l_arr = ['ACTIVE', 'COMPLETED', 'CANCELLED'];
+                // let l_status = s.goal.lifecycleStatus;
+                // l_arr.forEach(function(value) {
+                //     html += "<option value='" + value + "'";
+                //     if (value === l_status) {
+                //         html += " selected";
+                //     }
+                //     html += ">" + toLabel(value) + "</option>\n";
+                // });
+                //
+                // html += "</select></div>\n";
 
                 html += "<div><label for='achievementStatus" + id + "'>Achievement Status:</label> <select id='achievementStatus" + id + "' class='achievementStatus'>";
 
-                let a_arr = ['IN_PROGRESS', 'IMPROVING', 'WORSENING', 'NO_CHANGE', 'ACHIEVED', 'SUSTAINING', 'NOT_ACHIEVED', 'NO_PROGRESS', 'NOT_ATTAINABLE'];
+                // let a_arr = ['IN_PROGRESS', 'IMPROVING', 'WORSENING', 'NO_CHANGE', 'ACHIEVED', 'SUSTAINING', 'NOT_ACHIEVED', 'NO_PROGRESS', 'NOT_ATTAINABLE'];
+                let a_arr = ['IN_PROGRESS', 'ACHIEVED', 'NOT_ACHIEVED'];
                 let a_status = s.goal.achievementStatus;
                 a_arr.forEach(function(value) {
                     html += "<option value='" + value + "'";
@@ -272,16 +277,6 @@ function buildGoalData(button) {
     g.referenceCode = $(goal).attr('data-reference-code');
     g.goalText = getGoalText(goal);
     g.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
-    g.followUpDays = 0;
-    return g;
-}
-
-function buildGoalUpdateData(button) {
-    let goal = $(button).closest('.goal');
-    let g = {};
-    g.extGoalId = $(goal).attr('data-id');
-    g.lifecycleStatus = $(goal).find('.lifecycleStatus').find(':selected').val();
-    g.achievementStatus = $(goal).find('.achievementStatus').find(':selected').val();
     return g;
 }
 
@@ -289,18 +284,25 @@ function getGoalText(goal) {
     let action = $(goal).find('.action');
 
     if ($(action).length === 1) {
-        if ($(action).is('input[type="text"]')) {
-            return $(action).val();
+        return $(action).val();
 
-        } else if ($(action).is('div')) {
-            return $(action).text();
+    } else {
+        let el = $(action).filter(":checked");
+        if ($(el).hasClass('freetext')) {
+            return $(goal).find('input.freetextResponse').val();
+
+        } else {
+            return $(el).val();
         }
-
-    } else if ($(action).length > 1) {
-        return $(action).filter(":checked").val();
     }
+}
 
-    return null;
+function buildGoalUpdateData(button) {
+    let goal = $(button).closest('.goal');
+    let g = {};
+    g.extGoalId = $(goal).attr('data-id');
+    g.achievementStatus = $(goal).find('.achievementStatus').find(':selected').val();
+    return g;
 }
 
 function buildCounselingData(a) {
@@ -339,7 +341,6 @@ async function createGoal(g, _callback) {
     formData.append("referenceCode", g.referenceCode);
     formData.append("goalText", g.goalText);
     formData.append("targetDateTS", targetDateTS);
-    formData.append("followUpDays", g.followUpDays || 0);
 
     let response = await fetch("/goals/create", {
         method: "POST",
@@ -404,5 +405,16 @@ $(document).ready(function() {
         registerCounselingReceived(c, function(status) {
             window.location.href = $(a).attr('href');
         });
+    });
+
+    $(document).on('click', 'input.action[type="radio"]', function() {
+        let el = $(this).closest('.goal').find('input.freetextResponse');
+        if ($(this).hasClass('freetext')) {
+            $(el).prop('disabled', false);
+            $(el).focus();
+
+        } else {
+            $(el).prop('disabled', true);
+        }
     });
 });
