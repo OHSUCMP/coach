@@ -58,14 +58,14 @@ public class RecommendationController extends AuthenticatedController {
     public ResponseEntity<List<Card>> getCached(HttpSession session,
                                                 @RequestParam("id") String hookId) {
 
-        // attempt to get cached recommendations every 5 seconds for up to what, 5 minutes?
+        // attempt to get cached recommendations every 5 seconds for up to what, 1 hour?
 
         CacheData cache = SessionCache.getInstance().get(session.getId());
 
         List<Card> cards = null;
         HttpStatus status = HttpStatus.REQUEST_TIMEOUT;
 
-        for (int i = 0; i < 60; i ++) {
+        for (int i = 0; i < 720; i ++) {
             cards = cache.getCards(hookId);
 
             if (cards != null) {

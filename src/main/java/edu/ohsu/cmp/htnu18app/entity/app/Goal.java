@@ -16,6 +16,8 @@ public class Goal {
     private String referenceSystem;
     private String referenceCode;
     private String goalText;
+    private Integer systolicTarget;
+    private Integer diastolicTarget;
     private Date targetDate;
     private Date createdDate;
     private Boolean completed;
@@ -32,6 +34,17 @@ public class Goal {
         this.referenceSystem = referenceSystem;
         this.referenceCode = referenceCode;
         this.goalText = goalText;
+        this.targetDate = targetDate;
+        this.completed = false;
+    }
+
+    public Goal(String extGoalId, String referenceSystem, String referenceCode, Integer systolicTarget, Integer diastolicTarget, Date targetDate) {
+        this.extGoalId = extGoalId;
+        this.referenceSystem = referenceSystem;
+        this.referenceCode = referenceCode;
+        this.goalText = "Target BP: " + systolicTarget + "/" + diastolicTarget;
+        this.systolicTarget = systolicTarget;
+        this.diastolicTarget = diastolicTarget;
         this.targetDate = targetDate;
         this.completed = false;
     }
@@ -82,6 +95,26 @@ public class Goal {
 
     public void setGoalText(String goalText) {
         this.goalText = goalText;
+    }
+
+    public boolean isBloodPressureGoal() {
+        return systolicTarget != null && diastolicTarget != null;
+    }
+
+    public Integer getSystolicTarget() {
+        return systolicTarget;
+    }
+
+    public void setSystolicTarget(Integer systolicTarget) {
+        this.systolicTarget = systolicTarget;
+    }
+
+    public Integer getDiastolicTarget() {
+        return diastolicTarget;
+    }
+
+    public void setDiastolicTarget(Integer diastolicTarget) {
+        this.diastolicTarget = diastolicTarget;
     }
 
     public Date getTargetDate() {

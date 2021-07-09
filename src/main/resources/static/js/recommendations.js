@@ -150,37 +150,70 @@ function buildGoalsHTML(suggestions) {
     let html = "";
     if (suggestions !== null) {
         suggestions.forEach(function(s) {
-            if (s.type === 'goal') {
-                html += "<div class='goal' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
+            if (s.type === 'goal' || s.type === 'bp-goal') {
+                let c = s.type === 'bp-goal' ? 'bpGoal' : 'goal';
+
+                html += "<div class='" + c + "' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
                 html += "<span class='heading'>" + s.label + "</span>";
-                html += "<table><tr><td>";
+                html += "<table><tr>";
 
-                if (s.actions === null || s.actions.length === 0) {
-                    // textbox input
-                    html += "<div><input type='text' class='action' placeholder='Describe your goal here' /></div>";
+                html += "<td>";
+                if (s.type === 'goal') {
+                    if (s.actions === null || s.actions.length === 0) {
+                        // freeform input
+                        html += "<div class='action'>";
+                        html += "<input type='text' placeholder='Describe your goal here' />";
+                        html += "</div>\n";
 
-                // } else if (s.actions.length === 1) {
-                //     // predefined single goal, this is all you get, this is a label
-                //     html += "<div class='action'>" + s.actions[0].label + "</div>";
+                    } else {
+                        // predefined multiple-choice goal, these are radio buttons
+                        let i = 0;
+                        let x = randomChars(5);
+                        s.actions.forEach(function (action) {
+                            html += "<div class='action'>";
+                            html += "<input name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + action.label + "' />";
+                            html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label>";
+                            html += "</div>\n";
+                            i++;
+                        });
 
-                } else {
-                    // predefined multiple-choice goal, these are radio buttons
-                    let i = 0;
-                    let x = randomChars(5);
-                    s.actions.forEach(function(action) {
-                        html += "<div><input id='action" + x + "_" + i + "' class='action' type='radio' name='action" + x + "' value='" + action.label + "' />";
-                        html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label></div>\n";
-                        i ++;
-                    });
+                        html += "<div class='action'>";
+                        html += "<input name='action" + x + "' type='radio' class='freetext' />";
+                        html += "<input type='text' class='freetextResponse' placeholder='Describe your goal here' disabled/>";
+                        html += "</div>";
+                    }
 
-                    html += "<div><input id='action" + x + "_" + i + "' class='action freetext' type='radio' name='action" + x + "' />";
-                    html += "<input type='text' class='freetextResponse' placeholder='Describe your goal here' disabled/></div>";
+                } else if (s.type === 'bp-goal') {
+                    if (s.actions === null || s.actions.length === 0) {
+                        // freeform input
+                        html += "<div class='action'>";
+                        html += "<input type='text' class='systolic' placeholder='Systolic' /> /";
+                        html += "<input type='text' class='diastolic' placeholder='Diastolic' />";
+                        html += "</div>\n";
+
+                    } else {
+                        // predefined multiple-choice goal, these are radio buttons
+                        let i = 0;
+                        let x = randomChars(5);
+                        s.actions.forEach(function (action) {
+                            let bpdata = parseBPData(action.label);
+                            html += "<div class='action'>";
+                            html += "<input name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + action.label + "' data-systolic='" + bpdata.systolic + "' data-diastolic='" + bpdata.diastolic + "' />";
+                            html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label></div>\n";
+                            i++;
+                        });
+
+                        html += "<div class='action'>";
+                        html += "<input name='action" + x + "' type='radio' class='custom' />";
+                        html += "<input type='text' class='customResponse systolic' placeholder='Systolic' disabled/> / ";
+                        html += "<input type='text' class='customResponse diastolic' placeholder='Diastolic' disabled/>";
+                        html += "</div>\n";
+                    }
                 }
-
-                html += "</td><td>";
-
-                html += "<div class='commitToGoalButton'><span>Commit to Goal</span></div></td>\n";
                 html += "</td>";
+
+                html += "<td><div class='commitToGoalButton'><span>Commit to Goal</span></div></td>\n";
+
                 html += "</tr><tr>";
 
                 let y = randomChars(5);
@@ -197,24 +230,8 @@ function buildGoalsHTML(suggestions) {
 
                 let id = randomChars(5);
 
-                // html += "<div><label for='lifecycleStatus" + id + "'>Lifecycle Status:</label> <select id='lifecycleStatus" + id + "' class='lifecycleStatus'>";
-                //
-                // // let l_arr = ['PROPOSED', 'PLANNED', 'ACCEPTED', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED', 'ENTERED_IN_ERROR', 'REJECTED'];
-                // let l_arr = ['ACTIVE', 'COMPLETED', 'CANCELLED'];
-                // let l_status = s.goal.lifecycleStatus;
-                // l_arr.forEach(function(value) {
-                //     html += "<option value='" + value + "'";
-                //     if (value === l_status) {
-                //         html += " selected";
-                //     }
-                //     html += ">" + toLabel(value) + "</option>\n";
-                // });
-                //
-                // html += "</select></div>\n";
-
                 html += "<div><label for='achievementStatus" + id + "'>Achievement Status:</label> <select id='achievementStatus" + id + "' class='achievementStatus'>";
 
-                // let a_arr = ['IN_PROGRESS', 'IMPROVING', 'WORSENING', 'NO_CHANGE', 'ACHIEVED', 'SUSTAINING', 'NOT_ACHIEVED', 'NO_PROGRESS', 'NOT_ATTAINABLE'];
                 let a_arr = ['IN_PROGRESS', 'ACHIEVED', 'NOT_ACHIEVED'];
                 let a_status = s.goal.achievementStatus;
                 a_arr.forEach(function(value) {
@@ -269,6 +286,17 @@ function buildLinksHTML(suggestions) {
         "";
 }
 
+function parseBPData(s) {
+    // expected format: "{systolic}/{diastolic}"
+    let regex = /^.*?(\d+)\s*\/\s*(\d+).*?$/
+    let match = regex.exec(s);
+
+    let obj = {};
+    obj.systolic = match[1];
+    obj.diastolic = match[2];
+    return obj;
+}
+
 function buildGoalData(button) {
     let goal = $(button).closest('.goal');
     let g = {};
@@ -276,6 +304,21 @@ function buildGoalData(button) {
     g.referenceSystem = $(goal).attr('data-reference-system');
     g.referenceCode = $(goal).attr('data-reference-code');
     g.goalText = getGoalText(goal);
+    g.systolicTarget = 0;
+    g.diastolicTarget = 0;
+    g.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
+    return g;
+}
+
+function buildBPGoalData(button) {
+    let goal = $(button).closest('.bpGoal');
+    let g = {};
+    g.extGoalId = $(goal).attr('data-id');
+    g.referenceSystem = $(goal).attr('data-reference-system');
+    g.referenceCode = $(goal).attr('data-reference-code');
+    let target = getGoalBPTarget(goal);
+    g.systolicTarget = target.systolic;
+    g.diastolicTarget = target.diastolic;
     g.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
     return g;
 }
@@ -284,15 +327,41 @@ function getGoalText(goal) {
     let action = $(goal).find('.action');
 
     if ($(action).length === 1) {
-        return $(action).val();
+        return $(action).find('input').val();
 
     } else {
-        let el = $(action).filter(":checked");
-        if ($(el).hasClass('freetext')) {
-            return $(goal).find('input.freetextResponse').val();
+        let radio = $(action).find("input[type='radio']:checked");
+        if ($(radio).hasClass('freetext')) {
+            return $(radio).siblings('input.freetextResponse').val();
 
         } else {
-            return $(el).val();
+            return $(radio).val();
+        }
+    }
+}
+
+function getGoalBPTarget(bpGoal) {
+    let action = $(bpGoal).find('.action');
+
+    if ($(action).length === 1) {
+        let obj = {};
+        obj.systolic = $(action).find('input.systolic').val();
+        obj.diastolic = $(action).find('input.diastolic').val();
+        return obj;
+
+    } else {
+        let radio = $(action).find("input[type='radio']:checked");
+        if ($(radio).hasClass('custom')) {
+            let obj = {};
+            obj.systolic = $(radio).siblings('input.customResponse.systolic').val();
+            obj.diastolic = $(radio).siblings('input.customResponse.diastolic').val();
+            return obj;
+
+        } else {
+            let obj = {};
+            obj.systolic = $(radio).attr('data-systolic');
+            obj.diastolic = $(radio).attr('data-diastolic');
+            return obj;
         }
     }
 }
@@ -352,10 +421,30 @@ async function createGoal(g, _callback) {
     _callback(response.status);
 }
 
+async function createBPGoal(g, _callback) {
+    let targetDateTS = $.datepicker.formatDate('@', g.targetDate);
+
+    let formData = new FormData();
+    formData.append("extGoalId", g.extGoalId);
+    formData.append("referenceSystem", g.referenceSystem);
+    formData.append("referenceCode", g.referenceCode);
+    formData.append("systolicTarget", g.systolicTarget);
+    formData.append("diastolicTarget", g.diastolicTarget);
+    formData.append("targetDateTS", targetDateTS);
+
+    let response = await fetch("/goals/createbp", {
+        method: "POST",
+        body: formData
+    });
+
+    await response.text();
+
+    _callback(response.status);
+}
+
 async function updateGoal(g, _callback) {
     let formData = new FormData();
     formData.append("extGoalId", g.extGoalId);
-    formData.append("lifecycleStatus", g.lifecycleStatus);
     formData.append("achievementStatus", g.achievementStatus);
 
     let response = await fetch("/goals/update", {
@@ -368,37 +457,48 @@ async function updateGoal(g, _callback) {
     _callback(response.status);
 }
 
-function hideGoal(goalContainer) {
-    $(goalContainer).fadeOut();
+function hide(el) {
+    $(el).fadeOut();
 }
 
 $(document).ready(function() {
     enableHover('.commitToGoalButton');
     enableHover('.updateGoalButton');
 
-    $(document).on('click', '.goalsContainer .goal .commitToGoalButton', function() {
+    $(document).on('click', '.goal .commitToGoalButton', function() {
         let g = buildGoalData(this);
         let container = $(this).closest('.goal');
 
         createGoal(g, function(status) {
             if (status === 200) {
-                hideGoal(container);
+                hide(container);
             }
         });
     });
 
-    $(document).on('click', '.goalsContainer .goal .updateGoalButton', function() {
+    $(document).on('click', '.bpGoal .commitToGoalButton', function() {
+        let g = buildBPGoalData(this);
+        let container = $(this).closest('.bpGoal');
+
+        createBPGoal(g, function(status) {
+            if (status === 200) {
+                hide(container);
+            }
+        });
+    });
+
+    $(document).on('click', '.goal .updateGoalButton', function() {
         let g = buildGoalUpdateData(this);
         let container = $(this).closest('.goal');
 
         updateGoal(g, function(status) {
             if (status === 200) {
-                hideGoal(container);
+                hide(container);
             }
         });
     });
 
-    $(document).on('click', '.counselingContainer .counseling .actions a', function(event) {
+    $(document).on('click', '.counseling .actions a', function(event) {
         event.preventDefault();
         let a = $(this);
         let c = buildCounselingData(this);
@@ -407,11 +507,22 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('click', 'input.action[type="radio"]', function() {
+    $(document).on('click', '.goal .action input[type="radio"]', function() {
         let el = $(this).closest('.goal').find('input.freetextResponse');
         if ($(this).hasClass('freetext')) {
             $(el).prop('disabled', false);
             $(el).focus();
+
+        } else {
+            $(el).prop('disabled', true);
+        }
+    });
+
+    $(document).on('click', '.bpGoal .action input[type="radio"]', function() {
+        let el = $(this).closest('.bpGoal').find('input.customResponse');
+        if ($(this).hasClass('custom')) {
+            $(el).prop('disabled', false);
+            $(el).first().focus();
 
         } else {
             $(el).prop('disabled', true);

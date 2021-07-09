@@ -69,19 +69,38 @@ public class GoalController extends AuthenticatedController {
                                        @RequestParam("goalText") String goalText,
                                        @RequestParam("targetDateTS") Long targetDateTS) {
 
-// matt 6/22 : commented out, we don't want to autogenerate goal IDs anymore, as we aren't allowing the user to
-//             set their own arbitrary goals independent from generated Suggestions
-
-//        if (extGoalId.isEmpty()) {
-//            // autogenerate goal ID
-//            extGoalId = DigestUtils.sha256Hex(goalText);
-//        }
-
         Date targetDate = new Date(targetDateTS);
 
         Goal goal = goalService.getGoal(session.getId(), extGoalId);
         if (goal == null) {
             goal = new Goal(extGoalId, referenceSystem, referenceCode, goalText, targetDate);
+            goal = goalService.create(session.getId(), goal);
+
+            // remove goal from cache
+            CacheData cache = SessionCache.getInstance().get(session.getId());
+            cache.deleteSuggestion(extGoalId);
+
+            return new ResponseEntity<>(goal, HttpStatus.OK);
+
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
+        }
+    }
+
+    @PostMapping("createbp")
+    public ResponseEntity<Goal> createbp(HttpSession session,
+                                         @RequestParam("extGoalId") String extGoalId,
+                                         @RequestParam("referenceSystem") String referenceSystem,
+                                         @RequestParam("referenceCode") String referenceCode,
+                                         @RequestParam("systolicTarget") Integer systolicTarget,
+                                         @RequestParam("diastolicTarget") Integer diastolicTarget,
+                                         @RequestParam("targetDateTS") Long targetDateTS) {
+
+        Date targetDate = new Date(targetDateTS);
+
+        Goal goal = goalService.getGoal(session.getId(), extGoalId);
+        if (goal == null) {
+            goal = new Goal(extGoalId, referenceSystem, referenceCode, systolicTarget, diastolicTarget, targetDate);
             goal = goalService.create(session.getId(), goal);
 
             // remove goal from cache

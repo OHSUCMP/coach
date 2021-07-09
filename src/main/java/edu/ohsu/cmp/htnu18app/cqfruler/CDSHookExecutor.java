@@ -255,6 +255,26 @@ public class CDSHookExecutor implements Runnable {
         g.getDescription().setText(goal.getGoalText());
         g.setStatusDate(goal.getStatusDate());
 
+        if (goal.isBloodPressureGoal()) {
+            Goal.GoalTargetComponent systolic = new Goal.GoalTargetComponent();
+            systolic.getMeasure().addCoding().setCode(BloodPressureModel.SYSTOLIC_CODE).setSystem(BloodPressureModel.SYSTEM);
+            systolic.setDetail(new Quantity());
+            systolic.getDetailQuantity().setCode(BloodPressureModel.VALUE_CODE);
+            systolic.getDetailQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
+            systolic.getDetailQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
+            systolic.getDetailQuantity().setValue(goal.getSystolicTarget());
+            g.getTarget().add(systolic);
+
+            Goal.GoalTargetComponent diastolic = new Goal.GoalTargetComponent();
+            diastolic.getMeasure().addCoding().setCode(BloodPressureModel.DIASTOLIC_CODE).setSystem(BloodPressureModel.SYSTEM);
+            diastolic.setDetail(new Quantity());
+            diastolic.getDetailQuantity().setCode(BloodPressureModel.VALUE_CODE);
+            diastolic.getDetailQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
+            diastolic.getDetailQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
+            diastolic.getDetailQuantity().setValue(goal.getDiastolicTarget());
+            g.getTarget().add(diastolic);
+        }
+
         return g;
     }
 

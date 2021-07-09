@@ -34,6 +34,8 @@ create table goal (
   referenceSystem varchar(100) not null,
   referenceCode varchar(100) not null,
   goalText varchar(255) not null,
+  systolicTarget int,
+  diastolicTarget int,
   targetDate date not null,
 --   followUpDays int,
   createdDate datetime not null,

@@ -151,3 +151,15 @@
 /*.goal div.action {*/
 /*    margin-top: 5px;*/
 /*}*/
+
+.bpGoal input.systolic {
+    width: 50px
+}
+
+.bpGoal input.diastolic {
+    width: 55px
+}
+
+.bpGoal .action {
+    white-space: nowrap;
+}
