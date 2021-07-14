@@ -5,6 +5,8 @@ import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
 import edu.ohsu.cmp.htnu18app.entity.app.Goal;
 import edu.ohsu.cmp.htnu18app.entity.app.GoalHistory;
+import edu.ohsu.cmp.htnu18app.model.GoalHistoryModel;
+import edu.ohsu.cmp.htnu18app.model.GoalModel;
 import edu.ohsu.cmp.htnu18app.service.GoalHistoryService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import org.slf4j.Logger;
@@ -17,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -49,25 +52,22 @@ public class GoalController extends AuthenticatedController {
             logger.error("error populating patient model", e);
         }
 
-        List<Goal> list = goalService.getGoalList(session.getId());
+        List<GoalModel> list = new ArrayList<>();
+        for (Goal g : goalService.getGoalList(session.getId())) {
+            list.add(new GoalModel(g));
+        }
         model.addAttribute("goals", list);
 
         return "goals";
     }
 
-    @GetMapping("list")
-    public ResponseEntity<List<Goal>> getGoalsList(HttpSession session) {
-        List<Goal> list = goalService.getGoalList(session.getId());
-        return new ResponseEntity<>(list, HttpStatus.OK);
-    }
-
     @PostMapping("create")
-    public ResponseEntity<Goal> create(HttpSession session,
-                                       @RequestParam("extGoalId") String extGoalId,
-                                       @RequestParam("referenceSystem") String referenceSystem,
-                                       @RequestParam("referenceCode") String referenceCode,
-                                       @RequestParam("goalText") String goalText,
-                                       @RequestParam("targetDateTS") Long targetDateTS) {
+    public ResponseEntity<GoalModel> create(HttpSession session,
+                                            @RequestParam("extGoalId") String extGoalId,
+                                            @RequestParam("referenceSystem") String referenceSystem,
+                                            @RequestParam("referenceCode") String referenceCode,
+                                            @RequestParam("goalText") String goalText,
+                                            @RequestParam("targetDateTS") Long targetDateTS) {
 
         Date targetDate = new Date(targetDateTS);
 
@@ -80,7 +80,7 @@ public class GoalController extends AuthenticatedController {
             CacheData cache = SessionCache.getInstance().get(session.getId());
             cache.deleteSuggestion(extGoalId);
 
-            return new ResponseEntity<>(goal, HttpStatus.OK);
+            return new ResponseEntity<>(new GoalModel(goal), HttpStatus.OK);
 
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
@@ -88,13 +88,13 @@ public class GoalController extends AuthenticatedController {
     }
 
     @PostMapping("createbp")
-    public ResponseEntity<Goal> createbp(HttpSession session,
-                                         @RequestParam("extGoalId") String extGoalId,
-                                         @RequestParam("referenceSystem") String referenceSystem,
-                                         @RequestParam("referenceCode") String referenceCode,
-                                         @RequestParam("systolicTarget") Integer systolicTarget,
-                                         @RequestParam("diastolicTarget") Integer diastolicTarget,
-                                         @RequestParam("targetDateTS") Long targetDateTS) {
+    public ResponseEntity<GoalModel> createbp(HttpSession session,
+                                              @RequestParam("extGoalId") String extGoalId,
+                                              @RequestParam("referenceSystem") String referenceSystem,
+                                              @RequestParam("referenceCode") String referenceCode,
+                                              @RequestParam("systolicTarget") Integer systolicTarget,
+                                              @RequestParam("diastolicTarget") Integer diastolicTarget,
+                                              @RequestParam("targetDateTS") Long targetDateTS) {
 
         Date targetDate = new Date(targetDateTS);
 
@@ -107,55 +107,34 @@ public class GoalController extends AuthenticatedController {
             CacheData cache = SessionCache.getInstance().get(session.getId());
             cache.deleteSuggestion(extGoalId);
 
-            return new ResponseEntity<>(goal, HttpStatus.OK);
+            return new ResponseEntity<>(new GoalModel(goal), HttpStatus.OK);
 
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
         }
     }
 
-    @PostMapping("update")
-    public ResponseEntity<GoalHistory> update(HttpSession session,
-                                              @RequestParam("extGoalId") String extGoalId,
-                                              @RequestParam("achievementStatus") String achievementStatusStr) {
+    @PostMapping("setStatus")
+    public ResponseEntity<GoalHistoryModel> update(HttpSession session,
+                                                   @RequestParam("extGoalId") String extGoalId,
+                                                   @RequestParam("achievementStatus") String achievementStatusStr) {
 
         Goal g = goalService.getGoal(session.getId(), extGoalId);
         GoalHistory gh = new GoalHistory(AchievementStatus.valueOf(achievementStatusStr), g);
         gh = goalHistoryService.create(gh);
 
-        return new ResponseEntity<>(gh, HttpStatus.OK);
+        return new ResponseEntity<>(new GoalHistoryModel(gh), HttpStatus.OK);
     }
 
-    @PutMapping("setCompleted")
-    public ResponseEntity<Goal> setCompleted(HttpSession session,
-                                             @RequestParam("extGoalId") String extGoalId,
-                                             @RequestParam("completed") Boolean completed) {
-
-        Goal goal = goalService.getGoal(session.getId(), extGoalId);
-        if (goal != null) {
-            goal.setCompleted(completed);
-
-            Date completedDate = completed ? new Date() : null;
-            goal.setCompletedDate(completedDate);
-
-            goal = goalService.update(goal);
-            return new ResponseEntity<>(goal, HttpStatus.OK);
-
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-
-    @PostMapping("delete")
-    public ResponseEntity<String> delete(HttpSession session,
-                                         @RequestParam("extGoalId") String extGoalId) {
-        try {
-            goalService.delete(session.getId(), extGoalId);
-            return new ResponseEntity<>(extGoalId, HttpStatus.OK);
-
-        } catch (Exception e) {
-            return new ResponseEntity<>("Caught " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+//    @PostMapping("delete")
+//    public ResponseEntity<String> delete(HttpSession session,
+//                                         @RequestParam("extGoalId") String extGoalId) {
+//        try {
+//            goalService.delete(session.getId(), extGoalId);
+//            return new ResponseEntity<>(extGoalId, HttpStatus.OK);
+//
+//        } catch (Exception e) {
+//            return new ResponseEntity<>("Caught " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 }

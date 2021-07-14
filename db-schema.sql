@@ -37,10 +37,7 @@ create table goal (
   systolicTarget int,
   diastolicTarget int,
   targetDate date not null,
---   followUpDays int,
-  createdDate datetime not null,
-  completed tinyint(1) not null default 0,
-  completedDate datetime
+  createdDate datetime not null
 );
 
 create unique index idxPatGoalId on goal (patId, extGoalId);

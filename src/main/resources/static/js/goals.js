@@ -1,13 +1,3 @@
-async function getRecordedGoals() {
-    let response = await fetch("/goals/list", {
-        method: "GET"
-    });
-
-    let goals = await response.json();
-
-    return goals;
-}
-
 // function appendGoalToTable(goal) {
 //     let container = $('#goalsTable');
 //     let unsortedData = $(container).find('tr');
@@ -34,51 +24,39 @@ async function getRecordedGoals() {
 //     $(container).html(sortedData);
 // }
 
-async function setCompleted(el, completed) {
+async function updateStatus(el, status) {
     let extGoalId = $(el).closest('tr').attr('data-extGoalId');
 
     let formData = new FormData();
     formData.append("extGoalId", extGoalId);
-    formData.append("completed", completed);
+    formData.append("achievementStatus", status);
 
-    let response = await fetch("/goals/setCompleted", {
-        method: "PUT",
-        body: formData
-    });
-
-    let goal = await response.json();
-    if (goal) {
-        let row = $('tr.data[data-extGoalId=' + goal.extGoalId + ']');
-        if (row) {
-            let status = goal.completed ? 'Completed' : 'Active';
-            $(row).children('td.status').html(status);
-
-            let action = buildLifecycleStatusDiv(goal.completed);
-            $(row).children('td.actions').html(action);
-        }
-    }
-}
-
-function buildLifecycleStatusDiv(goal_completed) {
-
-    // todo : enhance this to show all available Goal statuses
-
-    return goal_completed ?
-        '<span class="markActive link">Mark Active</span>' :
-        '<span class="markCompleted link">Mark Completed</span>';
-}
-
-async function deleteGoal(extGoalId, _callback) {
-    let formData = new FormData();
-    formData.append("extGoalId", extGoalId);
-
-    let response = await fetch("/goals/delete", {
+    let response = await fetch("/goals/setStatus", {
         method: "POST",
         body: formData
     });
 
-    let deletedExtGoalId = await response.text();
-    if (deletedExtGoalId) {
-        _callback(deletedExtGoalId);
+    let goalHistory = await response.json();
+    if (goalHistory) {
+        let goalRow = $('tr.goal.data[data-extGoalId="' + extGoalId + '"]');
+        if (goalRow) {
+            $(goalRow).children('td.status').html(goalHistory.achievementStatus);
+            $(goalRow).children('td.actions').html(buildActionsHTML(goalHistory.achievementStatus));
+        }
+        let historyTable = $('tr.goal.history[data-extGoalId="' + extGoalId + '"]').find('table');
+        if (historyTable) {
+            $(historyTable).find('tr:last').after(buildHistoryHTML(goalHistory));
+        }
     }
+}
+
+function buildActionsHTML(status) {
+    // this should be kept synchronized with goals.mustache
+    return status === 'IN_PROGRESS' ?
+        '<div class="markAchieved link">Mark Achieved</div> <div class="markNotAchieved link">Mark Not Achieved</div>' :
+        '<div class="markInProgress link">Mark In Progress</div>';
+}
+
+function buildHistoryHTML(goalHistory) {
+    return "<tr><td>" + goalHistory.achievementStatus + "</td><td>" + goalHistory.createdDate + "</td></tr>\n";
 }

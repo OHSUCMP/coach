@@ -4,8 +4,8 @@
         <script type="text/javascript" src="js/form.js"></script>
         <link rel="stylesheet" href="css/form.css" />
 
-        <link rel="stylesheet" href="css/recommendations.css"/>
-        <script type="text/javascript" src="js/recommendations.js"></script>
+<!--        <link rel="stylesheet" href="css/recommendations.css"/>-->
+<!--        <script type="text/javascript" src="js/recommendations.js"></script>-->
 
         <script type="text/javascript" src="js/goals.js"></script>
         <link rel="stylesheet" href="css/goals.css"/>
@@ -15,12 +15,16 @@
                 enableHover('#goalsTable .link');
             });
 
-            $(document).on('click', '#goalsTable .markActive.link', function() {
-                setCompleted(this, false);
+            $(document).on('click', '#goalsTable .markInProgress.link', function() {
+                updateStatus(this, 'IN_PROGRESS');
             });
 
-            $(document).on('click', '#goalsTable .markCompleted.link', function() {
-                setCompleted(this, true);
+            $(document).on('click', '#goalsTable .markAchieved.link', function() {
+                updateStatus(this, 'ACHIEVED');
+            });
+
+            $(document).on('click', '#goalsTable .markNotAchieved.link', function() {
+                updateStatus(this, 'NOT_ACHIEVED');
             });
         </script>
     {{/head}}
@@ -64,42 +68,38 @@
                     <table id="goalsTable" class="data">
                         <tr id="goalsTableHeader">
                             <th>Goal</th>
-                            <th>Reference (System|Code)</th>
                             <th>Status</th>
                             <th>Created Date</th>
                             <th>&nbsp;</th>
                         </tr>
                         {{! note : keep this section synced with goals.js:appendRecordToTable(obj) }}
                         {{#goals}}
-                            <tr class='data' data-extGoalId='{{extGoalId}}'>
+                            <tr class='goal data' data-extGoalId='{{extGoalId}}'>
                                 <td>{{goalText}}</td>
-                                <td>{{referenceSystem}}|{{referenceCode}}</td>
                                 <td class="status">
-                                    {{#completed}}Completed{{/completed}}
-                                    {{^completed}}Active{{/completed}}
+                                    {{achievementStatus}}
                                 </td>
                                 <td>{{createdDate}}</td>
                                 <td class="actions">
-                                    <!-- todo : update this to make available all AchievementStatus values.  maybe also LifecycleStatus? -->
-                                    {{#completed}}
-                                        <span class="markActive link">Mark Active</span>
-                                    {{/completed}}
-                                    {{^completed}}
-                                        <span class="markCompleted link">Mark Completed</span>
-                                    {{/completed}}
+                                    {{! this should be kept synchronized with goals.js:buildActionsHTML(status) }}
+                                    {{#isInProgress}}
+                                        <div class="markAchieved link">Mark Achieved</div>
+                                        <div class="markNotAchieved link">Mark Not Achieved</div>
+                                    {{/isInProgress}}
+                                    {{^isInProgress}}
+                                        <div class="markInProgress link">Mark In Progress</div>
+                                    {{/isInProgress}}
                                 </td>
                             </tr>
-                            <tr class="history">
+                            <tr class="goal history" data-extGoalId='{{extGoalId}}'>
                                 <td colspan="5">
                                     <table class="no-spacing">
                                         <tr class="goalHistoryHeader">
-                                            <th>Lifecycle Status</th>
                                             <th>Achievement Status</th>
                                             <th>Date</th>
                                         </tr>
                                         {{#history}}
                                             <tr>
-                                                <td>{{lifecycleStatus}}</td>
                                                 <td>{{achievementStatus}}</td>
                                                 <td>{{createdDate}}</td>
                                             </tr>
@@ -108,9 +108,6 @@
                                 </td>
                             </tr>
                             </tr>
-                            {{#history}}
-
-                            {{/history}}
                         {{/goals}}
                     </table>
                 </td>

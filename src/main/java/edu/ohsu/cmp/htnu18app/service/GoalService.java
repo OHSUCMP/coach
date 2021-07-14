@@ -43,7 +43,6 @@ public class GoalService {
         CacheData cache = SessionCache.getInstance().get(sessionId);
         goal.setPatId(cache.getInternalPatientId());
         goal.setCreatedDate(new Date());
-        goal.setCompleted(false);
 
         Goal g = goalRepository.save(goal);
 

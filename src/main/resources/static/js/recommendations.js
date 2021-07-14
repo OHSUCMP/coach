@@ -14,20 +14,6 @@ function enableDatePicker(sel) {
     });
 }
 
-async function applyGoals() {
-    let goals = await getRecordedGoals();
-    $('.recommendation').each(function () {
-        let cardsContainer = $(this).find('.cardsContainer');
-        goals.forEach(function(goal) {
-            $(cardsContainer).find('input.goal[data-extGoalId="' + goal.extGoalId + '"').each(function () {
-                if ($(this).attr('type') === 'checkbox') {
-                    $(this).prop('checked', true);
-                }
-            });
-        });
-    });
-}
-
 async function executeRecommendations(_callback) {
     $('.recommendation').each(function () {
         let recommendationId = $(this).attr('data-id');

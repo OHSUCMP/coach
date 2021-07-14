@@ -20,8 +20,6 @@ public class Goal {
     private Integer diastolicTarget;
     private Date targetDate;
     private Date createdDate;
-    private Boolean completed;
-    private Date completedDate;
 
     @OneToMany(mappedBy = "goalId", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<GoalHistory> history;
@@ -35,7 +33,6 @@ public class Goal {
         this.referenceCode = referenceCode;
         this.goalText = goalText;
         this.targetDate = targetDate;
-        this.completed = false;
     }
 
     public Goal(String extGoalId, String referenceSystem, String referenceCode, Integer systolicTarget, Integer diastolicTarget, Date targetDate) {
@@ -46,7 +43,6 @@ public class Goal {
         this.systolicTarget = systolicTarget;
         this.diastolicTarget = diastolicTarget;
         this.targetDate = targetDate;
-        this.completed = false;
     }
 
     public Long getId() {
@@ -131,22 +127,6 @@ public class Goal {
 
     public void setCreatedDate(Date createdDate) {
         this.createdDate = createdDate;
-    }
-
-    public Boolean getCompleted() {
-        return completed;
-    }
-
-    public void setCompleted(Boolean completed) {
-        this.completed = completed;
-    }
-
-    public Date getCompletedDate() {
-        return completedDate;
-    }
-
-    public void setCompletedDate(Date archivedDate) {
-        this.completedDate = archivedDate;
     }
 
     public Set<GoalHistory> getHistory() {

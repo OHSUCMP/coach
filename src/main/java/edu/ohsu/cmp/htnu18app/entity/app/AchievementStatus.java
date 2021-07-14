@@ -6,14 +6,14 @@ import java.util.Map;
 public enum AchievementStatus {
     // these values taken from https://www.hl7.org/fhir/valueset-goal-achievement.html
     IN_PROGRESS("in-progress"),
-    IMPROVING("improving"),
-    WORSENING("worsening"),
-    NO_CHANGE("no-change"),
+//    IMPROVING("improving"),
+//    WORSENING("worsening"),
+//    NO_CHANGE("no-change"),
     ACHIEVED("achieved"),
-    SUSTAINING("sustaining"),
-    NOT_ACHIEVED("not-achieved"),
-    NO_PROGRESS("no-progress"),
-    NOT_ATTAINABLE("not-attainable");
+//    SUSTAINING("sustaining"),
+    NOT_ACHIEVED("not-achieved");
+//    NO_PROGRESS("no-progress"),
+//    NOT_ATTAINABLE("not-attainable");
 
     private static final Map<String, AchievementStatus> MAP = new HashMap<>();
     static {
