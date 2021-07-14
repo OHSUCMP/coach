@@ -119,9 +119,9 @@ public class CDSHookExecutor implements Runnable {
             Bundle bpBundle = buildBPBundle(p.getId());
             Bundle counselingBundle = buildCounselingBundle(p.getId());
             Bundle goalsBundle = buildGoalsBundle(p.getId());
-            Bundle conditionsBundle = buildConditionsBundle(p.getId());
+//            Bundle conditionsBundle = buildConditionsBundle(p.getId());
 
-            HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle, counselingBundle, goalsBundle, conditionsBundle);
+            HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle, counselingBundle, goalsBundle);
 
             MustacheFactory mf = new DefaultMustacheFactory();
             Mustache mustache = mf.compile("cqfruler/hookRequest.mustache");
@@ -279,17 +279,16 @@ public class CDSHookExecutor implements Runnable {
     }
 
     private Bundle buildBPBundle(String patientId) {
-        Bundle bundle = patientService.getObservations(sessionId);
+        Bundle bundle = patientService.getBloodPressureObservations(sessionId);
 
         // inject home blood pressure readings into Bundle for evaluation by CQF Ruler
         List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
         for (HomeBloodPressureReading item : hbprList) {
-            String uuid = UUID.randomUUID().toString();
+//            String uuid = UUID.randomUUID().toString();
+//            Encounter e = buildEncounter(uuid, patientId, item.getReadingDate());
+//            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
 
-            Encounter e = buildEncounter(uuid, patientId, item.getReadingDate());
-            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
-
-            Observation o = buildBloodPressureObservation(uuid, patientId, e.getId(), item);
+            Observation o = buildHomeBloodPressureObservation(patientId, item);
 
             // todo: should the URL be different?
             bundle.addEntry().setFullUrl("http://hl7.org/fhir/Observation/" + o.getId()).setResource(o);
@@ -320,14 +319,15 @@ public class CDSHookExecutor implements Runnable {
         return e;
     }
 
-    private Observation buildBloodPressureObservation(String uuid, String patientId, String encounterId, HomeBloodPressureReading item) {
+    private Observation buildHomeBloodPressureObservation(String patientId, HomeBloodPressureReading item) {
         // adapted from https://www.programcreek.com/java-api-examples/?api=org.hl7.fhir.dstu3.model.Observation
+        String uuid = UUID.randomUUID().toString();
 
         Observation o = new Observation();
 
         o.setId("observation-bp-" + uuid);
         o.setSubject(new Reference().setReference(patientId));
-        o.setEncounter(new Reference().setReference(encounterId));
+//        o.setEncounter(new Reference().setReference(encounterId));
         o.setStatus(Observation.ObservationStatus.FINAL);
         o.getCode().addCoding().setCode(BloodPressureModel.CODE).setSystem(BloodPressureModel.SYSTEM);
         o.setEffective(new DateTimeType(item.getReadingDate()));

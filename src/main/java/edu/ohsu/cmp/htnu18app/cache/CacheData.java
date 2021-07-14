@@ -126,7 +126,7 @@ public class CacheData {
                     Iterator<Suggestion> iter = c.getSuggestions().iterator();
                     while (iter.hasNext()) {
                         Suggestion s = iter.next();
-                        if (s.getId().equals(id)) {
+                        if (s.getId() != null && s.getId().equals(id)) {    // ignore suggestions without IDs
                             iter.remove();
                             rval = true;
                         }

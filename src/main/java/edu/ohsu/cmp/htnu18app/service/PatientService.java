@@ -4,6 +4,7 @@ import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.vsac.Concept;
 import edu.ohsu.cmp.htnu18app.entity.vsac.ValueSet;
+import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.MedicationModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.repository.app.PatientRepository;
@@ -71,18 +72,20 @@ public class PatientService {
         return DigestUtils.sha256Hex(patientId);
     }
 
-    public Bundle getObservations(String sessionId) {
+    public Bundle getBloodPressureObservations(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
         Bundle b = cache.getObservations();
         if (b == null) {
-            logger.info("requesting Observations for session " + sessionId);
+            logger.info("requesting Blood Pressure Observations for session " + sessionId);
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
             b = fcc.getClient()
                     .search()
                     .forResource(Observation.class)
                     .and(Observation.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-//                    .and(Observation.CODE.exactly().systemAndCode(BloodPressureModel.SYSTEM, BloodPressureModel.CODE))
+                    .and(Observation.CODE.exactly().systemAndCode(BloodPressureModel.SYSTEM, BloodPressureModel.CODE))
+//                    .include(new Include("Observation:encounter"))
+//                    .include(new Include("Observation:partOf"))
                     .returnBundle(Bundle.class)
                     .execute();
             cache.setObservations(b);
@@ -103,6 +106,21 @@ public class PatientService {
                     .and(Condition.PATIENT.hasId(fcc.getCredentials().getPatientId()))
                     .returnBundle(Bundle.class)
                     .execute();
+
+//            List<String> hypertensionValueSetOIDs = new ArrayList<>();
+//            hypertensionValueSetOIDs.add("2.16.840.1.113883.3.3157.4012");
+//            hypertensionValueSetOIDs.add("2.16.840.1.113762.1.4.1032.10");
+//
+//            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+//            while (iter.hasNext()) {
+//                Bundle.BundleEntryComponent item = iter.next();
+//                if (item.getResource() instanceof Condition) {
+//                    Condition c = (Condition) item.getResource();
+//
+//                    // todo : filter conditions down to only those that have codings associated with the indicated value sets
+//                }
+//            }
+
             cache.setConditions(b);
         }
         return b;
