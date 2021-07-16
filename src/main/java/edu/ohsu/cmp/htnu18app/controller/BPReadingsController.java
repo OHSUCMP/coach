@@ -2,6 +2,7 @@ package edu.ohsu.cmp.htnu18app.controller;
 
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
+import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
@@ -32,6 +33,9 @@ public class BPReadingsController {
 
     @Autowired
     private HomeBloodPressureReadingService hbprService;
+
+    @Autowired
+    private CQFRulerService cqfRulerService;
 
     @GetMapping(value={"", "/"})
     public String getBPReadings(HttpSession session, Model model) {
@@ -69,7 +73,7 @@ public class BPReadingsController {
         HomeBloodPressureReading bpreading2 = new HomeBloodPressureReading(systolic2, diastolic2, pulse2, readingDate, followedInstructions);
         bpreading2 = hbprService.create(session.getId(), bpreading2);
 
-        cache.deleteAllCards();
+        cqfRulerService.requestHooksExecution(session.getId());
 
         List<HomeBloodPressureReading> list = new ArrayList<>();
         list.add(bpreading1);

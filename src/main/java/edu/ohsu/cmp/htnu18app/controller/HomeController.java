@@ -2,6 +2,7 @@ package edu.ohsu.cmp.htnu18app.controller;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
+import edu.ohsu.cmp.htnu18app.cqfruler.CDSHookExecutorService;
 import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentials;
@@ -9,7 +10,6 @@ import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
 import edu.ohsu.cmp.htnu18app.util.FhirUtil;
-import org.hl7.fhir.r4.model.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +68,13 @@ public class HomeController {
                 List<CDSHook> list = cqfRulerService.getCDSHooks();
                 model.addAttribute("cdshooks", list);
 
+                int pos = cqfRulerService.getQueuePosition(session.getId());
+                String queuePosition;
+                if (pos == -1)      queuePosition = "NOT QUEUED";
+                else if (pos == 0)  queuePosition = "CURRENTLY RUNNING";
+                else                queuePosition = String.valueOf(pos);
+                model.addAttribute("queuePosition", queuePosition);
+
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " building index page", e);
             }
@@ -100,10 +107,10 @@ public class HomeController {
 
             cache.set(session.getId(), audience, credentialsWithClient, internalPatientId);
 
-            cqfRulerService.executeHooksDetached(session.getId());
+            cqfRulerService.requestHooksExecution(session.getId());
 
-            Bundle b = patientService.getMedicationStatements(session.getId());
-            logger.info("got medications : " + b);
+//            Bundle b = patientService.getMedicationStatements(session.getId());
+//            logger.info("got medications : " + b);
 
             return ResponseEntity.ok("session configured successfully");
 
@@ -114,6 +121,7 @@ public class HomeController {
 
     @GetMapping("logout")
     public String logout(HttpSession session) {
+        CDSHookExecutorService.getInstance().dequeue(session.getId());
         SessionCache.getInstance().remove(session.getId());
         return "logout";
     }

@@ -39,17 +39,25 @@ public class CQFRulerService {
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
     }
 
-    public void executeHooksDetached(String sessionId) {
-        CDSHookExecutor executor = new CDSHookExecutor(TESTING, sessionId, cdsHooksEndpointURL,
-                patientService,
-                hbprService,
-                goalService,
-                counselingService);
+    public void requestHooksExecution(String sessionId) {
+        try {
+            CDSHookExecutor executor = new CDSHookExecutor(TESTING, sessionId, cdsHooksEndpointURL,
+                    patientService,
+                    hbprService,
+                    goalService,
+                    counselingService);
 
-        logger.info("created " + executor);
+            logger.info("created " + executor);
 
-        Thread t = new Thread(executor);
-        t.start();
+            CDSHookExecutorService.getInstance().queue(executor);
+
+        } catch (InterruptedException ie) {
+            logger.error("caught " + ie.getClass().getName() + " attempting to execute hooks for session " + sessionId, ie);
+        }
+    }
+
+    public int getQueuePosition(String sessionId) {
+        return CDSHookExecutorService.getInstance().getPosition(sessionId);
     }
 
     public List<CDSHook> getCDSHooks() throws IOException {

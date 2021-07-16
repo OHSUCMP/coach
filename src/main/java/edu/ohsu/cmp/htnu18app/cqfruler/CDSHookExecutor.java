@@ -14,6 +14,7 @@ import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHookResponse;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.HookRequest;
 import edu.ohsu.cmp.htnu18app.entity.app.Counseling;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
+import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.http.HttpRequest;
 import edu.ohsu.cmp.htnu18app.http.HttpResponse;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
@@ -60,6 +61,10 @@ public class CDSHookExecutor implements Runnable {
         this.counselingService = counselingService;
     }
 
+    public String getSessionId() {
+        return sessionId;
+    }
+
     @Override
     public String toString() {
         return "CDSHookExecutor{" +
@@ -75,33 +80,38 @@ public class CDSHookExecutor implements Runnable {
 
     @Override
     public void run() {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
-
-        cache.deleteAllCards();
-
-        List<CDSHook> hooks = null;
         try {
-            hooks = CDSHooksUtil.getCDSHooks(testing, cdsHooksEndpointURL);
+            CacheData cache = SessionCache.getInstance().get(sessionId);
 
-        } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " getting CDS Hooks - " + e.getMessage(), e);
-        }
+            cache.deleteAllCards();
 
-        if (hooks != null) {
-            for (CDSHook hook : hooks) {
-                try {
-                    List<Card> cards = getCardsForHook(sessionId, hook.getId(),
-                            cache.getFhirCredentialsWithClient(),
-                            cache.getAudience());
+            List<CDSHook> hooks = null;
+            try {
+                hooks = CDSHooksUtil.getCDSHooks(testing, cdsHooksEndpointURL);
 
-                    cache.setCards(hook.getId(), cards);
+            } catch (IOException e) {
+                logger.error("caught " + e.getClass().getName() + " getting CDS Hooks - " + e.getMessage(), e);
+            }
 
-                    logger.info("cards generated for sessionId=" + sessionId + ", hookId=" + hook.getId());
+            if (hooks != null) {
+                for (CDSHook hook : hooks) {
+                    try {
+                        List<Card> cards = getCardsForHook(sessionId, hook.getId(),
+                                cache.getFhirCredentialsWithClient(),
+                                cache.getAudience());
 
-                } catch (Exception e) {
-                    logger.error("caught " + e.getClass().getName() + " executing hook '" + hook.getId() + "' - " + e.getMessage(), e);
+                        cache.setCards(hook.getId(), cards);
+
+                        logger.info("cards generated for sessionId=" + sessionId + ", hookId=" + hook.getId());
+
+                    } catch (IOException e) {
+                        logger.error("caught " + e.getClass().getName() + " executing hook '" + hook.getId() + "' - " + e.getMessage(), e);
+                    }
                 }
             }
+
+        } catch (SessionMissingException sme) {
+            logger.error("caught " + sme.getClass().getName() + " attempting to execute CDS Hooks - aborting", sme);
         }
     }
 
