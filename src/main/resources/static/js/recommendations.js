@@ -157,8 +157,25 @@ function buildGoalsHTML(suggestions) {
                         let x = randomChars(5);
                         s.actions.forEach(function (action) {
                             html += "<div class='action'>";
-                            html += "<input name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + action.label + "' />";
-                            html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label>";
+                            let arr = buildGoalInputData(action.label);
+                            if (arr.length === 1) {
+                                // presume that if there's just one thing in the array, that it's a fixed response,
+                                // it's the only thing that makes sense
+                                html += "<input name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + action.label + "' />";
+                                html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label>";
+
+                            } else {
+                                html += "<input name='action" + x + "' type='radio' class='madlib' id='action" + x + "_" + i + "' />";
+                                arr.forEach(function(item) {
+                                    if (typeof(item) === 'string') {
+                                        html += "<span class='madlibResponse'>" + item + '</span> ';
+
+                                    } else {
+                                        html += "<input type='text' class='madlibResponse' data-type='" + item.type + "' placeholder='" + item.label + "' disabled/> ";
+                                    }
+                                });
+                            }
+
                             html += "</div>\n";
                             i++;
                         });
@@ -246,6 +263,49 @@ function buildGoalsHTML(suggestions) {
         "";
 }
 
+function buildGoalInputData(s) {
+    let arr = [];
+    let buf = [];
+    let chars = s.split('');
+    while (chars.length > 0) {
+        let c = chars.shift();
+        if (c === '[') {
+            if (buf.length > 0) {
+                arr.push(buf.join('').trim());
+                buf = [];
+            }
+            let label = '';
+            let type = '';
+            while (c !== ']' && chars.length > 0) {
+                c = chars.shift();
+                if (c === ':') {
+                    label = buf.join('').trim();
+                    buf = [];
+                } else if (c === ']') {
+                    type = buf.join('').trim();
+                    buf = [];
+                } else {
+                    buf.push(c);
+                }
+            }
+            let obj = {
+                label:label,
+                type:type
+            };
+            arr.push(obj);
+            buf = [];
+
+        } else {
+            buf.push(c);
+        }
+    }
+    if (buf.length > 0) {
+        arr.push(buf.join('').trim());
+    }
+
+    return arr;
+}
+
 function buildLinksHTML(suggestions) {
     let html = "";
     if (suggestions !== null) {
@@ -319,6 +379,18 @@ function getGoalText(goal) {
         let radio = $(action).find("input[type='radio']:checked");
         if ($(radio).hasClass('freetext')) {
             return $(radio).siblings('input.freetextResponse').val();
+
+        } else if ($(radio).hasClass('madlib')) {
+            let parts = [];
+            $(radio).siblings('.madlibResponse').each(function() {
+                if ($(this).is('span')) {
+                    parts.push(this.innerHTML);
+
+                } else {
+                    parts.push($(this).val());
+                }
+            });
+            return parts.join(' ');
 
         } else {
             return $(radio).val();
@@ -494,13 +566,18 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.goal .action input[type="radio"]', function() {
-        let el = $(this).closest('.goal').find('input.freetextResponse');
-        if ($(this).hasClass('freetext')) {
-            $(el).prop('disabled', false);
-            $(el).focus();
+        let ftrmlr = $(this).closest('.goal').find('input.freetextResponse,input.madlibResponse');
+        $(ftrmlr).prop('disabled', true);
 
-        } else {
-            $(el).prop('disabled', true);
+        if ($(this).hasClass('freetext')) {
+            let ftr = $(this).siblings('input.freetextResponse');
+            $(ftr).prop('disabled', false);
+            $(ftr).focus();
+
+        } else if ($(this).hasClass('madlib')) {
+            let mlr = $(this).siblings('input.madlibResponse');
+            $(mlr).prop('disabled', false);
+            $(mlr).first().focus();
         }
     });
 
