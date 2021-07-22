@@ -54,7 +54,7 @@ public class RecommendationController extends AuthenticatedController {
 //        }
 //    }
 
-    @PostMapping("getCached")
+    @PostMapping("get-cached")
     public ResponseEntity<List<Card>> getCached(HttpSession session,
                                                 @RequestParam("id") String hookId) {
 

@@ -87,7 +87,7 @@ public class GoalController extends AuthenticatedController {
         }
     }
 
-    @PostMapping("createbp")
+    @PostMapping("create-bp")
     public ResponseEntity<GoalModel> createbp(HttpSession session,
                                               @RequestParam("extGoalId") String extGoalId,
                                               @RequestParam("referenceSystem") String referenceSystem,

@@ -50,7 +50,7 @@ async function getCachedRecommendations(_callback) {
 async function getCachedRecommendation(id, _callback) {
     let formData = new FormData();
     formData.append("id", id);
-    let response = await fetch("/recommendations/getCached", {
+    let response = await fetch("/recommendations/get-cached", {
         method: "POST",
         body: formData
     });
@@ -490,7 +490,7 @@ async function createBPGoal(g, _callback) {
     formData.append("diastolicTarget", g.diastolicTarget);
     formData.append("targetDateTS", targetDateTS);
 
-    let response = await fetch("/goals/createbp", {
+    let response = await fetch("/goals/create-bp", {
         method: "POST",
         body: formData
     });

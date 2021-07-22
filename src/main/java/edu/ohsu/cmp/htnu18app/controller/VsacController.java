@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
+import edu.ohsu.cmp.htnu18app.cache.CacheData;
+import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.vsac.ValueSet;
 import edu.ohsu.cmp.htnu18app.service.ConceptService;
 import edu.ohsu.cmp.htnu18app.service.ValueSetService;
@@ -31,7 +33,11 @@ public class VsacController {
     @Transactional
     public ResponseEntity<ValueSet> get(HttpSession session,
                                         @RequestParam("oid") String oid) {
-//        CacheData cache = SessionCache.getInstance().get(session.getId());
+
+        // get the cache, even though we don't do anything with it (yet?  maybe at all?)
+        // we do this to ensure the user is authenticated, as a means of preventing unauthorized access
+        // (this call will throw a SessionMissingException if the user is not authenticated)
+        CacheData cache = SessionCache.getInstance().get(session.getId());
 
         ValueSet valueSet = valueSetService.getValueSet(oid);
         logger.info("got ValueSet: " + valueSet);
