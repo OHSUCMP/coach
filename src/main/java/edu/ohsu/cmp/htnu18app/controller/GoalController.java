@@ -45,9 +45,6 @@ public class GoalController extends AuthenticatedController {
         try {
             patientController.populatePatientModel(session.getId(), model);
 
-//            List<CDSHook> list = cqfRulerService.getCDSHooks();
-//            model.addAttribute("cdshooks", list);
-
         } catch (Exception e) {
             logger.error("error populating patient model", e);
         }
@@ -87,37 +84,33 @@ public class GoalController extends AuthenticatedController {
         }
     }
 
-    @PostMapping("create-bp")
-    public ResponseEntity<GoalModel> createbp(HttpSession session,
+    @PostMapping("update-bp")
+    public ResponseEntity<GoalModel> updatebp(HttpSession session,
                                               @RequestParam("extGoalId") String extGoalId,
                                               @RequestParam("referenceSystem") String referenceSystem,
                                               @RequestParam("referenceCode") String referenceCode,
                                               @RequestParam("systolicTarget") Integer systolicTarget,
-                                              @RequestParam("diastolicTarget") Integer diastolicTarget,
-                                              @RequestParam("targetDateTS") Long targetDateTS) {
+                                              @RequestParam("diastolicTarget") Integer diastolicTarget) {
 
-        Date targetDate = new Date(targetDateTS);
+        // THERE CAN BE ONLY ONE!!!
+        // (blood pressure goal, that is)
 
-        Goal goal = goalService.getGoal(session.getId(), extGoalId);
-        if (goal == null) {
-            goal = new Goal(extGoalId, referenceSystem, referenceCode, systolicTarget, diastolicTarget, targetDate);
-            goal = goalService.create(session.getId(), goal);
+        Goal currentBPGoal = goalService.getCurrentBPGoal(session.getId());
 
-            // remove goal from cache
-            CacheData cache = SessionCache.getInstance().get(session.getId());
-            cache.deleteSuggestion(extGoalId);
+        currentBPGoal.setExtGoalId(extGoalId);
+        currentBPGoal.setReferenceSystem(referenceSystem);
+        currentBPGoal.setReferenceCode(referenceCode);
+        currentBPGoal.setSystolicTarget(systolicTarget);
+        currentBPGoal.setDiastolicTarget(diastolicTarget);
+        currentBPGoal = goalService.update(session.getId(), currentBPGoal);
 
-            return new ResponseEntity<>(new GoalModel(goal), HttpStatus.OK);
-
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
-        }
+        return new ResponseEntity<>(new GoalModel(currentBPGoal), HttpStatus.OK);
     }
 
-    @PostMapping("setStatus")
-    public ResponseEntity<GoalHistoryModel> update(HttpSession session,
-                                                   @RequestParam("extGoalId") String extGoalId,
-                                                   @RequestParam("achievementStatus") String achievementStatusStr) {
+    @PostMapping("set-status")
+    public ResponseEntity<GoalHistoryModel> updateStatus(HttpSession session,
+                                                         @RequestParam("extGoalId") String extGoalId,
+                                                         @RequestParam("achievementStatus") String achievementStatusStr) {
 
         Goal g = goalService.getGoal(session.getId(), extGoalId);
         GoalHistory gh = new GoalHistory(AchievementStatus.valueOf(achievementStatusStr), g);

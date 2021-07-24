@@ -15,6 +15,9 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
 
     Goal findOneByPatIdAndExtGoalId(@Param("patId") Long patId, @Param("extGoalId") String extGoalId);
 
+    @Query("select g from Goal g where g.patId=:patId and g.systolicTarget is not null and g.diastolicTarget is not null")
+    Goal findCurrentBPGoal(@Param("patId") Long patId);
+
     @Modifying
     @Transactional
     @Query("delete from Goal where extGoalId=:extGoalId and patId=:patId")

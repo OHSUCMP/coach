@@ -114,7 +114,7 @@
     margin-top: 0;
 }
 
-.goal, .link {
+.goal, .link, .bpGoal {
     background-color: #eff5ff;
     padding: 5px;
     margin-bottom: 5px;

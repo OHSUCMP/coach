@@ -31,7 +31,7 @@ async function updateStatus(el, status) {
     formData.append("extGoalId", extGoalId);
     formData.append("achievementStatus", status);
 
-    let response = await fetch("/goals/setStatus", {
+    let response = await fetch("/goals/set-status", {
         method: "POST",
         body: formData
     });

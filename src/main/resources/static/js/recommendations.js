@@ -214,16 +214,18 @@ function buildGoalsHTML(suggestions) {
                     }
                 }
                 html += "</td>";
-
                 html += "<td><div class='commitToGoalButton'><span>Commit to Goal</span></div></td>\n";
+                html += "</tr>";
 
-                html += "</tr><tr>";
+                if (s.type === 'goal') {
+                    html += "<tr>";
+                    let y = randomChars(5);
+                    html += "<td><label for='goalTargetDate" + y + "'>When do you want to achieve this goal?</label></td>";
+                    html += "<td><input id='goalTargetDate" + y + "' type='text' class='goalTargetDate' placeholder='--Select Date--' readOnly/></td>";
+                    html += "</tr>";
+                }
 
-                let y = randomChars(5);
-                html += "<td><label for='goalTargetDate" + y + "'>When do you want to achieve this goal?</label></td>";
-                html += "<td><input id='goalTargetDate" + y + "' type='text' class='goalTargetDate' placeholder='--Select Date--' readOnly/></td>";
-
-                html += "</tr></table>";
+                html += "</table>";
                 html += "</div>\n";
 
             } else if (s.type === 'update-goal') {
@@ -365,7 +367,7 @@ function buildBPGoalData(button) {
     let target = getGoalBPTarget(goal);
     g.systolicTarget = target.systolic;
     g.diastolicTarget = target.diastolic;
-    g.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
+    // g.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
     return g;
 }
 
@@ -479,7 +481,7 @@ async function createGoal(g, _callback) {
     _callback(response.status);
 }
 
-async function createBPGoal(g, _callback) {
+async function updateBPGoal(g, _callback) {
     let targetDateTS = $.datepicker.formatDate('@', g.targetDate);
 
     let formData = new FormData();
@@ -488,9 +490,9 @@ async function createBPGoal(g, _callback) {
     formData.append("referenceCode", g.referenceCode);
     formData.append("systolicTarget", g.systolicTarget);
     formData.append("diastolicTarget", g.diastolicTarget);
-    formData.append("targetDateTS", targetDateTS);
+    // formData.append("targetDateTS", targetDateTS);
 
-    let response = await fetch("/goals/create-bp", {
+    let response = await fetch("/goals/update-bp", {
         method: "POST",
         body: formData
     });
@@ -538,7 +540,7 @@ $(document).ready(function() {
         let g = buildBPGoalData(this);
         let container = $(this).closest('.bpGoal');
 
-        createBPGoal(g, function(status) {
+        updateBPGoal(g, function(status) {
             if (status === 200) {
                 hide(container);
             }

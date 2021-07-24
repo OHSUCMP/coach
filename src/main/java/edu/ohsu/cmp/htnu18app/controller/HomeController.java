@@ -5,9 +5,12 @@ import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.cqfruler.CDSHookExecutorService;
 import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
+import edu.ohsu.cmp.htnu18app.entity.app.Goal;
+import edu.ohsu.cmp.htnu18app.model.GoalModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
+import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.PatientService;
 import edu.ohsu.cmp.htnu18app.util.FhirUtil;
 import org.slf4j.Logger;
@@ -40,6 +43,9 @@ public class HomeController {
     @Autowired
     private CQFRulerService cqfRulerService;
 
+    @Autowired
+    private GoalService goalService;
+
     @GetMapping("launch-ehr")
     public String launchEHR(Model model) {
         model.addAttribute("clientId", env.getProperty("smart.ehr.clientId"));
@@ -65,9 +71,18 @@ public class HomeController {
             try {
                 patientController.populatePatientModel(session.getId(), model);
 
+                Goal currentBPGoal = goalService.getCurrentBPGoal(session.getId());
+                model.addAttribute("currentBPGoal", new GoalModel(currentBPGoal));
+
                 List<CDSHook> list = cqfRulerService.getCDSHooks();
                 model.addAttribute("cdshooks", list);
 
+                // CQF Ruler is a performance bottleneck.  It is presumed that hitting it with many
+                // concurrent requests will further degrade performance for everyone.  Therefore,
+                // the app places all Ruler requests into a queue, such that only one request is made
+                // at a time.  The queue is constructed in such a way that if any user submits a Ruler
+                // request, and they already have a request in the queue, that existing queue item
+                // is replaced with the new one, efficiently improving performance
                 int pos = cqfRulerService.getQueuePosition(session.getId());
                 String queuePosition;
                 if (pos == -1)      queuePosition = "NOT QUEUED";
@@ -94,9 +109,7 @@ public class HomeController {
                                             @RequestParam("userId") String userId,
                                             @RequestParam("audience") String audienceStr) {
 
-        SessionCache cache = SessionCache.getInstance();
-
-        if ( ! cache.exists(session.getId()) ) {
+//        if ( ! cache.exists(session.getId()) ) {
             FHIRCredentials credentials = new FHIRCredentials(serverUrl, bearerToken, patientId, userId);
             IGenericClient client = FhirUtil.buildClient(credentials.getServerURL(), credentials.getBearerToken());
             FHIRCredentialsWithClient credentialsWithClient = new FHIRCredentialsWithClient(credentials, client);
@@ -105,7 +118,7 @@ public class HomeController {
 
             Audience audience = Audience.fromTag(audienceStr);
 
-            cache.set(session.getId(), audience, credentialsWithClient, internalPatientId);
+            SessionCache.getInstance().set(session.getId(), audience, credentialsWithClient, internalPatientId);
 
             cqfRulerService.requestHooksExecution(session.getId());
 
@@ -114,9 +127,9 @@ public class HomeController {
 
             return ResponseEntity.ok("session configured successfully");
 
-        } else {
-            return ResponseEntity.ok("session already configured");
-        }
+//        } else {
+//            return ResponseEntity.ok("session already configured");
+//        }
     }
 
     @GetMapping("logout")

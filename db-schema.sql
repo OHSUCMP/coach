@@ -36,7 +36,7 @@ create table goal (
   goalText varchar(255) not null,
   systolicTarget int,
   diastolicTarget int,
-  targetDate date not null,
+  targetDate date,
   createdDate datetime not null
 );
 

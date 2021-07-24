@@ -39,8 +39,22 @@ public class GoalService {
         return goalRepository.findOneByPatIdAndExtGoalId(cache.getInternalPatientId(), extGoalId);
     }
 
+    public Goal getCurrentBPGoal(String sessionId) {
+        CacheData cache = SessionCache.getInstance().get(sessionId);
+
+        Goal g = goalRepository.findCurrentBPGoal(cache.getInternalPatientId());
+        if (g == null) {
+            g = create(sessionId, new Goal(Goal.DEFAULT_BP_GOAL_ID,
+                    Goal.BP_GOAL_REFERENCE_SYSTEM, Goal.BP_GOAL_REFERENCE_CODE,
+                    Goal.DEFAULT_BP_GOAL_SYSTOLIC, Goal.DEFAULT_BP_GOAL_DIASTOLIC));
+        }
+
+        return g;
+    }
+
     public Goal create(String sessionId, Goal goal) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
+
         goal.setPatId(cache.getInternalPatientId());
         goal.setCreatedDate(new Date());
 
@@ -54,7 +68,9 @@ public class GoalService {
         return g;
     }
 
-    public Goal update(Goal goal) {
+    public Goal update(String sessionId, Goal goal) {
+        CacheData cache = SessionCache.getInstance().get(sessionId);
+
         return goalRepository.save(goal);
     }
 

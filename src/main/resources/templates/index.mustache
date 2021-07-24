@@ -182,9 +182,11 @@
                             </td>
                         </tr>
                     </table>
-                    <span id="goalNote">
-                        Your GOAL: <em><strong>Below 130/80 (<u>American Heart Association</u>);</strong> Other goals might be</em> 140/90 (<u>European Society of Hypertension</u>)
-                    </span>
+                    {{#currentBPGoal}}
+                        <span id="currentBPGoal" data-systolic="{{systolicTarget}}" data-diastolic="{{diastolicTarget}}">
+                            Your Current Blood Pressure Goal: <em><strong>Below {{systolicTarget}}/{{diastolicTarget}}</strong></em>
+                        </span>
+                    {{/currentBPGoal}}
                 </td>
             </tr>
             <tr>

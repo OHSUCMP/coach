@@ -14,6 +14,7 @@ import org.opencds.cqf.tooling.terminology.CodeSystemLookupDictionary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -27,6 +28,8 @@ public class PatientService {
 
     private static final int MAX_CODES_PER_QUERY = 32; // todo: auto-identify this, or at least put it in the config
 
+    private String salt;
+
     @Autowired
     private PatientRepository repository;
 
@@ -35,6 +38,10 @@ public class PatientService {
 
 //    @Autowired
 //    private TerminologySystemService terminologySystemService;
+
+    public PatientService(@Value("${security.salt}") String salt) {
+        this.salt = salt;
+    }
 
     public Patient getPatient(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
@@ -69,7 +76,7 @@ public class PatientService {
     }
 
     private String buildPatIdHash(String patientId) {
-        return DigestUtils.sha256Hex(patientId);
+        return DigestUtils.sha256Hex(patientId + salt);
     }
 
     public Bundle getBloodPressureObservations(String sessionId) {
