@@ -104,8 +104,18 @@ function populateSummaryDiv() {
     $('#bpLabel').html(bpLabel + ':');
 }
 
+function getCurrentBPGoal() {
+    let el = $('#currentBPGoal');
+    return {
+        systolic: $(el).attr('data-systolic'),
+        diastolic: $(el).attr('data-diastolic')
+    };
+}
+
 function buildChart(data, startDate, endDate) {
     $('#loadingChart').addClass('hidden');
+
+    let goal = getCurrentBPGoal();
 
     let ctx = $('#chart');
     $(ctx).removeClass('hidden');
@@ -224,6 +234,32 @@ function buildChart(data, startDate, endDate) {
                             yMax: 90,
                             backgroundColor: 'rgba(244, 225, 172, 0.5)',
                             borderWidth: 0
+                        },
+                        systolicGoal: {
+                            type: 'line',
+                            yMin: goal.systolic,
+                            yMax: goal.systolic,
+                            borderColor: 'rgba(73,167,156,1)',
+                            borderDash: [10, 10],
+                            borderWidth: 1,
+                            label: {
+                                content: 'Systolic Target',
+                                enabled: true,
+                                backgroundColor: 'rgba(73,167,156,0.5)'
+                            }
+                        },
+                        diastolicGoal: {
+                            type: 'line',
+                            yMin: goal.diastolic,
+                            yMax: goal.diastolic,
+                            borderColor: 'rgba(167,139,51,1)',
+                            borderDash: [10, 10],
+                            borderWidth: 1,
+                            label: {
+                                content: 'Diastolic Target',
+                                enabled: true,
+                                backgroundColor: 'rgba(167,139,51,0.5)'
+                            }
                         }
                     }
                 }
