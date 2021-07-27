@@ -189,7 +189,7 @@ public class CDSHookExecutor implements Runnable {
 
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " processing response for hookId=" + hookId + " - " + e.getMessage(), e);
-                logger.error("\n\nJSON =\n" + body + "\n\n");
+                logger.error("\n\nBODY =\n" + body + "\n\n");
                 throw e;
             }
 

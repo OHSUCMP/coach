@@ -215,50 +215,30 @@ function buildChart(data, startDate, endDate) {
                 },
                 annotation: {
                     annotations: {
-                        targetSystolic: {
-                            drawTime: 'beforeDatasetsDraw',
-                            id: 'target-systolic',
-                            type: 'box',
-                            yScaleID: 'y',
-                            yMin: 90,
-                            yMax: 140,
-                            backgroundColor: 'rgba(172, 242, 233, 0.5)',
-                            borderWidth: 0
-                        },
-                        targetDiastolic: {
-                            drawTime: 'beforeDatasetsDraw',
-                            id: 'target-diastolic',
-                            type: 'box',
-                            yScaleID: 'y',
-                            yMin: 60,
-                            yMax: 90,
-                            backgroundColor: 'rgba(244, 225, 172, 0.5)',
-                            borderWidth: 0
-                        },
                         systolicGoal: {
                             type: 'line',
                             yMin: goal.systolic,
                             yMax: goal.systolic,
-                            borderColor: 'rgba(73,167,156,1)',
-                            borderDash: [10, 10],
+                            borderColor: 'rgb(255,0,0)', //'rgba(73,167,156,1)',
+                            // borderDash: [10, 10],
                             borderWidth: 1,
                             label: {
-                                content: 'Systolic Target',
+                                content: 'Systolic Goal',
                                 enabled: true,
-                                backgroundColor: 'rgba(73,167,156,0.5)'
+                                backgroundColor: 'rgba(255,0,0,0.5)', //'rgba(73,167,156,0.5)'
                             }
                         },
                         diastolicGoal: {
                             type: 'line',
                             yMin: goal.diastolic,
                             yMax: goal.diastolic,
-                            borderColor: 'rgba(167,139,51,1)',
-                            borderDash: [10, 10],
+                            borderColor: 'rgb(255,0,0)', //'rgba(167,139,51,1)',
+                            // borderDash: [10, 10],
                             borderWidth: 1,
                             label: {
-                                content: 'Diastolic Target',
+                                content: 'Diastolic Goal',
                                 enabled: true,
-                                backgroundColor: 'rgba(167,139,51,0.5)'
+                                backgroundColor: 'rgba(255,0,0,0.5)', //'rgba(167,139,51,0.5)'
                             }
                         }
                     }
