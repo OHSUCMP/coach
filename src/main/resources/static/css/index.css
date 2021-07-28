@@ -7,14 +7,16 @@
 /*}*/
 
 
-#chartKeyContainer {
+#legend {
     position: absolute;
     font-size: smaller;
     margin-left: 25px;
+    margin-top: -4px;
 }
 
-#chartKeyContainer * {
+#legend * {
     display: inline-block;
+    vertical-align: middle;
 }
 
 div.chartKeyItem {
@@ -47,11 +49,24 @@ div.chartKeyItem {
     background-color: #996124;
 }
 
+#chartKeySystolicGoal {
+    width: 25px;
+    height: 10px;
+    background-color: #ff0000;
+}
+
+#chartKeyDiastolicGoal {
+    width: 25px;
+    height: 10px;
+    background-color: #ff00ff;
+}
+
 #chartTimelineContainer {
     position: absolute;
     right: 10px;
     display: block;
     text-align: right;
+    margin-top: 4px;
 }
 
 #chartTimelineContainer * {
@@ -99,32 +114,32 @@ div.chartKeyItem {
     width: 600px;
 }
 
-#sliderContainer {
-    margin-top: 5px;
-    height: 25px;
-    vertical-align: middle !important;
-}
+/*#sliderContainer {*/
+/*    margin-top: 5px;*/
+/*    height: 25px;*/
+/*    vertical-align: middle !important;*/
+/*}*/
 
-#sliderContainer * {
-    display: inline-block;
-    vertical-align: middle !important;
-}
+/*#sliderContainer * {*/
+/*    display: inline-block;*/
+/*    vertical-align: middle !important;*/
+/*}*/
 
-#sliderRangeFrom {
-    margin-left: 37px;
-    width: 40px;
-    text-align: center;
-}
+/*#sliderRangeFrom {*/
+/*    margin-left: 37px;*/
+/*    width: 40px;*/
+/*    text-align: center;*/
+/*}*/
 
-#chartRangeSlider {
-    margin-top: 3px;
-    width: 300px;
-}
+/*#chartRangeSlider {*/
+/*    margin-top: 3px;*/
+/*    width: 300px;*/
+/*}*/
 
-#sliderRangeTo {
-    width: 40px;
-    text-align: center;
-}
+/*#sliderRangeTo {*/
+/*    width: 40px;*/
+/*    text-align: center;*/
+/*}*/
 
 #avgSystolic, #avgDiastolic {
     font-size: large;

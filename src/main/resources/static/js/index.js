@@ -220,26 +220,14 @@ function buildChart(data, startDate, endDate) {
                             yMin: goal.systolic,
                             yMax: goal.systolic,
                             borderColor: 'rgb(255,0,0)', //'rgba(73,167,156,1)',
-                            // borderDash: [10, 10],
-                            borderWidth: 1,
-                            label: {
-                                content: 'Systolic Goal',
-                                enabled: true,
-                                backgroundColor: 'rgba(255,0,0,0.5)', //'rgba(73,167,156,0.5)'
-                            }
+                            borderWidth: 1
                         },
                         diastolicGoal: {
                             type: 'line',
                             yMin: goal.diastolic,
                             yMax: goal.diastolic,
-                            borderColor: 'rgb(255,0,0)', //'rgba(167,139,51,1)',
-                            // borderDash: [10, 10],
-                            borderWidth: 1,
-                            label: {
-                                content: 'Diastolic Goal',
-                                enabled: true,
-                                backgroundColor: 'rgba(255,0,0,0.5)', //'rgba(167,139,51,0.5)'
-                            }
+                            borderColor: 'rgb(255,0,255)', //'rgba(167,139,51,1)',
+                            borderWidth: 1
                         }
                     }
                 }
