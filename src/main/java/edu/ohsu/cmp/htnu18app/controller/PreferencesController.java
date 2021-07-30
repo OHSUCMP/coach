@@ -1,6 +1,8 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
+import edu.ohsu.cmp.htnu18app.model.PatientModel;
+import edu.ohsu.cmp.htnu18app.service.EHRService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +19,12 @@ public class PreferencesController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private PatientController patientController;
+    private EHRService ehrService;
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
-
         try {
-            patientController.populatePatientModel(session.getId(), model);
+            model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
         } catch (SessionMissingException e) {
             logger.error("error populating patient model", e);

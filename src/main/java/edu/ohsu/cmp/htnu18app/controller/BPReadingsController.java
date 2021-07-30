@@ -5,6 +5,8 @@ import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
+import edu.ohsu.cmp.htnu18app.model.PatientModel;
+import edu.ohsu.cmp.htnu18app.service.EHRService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +31,7 @@ public class BPReadingsController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private PatientController patientController;
+    private EHRService ehrService;
 
     @Autowired
     private HomeBloodPressureReadingService hbprService;
@@ -38,9 +40,9 @@ public class BPReadingsController {
     private CQFRulerService cqfRulerService;
 
     @GetMapping(value={"", "/"})
-    public String getBPReadings(HttpSession session, Model model) {
+    public String view(HttpSession session, Model model) {
         try {
-            patientController.populatePatientModel(session.getId(), model);
+            model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
         } catch (SessionMissingException e) {
             logger.error("error populating patient model", e);
@@ -63,7 +65,8 @@ public class BPReadingsController {
                                                                  @RequestParam("readingDateTS") Long readingDateTS,
                                                                  @RequestParam("confirm") Boolean followedInstructions) {
 
-        CacheData cache = SessionCache.getInstance().get(session.getId());
+        // get the cache just to make sure it's defined and the user is properly authenticated
+        SessionCache.getInstance().get(session.getId());
 
         Date readingDate = new Date(readingDateTS);
 

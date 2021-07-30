@@ -1,6 +1,6 @@
 async function loadBloodPressureObservations(_callback) {
-    let response = await fetch("/patient/blood-pressure-observations", {
-        method: "GET",
+    let response = await fetch("/blood-pressure-observations", {
+        method: "POST",
         headers: {
             "Content-Type": "application/json; charset=utf-8"
         }
@@ -20,8 +20,8 @@ async function loadBloodPressureObservations(_callback) {
 }
 
 async function loadMedications(_callback) {
-    let response = await fetch("/patient/medications", {
-        method: "GET",
+    let response = await fetch("/medications", {
+        method: "POST",
         headers: {
             "Content-Type": "application/json; charset=utf-8"
         }

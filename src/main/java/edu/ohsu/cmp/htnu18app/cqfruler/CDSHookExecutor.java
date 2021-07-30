@@ -22,10 +22,7 @@ import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Suggestion;
-import edu.ohsu.cmp.htnu18app.service.CounselingService;
-import edu.ohsu.cmp.htnu18app.service.GoalService;
-import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
-import edu.ohsu.cmp.htnu18app.service.PatientService;
+import edu.ohsu.cmp.htnu18app.service.*;
 import edu.ohsu.cmp.htnu18app.util.MustacheUtil;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
@@ -41,21 +38,21 @@ public class CDSHookExecutor implements Runnable {
     private boolean testing;
     private String sessionId;
     private String cdsHooksEndpointURL;
-    private PatientService patientService;
+    private EHRService ehrService;
     private HomeBloodPressureReadingService hbprService;
     private GoalService goalService;
     private CounselingService counselingService;
 
     public CDSHookExecutor(boolean testing, String sessionId,
                            String cdsHooksEndpointURL,
-                           PatientService patientService,
+                           EHRService ehrService,
                            HomeBloodPressureReadingService hbprService,
                            GoalService goalService,
                            CounselingService counselingService) {
         this.testing = testing;
         this.sessionId = sessionId;
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
-        this.patientService = patientService;
+        this.ehrService = ehrService;
         this.hbprService = hbprService;
         this.goalService = goalService;
         this.counselingService = counselingService;
@@ -71,7 +68,7 @@ public class CDSHookExecutor implements Runnable {
                 "testing=" + testing +
                 ", sessionId='" + sessionId + '\'' +
                 ", cdsHooksEndpointURL='" + cdsHooksEndpointURL + '\'' +
-                ", patientService=" + patientService +
+                ", ehrService=" + ehrService +
                 ", hbprService=" + hbprService +
                 ", goalService=" + goalService +
                 ", counselingService=" + counselingService +
@@ -124,7 +121,7 @@ public class CDSHookExecutor implements Runnable {
         List<Card> cards = new ArrayList<>();
 
         try {
-            Patient p = patientService.getPatient(sessionId);
+            Patient p = ehrService.getPatient(sessionId);
 
             Bundle bpBundle = buildBPBundle(p.getId());
             Bundle counselingBundle = buildCounselingBundle(p.getId());
@@ -204,10 +201,6 @@ public class CDSHookExecutor implements Runnable {
         return cards;
     }
 
-    private Bundle buildConditionsBundle(String patientId) {
-        return patientService.getConditions(sessionId);
-    }
-
     private Bundle buildCounselingBundle(String patientId) {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
@@ -245,7 +238,7 @@ public class CDSHookExecutor implements Runnable {
     }
 
     private Bundle buildGoalsBundle(String patientId) {
-        Bundle bundle = patientService.getGoals(sessionId);
+        Bundle bundle = ehrService.getCurrentGoals(sessionId);
 
         List<edu.ohsu.cmp.htnu18app.entity.app.Goal> goalList = goalService.getGoalList(sessionId);
         for (edu.ohsu.cmp.htnu18app.entity.app.Goal g : goalList) {
@@ -292,7 +285,7 @@ public class CDSHookExecutor implements Runnable {
     }
 
     private Bundle buildBPBundle(String patientId) {
-        Bundle bundle = patientService.getBloodPressureObservations(sessionId);
+        Bundle bundle = ehrService.getBloodPressureObservations(sessionId);
 
         // inject home blood pressure readings into Bundle for evaluation by CQF Ruler
         List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);

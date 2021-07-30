@@ -50,7 +50,7 @@ async function getCachedRecommendations(_callback) {
 async function getCachedRecommendation(id, _callback) {
     let formData = new FormData();
     formData.append("id", id);
-    let response = await fetch("/recommendations/get-cached", {
+    let response = await fetch("/recommendation", {
         method: "POST",
         body: formData
     });
@@ -361,9 +361,9 @@ function buildGoalData(button) {
 function buildBPGoalData(button) {
     let goal = $(button).closest('.bpGoal');
     let g = {};
-    g.extGoalId = $(goal).attr('data-id');
-    g.referenceSystem = $(goal).attr('data-reference-system');
-    g.referenceCode = $(goal).attr('data-reference-code');
+    // g.extGoalId = $(goal).attr('data-id');
+    // g.referenceSystem = $(goal).attr('data-reference-system');
+    // g.referenceCode = $(goal).attr('data-reference-code');
     let target = getGoalBPTarget(goal);
     g.systolicTarget = target.systolic;
     g.diastolicTarget = target.diastolic;
@@ -482,12 +482,12 @@ async function createGoal(g, _callback) {
 }
 
 async function updateBPGoal(g, _callback) {
-    let targetDateTS = $.datepicker.formatDate('@', g.targetDate);
+    // let targetDateTS = $.datepicker.formatDate('@', g.targetDate);
 
     let formData = new FormData();
-    formData.append("extGoalId", g.extGoalId);
-    formData.append("referenceSystem", g.referenceSystem);
-    formData.append("referenceCode", g.referenceCode);
+    // formData.append("extGoalId", g.extGoalId);
+    // formData.append("referenceSystem", g.referenceSystem);
+    // formData.append("referenceCode", g.referenceCode);
     formData.append("systolicTarget", g.systolicTarget);
     formData.append("diastolicTarget", g.diastolicTarget);
     // formData.append("targetDateTS", targetDateTS);
@@ -542,6 +542,8 @@ $(document).ready(function() {
 
         updateBPGoal(g, function(status) {
             if (status === 200) {
+                // todo : redraw chart
+                // todo : update current BP goal UI component
                 hide(container);
             }
         });

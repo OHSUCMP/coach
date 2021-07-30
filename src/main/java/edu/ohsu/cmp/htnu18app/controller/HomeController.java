@@ -1,22 +1,27 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
-import ca.uhn.fhir.rest.client.api.IGenericClient;
+import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
-import edu.ohsu.cmp.htnu18app.cqfruler.CDSHookExecutorService;
 import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
-import edu.ohsu.cmp.htnu18app.entity.app.Goal;
+import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
+import edu.ohsu.cmp.htnu18app.exception.DataException;
+import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
-import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentials;
-import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
-import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
+import edu.ohsu.cmp.htnu18app.model.MedicationModel;
+import edu.ohsu.cmp.htnu18app.model.PatientModel;
+import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
+import edu.ohsu.cmp.htnu18app.service.EHRService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
-import edu.ohsu.cmp.htnu18app.service.PatientService;
-import edu.ohsu.cmp.htnu18app.util.FhirUtil;
+import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.MedicationStatement;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,54 +30,34 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
-import java.util.List;
+import java.util.*;
 
 @Controller
 public class HomeController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private Environment env;
-
-    @Autowired
-    private PatientController patientController;
-
-    @Autowired
-    private PatientService patientService;
+    private EHRService ehrService;
 
     @Autowired
     private CQFRulerService cqfRulerService;
 
     @Autowired
+    private HomeBloodPressureReadingService hbprService;
+
+    @Autowired
     private GoalService goalService;
 
-    @GetMapping("launch-ehr")
-    public String launchEHR(Model model) {
-        model.addAttribute("clientId", env.getProperty("smart.ehr.clientId"));
-        model.addAttribute("scope", env.getProperty("smart.ehr.scope"));
-        model.addAttribute("redirectUri", env.getProperty("smart.ehr.redirectUri"));
-        return "launch-ehr";
-    }
-
-    @GetMapping("launch-patient")
-    public String launchPatient(Model model) {
-        model.addAttribute("clientId", env.getProperty("smart.patient.clientId"));
-        model.addAttribute("scope", env.getProperty("smart.patient.scope"));
-        model.addAttribute("redirectUri", env.getProperty("smart.patient.redirectUri"));
-        model.addAttribute("iss", env.getProperty("smart.patient.iss"));
-        return "launch-patient";
-    }
-
-    @GetMapping(value = {"", "/", "index"})
-    public String index(HttpSession session, Model model) {
+    @GetMapping(value = {"", "/"})
+    public String view(HttpSession session, Model model) {
         if (SessionCache.getInstance().exists(session.getId())) {
             logger.info("requesting data for session " + session.getId());
 
             try {
-                patientController.populatePatientModel(session.getId(), model);
+                model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
-                Goal currentBPGoal = goalService.getCurrentBPGoal(session.getId());
-                model.addAttribute("currentBPGoal", new GoalModel(currentBPGoal));
+                GoalModel currentBPGoal = goalService.getCurrentBPGoal(session.getId());
+                model.addAttribute("currentBPGoal", currentBPGoal);
 
                 List<CDSHook> list = cqfRulerService.getCDSHooks();
                 model.addAttribute("cdshooks", list);
@@ -94,54 +79,103 @@ public class HomeController {
                 logger.error("caught " + e.getClass().getName() + " building index page", e);
             }
 
-            return "index";
+            return "home";
 
         } else {
             return "fhir-complete-handshake";
         }
     }
 
-    @PostMapping("prepare-session")
-    public ResponseEntity<?> prepareSession(HttpSession session,
-                                            @RequestParam("serverUrl") String serverUrl,
-                                            @RequestParam("bearerToken") String bearerToken,
-                                            @RequestParam("patientId") String patientId,
-                                            @RequestParam("userId") String userId,
-                                            @RequestParam("audience") String audienceStr) {
+    @PostMapping("blood-pressure-observations")
+    public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) {
+        Set<BloodPressureModel> set = new TreeSet<>();
 
-//        if ( ! cache.exists(session.getId()) ) {
-            FHIRCredentials credentials = new FHIRCredentials(serverUrl, bearerToken, patientId, userId);
-            IGenericClient client = FhirUtil.buildClient(credentials.getServerURL(), credentials.getBearerToken());
-            FHIRCredentialsWithClient credentialsWithClient = new FHIRCredentialsWithClient(credentials, client);
+        // first add BP observations from configured FHIR server
+        Bundle bundle = ehrService.getBloodPressureObservations(session.getId());
+        for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
+            if (entryCon.getResource() instanceof Observation) {
+                Observation o = (Observation) entryCon.getResource();
+                try {
+                    set.add(new BloodPressureModel(o));
 
-            Long internalPatientId = patientService.getInternalPatientId(patientId);
+                } catch (DataException e) {
+                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+                }
 
-            Audience audience = Audience.fromTag(audienceStr);
+            } else {
+                Resource r = entryCon.getResource();
+                logger.warn("ignoring " + r.getClass().getName() + " (id=" + r.getId() + ") while building Blood Pressure Observations");
+            }
+        }
 
-            SessionCache.getInstance().set(session.getId(), audience, credentialsWithClient, internalPatientId);
+        // now incorporate Home Blood Pressure Readings that the user entered themself into the system
+        List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(session.getId());
+        for (HomeBloodPressureReading item : hbprList) {
+            set.add(new BloodPressureModel(item));
+        }
 
-            cqfRulerService.requestHooksExecution(session.getId());
-
-//            Bundle b = patientService.getMedicationStatements(session.getId());
-//            logger.info("got medications : " + b);
-
-            return ResponseEntity.ok("session configured successfully");
-
-//        } else {
-//            return ResponseEntity.ok("session already configured");
-//        }
+        return new ResponseEntity<>(new ArrayList<>(set), HttpStatus.OK);
     }
 
-    @GetMapping("logout")
-    public String logout(HttpSession session) {
-        CDSHookExecutorService.getInstance().dequeue(session.getId());
-        SessionCache.getInstance().remove(session.getId());
-        return "logout";
+    @PostMapping("recommendation")
+    public ResponseEntity<List<Card>> getRecommendation(HttpSession session,
+                                                        @RequestParam("id") String hookId) {
+
+        // attempt to get cached recommendations every 5 seconds for up to what, 1 hour?
+
+        CacheData cache = SessionCache.getInstance().get(session.getId());
+
+        List<Card> cards = null;
+        HttpStatus status = HttpStatus.REQUEST_TIMEOUT;
+
+        for (int i = 0; i < 720; i ++) {
+            cards = cache.getCards(hookId);
+
+            if (cards != null) {
+                logger.info("got cards for hookId=" + hookId + "!");
+                status = HttpStatus.OK;
+                break;
+
+            } else {
+                try {
+                    Thread.sleep(5000);
+
+                } catch (InterruptedException e) {
+                    logger.error("caught " + e.getClass().getName() + " getting cached cards for hookId=" + hookId +
+                            " (attempt " + i + ")", e);
+                    status = HttpStatus.INTERNAL_SERVER_ERROR;
+                    break;
+                }
+            }
+        }
+
+        return new ResponseEntity<>(cards, status);
     }
 
-    @PostMapping("clear-session")
-    public ResponseEntity<?> clearSession(HttpSession session) {
-        SessionCache.getInstance().remove(session.getId());
-        return ResponseEntity.ok("session cleared");
+    @PostMapping("medications")
+    public ResponseEntity<List<MedicationModel>> getMedications(HttpSession session) {
+        Set<MedicationModel> set = new LinkedHashSet<MedicationModel>();
+
+        // first add BP observations from configured FHIR server
+        Bundle bundle = ehrService.getMedicationStatements(session.getId());
+        for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
+            if (entryCon.getResource() instanceof MedicationStatement) {
+                MedicationStatement ms = (MedicationStatement) entryCon.getResource();
+                try {
+                    MedicationModel model = new MedicationModel(ms);
+                    logger.info("got medication: " + model.getSystem() + "|" + model.getCode() + ": " + model.getDescription());
+                    set.add(model);
+
+                } catch (DataException e) {
+                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+                }
+
+            } else {
+                Resource r = entryCon.getResource();
+                logger.warn("ignoring " + r.getClass().getName() + " (id=" + r.getId() + ") while building Medications");
+            }
+        }
+
+        return new ResponseEntity<>(new ArrayList<>(set), HttpStatus.OK);
     }
 }

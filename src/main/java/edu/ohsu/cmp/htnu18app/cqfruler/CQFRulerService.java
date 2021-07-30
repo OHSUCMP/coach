@@ -2,9 +2,9 @@ package edu.ohsu.cmp.htnu18app.cqfruler;
 
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.service.CounselingService;
+import edu.ohsu.cmp.htnu18app.service.EHRService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
-import edu.ohsu.cmp.htnu18app.service.PatientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,7 @@ public class CQFRulerService {
     private String cdsHooksEndpointURL;
 
     @Autowired
-    private PatientService patientService;
+    private EHRService ehrService;
 
     @Autowired
     private HomeBloodPressureReadingService hbprService;
@@ -42,7 +42,7 @@ public class CQFRulerService {
     public void requestHooksExecution(String sessionId) {
         try {
             CDSHookExecutor executor = new CDSHookExecutor(TESTING, sessionId, cdsHooksEndpointURL,
-                    patientService,
+                    ehrService,
                     hbprService,
                     goalService,
                     counselingService);

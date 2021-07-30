@@ -1,5 +1,8 @@
 package edu.ohsu.cmp.htnu18app.entity.app;
 
+import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
+import edu.ohsu.cmp.htnu18app.model.GoalModel;
+
 import javax.persistence.*;
 import java.util.Date;
 import java.util.Set;
@@ -7,12 +10,6 @@ import java.util.Set;
 @Entity
 @Table(schema = "htnu18app")
 public class Goal {
-    public static final String DEFAULT_BP_GOAL_ID = "default-bp-goal";
-    public static final Integer DEFAULT_BP_GOAL_SYSTOLIC = 140;
-    public static final Integer DEFAULT_BP_GOAL_DIASTOLIC = 90;
-    public static final String BP_GOAL_REFERENCE_SYSTEM = "https://coach.ohsu.edu";
-    public static final String BP_GOAL_REFERENCE_CODE = "blood-pressure";
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -41,10 +38,10 @@ public class Goal {
         this.targetDate = targetDate;
     }
 
-    public Goal(String extGoalId, String referenceSystem, String referenceCode, Integer systolicTarget, Integer diastolicTarget) {
-        this.extGoalId = extGoalId;
-        this.referenceSystem = referenceSystem;
-        this.referenceCode = referenceCode;
+    public Goal(Integer systolicTarget, Integer diastolicTarget) {
+        this.extGoalId = GoalModel.BP_GOAL_ID;
+        this.referenceSystem = BloodPressureModel.SYSTEM;
+        this.referenceCode = BloodPressureModel.CODE;
         this.goalText = "Target BP: " + systolicTarget + "/" + diastolicTarget;
         this.systolicTarget = systolicTarget;
         this.diastolicTarget = diastolicTarget;

@@ -7,6 +7,8 @@ import edu.ohsu.cmp.htnu18app.entity.app.Goal;
 import edu.ohsu.cmp.htnu18app.entity.app.GoalHistory;
 import edu.ohsu.cmp.htnu18app.model.GoalHistoryModel;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
+import edu.ohsu.cmp.htnu18app.model.PatientModel;
+import edu.ohsu.cmp.htnu18app.service.EHRService;
 import edu.ohsu.cmp.htnu18app.service.GoalHistoryService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import org.slf4j.Logger;
@@ -16,7 +18,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
@@ -25,11 +30,11 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/goals")
-public class GoalController extends AuthenticatedController {
+public class GoalsController extends AuthenticatedController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private PatientController patientController;
+    private EHRService ehrService;
 
     @Autowired
     private GoalService goalService;
@@ -41,9 +46,9 @@ public class GoalController extends AuthenticatedController {
 //    private CQFRulerService cqfRulerService;
 
     @GetMapping(value={"", "/"})
-    public String getGoals(HttpSession session, Model model) {
+    public String view(HttpSession session, Model model) {
         try {
-            patientController.populatePatientModel(session.getId(), model);
+            model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
         } catch (Exception e) {
             logger.error("error populating patient model", e);
@@ -86,23 +91,17 @@ public class GoalController extends AuthenticatedController {
 
     @PostMapping("update-bp")
     public ResponseEntity<GoalModel> updatebp(HttpSession session,
-                                              @RequestParam("extGoalId") String extGoalId,
-                                              @RequestParam("referenceSystem") String referenceSystem,
-                                              @RequestParam("referenceCode") String referenceCode,
+//                                              @RequestParam("extGoalId") String extGoalId,
+//                                              @RequestParam("referenceSystem") String referenceSystem,
+//                                              @RequestParam("referenceCode") String referenceCode,
                                               @RequestParam("systolicTarget") Integer systolicTarget,
                                               @RequestParam("diastolicTarget") Integer diastolicTarget) {
 
         // THERE CAN BE ONLY ONE!!!
         // (blood pressure goal, that is)
+        goalService.deleteBPGoalIfExists(session.getId());
 
-        Goal currentBPGoal = goalService.getCurrentBPGoal(session.getId());
-
-        currentBPGoal.setExtGoalId(extGoalId);
-        currentBPGoal.setReferenceSystem(referenceSystem);
-        currentBPGoal.setReferenceCode(referenceCode);
-        currentBPGoal.setSystolicTarget(systolicTarget);
-        currentBPGoal.setDiastolicTarget(diastolicTarget);
-        currentBPGoal = goalService.update(session.getId(), currentBPGoal);
+        Goal currentBPGoal = goalService.create(session.getId(), new Goal(systolicTarget, diastolicTarget));
 
         return new ResponseEntity<>(new GoalModel(currentBPGoal), HttpStatus.OK);
     }
