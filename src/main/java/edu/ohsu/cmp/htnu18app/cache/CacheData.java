@@ -19,7 +19,7 @@ public class CacheData {
     private Patient patient;
     private Bundle observations;
     private Bundle conditions;
-    private Bundle goals;
+    private Bundle currentGoals;
     private Bundle medicationStatements;
     private Map<String, List<Card>> cards;
 
@@ -78,12 +78,12 @@ public class CacheData {
         this.conditions = conditions;
     }
 
-    public Bundle getGoals() {
-        return goals;
+    public Bundle getCurrentGoals() {
+        return currentGoals;
     }
 
-    public void setGoals(Bundle goals) {
-        this.goals = goals;
+    public void setCurrentGoals(Bundle currentGoals) {
+        this.currentGoals = currentGoals;
     }
 
     public Bundle getMedicationStatements() {

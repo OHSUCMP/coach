@@ -102,7 +102,7 @@ public class EHRService {
 
     public Bundle getCurrentGoals(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
-        Bundle b = cache.getGoals();
+        Bundle b = cache.getCurrentGoals();
         if (b == null) {
             logger.info("requesting Goals for session " + sessionId);
 
@@ -133,7 +133,7 @@ public class EHRService {
                 }
             }
 
-            cache.setGoals(b);
+            cache.setCurrentGoals(b);
         }
 
         return b;
