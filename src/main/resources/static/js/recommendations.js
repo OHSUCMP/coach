@@ -499,7 +499,7 @@ async function updateBPGoal(g, _callback) {
 
     await response.text();
 
-    _callback(response.status);
+    _callback(response.status, g);
 }
 
 async function updateGoal(g, _callback) {
@@ -540,10 +540,15 @@ $(document).ready(function() {
         let g = buildBPGoalData(this);
         let container = $(this).closest('.bpGoal');
 
-        updateBPGoal(g, function(status) {
+        updateBPGoal(g, function(status, g) {
             if (status === 200) {
-                // todo : redraw chart
-                // todo : update current BP goal UI component
+                let el = $('#currentBPGoal');
+                $(el).attr('data-systolic', g.systolicTarget);
+                $(el).attr('data-diastolic', g.diastolicTarget);
+                $(el).html("Your Current Blood Pressure Goal: <em><strong>Below " + g.systolicTarget + "/" + g.diastolicTarget + "</strong></em>");
+
+                updateChart();
+
                 hide(container);
             }
         });

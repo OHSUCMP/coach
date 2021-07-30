@@ -112,7 +112,7 @@ function getCurrentBPGoal() {
     };
 }
 
-function buildChart(data, startDate, endDate) {
+function buildChart() {
     $('#loadingChart').addClass('hidden');
 
     let goal = getCurrentBPGoal();
@@ -121,7 +121,7 @@ function buildChart(data, startDate, endDate) {
     $(ctx).removeClass('hidden');
     $('#chartKeyContainer, #chartTimelineContainer').removeClass('hidden');
 
-    let pointStyleArr = buildPointStyleArray(data);
+    let pointStyleArr = buildPointStyleArray(window.bpchart.data);
 
     let config = {
         type: 'line',
@@ -137,7 +137,7 @@ function buildChart(data, startDate, endDate) {
                 pointBorderColor: 'rgba(126, 194, 185, 1)',
                 pointBackgroundColor: 'rgba(126, 194, 185, 0.6)',
                 tension: 0,
-                data: toScatterData(data, 'systolic')
+                data: toScatterData(window.bpchart.data, 'systolic')
             }, {
                 type: 'line',
                 label: 'Systolic Trend',
@@ -146,7 +146,7 @@ function buildChart(data, startDate, endDate) {
                 borderColor: 'rgba(0, 127, 109, 1)',
                 borderWidth: 2,
                 tension: 0.1,
-                data: toTrendLineData(data, 'systolic')
+                data: toTrendLineData(window.bpchart.data, 'systolic')
             }, /* {
                 type: 'line',
                 label: 'Systolic Regression',
@@ -166,7 +166,7 @@ function buildChart(data, startDate, endDate) {
                 pointBorderColor: 'rgba(207, 178, 137, 1)',
                 pointBackgroundColor: 'rgba(207, 178, 137, 0.6)',
                 tension: 0,
-                data: toScatterData(data, 'diastolic')
+                data: toScatterData(window.bpchart.data, 'diastolic')
             }, {
                 type: 'line',
                 label: 'Diastolic Trend',
@@ -175,7 +175,7 @@ function buildChart(data, startDate, endDate) {
                 borderColor: 'rgba(153, 97, 36, 1)',
                 borderWidth: 1,
                 tension: 0.1,
-                data: toTrendLineData(data, 'diastolic')
+                data: toTrendLineData(window.bpchart.data, 'diastolic')
             } /*, {
                 type: 'line',
                 label: 'Diastolic Regression',
@@ -235,12 +235,12 @@ function buildChart(data, startDate, endDate) {
         }
     };
 
-    if (startDate !== undefined) {
-        config.options.scales.x.suggestedMin = startDate;
+    if (window.bpchart.startDate !== undefined) {
+        config.options.scales.x.suggestedMin = window.bpchart.startDate;
     }
 
-    if (endDate !== undefined) {
-        config.options.scales.x.suggestedMax = endDate;
+    if (window.bpchart.endDate !== undefined) {
+        config.options.scales.x.suggestedMax = window.bpchart.endDate;
     }
 
     return new Chart(ctx, config);
@@ -259,10 +259,10 @@ function buildPointStyleArray(data) {
     return arr;
 }
 
-function updateChart(data, startDate, endDate) {
+function updateChart() {
     // calling buildChart() without first replacing the DOM element creates wonkiness
     $('#chart').replaceWith('<canvas id="chart" width="700" height="250"></canvas>');
-    buildChart(data, startDate, endDate);
+    buildChart();
 }
 
 /*

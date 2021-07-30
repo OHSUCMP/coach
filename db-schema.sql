@@ -47,7 +47,10 @@ create table goal_history (
     id int not null auto_increment primary key,
     goalId int not null,
     achievementStatus varchar(20) not null,
-    createdDate datetime not null
+    createdDate datetime not null,
+    foreign key (goalId)
+        references goal (id)
+        on delete cascade
 );
 
 create index idxGoalId on goal_history (goalId);

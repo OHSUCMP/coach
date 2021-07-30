@@ -23,12 +23,16 @@
                 let startDate = new Date();
                 startDate.setMonth(startDate.getMonth() - 2);
                 startDate.setHours(0, 0, 0);
-                let truncatedData = truncateData(window.bpdata, startDate);
 
                 let endDate = new Date();
                 endDate.setHours(23, 59, 59);
 
-                updateChart(truncatedData, startDate, endDate);
+                window.bpchart = {};
+                window.bpchart.data = truncateData(window.bpdata, startDate);
+                window.bpchart.startDate = startDate;
+                window.bpchart.endDate = endDate;
+
+                updateChart();
             });
 
             $(document).on('click', '#adjustTimeline2Y', function() {
@@ -40,11 +44,19 @@
                 let endDate = new Date();
                 endDate.setHours(23, 59, 59);
 
-                updateChart(truncatedData, startDate, endDate);
+                window.bpchart = {};
+                window.bpchart.data = truncateData(window.bpdata, startDate);
+                window.bpchart.startDate = startDate;
+                window.bpchart.endDate = endDate;
+
+                updateChart();
             });
 
             $(document).on('click', '#adjustTimelineAll', function() {
-                updateChart(window.bpdata);
+                window.bpchart = {};
+                window.bpchart.data = window.bpdata;
+
+                updateChart();
             });
 
             $(document).ready(function () {
@@ -52,8 +64,11 @@
 
                 loadBloodPressureObservations(function(bpdata) {
                     window.bpdata = bpdata;
+                    window.bpchart = {};
+                    window.bpchart.data = window.bpdata;
+
                     populateSummaryDiv();
-                    buildChart(window.bpdata);
+                    buildChart();
                     // buildChartSlider();
                 });
 
