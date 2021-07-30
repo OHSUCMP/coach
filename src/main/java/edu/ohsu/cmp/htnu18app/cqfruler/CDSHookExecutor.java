@@ -22,7 +22,10 @@ import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Suggestion;
-import edu.ohsu.cmp.htnu18app.service.*;
+import edu.ohsu.cmp.htnu18app.service.CounselingService;
+import edu.ohsu.cmp.htnu18app.service.EHRService;
+import edu.ohsu.cmp.htnu18app.service.GoalService;
+import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.htnu18app.util.MustacheUtil;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
@@ -238,7 +241,13 @@ public class CDSHookExecutor implements Runnable {
     }
 
     private Bundle buildGoalsBundle(String patientId) {
-        Bundle bundle = ehrService.getCurrentGoals(sessionId);
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.COLLECTION);
+
+        // add to new bundle so as to not modify what's in the cache
+        for (Bundle.BundleEntryComponent bec : ehrService.getCurrentGoals(sessionId).getEntry()) {
+            bundle.addEntry(bec);
+        }
 
         List<edu.ohsu.cmp.htnu18app.entity.app.Goal> goalList = goalService.getGoalList(sessionId);
         for (edu.ohsu.cmp.htnu18app.entity.app.Goal g : goalList) {
@@ -285,7 +294,13 @@ public class CDSHookExecutor implements Runnable {
     }
 
     private Bundle buildBPBundle(String patientId) {
-        Bundle bundle = ehrService.getBloodPressureObservations(sessionId);
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.COLLECTION);
+
+        // add to new bundle so as to not modify what's in the cache
+        for (Bundle.BundleEntryComponent bec : ehrService.getBloodPressureObservations(sessionId).getEntry()) {
+            bundle.addEntry(bec);
+        }
 
         // inject home blood pressure readings into Bundle for evaluation by CQF Ruler
         List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);

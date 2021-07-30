@@ -122,7 +122,7 @@ public class EHRService {
                 boolean inProgress = false;
                 if (btc.getResource() instanceof org.hl7.fhir.r4.model.Goal) {
                     org.hl7.fhir.r4.model.Goal g = (org.hl7.fhir.r4.model.Goal) btc.getResource();
-                    active = g.getLifecycleStatus() != org.hl7.fhir.r4.model.Goal.GoalLifecycleStatus.ACTIVE;
+                    active = g.getLifecycleStatus() == org.hl7.fhir.r4.model.Goal.GoalLifecycleStatus.ACTIVE;
                     inProgress = g.getAchievementStatus().hasCoding(
                             GoalModel.ACHIEVEMENT_STATUS_CODING_SYSTEM,
                             GoalModel.ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE
