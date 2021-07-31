@@ -11,8 +11,8 @@
     <groupId>edu.ohsu.cmp</groupId>
     <artifactId>htnu18app</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Hypertension U18 Application</name>
-    <description>The FHIR application assoicated with OHSU CMP team&apos;s Hypertension U18 grant</description>
+    <name>COACH</name>
+    <description>The COACH FHIR application</description>
 
     <properties>
         <java.version>11</java.version>

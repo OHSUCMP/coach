@@ -1,6 +1,5 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
-import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.model.PatientModel;
 import edu.ohsu.cmp.htnu18app.service.EHRService;
 import org.slf4j.Logger;
@@ -23,12 +22,7 @@ public class PreferencesController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
-        try {
-            model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
-
-        } catch (SessionMissingException e) {
-            logger.error("error populating patient model", e);
-        }
+        model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
         return "preferences";
     }

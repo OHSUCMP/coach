@@ -1,0 +1,67 @@
+{{#layout}}
+    {{#title}}COACH - Contact{{/title}}
+    {{#head}}
+        <script type="text/javascript" src="js/form.js"></script>
+        <link rel="stylesheet" href="css/form.css" />
+
+        <!--        <link rel="stylesheet" href="css/recommendations.css"/>-->
+        <!--        <script type="text/javascript" src="js/recommendations.js"></script>-->
+
+        <script type="text/javascript" src="js/contact.js"></script>
+        <link rel="stylesheet" href="css/contact.css"/>
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+            });
+        </script>
+    {{/head}}
+    {{#menuItems}}
+        <li><a href="/">Patient Portal</a></li>
+        <li><a href="/goals">My Goals</a></li>
+        <li><a href="/bp-readings">Home BP Readings</a></li>
+        <li><a href="/preferences">My Preferences</a></li>
+        <li><a href="/feedback">Provider Feedback</a></li>
+    {{/menuItems}}
+    {{#content}}
+        <table class="content">
+            <tr>
+                <td id="patientInfo">
+                    <table style="margin-left: 50px">
+                        <tr>
+                            <td rowspan="2">
+                                <span class="circle" style="background-color: #b3fff0">&nbsp;</span>
+                            </td>
+                            <td colspan="2">
+                                <span style="font-size: x-large">{{patient.name}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>{{patient.age}} years</td>
+                            <td>{{patient.gender}}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <table class="content">
+            <tr>
+                <td class="heading">
+                    Contact
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <heading>Pre-Populated Note Based on Recommendations</heading>
+                    <div id="messageContainer">
+                        <textarea id="message">{{message}}</textarea>
+                        <div id="buttonContainer">
+                            <div id="sendToEpic" class="button disabled">Send to Epic</div>
+                            <div id="copyAndPaste" class="button">Copy and Paste</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    {{/content}}
+{{/layout}}

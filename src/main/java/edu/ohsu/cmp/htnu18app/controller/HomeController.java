@@ -76,7 +76,7 @@ public class HomeController {
                 model.addAttribute("queuePosition", queuePosition);
 
             } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " building index page", e);
+                logger.error("caught " + e.getClass().getName() + " building home page", e);
             }
 
             return "home";

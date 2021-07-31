@@ -4,7 +4,6 @@ import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
-import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.model.PatientModel;
 import edu.ohsu.cmp.htnu18app.service.EHRService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
@@ -41,12 +40,7 @@ public class BPReadingsController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
-        try {
-            model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
-
-        } catch (SessionMissingException e) {
-            logger.error("error populating patient model", e);
-        }
+        model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
         List<HomeBloodPressureReading> bpreadings = hbprService.getHomeBloodPressureReadings(session.getId());
         model.addAttribute("bpreadings", bpreadings);

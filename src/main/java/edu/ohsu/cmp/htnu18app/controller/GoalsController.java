@@ -47,12 +47,7 @@ public class GoalsController extends AuthenticatedController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
-        try {
-            model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
-
-        } catch (Exception e) {
-            logger.error("error populating patient model", e);
-        }
+        model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
         List<GoalModel> list = new ArrayList<>();
         for (Goal g : goalService.getGoalList(session.getId())) {
