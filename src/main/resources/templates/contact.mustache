@@ -12,7 +12,18 @@
 
         <script type="text/javascript">
             $(document).ready(function () {
+                enableHover('#copyAndPaste.button');
+                enableHover('#closeInstructions.button');
             });
+
+            $(document).on('click', '#copyAndPaste', function() {
+                setClipboard($('#message').val());
+                $('#myChartInstructionsContainer').show();
+            });
+
+            $(document).on('click', '#closeInstructions', function() {
+                $('#myChartInstructionsContainer').hide();
+            })
         </script>
     {{/head}}
     {{#menuItems}}
@@ -52,10 +63,10 @@
             </tr>
             <tr>
                 <td>
-                    <heading>Pre-Populated Note Based on Recommendations</heading>
+                    <div class="heading">Pre-Populated Note Based on Recommendations</div>
                     <div id="messageContainer">
                         <textarea id="message">{{message}}</textarea>
-                        <div id="buttonContainer">
+                        <div class="buttonContainer">
                             <div id="sendToEpic" class="button disabled">Send to Epic</div>
                             <div id="copyAndPaste" class="button">Copy and Paste</div>
                         </div>
@@ -63,5 +74,22 @@
                 </td>
             </tr>
         </table>
+        <div id="myChartInstructionsContainer" class="modal">
+            <div id="myChartInstructions" class="modalContent">
+                <div class="heading">Message Copied!  Next Steps:</div>
+                <ol>
+                    <li>Log into MyChart (<a href="{{mychartLoginLink}}" target="_blank">direct link</a>)</li>
+                    <li>Go to the Messages activity, click "Ask a Question," then select "Contact my Doctor's Office" (<a href="{{mychartMessageLink}}" target="_blank">direct link</a>)</li>
+                    <li>Select the Care Team member that gave you access to this Application</li>
+                    <li>Specify an appropriate Subject</li>
+                    <li>Paste (Ctrl-V, or right-click and select "Paste") this message into the MyChart message text-area</li>
+                    <li>Review the message, and edit as desired</li>
+                    <li>When everything looks complete and correct, click "Send"</li>
+                </ol>
+                <div class="buttonContainer">
+                    <div id="closeInstructions" class="button">Close</div>
+                </div>
+            </div>
+        </div>
     {{/content}}
 {{/layout}}

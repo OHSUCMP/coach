@@ -1,18 +1,10 @@
-function hoverOn(el) {
-    $(el).addClass('hover');
-}
-
-function hoverOff(el) {
-    $(el).removeClass('hover');
-}
-
 function enableHover(selector) {
     $(document).on({
         mouseover: function () {
-            hoverOn($(this));
+            $(this).addClass('hover')
         },
         mouseleave: function () {
-            hoverOff($(this));
+            $(this).removeClass('hover');
         }
     }, selector);
 }
@@ -28,10 +20,13 @@ function randomChars(length) {
     return result;
 }
 
-function toLabel(string) {
-    let words = string.replaceAll("_", " ").toLowerCase().split(" ");
-    let label = words.map(word => {
-        return word[0].toUpperCase() + word.substring(1);
-    }).join(" ");
-    return label;
+// pulled from https://stackoverflow.com/questions/31593297/using-execcommand-javascript-to-copy-hidden-text-to-clipboard
+function setClipboard(value) {
+    let tempInput = document.createElement("input");
+    tempInput.style = "position: absolute; left: -1000px; top: -1000px";
+    tempInput.value = value;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand("copy");
+    document.body.removeChild(tempInput);
 }

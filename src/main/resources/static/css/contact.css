@@ -13,7 +13,7 @@
     height: 200px;
 }
 
-#buttonContainer {
+.buttonContainer {
     display: block;
     float: right;
 }
@@ -31,4 +31,9 @@
 .button.disabled {
     color: #000;
     background-color: #888;
+}
+
+#myChartInstructions {
+    width: 500px;
+    height: 265px;
 }
