@@ -208,11 +208,11 @@
                             </td>
                         </tr>
                     </table>
-                    {{#currentBPGoal}}
-                        <span id="currentBPGoal" data-systolic="{{systolicTarget}}" data-diastolic="{{diastolicTarget}}">
-                            Your Current Blood Pressure Goal: <em><strong>Below {{systolicTarget}}/{{diastolicTarget}}</strong></em>
-                        </span>
-                    {{/currentBPGoal}}
+                    <div id="currentBPGoal" data-systolic="{{currentBPGoal.systolicTarget}}" data-diastolic="{{currentBPGoal.diastolicTarget}}">
+                        Your Current Blood Pressure Goal: <em><strong>Below {{currentBPGoal.systolicTarget}}/{{currentBPGoal.diastolicTarget}}</strong></em>
+                    </div>
+                    <div id="currentMedications">
+                    </div>
                 </td>
             </tr>
             <tr>

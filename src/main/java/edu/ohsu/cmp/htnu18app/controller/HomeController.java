@@ -14,10 +14,7 @@ import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
 import edu.ohsu.cmp.htnu18app.service.EHRService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.MedicationStatement;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -157,10 +154,10 @@ public class HomeController {
         Set<MedicationModel> set = new LinkedHashSet<MedicationModel>();
 
         // first add BP observations from configured FHIR server
-        Bundle bundle = ehrService.getMedicationStatements(session.getId());
+        Bundle bundle = ehrService.getMedicationRequests(session.getId());
         for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
-            if (entryCon.getResource() instanceof MedicationStatement) {
-                MedicationStatement ms = (MedicationStatement) entryCon.getResource();
+            if (entryCon.getResource() instanceof MedicationRequest) {
+                MedicationRequest ms = (MedicationRequest) entryCon.getResource();
                 try {
                     MedicationModel model = new MedicationModel(ms);
                     logger.info("got medication: " + model.getSystem() + "|" + model.getCode() + ": " + model.getDescription());

@@ -191,4 +191,56 @@ public class EHRService {
 
         return b;
     }
+
+    @Transactional
+    public Bundle getMedicationRequests(String sessionId) {
+        CacheData cache = SessionCache.getInstance().get(sessionId);
+
+        Bundle b = cache.getMedicationRequests();
+        if (b == null) {
+            logger.info("requesting MedicationRequests for session " + sessionId);
+
+            // build concept info as a simple set we can query to test inclusion
+            // (these are the meds we want to show)
+            ValueSet valueSet = valueSetService.getValueSet(MedicationModel.VALUE_SET_OID);
+            Set<String> concepts = new HashSet<>();
+            for (Concept c : valueSet.getConcepts()) {
+                String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
+                concepts.add(codeSystem + "|" + c.getCode());
+            }
+
+            // get all the patient's meds (yes, all of them)
+            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+            b = fcc.getClient()
+                    .search()
+                    .forResource(MedicationRequest.class)
+                    .and(MedicationRequest.PATIENT.hasId(fcc.getCredentials().getPatientId()))
+                    .returnBundle(Bundle.class)
+                    .execute();
+
+            // filter out any of the patient's meds that aren't included in set we want to show
+            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+            while (iter.hasNext()) {
+                Bundle.BundleEntryComponent entry = iter.next();
+                boolean exists = false;
+                if (entry.getResource() instanceof MedicationRequest) {
+                    MedicationRequest mr = (MedicationRequest) entry.getResource();
+                    CodeableConcept cc = mr.getMedicationCodeableConcept();
+                    for (Coding c : cc.getCoding()) {
+                        if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                }
+                if ( ! exists ) {
+                    iter.remove();
+                }
+            }
+
+            cache.setMedicationRequests(b);
+        }
+
+        return b;
+    }
 }

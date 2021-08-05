@@ -104,9 +104,14 @@ div.chartKeyItem {
     top: 25px;
 }
 
-#currentBPGoal {
-    text-align: center;
-    padding: 10px;
+#currentBPGoal, #currentMedications {
+    /*text-align: center;*/
+    margin: 10px;
+}
+
+.medication {
+    font-weight: bold;
+    font-style: italic;
 }
 
 #recommendationsContainer {

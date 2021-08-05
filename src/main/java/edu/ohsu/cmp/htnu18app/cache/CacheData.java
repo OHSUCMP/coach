@@ -21,6 +21,7 @@ public class CacheData {
     private Bundle conditions;
     private Bundle currentGoals;
     private Bundle medicationStatements;
+    private Bundle medicationRequests;
     private Map<String, List<Card>> cards;
 
     public CacheData(Audience audience, FHIRCredentialsWithClient fhirCredentialsWithClient, Long internalPatientId) {
@@ -92,6 +93,14 @@ public class CacheData {
 
     public void setMedicationStatements(Bundle medicationStatements) {
         this.medicationStatements = medicationStatements;
+    }
+
+    public Bundle getMedicationRequests() {
+        return medicationRequests;
+    }
+
+    public void setMedicationRequests(Bundle medicationRequests) {
+        this.medicationRequests = medicationRequests;
     }
 
     public boolean containsCards(String hookId) {

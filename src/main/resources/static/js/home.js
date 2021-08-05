@@ -34,18 +34,19 @@ async function loadMedications(_callback) {
 
 function populateMedications() {
     let data = window.meds;
-    let html = '';
 
     if (Array.isArray(data) && data.length > 0) {
+        let arr = [];
         data.forEach(function (m) {
-            html += '<div class="medication" data-system="' + m.system + '" data-code="' + m.code + '">' +
+            arr.push('<span class="medication" data-system="' + m.system + '" data-code="' + m.code + '">' +
                 m.description +
-                '</div>';
-
+                '</span>');
         });
-    }
 
-    $('#medications').html(html);
+        let html = 'Your Active Anti-hypertension Medications: ' + arr.join(', ');
+
+        $('#currentMedications').html(html);
+    }
 }
 
 function populateSummaryDiv() {

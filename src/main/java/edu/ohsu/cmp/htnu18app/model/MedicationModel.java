@@ -3,6 +3,7 @@ package edu.ohsu.cmp.htnu18app.model;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.MedicationRequest;
 import org.hl7.fhir.r4.model.MedicationStatement;
 
 public class MedicationModel implements Comparable<MedicationModel> {
@@ -34,6 +35,26 @@ public class MedicationModel implements Comparable<MedicationModel> {
 
         } else {
             throw new DataException("missing effective date or period");
+        }
+    }
+
+    public MedicationModel(MedicationRequest mr) throws DataException {
+        status = mr.getStatus().getDisplay();
+
+        CodeableConcept mcc = mr.getMedicationCodeableConcept();
+        description = mcc.getText();
+
+        if (mcc.getCoding().size() > 0) {       // only grab the first coding
+            Coding c = mcc.getCoding().get(0);
+            system = c.getSystem();
+            code = c.getCode();
+        }
+
+        if (mr.getAuthoredOn() != null) {
+            effectiveTimestamp = mr.getAuthoredOn().getTime();
+
+        } else {
+            throw new DataException("missing authored on");
         }
     }
 
