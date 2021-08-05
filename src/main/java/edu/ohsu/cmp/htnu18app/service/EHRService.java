@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.htnu18app.service;
 
+import ca.uhn.fhir.model.api.Include;
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.vsac.Concept;
@@ -215,8 +216,14 @@ public class EHRService {
                     .search()
                     .forResource(MedicationRequest.class)
                     .and(MedicationRequest.PATIENT.hasId(fcc.getCredentials().getPatientId()))
+                    .include(new Include("MedicationRequest:medication"))
                     .returnBundle(Bundle.class)
                     .execute();
+
+            for (Bundle.BundleEntryComponent bec : b.getEntry()) {
+                Resource r = bec.getResource();
+                logger.info("got item: " + r.fhirType() + " / " + r.getId());
+            }
 
             // filter out any of the patient's meds that aren't included in set we want to show
             Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
@@ -225,12 +232,17 @@ public class EHRService {
                 boolean exists = false;
                 if (entry.getResource() instanceof MedicationRequest) {
                     MedicationRequest mr = (MedicationRequest) entry.getResource();
-                    CodeableConcept cc = mr.getMedicationCodeableConcept();
-                    for (Coding c : cc.getCoding()) {
-                        if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
-                            exists = true;
-                            break;
+                    if (mr.hasMedicationCodeableConcept()) {
+                        CodeableConcept cc = mr.getMedicationCodeableConcept();
+                        for (Coding c : cc.getCoding()) {
+                            if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
+                                exists = true;
+                                break;
+                            }
                         }
+
+                    } else if (mr.hasMedicationReference()) {
+                        logger.info("ENCOUNTERED MEDICATION REFERENCE: " + mr.getMedicationReference().getReference());
                     }
                 }
                 if ( ! exists ) {
