@@ -216,7 +216,7 @@ public class EHRService {
                     .search()
                     .forResource(MedicationRequest.class)
                     .and(MedicationRequest.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-                    .include(new Include("MedicationRequest:medication"))
+                    .include(new Include("*"))
                     .returnBundle(Bundle.class)
                     .execute();
 
