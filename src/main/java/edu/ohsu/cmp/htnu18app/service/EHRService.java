@@ -242,7 +242,6 @@ public class EHRService {
                         }
 
                     } else if (mr.hasMedicationReference()) {
-//                        logger.info("ENCOUNTERED MEDICATION REFERENCE: " + mr.getMedicationReference().getReference());
                         Medication m = (Medication) FhirUtil.getResourceByUrl(sessionId, mr.getMedicationReference().getReference());
                         for (Coding c : m.getCode().getCoding()) {
                             if (concepts.contains(c.getSystem() + "|" + c.getCode())) {

@@ -8,10 +8,13 @@ import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 
 public class FhirUtil {
+    private static final Logger logger = LoggerFactory.getLogger(FhirUtil.class);
+
     public static IGenericClient buildClient(String serverUrl, String bearerToken) {
         FhirContext ctx = FhirContext.forR4();
         IGenericClient client = ctx.newRestfulGenericClient(serverUrl);
@@ -36,6 +39,7 @@ public class FhirUtil {
         CacheData cache = SessionCache.getInstance().get(sessionId);
         Resource r = cache.getResource(url);
         if (r == null) {
+            logger.info("getting Resource with url=" + url + " for session " + sessionId);
             Bundle b = cache.getFhirCredentialsWithClient().getClient().search()
                     .byUrl(url)
                     .returnBundle(Bundle.class)
