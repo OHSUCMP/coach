@@ -216,20 +216,40 @@ function buildChart() {
                 },
                 annotation: {
                     annotations: {
-                        systolicGoal: {
-                            type: 'line',
-                            yMin: goal.systolic,
+                        targetSystolic: {
+                            drawTime: 'beforeDatasetsDraw',
+                            id: 'target-systolic',
+                            type: 'box',
+                            yScaleID: 'y',
+                            yMin: 90,
                             yMax: goal.systolic,
-                            borderColor: 'rgb(255,0,0)', //'rgba(73,167,156,1)',
-                            borderWidth: 1
+                            backgroundColor: 'rgba(172, 242, 233, 0.5)',
+                            borderWidth: 0
                         },
-                        diastolicGoal: {
-                            type: 'line',
-                            yMin: goal.diastolic,
+                        targetDiastolic: {
+                            drawTime: 'beforeDatasetsDraw',
+                            id: 'target-diastolic',
+                            type: 'box',
+                            yScaleID: 'y',
+                            yMin: 60,
                             yMax: goal.diastolic,
-                            borderColor: 'rgb(255,0,255)', //'rgba(167,139,51,1)',
-                            borderWidth: 1
+                            backgroundColor: 'rgba(244, 225, 172, 0.5)',
+                            borderWidth: 0
                         }
+                        // systolicGoal: {
+                        //     type: 'line',
+                        //     yMin: goal.systolic,
+                        //     yMax: goal.systolic,
+                        //     borderColor: 'rgb(255,0,0)', //'rgba(73,167,156,1)',
+                        //     borderWidth: 1
+                        // },
+                        // diastolicGoal: {
+                        //     type: 'line',
+                        //     yMin: goal.diastolic,
+                        //     yMax: goal.diastolic,
+                        //     borderColor: 'rgb(255,0,255)', //'rgba(167,139,51,1)',
+                        //     borderWidth: 1
+                        // }
                     }
                 }
             }

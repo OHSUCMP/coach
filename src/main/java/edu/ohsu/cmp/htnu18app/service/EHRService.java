@@ -1,6 +1,5 @@
 package edu.ohsu.cmp.htnu18app.service;
 
-import ca.uhn.fhir.model.api.Include;
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.vsac.Concept;
@@ -9,6 +8,7 @@ import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
 import edu.ohsu.cmp.htnu18app.model.MedicationModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.htnu18app.util.FhirUtil;
 import org.hl7.fhir.r4.model.*;
 import org.opencds.cqf.tooling.terminology.CodeSystemLookupDictionary;
 import org.slf4j.Logger;
@@ -216,7 +216,7 @@ public class EHRService {
                     .search()
                     .forResource(MedicationRequest.class)
                     .and(MedicationRequest.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-                    .include(new Include("*"))
+//                    .include(new Include("MedicationRequest:medication")) // todo: doesn't actually include it.  wth?
                     .returnBundle(Bundle.class)
                     .execute();
 
@@ -242,7 +242,14 @@ public class EHRService {
                         }
 
                     } else if (mr.hasMedicationReference()) {
-                        logger.info("ENCOUNTERED MEDICATION REFERENCE: " + mr.getMedicationReference().getReference());
+//                        logger.info("ENCOUNTERED MEDICATION REFERENCE: " + mr.getMedicationReference().getReference());
+                        Medication m = (Medication) FhirUtil.getResourceByUrl(sessionId, mr.getMedicationReference().getReference());
+                        for (Coding c : m.getCode().getCoding()) {
+                            if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
+                                exists = true;
+                                break;
+                            }
+                        }
                     }
                 }
                 if ( ! exists ) {

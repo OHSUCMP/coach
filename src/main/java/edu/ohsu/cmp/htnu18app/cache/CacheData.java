@@ -6,11 +6,9 @@ import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Suggestion;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Resource;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CacheData {
     private Audience audience;
@@ -23,12 +21,14 @@ public class CacheData {
     private Bundle medicationStatements;
     private Bundle medicationRequests;
     private Map<String, List<Card>> cards;
+    private Map<String, Resource> resources;
 
     public CacheData(Audience audience, FHIRCredentialsWithClient fhirCredentialsWithClient, Long internalPatientId) {
         this.audience = audience;
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
         this.internalPatientId = internalPatientId;
         this.cards = new LinkedHashMap<String, List<Card>>();
+        this.resources = new HashMap<String, Resource>();
     }
 
     public Audience getAudience() {
@@ -144,5 +144,13 @@ public class CacheData {
             }
         }
         return rval;
+    }
+
+    public Resource getResource(String url) {
+        return resources.get(url);
+    }
+
+    public void setResource(String url, Resource resource) {
+        resources.put(url, resource);
     }
 }

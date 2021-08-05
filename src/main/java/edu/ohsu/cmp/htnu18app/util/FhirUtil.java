@@ -3,7 +3,10 @@ package edu.ohsu.cmp.htnu18app.util;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
+import edu.ohsu.cmp.htnu18app.cache.CacheData;
+import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 
 import java.util.Iterator;
@@ -27,5 +30,19 @@ public class FhirUtil {
             logger.info(i + ": " + entry.getResource().getClass().getName() + " (" + entry.getResource().getId() + ")");
             i ++;
         }
+    }
+
+    public static Resource getResourceByUrl(String sessionId, String url) {
+        CacheData cache = SessionCache.getInstance().get(sessionId);
+        Resource r = cache.getResource(url);
+        if (r == null) {
+            Bundle b = cache.getFhirCredentialsWithClient().getClient().search()
+                    .byUrl(url)
+                    .returnBundle(Bundle.class)
+                    .execute();
+            r = b.getEntryFirstRep().getResource();
+            cache.setResource(url, r);
+        }
+        return r;
     }
 }
