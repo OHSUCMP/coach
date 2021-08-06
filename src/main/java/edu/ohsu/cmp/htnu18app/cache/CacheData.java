@@ -146,11 +146,11 @@ public class CacheData {
         return rval;
     }
 
-    public Resource getResource(String url) {
-        return resources.get(url);
+    public Resource getResource(String id) {
+        return resources.get(id);
     }
 
-    public void setResource(String url, Resource resource) {
-        resources.put(url, resource);
+    public void setResource(String id, Resource resource) {
+        resources.put(id, resource);
     }
 }

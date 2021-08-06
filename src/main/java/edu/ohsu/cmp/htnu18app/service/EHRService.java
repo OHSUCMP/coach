@@ -242,7 +242,7 @@ public class EHRService {
                         }
 
                     } else if (mr.hasMedicationReference()) {
-                        Medication m = (Medication) FhirUtil.getResourceByUrl(sessionId, mr.getMedicationReference().getReference());
+                        Medication m = (Medication) FhirUtil.getResourceById(sessionId, mr.getMedicationReference().getReference());
                         for (Coding c : m.getCode().getCoding()) {
                             if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
                                 exists = true;
