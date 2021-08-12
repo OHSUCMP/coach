@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.htnu18app.model.recommendation;
 
-import edu.ohsu.cmp.htnu18app.entity.app.Goal;
+import edu.ohsu.cmp.htnu18app.entity.app.MyGoal;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class Suggestion {
     private Reference references;
     private String label;
     private List<Action> actions;
-    private Goal goal;  // the patient's recorded goal when type is an 'update' variant
+    private MyGoal goal;  // the patient's recorded goal when type is an 'update' variant
 
     public String getId() {
         return id;
@@ -59,11 +59,11 @@ public class Suggestion {
         this.actions = actions;
     }
 
-    public Goal getGoal() {
+    public MyGoal getGoal() {
         return goal;
     }
 
-    public void setGoal(Goal goal) {
+    public void setGoal(MyGoal goal) {
         this.goal = goal;
     }
 }

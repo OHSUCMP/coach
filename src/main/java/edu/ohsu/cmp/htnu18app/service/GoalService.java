@@ -3,7 +3,7 @@ package edu.ohsu.cmp.htnu18app.service;
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
-import edu.ohsu.cmp.htnu18app.entity.app.Goal;
+import edu.ohsu.cmp.htnu18app.entity.app.MyGoal;
 import edu.ohsu.cmp.htnu18app.entity.app.GoalHistory;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
@@ -33,18 +33,18 @@ public class GoalService {
 
     public List<String> getExtGoalIdList(String sessionId) {
         List<String> list = new ArrayList<>();
-        for (Goal g : getGoalList(sessionId)) {
+        for (MyGoal g : getGoalList(sessionId)) {
             list.add(g.getExtGoalId());
         }
         return list;
     }
 
-    public List<Goal> getGoalList(String sessionId) {
+    public List<MyGoal> getGoalList(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
         return goalRepository.findAllByPatId(cache.getInternalPatientId());
     }
 
-    public Goal getGoal(String sessionId, String extGoalId) {
+    public MyGoal getGoal(String sessionId, String extGoalId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
         return goalRepository.findOneByPatIdAndExtGoalId(cache.getInternalPatientId(), extGoalId);
     }
@@ -59,7 +59,7 @@ public class GoalService {
 
         GoalModel ehrBPGoal = getCurrentEHRBPGoal(sessionId);
 
-        Goal g = getCurrentAppBPGoal(sessionId);
+        MyGoal g = getCurrentAppBPGoal(sessionId);
         GoalModel bpGoal = g != null ?
                 new GoalModel(g) :
                 null;
@@ -80,14 +80,14 @@ public class GoalService {
             return bpGoal;
 
         } else {
-            return new GoalModel(create(sessionId, new Goal(
+            return new GoalModel(create(sessionId, new MyGoal(
                     GoalModel.BP_GOAL_DEFAULT_SYSTOLIC,
                     GoalModel.BP_GOAL_DEFAULT_DIASTOLIC
             )));
         }
     }
 
-    public Goal getCurrentAppBPGoal(String sessionId) {
+    public MyGoal getCurrentAppBPGoal(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
         return goalRepository.findCurrentBPGoal(cache.getInternalPatientId());
     }
@@ -136,13 +136,13 @@ public class GoalService {
                 null;
     }
 
-    public Goal create(String sessionId, Goal goal) {
+    public MyGoal create(String sessionId, MyGoal goal) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
 
         goal.setPatId(cache.getInternalPatientId());
         goal.setCreatedDate(new Date());
 
-        Goal g = goalRepository.save(goal);
+        MyGoal g = goalRepository.save(goal);
 
         GoalHistory gh = goalHistoryRepository.save(new GoalHistory(AchievementStatus.IN_PROGRESS, g));
         Set<GoalHistory> set = new HashSet<>();

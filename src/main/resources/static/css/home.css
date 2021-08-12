@@ -104,12 +104,12 @@ div.chartKeyItem {
     top: 25px;
 }
 
-#currentBPGoal, #currentMedications {
+#currentBPGoal, #currentMedications, #adverseEvents {
     /*text-align: center;*/
     margin: 10px;
 }
 
-.medication {
+.medication, .adverseEvent {
     font-weight: bold;
     font-style: italic;
 }

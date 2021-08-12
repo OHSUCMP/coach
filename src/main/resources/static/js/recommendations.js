@@ -14,32 +14,11 @@ function enableDatePicker(sel) {
     });
 }
 
-async function executeRecommendations(_callback) {
-    $('.recommendation').each(function () {
-        let recommendationId = $(this).attr('data-id');
-        let cardsContainer = $(this).find('.cardsContainer');
-        executeRecommendation(recommendationId, function (cards) {
-            _callback(cardsContainer, cards);
-        });
-    });
-}
-
-async function executeRecommendation(id, _callback) {
-    let formData = new FormData();
-    formData.append("id", id);
-    let response = await fetch("/recommendations/execute", {
-        method: "POST",
-        body: formData
-    });
-    let cards = await response.json();
-    _callback(cards);
-}
-
 async function getCachedRecommendations(_callback) {
     $(".recommendation").each(function () {
         let recommendationId = $(this).attr('data-id');
         let cardsContainer = $(this).find('.cardsContainer');
-        getCachedRecommendation(recommendationId, function (cards) {
+        getRecommendation(recommendationId, function (cards) {
             _callback(cardsContainer, cards);
             enableDatePicker($(cardsContainer).find('.goalTargetDate'));
         });
@@ -47,7 +26,7 @@ async function getCachedRecommendations(_callback) {
 }
 
 // get a recommendation from cache, but do not execute it
-async function getCachedRecommendation(id, _callback) {
+async function getRecommendation(id, _callback) {
     let formData = new FormData();
     formData.append("id", id);
     let response = await fetch("/recommendation", {

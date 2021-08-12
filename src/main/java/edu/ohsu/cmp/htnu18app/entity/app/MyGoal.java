@@ -8,8 +8,8 @@ import java.util.Date;
 import java.util.Set;
 
 @Entity
-@Table(schema = "htnu18app")
-public class Goal {
+@Table(schema = "htnu18app", name = "goal")
+public class MyGoal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,10 +27,10 @@ public class Goal {
     @OneToMany(mappedBy = "goalId", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<GoalHistory> history;
 
-    protected Goal() {
+    protected MyGoal() {
     }
 
-    public Goal(String extGoalId, String referenceSystem, String referenceCode, String goalText, Date targetDate) {
+    public MyGoal(String extGoalId, String referenceSystem, String referenceCode, String goalText, Date targetDate) {
         this.extGoalId = extGoalId;
         this.referenceSystem = referenceSystem;
         this.referenceCode = referenceCode;
@@ -38,7 +38,7 @@ public class Goal {
         this.targetDate = targetDate;
     }
 
-    public Goal(Integer systolicTarget, Integer diastolicTarget) {
+    public MyGoal(Integer systolicTarget, Integer diastolicTarget) {
         this.extGoalId = GoalModel.BP_GOAL_ID;
         this.referenceSystem = BloodPressureModel.SYSTEM;
         this.referenceCode = BloodPressureModel.CODE;

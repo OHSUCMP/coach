@@ -14,6 +14,7 @@ import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHookResponse;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.HookRequest;
 import edu.ohsu.cmp.htnu18app.entity.app.Counseling;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
+import edu.ohsu.cmp.htnu18app.entity.app.MyGoal;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.http.HttpRequest;
 import edu.ohsu.cmp.htnu18app.http.HttpResponse;
@@ -178,8 +179,8 @@ public class CDSHookExecutor implements Runnable {
 
                         for (Suggestion s : card.getSuggestions()) {
                             if (s.getType().equals(Suggestion.TYPE_UPDATE_GOAL)) {
-                                edu.ohsu.cmp.htnu18app.entity.app.Goal goal = goalService.getGoal(sessionId, s.getId());
-                                s.setGoal(goal);
+                                MyGoal myGoal = goalService.getGoal(sessionId, s.getId());
+                                s.setGoal(myGoal);
                             }
                         }
                     }
@@ -249,8 +250,8 @@ public class CDSHookExecutor implements Runnable {
             bundle.addEntry(bec);
         }
 
-        List<edu.ohsu.cmp.htnu18app.entity.app.Goal> goalList = goalService.getGoalList(sessionId);
-        for (edu.ohsu.cmp.htnu18app.entity.app.Goal g : goalList) {
+        List<MyGoal> myGoalList = goalService.getGoalList(sessionId);
+        for (MyGoal g : myGoalList) {
             Goal goal = buildGoal(patientId, g);
             bundle.addEntry().setFullUrl("http://hl7.org/fhir/Goal/" + goal.getId()).setResource(goal);
         }
@@ -258,26 +259,26 @@ public class CDSHookExecutor implements Runnable {
         return bundle;
     }
 
-    private Goal buildGoal(String patientId, edu.ohsu.cmp.htnu18app.entity.app.Goal goal) {
+    private Goal buildGoal(String patientId, MyGoal myGoal) {
         Goal g = new Goal();
 
-        g.setId(goal.getExtGoalId());
+        g.setId(myGoal.getExtGoalId());
         g.setSubject(new Reference().setReference(patientId));
-        g.setLifecycleStatus(goal.getLifecycleStatus().toGoalLifecycleStatus());
-        g.getAchievementStatus().addCoding().setCode(goal.getAchievementStatus().getFhirValue())
+        g.setLifecycleStatus(myGoal.getLifecycleStatus().toGoalLifecycleStatus());
+        g.getAchievementStatus().addCoding().setCode(myGoal.getAchievementStatus().getFhirValue())
                 .setSystem("http://terminology.hl7.org/CodeSystem/goal-achievement");
-        g.getCategoryFirstRep().addCoding().setCode(goal.getReferenceCode()).setSystem(goal.getReferenceSystem());
-        g.getDescription().setText(goal.getGoalText());
-        g.setStatusDate(goal.getStatusDate());
+        g.getCategoryFirstRep().addCoding().setCode(myGoal.getReferenceCode()).setSystem(myGoal.getReferenceSystem());
+        g.getDescription().setText(myGoal.getGoalText());
+        g.setStatusDate(myGoal.getStatusDate());
 
-        if (goal.isBloodPressureGoal()) {
+        if (myGoal.isBloodPressureGoal()) {
             Goal.GoalTargetComponent systolic = new Goal.GoalTargetComponent();
             systolic.getMeasure().addCoding().setCode(BloodPressureModel.SYSTOLIC_CODE).setSystem(BloodPressureModel.SYSTEM);
             systolic.setDetail(new Quantity());
             systolic.getDetailQuantity().setCode(BloodPressureModel.VALUE_CODE);
             systolic.getDetailQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
             systolic.getDetailQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
-            systolic.getDetailQuantity().setValue(goal.getSystolicTarget());
+            systolic.getDetailQuantity().setValue(myGoal.getSystolicTarget());
             g.getTarget().add(systolic);
 
             Goal.GoalTargetComponent diastolic = new Goal.GoalTargetComponent();
@@ -286,7 +287,7 @@ public class CDSHookExecutor implements Runnable {
             diastolic.getDetailQuantity().setCode(BloodPressureModel.VALUE_CODE);
             diastolic.getDetailQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
             diastolic.getDetailQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
-            diastolic.getDetailQuantity().setValue(goal.getDiastolicTarget());
+            diastolic.getDetailQuantity().setValue(myGoal.getDiastolicTarget());
             g.getTarget().add(diastolic);
         }
 

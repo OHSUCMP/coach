@@ -26,8 +26,8 @@ public class GoalHistory {
     protected GoalHistory() {
     }
 
-    public GoalHistory(AchievementStatus achievementStatus, Goal goal) {
-        this.goalId = goal.getId();
+    public GoalHistory(AchievementStatus achievementStatus, MyGoal myGoal) {
+        this.goalId = myGoal.getId();
         this.achievementStatus = achievementStatus;
         this.createdDate = new Date();
 //        this.goal = goal;

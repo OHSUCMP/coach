@@ -60,6 +60,11 @@
             });
 
             $(document).ready(function () {
+                let sessionEstablished = $('#sessionEstablished').text();
+                if (sessionEstablished !== 'true') {
+                    return;
+                }
+
                 enableHover('#chartTimelineContainer .button');
 
                 loadBloodPressureObservations(function(bpdata) {
@@ -75,6 +80,11 @@
                 loadMedications(function(meds) {
                     window.meds = meds;
                     populateMedications();
+                });
+
+                loadAdverseEvents(function(adverseEvents) {
+                    window.adverseEvents = adverseEvents;
+                    populateAdverseEvents();
                 });
 
                 getCachedRecommendations(function(container, cards) {
@@ -105,6 +115,7 @@
         <li><a href="/feedback">Provider Feedback</a></li>
     {{/menuItems}}
     {{#content}}
+        <div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
         <table class="content">
             <tr>
                 <td id="patientInfo">
@@ -212,6 +223,7 @@
                     </div>
                     <div id="currentMedications">
                     </div>
+                    <div id="adverseEvents"></div>
                 </td>
             </tr>
             <tr>

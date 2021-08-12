@@ -3,7 +3,7 @@ package edu.ohsu.cmp.htnu18app.controller;
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
-import edu.ohsu.cmp.htnu18app.entity.app.Goal;
+import edu.ohsu.cmp.htnu18app.entity.app.MyGoal;
 import edu.ohsu.cmp.htnu18app.entity.app.GoalHistory;
 import edu.ohsu.cmp.htnu18app.model.GoalHistoryModel;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
@@ -50,7 +50,7 @@ public class GoalsController extends AuthenticatedController {
         model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
         List<GoalModel> list = new ArrayList<>();
-        for (Goal g : goalService.getGoalList(session.getId())) {
+        for (MyGoal g : goalService.getGoalList(session.getId())) {
             list.add(new GoalModel(g));
         }
         model.addAttribute("goals", list);
@@ -68,16 +68,16 @@ public class GoalsController extends AuthenticatedController {
 
         Date targetDate = new Date(targetDateTS);
 
-        Goal goal = goalService.getGoal(session.getId(), extGoalId);
-        if (goal == null) {
-            goal = new Goal(extGoalId, referenceSystem, referenceCode, goalText, targetDate);
-            goal = goalService.create(session.getId(), goal);
+        MyGoal myGoal = goalService.getGoal(session.getId(), extGoalId);
+        if (myGoal == null) {
+            myGoal = new MyGoal(extGoalId, referenceSystem, referenceCode, goalText, targetDate);
+            myGoal = goalService.create(session.getId(), myGoal);
 
             // remove goal from cache
             CacheData cache = SessionCache.getInstance().get(session.getId());
             cache.deleteSuggestion(extGoalId);
 
-            return new ResponseEntity<>(new GoalModel(goal), HttpStatus.OK);
+            return new ResponseEntity<>(new GoalModel(myGoal), HttpStatus.OK);
 
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
@@ -96,7 +96,7 @@ public class GoalsController extends AuthenticatedController {
         // (blood pressure goal, that is)
         goalService.deleteBPGoalIfExists(session.getId());
 
-        Goal currentBPGoal = goalService.create(session.getId(), new Goal(systolicTarget, diastolicTarget));
+        MyGoal currentBPGoal = goalService.create(session.getId(), new MyGoal(systolicTarget, diastolicTarget));
 
         return new ResponseEntity<>(new GoalModel(currentBPGoal), HttpStatus.OK);
     }
@@ -106,7 +106,7 @@ public class GoalsController extends AuthenticatedController {
                                                          @RequestParam("extGoalId") String extGoalId,
                                                          @RequestParam("achievementStatus") String achievementStatusStr) {
 
-        Goal g = goalService.getGoal(session.getId(), extGoalId);
+        MyGoal g = goalService.getGoal(session.getId(), extGoalId);
         GoalHistory gh = new GoalHistory(AchievementStatus.valueOf(achievementStatusStr), g);
         gh = goalHistoryService.create(gh);
 

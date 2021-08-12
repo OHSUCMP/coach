@@ -2,13 +2,14 @@ package edu.ohsu.cmp.htnu18app.service;
 
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
+import edu.ohsu.cmp.htnu18app.entity.app.MyAdverseEvent;
 import edu.ohsu.cmp.htnu18app.entity.vsac.Concept;
 import edu.ohsu.cmp.htnu18app.entity.vsac.ValueSet;
+import edu.ohsu.cmp.htnu18app.fhir.QueryManager;
 import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
 import edu.ohsu.cmp.htnu18app.model.MedicationModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
-import edu.ohsu.cmp.htnu18app.util.FhirUtil;
 import org.hl7.fhir.r4.model.*;
 import org.opencds.cqf.tooling.terminology.CodeSystemLookupDictionary;
 import org.slf4j.Logger;
@@ -28,7 +29,13 @@ public class EHRService {
     private static final int MAX_CODES_PER_QUERY = 32; // todo: auto-identify this, or at least put it in the config
 
     @Autowired
+    private QueryManager queryManager;
+
+    @Autowired
     private ValueSetService valueSetService;
+
+    @Autowired
+    private AdverseEventService adverseEventService;
 
     public Patient getPatient(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
@@ -37,11 +44,7 @@ public class EHRService {
             logger.info("requesting Patient data for session " + sessionId);
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            p = fcc.getClient()
-                    .read()
-                    .resource(Patient.class)
-                    .withId(fcc.getCredentials().getPatientId())
-                    .execute();
+            p = fcc.read(Patient.class, queryManager.getPatientLookup(fcc.getCredentials().getPatientId()));
             cache.setPatient(p);
         }
         return p;
@@ -54,15 +57,12 @@ public class EHRService {
             logger.info("requesting Blood Pressure Observations for session " + sessionId);
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.getClient()
-                    .search()
-                    .forResource(Observation.class)
-                    .and(Observation.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-                    .and(Observation.CODE.exactly().systemAndCode(BloodPressureModel.SYSTEM, BloodPressureModel.CODE))
-//                    .include(new Include("Observation:encounter"))
-//                    .include(new Include("Observation:partOf"))
-                    .returnBundle(Bundle.class)
-                    .execute();
+            b = fcc.search(queryManager.getObservationQueryCode(
+                    fcc.getCredentials().getPatientId(),
+                    BloodPressureModel.SYSTEM,
+                    BloodPressureModel.CODE
+            ));
+
             cache.setObservations(b);
         }
         return b;
@@ -75,12 +75,7 @@ public class EHRService {
             logger.info("requesting Conditions for session " + sessionId);
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.getClient()
-                    .search()
-                    .forResource(Condition.class)
-                    .and(Condition.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-                    .returnBundle(Bundle.class)
-                    .execute();
+            b = fcc.search(queryManager.getConditionQuery(fcc.getCredentials().getPatientId()));
 
 //            List<String> hypertensionValueSetOIDs = new ArrayList<>();
 //            hypertensionValueSetOIDs.add("2.16.840.1.113883.3.3157.4012");
@@ -108,12 +103,7 @@ public class EHRService {
             logger.info("requesting Goals for session " + sessionId);
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.getClient()
-                    .search()
-                    .forResource(Goal.class)
-                    .and(Goal.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-                    .returnBundle(Bundle.class)
-                    .execute();
+            b = fcc.search(queryManager.getGoalQuery(fcc.getCredentials().getPatientId()));
 
             // filter out any resources that aren't Active, In-Progress Goals
             Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
@@ -141,110 +131,128 @@ public class EHRService {
     }
 
     @Transactional
-    public Bundle getMedicationStatements(String sessionId) {
+    public Bundle getMedications(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
 
-        Bundle b = cache.getMedicationStatements();
+        Bundle b = cache.getMedications();
         if (b == null) {
-            logger.info("requesting MedicationStatements for session " + sessionId);
-
-            // build concept info as a simple set we can query to test inclusion
-            // (these are the meds we want to show)
-            ValueSet valueSet = valueSetService.getValueSet(MedicationModel.VALUE_SET_OID);
-            Set<String> concepts = new HashSet<>();
-            for (Concept c : valueSet.getConcepts()) {
-                String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
-                concepts.add(codeSystem + "|" + c.getCode());
-            }
-
-            // get all the patient's meds (yes, all of them)
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-//            b = new FHIRQuery(fcc).queryByValueSet(MedicationStatement.class, valueSet);
-            b = fcc.getClient()
-                    .search()
-                    .forResource(MedicationStatement.class)
-                    .and(MedicationStatement.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-                    .returnBundle(Bundle.class)
-                    .execute();
+            b = getMedicationStatements(fcc);
+            if (b == null) b = getMedicationRequests(fcc);
+            cache.setMedications(b);
+        }
 
-            // filter out any of the patient's meds that aren't included in set we want to show
-            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
-            while (iter.hasNext()) {
-                Bundle.BundleEntryComponent entry = iter.next();
-                boolean exists = false;
-                if (entry.getResource() instanceof MedicationStatement) {
-                    MedicationStatement ms = (MedicationStatement) entry.getResource();
-                    CodeableConcept cc = ms.getMedicationCodeableConcept();
+        return b;
+    }
+
+    private Bundle getMedicationStatements(FHIRCredentialsWithClient fcc) {
+        Bundle b = fcc.search(queryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()));
+        if (b == null) return null;
+
+        // build concept info as a simple set we can query to test inclusion
+        // (these are the meds we want to show)
+        ValueSet valueSet = valueSetService.getValueSet(MedicationModel.VALUE_SET_OID);
+        Set<String> concepts = new HashSet<>();
+        for (Concept c : valueSet.getConcepts()) {
+            String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
+            concepts.add(codeSystem + "|" + c.getCode());
+        }
+
+        // filter out any of the patient's meds that aren't included in set we want to show
+        Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+        while (iter.hasNext()) {
+            Bundle.BundleEntryComponent entry = iter.next();
+            boolean exists = false;
+            if (entry.getResource() instanceof MedicationStatement) {
+                MedicationStatement ms = (MedicationStatement) entry.getResource();
+                CodeableConcept cc = ms.getMedicationCodeableConcept();
+                for (Coding c : cc.getCoding()) {
+                    if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
+                        exists = true;
+                        break;
+                    }
+                }
+            }
+            if ( ! exists ) {
+                iter.remove();
+            }
+        }
+
+        return b;
+    }
+
+    private Bundle getMedicationRequests(FHIRCredentialsWithClient fcc) {
+        Bundle b = fcc.search(queryManager.getMedicationRequestQuery(fcc.getCredentials().getPatientId()));
+        if (b == null) return null;
+
+        // build concept info as a simple set we can query to test inclusion
+        // (these are the meds we want to show)
+        ValueSet valueSet = valueSetService.getValueSet(MedicationModel.VALUE_SET_OID);
+        Set<String> concepts = new HashSet<>();
+        for (Concept c : valueSet.getConcepts()) {
+            String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
+            concepts.add(codeSystem + "|" + c.getCode());
+        }
+
+        // filter out any of the patient's meds that aren't included in set we want to show
+        Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+        while (iter.hasNext()) {
+            Bundle.BundleEntryComponent entry = iter.next();
+            boolean exists = false;
+            if (entry.getResource() instanceof MedicationRequest) {
+                MedicationRequest mr = (MedicationRequest) entry.getResource();
+                if (mr.hasMedicationCodeableConcept()) {
+                    CodeableConcept cc = mr.getMedicationCodeableConcept();
                     for (Coding c : cc.getCoding()) {
                         if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
                             exists = true;
                             break;
                         }
                     }
-                }
-                if ( ! exists ) {
-                    iter.remove();
+
+                } else if (mr.hasMedicationReference()) {
+                    Medication m = fcc.read(Medication.class, mr.getMedicationReference().getReference());
+                    for (Coding c : m.getCode().getCoding()) {
+                        if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
+                            exists = true;
+                            break;
+                        }
+                    }
                 }
             }
-
-            cache.setMedicationStatements(b);
+            if ( ! exists ) {
+                iter.remove();
+            }
         }
 
         return b;
     }
 
-    @Transactional
-    public Bundle getMedicationRequests(String sessionId) {
+    public Bundle getAdverseEventConditions(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
 
-        Bundle b = cache.getMedicationRequests();
+        Bundle b = cache.getAdverseEvents();
         if (b == null) {
-            logger.info("requesting MedicationRequests for session " + sessionId);
-
-            // build concept info as a simple set we can query to test inclusion
-            // (these are the meds we want to show)
-            ValueSet valueSet = valueSetService.getValueSet(MedicationModel.VALUE_SET_OID);
-            Set<String> concepts = new HashSet<>();
-            for (Concept c : valueSet.getConcepts()) {
-                String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
-                concepts.add(codeSystem + "|" + c.getCode());
-            }
-
-            // get all the patient's meds (yes, all of them)
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.getClient()
-                    .search()
-                    .forResource(MedicationRequest.class)
-                    .and(MedicationRequest.PATIENT.hasId(fcc.getCredentials().getPatientId()))
-//                    .include(new Include("MedicationRequest:medication")) // todo: doesn't actually include it.  wth?
-                    .returnBundle(Bundle.class)
-                    .execute();
+            b = fcc.search(queryManager.getAdverseEventQuery(fcc.getCredentials().getPatientId()));
+            if (b == null) return null;
 
-            for (Bundle.BundleEntryComponent bec : b.getEntry()) {
-                Resource r = bec.getResource();
-                logger.info("got item: " + r.fhirType() + " / " + r.getId());
+            Set<String> codesWeCareAbout = new HashSet<String>();
+            for (MyAdverseEvent mae : adverseEventService.getAll()) {
+                codesWeCareAbout.add(mae.getSystem() + "|" + mae.getCode());
             }
 
-            // filter out any of the patient's meds that aren't included in set we want to show
+            // filter out any of the patient's conditions that don't match a code we're interested in
             Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
             while (iter.hasNext()) {
                 Bundle.BundleEntryComponent entry = iter.next();
                 boolean exists = false;
-                if (entry.getResource() instanceof MedicationRequest) {
-                    MedicationRequest mr = (MedicationRequest) entry.getResource();
-                    if (mr.hasMedicationCodeableConcept()) {
-                        CodeableConcept cc = mr.getMedicationCodeableConcept();
-                        for (Coding c : cc.getCoding()) {
-                            if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
-                                exists = true;
-                                break;
-                            }
-                        }
-
-                    } else if (mr.hasMedicationReference()) {
-                        Medication m = (Medication) FhirUtil.getResourceById(sessionId, mr.getMedicationReference().getReference());
-                        for (Coding c : m.getCode().getCoding()) {
-                            if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
+                if (entry.getResource() instanceof Condition) {
+                    Condition c = (Condition) entry.getResource();
+                    if (c.getCode().hasCoding()) {
+                        for (Coding coding : c.getCode().getCoding()) {
+                            String item = coding.getSystem() + "|" + coding.getCode();
+                            if (codesWeCareAbout.contains(item)) {
                                 exists = true;
                                 break;
                             }
@@ -256,7 +264,7 @@ public class EHRService {
                 }
             }
 
-            cache.setMedicationRequests(b);
+            cache.setAdverseEvents(b);
         }
 
         return b;

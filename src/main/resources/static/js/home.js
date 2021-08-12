@@ -49,6 +49,36 @@ function populateMedications() {
     }
 }
 
+async function loadAdverseEvents(_callback) {
+    let response = await fetch("/adverse-events", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    });
+
+    let adverseEvents = await response.json();
+
+    _callback(adverseEvents);
+}
+
+function populateAdverseEvents() {
+    let data = window.adverseEvents;
+
+    if (Array.isArray(data) && data.length > 0) {
+        let arr = [];
+        data.forEach(function (m) {
+            arr.push('<span class="adverseEvent" data-system="' + m.system + '" data-code="' + m.code + '">' +
+                m.description +
+                '</span>');
+        });
+
+        let html = 'Your Adverse Events: ' + arr.join(', ');
+
+        $('#adverseEvents').html(html);
+    }
+}
+
 function populateSummaryDiv() {
     let data = window.bpdata;
     let totalSystolic = 0;

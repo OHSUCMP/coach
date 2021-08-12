@@ -6,15 +6,15 @@ import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
-import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
-import edu.ohsu.cmp.htnu18app.model.GoalModel;
-import edu.ohsu.cmp.htnu18app.model.MedicationModel;
-import edu.ohsu.cmp.htnu18app.model.PatientModel;
+import edu.ohsu.cmp.htnu18app.exception.IncompatibleResourceException;
+import edu.ohsu.cmp.htnu18app.model.*;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
 import edu.ohsu.cmp.htnu18app.service.EHRService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +47,9 @@ public class HomeController {
 
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model) {
-        if (SessionCache.getInstance().exists(session.getId())) {
+        boolean sessionEstablished = SessionCache.getInstance().exists(session.getId());
+        model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
+        if (sessionEstablished) {
             logger.info("requesting data for session " + session.getId());
 
             try {
@@ -120,6 +122,9 @@ public class HomeController {
 
         // attempt to get cached recommendations every 5 seconds for up to what, 1 hour?
 
+        // DOES NOT ACTUALLY FIRE A CALL ANYWHERE - ONLY SEARCHES CACHE
+        // actual calls are fired in an asynchronous thread by CQFRulerService on login
+
         CacheData cache = SessionCache.getInstance().get(session.getId());
 
         List<Card> cards = null;
@@ -154,25 +159,42 @@ public class HomeController {
         Set<MedicationModel> set = new LinkedHashSet<MedicationModel>();
 
         // first add BP observations from configured FHIR server
-        Bundle bundle = ehrService.getMedicationRequests(session.getId());
+        Bundle bundle = ehrService.getMedications(session.getId());
         for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
-            if (entryCon.getResource() instanceof MedicationRequest) {
-                MedicationRequest ms = (MedicationRequest) entryCon.getResource();
-                try {
-                    MedicationModel model = new MedicationModel(ms);
-                    logger.info("got medication: " + model.getSystem() + "|" + model.getCode() + ": " + model.getDescription());
-                    set.add(model);
+            try {
+                MedicationModel model = new MedicationModel(entryCon.getResource());
+                logger.info("got medication: " + model.getSystem() + "|" + model.getCode() + ": " + model.getDescription());
+                set.add(model);
 
-                } catch (DataException e) {
-                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
-                }
+            } catch (DataException e) {
+                logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
 
-            } else {
-                Resource r = entryCon.getResource();
-                logger.warn("ignoring " + r.getClass().getName() + " (id=" + r.getId() + ") while building Medications");
+            } catch (IncompatibleResourceException ire) {
+                logger.debug(ire.getMessage());
             }
         }
 
         return new ResponseEntity<>(new ArrayList<>(set), HttpStatus.OK);
+    }
+
+    @PostMapping("adverse-events")
+    public ResponseEntity<List<AdverseEventModel>> getAdverseEvents(HttpSession session) {
+        List<AdverseEventModel> list = new ArrayList<>();
+
+        Bundle bundle = ehrService.getAdverseEventConditions(session.getId());
+        for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
+            try {
+                AdverseEventModel model = new AdverseEventModel(entryCon.getResource());
+                list.add(model);
+
+            } catch (DataException e) {
+                logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+
+            } catch (IncompatibleResourceException ire) {
+                logger.debug(ire.getMessage());
+            }
+        }
+
+        return new ResponseEntity<>(new ArrayList<>(list), HttpStatus.OK);
     }
 }

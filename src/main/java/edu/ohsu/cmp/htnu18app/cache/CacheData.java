@@ -18,8 +18,8 @@ public class CacheData {
     private Bundle observations;
     private Bundle conditions;
     private Bundle currentGoals;
-    private Bundle medicationStatements;
-    private Bundle medicationRequests;
+    private Bundle medications;
+    private Bundle adverseEvents;
     private Map<String, List<Card>> cards;
     private Map<String, Resource> resources;
 
@@ -87,20 +87,20 @@ public class CacheData {
         this.currentGoals = currentGoals;
     }
 
-    public Bundle getMedicationStatements() {
-        return medicationStatements;
+    public Bundle getMedications() {
+        return medications;
     }
 
-    public void setMedicationStatements(Bundle medicationStatements) {
-        this.medicationStatements = medicationStatements;
+    public void setMedications(Bundle medications) {
+        this.medications = medications;
     }
 
-    public Bundle getMedicationRequests() {
-        return medicationRequests;
+    public Bundle getAdverseEvents() {
+        return adverseEvents;
     }
 
-    public void setMedicationRequests(Bundle medicationRequests) {
-        this.medicationRequests = medicationRequests;
+    public void setAdverseEvents(Bundle adverseEvents) {
+        this.adverseEvents = adverseEvents;
     }
 
     public boolean containsCards(String hookId) {

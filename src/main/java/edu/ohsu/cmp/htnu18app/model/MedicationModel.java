@@ -1,6 +1,8 @@
 package edu.ohsu.cmp.htnu18app.model;
 
 import edu.ohsu.cmp.htnu18app.exception.DataException;
+import edu.ohsu.cmp.htnu18app.exception.IncompatibleResourceException;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.MedicationRequest;
@@ -15,7 +17,19 @@ public class MedicationModel implements Comparable<MedicationModel> {
     private String status;
     private Long effectiveTimestamp;
 
-    public MedicationModel(MedicationStatement ms) throws DataException {
+    public MedicationModel(IBaseResource resource) throws DataException, IncompatibleResourceException {
+        if (resource instanceof MedicationStatement) {
+            createFromMedicationStatement((MedicationStatement) resource);
+
+        } else if (resource instanceof MedicationRequest) {
+            createFromMedicationRequest((MedicationRequest) resource);
+
+        } else {
+            throw new IncompatibleResourceException("cannot create MedicationModel from " + resource.getClass().getName());
+        }
+    }
+
+    private void createFromMedicationStatement(MedicationStatement ms) throws DataException {
         status = ms.getStatus().getDisplay();
 
         CodeableConcept mcc = ms.getMedicationCodeableConcept();
@@ -38,7 +52,7 @@ public class MedicationModel implements Comparable<MedicationModel> {
         }
     }
 
-    public MedicationModel(MedicationRequest mr) throws DataException {
+    private void createFromMedicationRequest(MedicationRequest mr) throws DataException {
         status = mr.getStatus().getDisplay();
 
         CodeableConcept mcc = mr.getMedicationCodeableConcept();

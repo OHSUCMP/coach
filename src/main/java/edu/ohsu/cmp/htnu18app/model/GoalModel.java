@@ -1,8 +1,9 @@
 package edu.ohsu.cmp.htnu18app.model;
 
 import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
-import edu.ohsu.cmp.htnu18app.entity.app.Goal;
 import edu.ohsu.cmp.htnu18app.entity.app.GoalHistory;
+import edu.ohsu.cmp.htnu18app.entity.app.MyGoal;
+import org.hl7.fhir.r4.model.Goal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
@@ -29,7 +30,7 @@ public class GoalModel implements Comparable<GoalModel> {
 
     private TreeSet<GoalHistoryModel> history;
 
-    public GoalModel(Goal g) {
+    public GoalModel(MyGoal g) {
         this.id = g.getId();
         this.patId = g.getPatId();
         this.extGoalId = g.getExtGoalId();
@@ -47,7 +48,7 @@ public class GoalModel implements Comparable<GoalModel> {
         }
     }
 
-    public GoalModel(org.hl7.fhir.r4.model.Goal g, Long internalPatientId) {
+    public GoalModel(Goal g, Long internalPatientId) {
         this.id = null; // EHR-based
         this.patId = internalPatientId;
         this.extGoalId = g.getId();
@@ -55,7 +56,7 @@ public class GoalModel implements Comparable<GoalModel> {
         this.referenceCode = BloodPressureModel.CODE;
         this.goalText = g.getDescription().getText();
 
-        for (org.hl7.fhir.r4.model.Goal.GoalTargetComponent gtc : g.getTarget()) {
+        for (Goal.GoalTargetComponent gtc : g.getTarget()) {
             if (gtc.getMeasure().hasCoding(BloodPressureModel.SYSTEM, BloodPressureModel.SYSTOLIC_CODE)) {
                 this.systolicTarget = gtc.getDetailQuantity().getValue().intValue();
 
