@@ -239,7 +239,7 @@ public class EHRService {
 
             Set<String> codesWeCareAbout = new HashSet<String>();
             for (MyAdverseEvent mae : adverseEventService.getAll()) {
-                codesWeCareAbout.add(mae.getSystem() + "|" + mae.getCode());
+                codesWeCareAbout.add(mae.getConceptSystem() + "|" + mae.getConceptCode());
             }
 
             // filter out any of the patient's conditions that don't match a code we're interested in

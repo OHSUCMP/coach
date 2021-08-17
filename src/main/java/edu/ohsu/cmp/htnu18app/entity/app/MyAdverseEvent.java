@@ -9,9 +9,9 @@ public class MyAdverseEvent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String conceptOfInterest;
-    private String code;
-    private String system;
+    private String description;
+    private String conceptCode;
+    private String conceptSystem;
 
     protected MyAdverseEvent() {
     }
@@ -24,27 +24,27 @@ public class MyAdverseEvent {
         this.id = id;
     }
 
-    public String getConceptOfInterest() {
-        return conceptOfInterest;
+    public String getDescription() {
+        return description;
     }
 
-    public void setConceptOfInterest(String conceptOfInterest) {
-        this.conceptOfInterest = conceptOfInterest;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public String getCode() {
-        return code;
+    public String getConceptCode() {
+        return conceptCode;
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void setConceptCode(String conceptCode) {
+        this.conceptCode = conceptCode;
     }
 
-    public String getSystem() {
-        return system;
+    public String getConceptSystem() {
+        return conceptSystem;
     }
 
-    public void setSystem(String system) {
-        this.system = system;
+    public void setConceptSystem(String conceptSystem) {
+        this.conceptSystem = conceptSystem;
     }
 }
