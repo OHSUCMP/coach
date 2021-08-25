@@ -10,6 +10,7 @@ import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
 import edu.ohsu.cmp.htnu18app.model.MedicationModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.htnu18app.util.FhirUtil;
 import org.hl7.fhir.r4.model.*;
 import org.opencds.cqf.tooling.terminology.CodeSystemLookupDictionary;
 import org.slf4j.Logger;
@@ -119,7 +120,7 @@ public class EHRService {
                             GoalModel.ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE
                     );
                 }
-                if ( ! active || ! inProgress ) {
+                if (!active || !inProgress) {
                     iter.remove();
                 }
             }
@@ -173,7 +174,7 @@ public class EHRService {
                     }
                 }
             }
-            if ( ! exists ) {
+            if (!exists) {
                 iter.remove();
             }
         }
@@ -198,8 +199,9 @@ public class EHRService {
         Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
         while (iter.hasNext()) {
             Bundle.BundleEntryComponent entry = iter.next();
-            boolean exists = false;
             if (entry.getResource() instanceof MedicationRequest) {
+                boolean exists = false;
+
                 MedicationRequest mr = (MedicationRequest) entry.getResource();
                 if (mr.hasMedicationCodeableConcept()) {
                     CodeableConcept cc = mr.getMedicationCodeableConcept();
@@ -211,17 +213,21 @@ public class EHRService {
                     }
 
                 } else if (mr.hasMedicationReference()) {
-                    Medication m = fcc.read(Medication.class, mr.getMedicationReference().getReference());
+                    Medication m = fcc.read(Medication.class, mr.getMedicationReference().getReference(), b);
                     for (Coding c : m.getCode().getCoding()) {
                         if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
                             exists = true;
+                            if ( ! FhirUtil.bundleContainsReference(b, mr.getMedicationReference().getReference()) ) {
+                                b.addEntry(new Bundle.BundleEntryComponent().setResource(m));
+                            }
                             break;
                         }
                     }
                 }
-            }
-            if ( ! exists ) {
-                iter.remove();
+
+                if ( ! exists ) {
+                    iter.remove();
+                }
             }
         }
 
@@ -259,7 +265,7 @@ public class EHRService {
                         }
                     }
                 }
-                if ( ! exists ) {
+                if (!exists) {
                     iter.remove();
                 }
             }

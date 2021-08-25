@@ -2,13 +2,15 @@ package edu.ohsu.cmp.htnu18app.model;
 
 import edu.ohsu.cmp.htnu18app.exception.DataException;
 import edu.ohsu.cmp.htnu18app.exception.IncompatibleResourceException;
+import edu.ohsu.cmp.htnu18app.util.FhirUtil;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Coding;
-import org.hl7.fhir.r4.model.MedicationRequest;
-import org.hl7.fhir.r4.model.MedicationStatement;
+import org.hl7.fhir.r4.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MedicationModel implements Comparable<MedicationModel> {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     public static final String VALUE_SET_OID = "2.16.840.1.113762.1.4.1178.10";
 
     private String system;
@@ -17,12 +19,12 @@ public class MedicationModel implements Comparable<MedicationModel> {
     private String status;
     private Long effectiveTimestamp;
 
-    public MedicationModel(IBaseResource resource) throws DataException, IncompatibleResourceException {
+    public MedicationModel(IBaseResource resource, Bundle bundle) throws DataException, IncompatibleResourceException {
         if (resource instanceof MedicationStatement) {
             createFromMedicationStatement((MedicationStatement) resource);
 
         } else if (resource instanceof MedicationRequest) {
-            createFromMedicationRequest((MedicationRequest) resource);
+            createFromMedicationRequest((MedicationRequest) resource, bundle);
 
         } else {
             throw new IncompatibleResourceException("cannot create MedicationModel from " + resource.getClass().getName());
@@ -52,16 +54,30 @@ public class MedicationModel implements Comparable<MedicationModel> {
         }
     }
 
-    private void createFromMedicationRequest(MedicationRequest mr) throws DataException {
+    private void createFromMedicationRequest(MedicationRequest mr, Bundle bundle) throws DataException {
         status = mr.getStatus().getDisplay();
 
-        CodeableConcept mcc = mr.getMedicationCodeableConcept();
-        description = mcc.getText();
+        if (mr.hasMedicationCodeableConcept()) {
+            CodeableConcept mcc = mr.getMedicationCodeableConcept();
+//            description = mcc.getText();
 
-        if (mcc.getCoding().size() > 0) {       // only grab the first coding
-            Coding c = mcc.getCoding().get(0);
+            Coding c = mcc.getCodingFirstRep();
             system = c.getSystem();
             code = c.getCode();
+            description = c.getDisplay();
+
+        } else if (mr.hasMedicationReference()) {
+            Medication m = FhirUtil.getResourceFromBundleByReference(bundle, Medication.class, mr.getMedicationReference().getReference());
+
+            if (m != null && m.hasCode()) {
+                Coding c = m.getCode().getCodingFirstRep();
+                system = c.getSystem();
+                code = c.getCode();
+                description = c.getDisplay();
+
+            } else {
+                throw new DataException("medication or medication code not found: " + mr.getMedicationReference().getReference());
+            }
         }
 
         if (mr.getAuthoredOn() != null) {

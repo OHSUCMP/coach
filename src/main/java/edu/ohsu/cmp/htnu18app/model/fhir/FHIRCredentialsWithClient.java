@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.htnu18app.model.fhir;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import edu.ohsu.cmp.htnu18app.util.FhirUtil;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.slf4j.Logger;
@@ -25,11 +26,24 @@ public class FHIRCredentialsWithClient {
         return client;
     }
 
-    public <T extends IBaseResource> T read(Class<T> aClass, String id) {
-        return client.read()
-                .resource(aClass)
-                .withId(id)
-                .execute();
+    public <T extends IBaseResource> T read(Class<T> aClass, String reference) {
+        return read(aClass, reference, null);
+    }
+
+    // version of the read function that first queries the referenced Bundle for the referenced resource
+    // only executes API service call if the referenced resource isn't found
+    public <T extends IBaseResource> T read(Class<T> aClass, String reference, Bundle bundle) {
+        T t = null;
+        if (bundle != null) {
+            t = FhirUtil.getResourceFromBundleByReference(bundle, aClass, reference);
+        }
+        if (t == null) {
+            t = client.read()
+                    .resource(aClass)
+                    .withId(reference)
+                    .execute();
+        }
+        return t;
     }
 
     // search function to facilitate getting large datasets involving multi-paginated queries

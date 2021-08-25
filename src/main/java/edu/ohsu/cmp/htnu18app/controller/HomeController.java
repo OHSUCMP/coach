@@ -162,7 +162,7 @@ public class HomeController {
         Bundle bundle = ehrService.getMedications(session.getId());
         for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
             try {
-                MedicationModel model = new MedicationModel(entryCon.getResource());
+                MedicationModel model = new MedicationModel(entryCon.getResource(), bundle);
                 logger.info("got medication: " + model.getSystem() + "|" + model.getCode() + ": " + model.getDescription());
                 set.add(model);
 
