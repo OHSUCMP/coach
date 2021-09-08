@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Loading</title>
     <script type="text/javascript" src="js/jquery-3.5.1.js"></script>
-    <script type="text/javascript" src="js/fhir-client.js"></script>
+    <script type="text/javascript" src="node_modules/fhirclient/build/fhir-client.js"></script>
     <script type="text/javascript">
         async function clearSession(_callback) {
             let response = await fetch("/clear-session", {
