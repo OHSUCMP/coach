@@ -33,11 +33,13 @@ public class FHIRCredentialsWithClient {
     // version of the read function that first queries the referenced Bundle for the referenced resource
     // only executes API service call if the referenced resource isn't found
     public <T extends IBaseResource> T read(Class<T> aClass, String reference, Bundle bundle) {
-        T t = null;
-        if (bundle != null) {
+        logger.info("read: " + reference + " (" + aClass.getName() + ")");
+
+        T t;
+        if (bundle != null && FhirUtil.bundleContainsReference(bundle, reference)) {
             t = FhirUtil.getResourceFromBundleByReference(bundle, aClass, reference);
-        }
-        if (t == null) {
+
+        } else {
             t = client.read()
                     .resource(aClass)
                     .withId(reference)
