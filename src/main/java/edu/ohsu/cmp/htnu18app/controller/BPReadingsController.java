@@ -26,7 +26,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/bp-readings")
-public class BPReadingsController {
+public class BPReadingsController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -40,6 +40,7 @@ public class BPReadingsController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
+        model.addAttribute("applicationName", applicationName);
         model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
         List<HomeBloodPressureReading> bpreadings = hbprService.getHomeBloodPressureReadings(session.getId());

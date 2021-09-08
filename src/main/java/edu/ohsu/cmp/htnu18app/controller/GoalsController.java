@@ -30,7 +30,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/goals")
-public class GoalsController extends AuthenticatedController {
+public class GoalsController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -47,6 +47,7 @@ public class GoalsController extends AuthenticatedController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
+        model.addAttribute("applicationName", applicationName);
         model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
         List<GoalModel> list = new ArrayList<>();

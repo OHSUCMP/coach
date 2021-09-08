@@ -31,7 +31,7 @@ import javax.servlet.http.HttpSession;
 import java.util.*;
 
 @Controller
-public class HomeController {
+public class HomeController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -49,6 +49,7 @@ public class HomeController {
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model) {
         boolean sessionEstablished = SessionCache.getInstance().exists(session.getId());
+        model.addAttribute("applicationName", applicationName);
         model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
         if (sessionEstablished) {
             logger.info("requesting data for session " + session.getId());

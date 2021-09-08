@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import javax.servlet.http.HttpSession;
 
 @Controller
-public class SessionController {
+public class SessionController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -37,6 +37,7 @@ public class SessionController {
 
     @GetMapping("launch-ehr")
     public String launchEHR(Model model) {
+        model.addAttribute("applicationName", applicationName);
         model.addAttribute("clientId", env.getProperty("smart.ehr.clientId"));
         model.addAttribute("scope", env.getProperty("smart.ehr.scope"));
         model.addAttribute("redirectUri", env.getProperty("smart.ehr.redirectUri"));
@@ -45,6 +46,7 @@ public class SessionController {
 
     @GetMapping("launch-patient")
     public String launchPatient(Model model) {
+        model.addAttribute("applicationName", applicationName);
         model.addAttribute("clientId", env.getProperty("smart.patient.clientId"));
         model.addAttribute("scope", env.getProperty("smart.patient.scope"));
         model.addAttribute("redirectUri", env.getProperty("smart.patient.redirectUri"));

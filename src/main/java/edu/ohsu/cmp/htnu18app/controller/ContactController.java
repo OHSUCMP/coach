@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import javax.servlet.http.HttpSession;
 
 @Controller
-public class ContactController {
+public class ContactController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -28,6 +28,7 @@ public class ContactController {
         if (SessionCache.getInstance().exists(session.getId())) {
             logger.info("showing contact form for session " + session.getId());
 
+            model.addAttribute("applicationName", applicationName);
             model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
             // todo : generate this message from somewhere

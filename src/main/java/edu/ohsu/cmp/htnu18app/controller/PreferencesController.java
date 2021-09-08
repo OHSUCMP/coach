@@ -14,7 +14,7 @@ import javax.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/preferences")
-public class PreferencesController {
+public class PreferencesController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -22,6 +22,7 @@ public class PreferencesController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
+        model.addAttribute("applicationName", applicationName);
         model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
         return "preferences";
