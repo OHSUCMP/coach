@@ -14,7 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
-@PropertySource("classpath:fhirqueries.properties")
+@PropertySource("${querymanager.file}")
 public class QueryManager {
     private static final String TOKEN_ID = "\\{id}";
     private static final String TOKEN_SUBJECT = "\\{subject}";
