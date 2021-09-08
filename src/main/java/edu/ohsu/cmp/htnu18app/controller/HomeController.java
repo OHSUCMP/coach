@@ -25,6 +25,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpSession;
 import java.util.*;
@@ -156,45 +157,57 @@ public class HomeController {
 
     @PostMapping("medications")
     public ResponseEntity<List<MedicationModel>> getMedications(HttpSession session) {
-        Set<MedicationModel> set = new LinkedHashSet<MedicationModel>();
+        try {
+            Set<MedicationModel> set = new LinkedHashSet<MedicationModel>();
 
-        // first add BP observations from configured FHIR server
-        Bundle bundle = ehrService.getMedications(session.getId());
-        for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
-            try {
-                MedicationModel model = new MedicationModel(entryCon.getResource(), bundle);
-                logger.info("got medication: " + model.getSystem() + "|" + model.getCode() + ": " + model.getDescription());
-                set.add(model);
+            // first add BP observations from configured FHIR server
+            Bundle bundle = ehrService.getMedications(session.getId());
+            for (Bundle.BundleEntryComponent entryCon : bundle.getEntry()) {
+                try {
+                    MedicationModel model = new MedicationModel(entryCon.getResource(), bundle);
+                    logger.info("got medication: " + model.getSystem() + "|" + model.getCode() + ": " + model.getDescription());
+                    set.add(model);
 
-            } catch (DataException e) {
-                logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+                } catch (DataException e) {
+                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
 
-            } catch (IncompatibleResourceException ire) {
-                logger.debug(ire.getMessage());
+                } catch (IncompatibleResourceException ire) {
+                    logger.debug(ire.getMessage());
+                }
             }
-        }
 
-        return new ResponseEntity<>(new ArrayList<>(set), HttpStatus.OK);
+            return new ResponseEntity<>(new ArrayList<>(set), HttpStatus.OK);
+
+        } catch (HttpServerErrorException.InternalServerError ise) {
+            logger.error("caught " + ise.getClass().getName() + " getting medications - " + ise.getMessage(), ise);
+            throw ise;
+        }
     }
 
     @PostMapping("adverse-events")
     public ResponseEntity<List<AdverseEventModel>> getAdverseEvents(HttpSession session) {
-        List<AdverseEventModel> list = new ArrayList<>();
+        try {
+            List<AdverseEventModel> list = new ArrayList<>();
 
-        Bundle bundle = ehrService.getAdverseEventConditions(session.getId());
-        for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
-            try {
-                AdverseEventModel model = new AdverseEventModel(entryCon.getResource());
-                list.add(model);
+            Bundle bundle = ehrService.getAdverseEventConditions(session.getId());
+            for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
+                try {
+                    AdverseEventModel model = new AdverseEventModel(entryCon.getResource());
+                    list.add(model);
 
-            } catch (DataException e) {
-                logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+                } catch (DataException e) {
+                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
 
-            } catch (IncompatibleResourceException ire) {
-                logger.debug(ire.getMessage());
+                } catch (IncompatibleResourceException ire) {
+                    logger.debug(ire.getMessage());
+                }
             }
-        }
 
-        return new ResponseEntity<>(new ArrayList<>(list), HttpStatus.OK);
+            return new ResponseEntity<>(new ArrayList<>(list), HttpStatus.OK);
+
+        } catch (HttpServerErrorException.InternalServerError ise) {
+            logger.error("caught " + ise.getClass().getName() + " getting adverse events - " + ise.getMessage(), ise);
+            throw ise;
+        }
     }
 }
