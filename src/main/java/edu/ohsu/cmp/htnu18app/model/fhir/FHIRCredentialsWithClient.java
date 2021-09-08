@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.htnu18app.model.fhir;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import edu.ohsu.cmp.htnu18app.util.FhirUtil;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
@@ -52,12 +53,19 @@ public class FHIRCredentialsWithClient {
     public Bundle search(String fhirQuery) {
         if (fhirQuery == null || fhirQuery.trim().equals("")) return null;
 
-        Bundle bundle = client.search()
-                .byUrl(credentials.getServerURL() + '/' + fhirQuery)
-                .returnBundle(Bundle.class)
-                .execute();
+        Bundle bundle;
+        try {
+            bundle = client.search()
+                    .byUrl(credentials.getServerURL() + '/' + fhirQuery)
+                    .returnBundle(Bundle.class)
+                    .execute();
 
-        logger.info("search: " + fhirQuery + " (size=" + bundle.getTotal() + ")");
+            logger.info("search: " + fhirQuery + " (size=" + bundle.getTotal() + ")");
+
+        } catch (InvalidRequestException ire) {
+            logger.error("caught " + ire.getClass().getName() + " executing search: " + fhirQuery, ire);
+            throw ire;
+        }
 
         if (bundle.getLink(Bundle.LINK_NEXT) == null) {
             return bundle;
