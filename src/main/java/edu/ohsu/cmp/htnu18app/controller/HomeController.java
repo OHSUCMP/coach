@@ -97,7 +97,7 @@ public class HomeController extends BaseController {
             if (entryCon.getResource() instanceof Observation) {
                 Observation o = (Observation) entryCon.getResource();
                 try {
-                    set.add(new BloodPressureModel(o));
+                    set.add(new BloodPressureModel(o, fcm));
 
                 } catch (DataException e) {
                     logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);

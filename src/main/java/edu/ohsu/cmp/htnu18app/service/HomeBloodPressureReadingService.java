@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 
 @Service
-public class HomeBloodPressureReadingService {
+public class HomeBloodPressureReadingService extends BaseService {
 
     @Autowired
     private HomeBloodPressureReadingRepository repository;

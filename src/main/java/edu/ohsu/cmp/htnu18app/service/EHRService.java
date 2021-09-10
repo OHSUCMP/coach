@@ -5,10 +5,8 @@ import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.MyAdverseEvent;
 import edu.ohsu.cmp.htnu18app.entity.vsac.Concept;
 import edu.ohsu.cmp.htnu18app.entity.vsac.ValueSet;
-import edu.ohsu.cmp.htnu18app.fhir.QueryManager;
-import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
+import edu.ohsu.cmp.htnu18app.fhir.FhirQueryManager;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
-import edu.ohsu.cmp.htnu18app.model.MedicationModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.util.FhirUtil;
 import org.hl7.fhir.r4.model.*;
@@ -24,13 +22,13 @@ import java.util.Iterator;
 import java.util.Set;
 
 @Service
-public class EHRService {
+public class EHRService extends BaseService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final int MAX_CODES_PER_QUERY = 32; // todo: auto-identify this, or at least put it in the config
 
     @Autowired
-    private QueryManager queryManager;
+    private FhirQueryManager fhirQueryManager;
 
     @Autowired
     private ValueSetService valueSetService;
@@ -45,7 +43,7 @@ public class EHRService {
             logger.info("requesting Patient data for session " + sessionId);
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            p = fcc.read(Patient.class, queryManager.getPatientLookup(fcc.getCredentials().getPatientId()));
+            p = fcc.read(Patient.class, fhirQueryManager.getPatientLookup(fcc.getCredentials().getPatientId()));
             cache.setPatient(p);
         }
         return p;
@@ -58,10 +56,9 @@ public class EHRService {
             logger.info("requesting Blood Pressure Observations for session " + sessionId);
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.search(queryManager.getObservationQueryCode(
+            b = fcc.search(fhirQueryManager.getObservationQueryCode(
                     fcc.getCredentials().getPatientId(),
-                    BloodPressureModel.SYSTEM,
-                    BloodPressureModel.CODE
+                    fcm.getBpSystem(), fcm.getBpCode()
             ));
 
             cache.setObservations(b);
@@ -76,7 +73,7 @@ public class EHRService {
             logger.info("requesting Conditions for session " + sessionId);
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.search(queryManager.getConditionQuery(fcc.getCredentials().getPatientId()));
+            b = fcc.search(fhirQueryManager.getConditionQuery(fcc.getCredentials().getPatientId()));
 
 //            List<String> hypertensionValueSetOIDs = new ArrayList<>();
 //            hypertensionValueSetOIDs.add("2.16.840.1.113883.3.3157.4012");
@@ -104,7 +101,7 @@ public class EHRService {
             logger.info("requesting Goals for session " + sessionId);
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.search(queryManager.getGoalQuery(fcc.getCredentials().getPatientId()));
+            b = fcc.search(fhirQueryManager.getGoalQuery(fcc.getCredentials().getPatientId()));
 
             // filter out any resources that aren't Active, In-Progress Goals
             Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
@@ -147,12 +144,12 @@ public class EHRService {
     }
 
     private Bundle getMedicationStatements(FHIRCredentialsWithClient fcc) {
-        Bundle b = fcc.search(queryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()));
+        Bundle b = fcc.search(fhirQueryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()));
         if (b == null) return null;
 
         // build concept info as a simple set we can query to test inclusion
         // (these are the meds we want to show)
-        ValueSet valueSet = valueSetService.getValueSet(MedicationModel.VALUE_SET_OID);
+        ValueSet valueSet = valueSetService.getValueSet(fcm.getMedicationValueSetOid());
         Set<String> concepts = new HashSet<>();
         for (Concept c : valueSet.getConcepts()) {
             String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
@@ -183,12 +180,12 @@ public class EHRService {
     }
 
     private Bundle getMedicationRequests(FHIRCredentialsWithClient fcc) {
-        Bundle b = fcc.search(queryManager.getMedicationRequestQuery(fcc.getCredentials().getPatientId()));
+        Bundle b = fcc.search(fhirQueryManager.getMedicationRequestQuery(fcc.getCredentials().getPatientId()));
         if (b == null) return null;
 
         // build concept info as a simple set we can query to test inclusion
         // (these are the meds we want to show)
-        ValueSet valueSet = valueSetService.getValueSet(MedicationModel.VALUE_SET_OID);
+        ValueSet valueSet = valueSetService.getValueSet(fcm.getMedicationValueSetOid());
         Set<String> concepts = new HashSet<>();
         for (Concept c : valueSet.getConcepts()) {
             String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
@@ -240,7 +237,7 @@ public class EHRService {
         Bundle b = cache.getAdverseEvents();
         if (b == null) {
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.search(queryManager.getAdverseEventQuery(fcc.getCredentials().getPatientId()));
+            b = fcc.search(fhirQueryManager.getAdverseEventQuery(fcc.getCredentials().getPatientId()));
             if (b == null) return null;
 
             Set<String> codesWeCareAbout = new HashSet<String>();

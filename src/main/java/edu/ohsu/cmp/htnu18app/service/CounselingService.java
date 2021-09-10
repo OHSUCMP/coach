@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 
 @Service
-public class CounselingService {
+public class CounselingService extends BaseService {
 
     @Autowired
     private CounselingRepository repository;

@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-public class PatientService {
+public class PatientService extends BaseService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private String salt;

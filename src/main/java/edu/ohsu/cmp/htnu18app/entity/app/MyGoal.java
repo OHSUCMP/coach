@@ -1,6 +1,5 @@
 package edu.ohsu.cmp.htnu18app.entity.app;
 
-import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
 
 import javax.persistence.*;
@@ -38,10 +37,10 @@ public class MyGoal {
         this.targetDate = targetDate;
     }
 
-    public MyGoal(Integer systolicTarget, Integer diastolicTarget) {
+    public MyGoal(String referenceSystem, String referenceCode, Integer systolicTarget, Integer diastolicTarget) {
         this.extGoalId = GoalModel.BP_GOAL_ID;
-        this.referenceSystem = BloodPressureModel.SYSTEM;
-        this.referenceCode = BloodPressureModel.CODE;
+        this.referenceSystem = referenceSystem;
+        this.referenceCode = referenceCode;
         this.goalText = "Target BP: " + systolicTarget + "/" + diastolicTarget;
         this.systolicTarget = systolicTarget;
         this.diastolicTarget = diastolicTarget;

@@ -5,14 +5,8 @@ import edu.ohsu.cmp.htnu18app.exception.IncompatibleResourceException;
 import edu.ohsu.cmp.htnu18app.util.FhirUtil;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MedicationModel implements Comparable<MedicationModel> {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    public static final String VALUE_SET_OID = "2.16.840.1.113762.1.4.1178.10";
-
     private String system;
     private String code;
     private String description;

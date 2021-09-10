@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class AdverseEventService {
+public class AdverseEventService extends BaseService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

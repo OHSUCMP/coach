@@ -97,7 +97,7 @@ public class GoalsController extends BaseController {
         // (blood pressure goal, that is)
         goalService.deleteBPGoalIfExists(session.getId());
 
-        MyGoal currentBPGoal = goalService.create(session.getId(), new MyGoal(systolicTarget, diastolicTarget));
+        MyGoal currentBPGoal = goalService.create(session.getId(), new MyGoal(fcm.getBpSystem(), fcm.getBpCode(), systolicTarget, diastolicTarget));
 
         return new ResponseEntity<>(new GoalModel(currentBPGoal), HttpStatus.OK);
     }

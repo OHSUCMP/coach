@@ -3,6 +3,7 @@ package edu.ohsu.cmp.htnu18app.model;
 import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
 import edu.ohsu.cmp.htnu18app.entity.app.GoalHistory;
 import edu.ohsu.cmp.htnu18app.entity.app.MyGoal;
+import edu.ohsu.cmp.htnu18app.fhir.FhirConfigManager;
 import org.hl7.fhir.r4.model.Goal;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,19 +49,19 @@ public class GoalModel implements Comparable<GoalModel> {
         }
     }
 
-    public GoalModel(Goal g, Long internalPatientId) {
+    public GoalModel(Goal g, Long internalPatientId, FhirConfigManager fcm) {
         this.id = null; // EHR-based
         this.patId = internalPatientId;
         this.extGoalId = g.getId();
-        this.referenceSystem = BloodPressureModel.SYSTEM;
-        this.referenceCode = BloodPressureModel.CODE;
+        this.referenceSystem = fcm.getBpSystem();
+        this.referenceCode = fcm.getBpCode();
         this.goalText = g.getDescription().getText();
 
         for (Goal.GoalTargetComponent gtc : g.getTarget()) {
-            if (gtc.getMeasure().hasCoding(BloodPressureModel.SYSTEM, BloodPressureModel.SYSTOLIC_CODE)) {
+            if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpSystolicCode())) {
                 this.systolicTarget = gtc.getDetailQuantity().getValue().intValue();
 
-            } else if (gtc.getMeasure().hasCoding(BloodPressureModel.SYSTEM, BloodPressureModel.DIASTOLIC_CODE)) {
+            } else if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpDiastolicCode())) {
                 this.diastolicTarget = gtc.getDetailQuantity().getValue().intValue();
             }
         }

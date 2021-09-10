@@ -2,6 +2,7 @@ package edu.ohsu.cmp.htnu18app.model;
 
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
+import edu.ohsu.cmp.htnu18app.fhir.FhirConfigManager;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Observation;
@@ -10,13 +11,13 @@ import org.hl7.fhir.r4.model.Quantity;
 import java.util.Objects;
 
 public class BloodPressureModel implements Comparable<BloodPressureModel> {
-    public static final String SYSTEM = "http://loinc.org";
-    public static final String CODE = "55284-4";
-    public static final String SYSTOLIC_CODE = "8480-6";
-    public static final String DIASTOLIC_CODE = "8462-4";
-    public static final String VALUE_SYSTEM = "http://unitsofmeasure.org";
-    public static final String VALUE_CODE = "mm[Hg]";
-    public static final String VALUE_UNIT = "mmHg";
+//    public static final String SYSTEM = "http://loinc.org";
+//    public static final String CODE = "55284-4";
+//    public static final String SYSTOLIC_CODE = "8480-6";
+//    public static final String DIASTOLIC_CODE = "8462-4";
+//    public static final String VALUE_SYSTEM = "http://unitsofmeasure.org";
+//    public static final String VALUE_CODE = "mm[Hg]";
+//    public static final String VALUE_UNIT = "mmHg";
 
     private Source source;
     private QuantityModel systolic;
@@ -66,18 +67,18 @@ public class BloodPressureModel implements Comparable<BloodPressureModel> {
         timestamp = reading.getReadingDate().getTime();
     }
 
-    public BloodPressureModel(Observation o) throws DataException {
+    public BloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException {
         source = Source.OFFICE;
         for (Observation.ObservationComponentComponent occ : o.getComponent()) {
             ValueType valueType = ValueType.UNKNOWN;
 
             CodeableConcept cc = occ.getCode();
             for (Coding c : cc.getCoding()) {
-                if (c.getSystem().equals(SYSTEM) && c.getCode().equals(SYSTOLIC_CODE)) {
+                if (c.getSystem().equals(fcm.getBpSystem()) && c.getCode().equals(fcm.getBpSystolicCode())) {
                     valueType = ValueType.SYSTOLIC;
                     break;
 
-                } else if (c.getSystem().equals(SYSTEM) && c.getCode().equals(DIASTOLIC_CODE)) {
+                } else if (c.getSystem().equals(fcm.getBpSystem()) && c.getCode().equals(fcm.getBpDiastolicCode())) {
                     valueType = ValueType.DIASTOLIC;
                     break;
                 }

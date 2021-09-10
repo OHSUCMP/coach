@@ -14,8 +14,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
-@PropertySource("${querymanager.file}")
-public class QueryManager {
+@PropertySource("${fhirqueries.file}")
+public class FhirQueryManager {
     private static final String TOKEN_ID = "\\{id}";
     private static final String TOKEN_SUBJECT = "\\{subject}";
     private static final String TOKEN_CODE = "\\{code}";
@@ -25,26 +25,13 @@ public class QueryManager {
     private static final Pattern PATTERN_RELATIVE_DATE_PART = Pattern.compile("([0-9]+)([mMdDyY])");
     private static final DateFormat FHIR_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
-    @Value("${Patient.Lookup}")
-    private String patientLookup;
-
-    @Value("${Observation.Query.code}")
-    private String observationQueryCode;
-
-    @Value("${Condition.Query}")
-    private String conditionQuery;
-
-    @Value("${Goal.Query}")
-    private String goalQuery;
-
-    @Value("${MedicationStatement.Query}")
-    private String medicationStatementQuery;
-
-    @Value("${MedicationRequest.Query}")
-    private String medicationRequestQuery;
-
-    @Value("${AdverseEvent.Query}")
-    private String adverseEventQuery;
+    @Value("${Patient.Lookup}")             private String patientLookup;
+    @Value("${Observation.Query.code}")     private String observationQueryCode;
+    @Value("${Condition.Query}")            private String conditionQuery;
+    @Value("${Goal.Query}")                 private String goalQuery;
+    @Value("${MedicationStatement.Query}")  private String medicationStatementQuery;
+    @Value("${MedicationRequest.Query}")    private String medicationRequestQuery;
+    @Value("${AdverseEvent.Query}")         private String adverseEventQuery;
 
     public String getPatientLookup(String id) {
         return buildQuery(patientLookup, params()

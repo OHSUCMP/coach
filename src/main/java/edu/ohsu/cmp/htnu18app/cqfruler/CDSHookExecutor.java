@@ -16,9 +16,9 @@ import edu.ohsu.cmp.htnu18app.entity.app.Counseling;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.entity.app.MyGoal;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
+import edu.ohsu.cmp.htnu18app.fhir.FhirConfigManager;
 import edu.ohsu.cmp.htnu18app.http.HttpRequest;
 import edu.ohsu.cmp.htnu18app.http.HttpResponse;
-import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Audience;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
@@ -28,6 +28,7 @@ import edu.ohsu.cmp.htnu18app.service.EHRService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.htnu18app.util.MustacheUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,13 +47,15 @@ public class CDSHookExecutor implements Runnable {
     private HomeBloodPressureReadingService hbprService;
     private GoalService goalService;
     private CounselingService counselingService;
+    private FhirConfigManager fcm;
 
     public CDSHookExecutor(boolean testing, String sessionId,
                            String cdsHooksEndpointURL,
                            EHRService ehrService,
                            HomeBloodPressureReadingService hbprService,
                            GoalService goalService,
-                           CounselingService counselingService) {
+                           CounselingService counselingService,
+                           FhirConfigManager fcm) {
         this.testing = testing;
         this.sessionId = sessionId;
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
@@ -60,6 +63,7 @@ public class CDSHookExecutor implements Runnable {
         this.hbprService = hbprService;
         this.goalService = goalService;
         this.counselingService = counselingService;
+        this.fcm = fcm;
     }
 
     public String getSessionId() {
@@ -76,6 +80,7 @@ public class CDSHookExecutor implements Runnable {
                 ", hbprService=" + hbprService +
                 ", goalService=" + goalService +
                 ", counselingService=" + counselingService +
+                ", fcm=" + fcm +
                 '}';
     }
 
@@ -139,7 +144,7 @@ public class CDSHookExecutor implements Runnable {
             StringWriter writer = new StringWriter();
             mustache.execute(writer, request).flush();
 
-            logger.info("hookRequest = " + writer.toString());
+            logger.debug("hookRequest = " + writer.toString());
 
             Map<String, String> headers = new HashMap<>();
             headers.put("Content-Type", "application/json; charset=UTF-8");
@@ -156,7 +161,7 @@ public class CDSHookExecutor implements Runnable {
                 body = httpResponse.getResponseBody();
             }
 
-            logger.info("got response code=" + code + ", body=" + body);
+            logger.debug("got response code=" + code + ", body=" + body);
 
             Gson gson = new GsonBuilder().create();
             try {
@@ -273,20 +278,20 @@ public class CDSHookExecutor implements Runnable {
 
         if (myGoal.isBloodPressureGoal()) {
             Goal.GoalTargetComponent systolic = new Goal.GoalTargetComponent();
-            systolic.getMeasure().addCoding().setCode(BloodPressureModel.SYSTOLIC_CODE).setSystem(BloodPressureModel.SYSTEM);
+            systolic.getMeasure().addCoding().setCode(fcm.getBpSystolicCode()).setSystem(fcm.getBpSystem());
             systolic.setDetail(new Quantity());
-            systolic.getDetailQuantity().setCode(BloodPressureModel.VALUE_CODE);
-            systolic.getDetailQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
-            systolic.getDetailQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
+            systolic.getDetailQuantity().setCode(fcm.getBpValueCode());
+            systolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
+            systolic.getDetailQuantity().setUnit(fcm.getBpValueUnit());
             systolic.getDetailQuantity().setValue(myGoal.getSystolicTarget());
             g.getTarget().add(systolic);
 
             Goal.GoalTargetComponent diastolic = new Goal.GoalTargetComponent();
-            diastolic.getMeasure().addCoding().setCode(BloodPressureModel.DIASTOLIC_CODE).setSystem(BloodPressureModel.SYSTEM);
+            diastolic.getMeasure().addCoding().setCode(fcm.getBpDiastolicCode()).setSystem(fcm.getBpSystem());
             diastolic.setDetail(new Quantity());
-            diastolic.getDetailQuantity().setCode(BloodPressureModel.VALUE_CODE);
-            diastolic.getDetailQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
-            diastolic.getDetailQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
+            diastolic.getDetailQuantity().setCode(fcm.getBpValueCode());
+            diastolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
+            diastolic.getDetailQuantity().setUnit(fcm.getBpValueUnit());
             diastolic.getDetailQuantity().setValue(myGoal.getDiastolicTarget());
             g.getTarget().add(diastolic);
         }
@@ -351,24 +356,34 @@ public class CDSHookExecutor implements Runnable {
         o.setSubject(new Reference().setReference(patientId));
 //        o.setEncounter(new Reference().setReference(encounterId));
         o.setStatus(Observation.ObservationStatus.FINAL);
-        o.getCode().addCoding().setCode(BloodPressureModel.CODE).setSystem(BloodPressureModel.SYSTEM);
+        o.getCode().addCoding()
+                .setCode(fcm.getBpCode())
+                .setSystem(fcm.getBpSystem());
+
+        if (StringUtils.isNotEmpty(fcm.getBpHomeSystem()) && StringUtils.isNotEmpty(fcm.getBpHomeCode())) {
+            o.getCode().addCoding()
+                    .setCode(fcm.getBpHomeCode())
+                    .setSystem(fcm.getBpHomeSystem())
+                    .setDisplay(fcm.getBpHomeDisplay());
+        }
+
         o.setEffective(new DateTimeType(item.getReadingDate()));
 
         Observation.ObservationComponentComponent systolic = new Observation.ObservationComponentComponent();
-        systolic.getCode().addCoding().setCode(BloodPressureModel.SYSTOLIC_CODE).setSystem(BloodPressureModel.SYSTEM);
+        systolic.getCode().addCoding().setCode(fcm.getBpSystolicCode()).setSystem(fcm.getBpSystem());
         systolic.setValue(new Quantity());
-        systolic.getValueQuantity().setCode(BloodPressureModel.VALUE_CODE);
-        systolic.getValueQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
-        systolic.getValueQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
+        systolic.getValueQuantity().setCode(fcm.getBpValueCode());
+        systolic.getValueQuantity().setSystem(fcm.getBpValueSystem());
+        systolic.getValueQuantity().setUnit(fcm.getBpValueUnit());
         systolic.getValueQuantity().setValue(item.getSystolic());
         o.getComponent().add(systolic);
 
         Observation.ObservationComponentComponent diastolic = new Observation.ObservationComponentComponent();
-        diastolic.getCode().addCoding().setCode(BloodPressureModel.DIASTOLIC_CODE).setSystem(BloodPressureModel.SYSTEM);
+        diastolic.getCode().addCoding().setCode(fcm.getBpDiastolicCode()).setSystem(fcm.getBpSystem());
         diastolic.setValue(new Quantity());
-        diastolic.getValueQuantity().setCode(BloodPressureModel.VALUE_CODE);
-        diastolic.getValueQuantity().setSystem(BloodPressureModel.VALUE_SYSTEM);
-        diastolic.getValueQuantity().setUnit(BloodPressureModel.VALUE_UNIT);
+        diastolic.getValueQuantity().setCode(fcm.getBpValueCode());
+        diastolic.getValueQuantity().setSystem(fcm.getBpValueSystem());
+        diastolic.getValueQuantity().setUnit(fcm.getBpValueUnit());
         diastolic.getValueQuantity().setValue(item.getDiastolic());
         o.getComponent().add(diastolic);
 

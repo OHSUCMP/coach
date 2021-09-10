@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 
 @Service
-public class GoalHistoryService {
+public class GoalHistoryService extends BaseService {
 
     @Autowired
     private GoalHistoryRepository repository;

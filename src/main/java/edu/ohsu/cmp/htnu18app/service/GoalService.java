@@ -3,9 +3,8 @@ package edu.ohsu.cmp.htnu18app.service;
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.AchievementStatus;
-import edu.ohsu.cmp.htnu18app.entity.app.MyGoal;
 import edu.ohsu.cmp.htnu18app.entity.app.GoalHistory;
-import edu.ohsu.cmp.htnu18app.model.BloodPressureModel;
+import edu.ohsu.cmp.htnu18app.entity.app.MyGoal;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
 import edu.ohsu.cmp.htnu18app.repository.app.GoalHistoryRepository;
 import edu.ohsu.cmp.htnu18app.repository.app.GoalRepository;
@@ -19,7 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class GoalService {
+public class GoalService extends BaseService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -81,6 +80,8 @@ public class GoalService {
 
         } else {
             return new GoalModel(create(sessionId, new MyGoal(
+                    fcm.getBpSystem(),
+                    fcm.getBpCode(),
                     GoalModel.BP_GOAL_DEFAULT_SYSTOLIC,
                     GoalModel.BP_GOAL_DEFAULT_DIASTOLIC
             )));
@@ -108,10 +109,10 @@ public class GoalService {
                 boolean hasDiastolicTarget = false;
 
                 for (org.hl7.fhir.r4.model.Goal.GoalTargetComponent gtc : g.getTarget()) {
-                    if (gtc.getMeasure().hasCoding(BloodPressureModel.SYSTEM, BloodPressureModel.SYSTOLIC_CODE)) {
+                    if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpSystolicCode())) {
                         hasSystolicTarget = true;
 
-                    } else if (gtc.getMeasure().hasCoding(BloodPressureModel.SYSTEM, BloodPressureModel.DIASTOLIC_CODE)) {
+                    } else if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpDiastolicCode())) {
                         hasDiastolicTarget = true;
                     }
                 }
@@ -132,7 +133,7 @@ public class GoalService {
         }
 
         return currentEHRBPGoal != null ?
-                new GoalModel(currentEHRBPGoal, cache.getInternalPatientId()) :
+                new GoalModel(currentEHRBPGoal, cache.getInternalPatientId(), fcm) :
                 null;
     }
 

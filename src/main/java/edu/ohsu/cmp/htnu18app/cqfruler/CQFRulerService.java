@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.htnu18app.cqfruler;
 
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
+import edu.ohsu.cmp.htnu18app.fhir.FhirConfigManager;
 import edu.ohsu.cmp.htnu18app.service.CounselingService;
 import edu.ohsu.cmp.htnu18app.service.EHRService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
@@ -23,17 +24,11 @@ public class CQFRulerService {
 
     private String cdsHooksEndpointURL;
 
-    @Autowired
-    private EHRService ehrService;
-
-    @Autowired
-    private HomeBloodPressureReadingService hbprService;
-
-    @Autowired
-    private GoalService goalService;
-
-    @Autowired
-    private CounselingService counselingService;
+    @Autowired private EHRService ehrService;
+    @Autowired private HomeBloodPressureReadingService hbprService;
+    @Autowired private GoalService goalService;
+    @Autowired private CounselingService counselingService;
+    @Autowired private FhirConfigManager fcm;
 
     public CQFRulerService(@Value("${cqfruler.cdshooks.endpoint.url}") String cdsHooksEndpointURL) {
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
@@ -45,7 +40,8 @@ public class CQFRulerService {
                     ehrService,
                     hbprService,
                     goalService,
-                    counselingService);
+                    counselingService,
+                    fcm);
 
             logger.info("created " + executor);
 
