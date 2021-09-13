@@ -68,6 +68,10 @@ public class FHIRCredentialsWithClient {
         }
 
         if (bundle.getLink(Bundle.LINK_NEXT) == null) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("bundle = " + FhirUtil.toJson(bundle));
+            }
+
             return bundle;
 
         } else {
@@ -89,6 +93,10 @@ public class FHIRCredentialsWithClient {
                 }
 
                 page ++;
+            }
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("compositeBundle = " + FhirUtil.toJson(compositeBundle));
             }
 
             return compositeBundle;

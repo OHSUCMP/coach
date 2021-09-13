@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.htnu18app.util;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -64,5 +65,12 @@ public class FhirUtil {
             }
         }
         return false;
+    }
+
+    public static String toJson(IBaseResource r) {
+        FhirContext ctx = FhirContext.forR4();
+        IParser parser = ctx.newJsonParser();
+        parser.setPrettyPrint(true);
+        return parser.encodeResourceToString(r);
     }
 }
