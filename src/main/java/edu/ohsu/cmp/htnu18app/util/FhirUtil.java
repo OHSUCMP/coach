@@ -38,6 +38,7 @@ public class FhirUtil {
     public static <T extends IBaseResource> T getResourceFromBundleByReference(Bundle b, Class<T> aClass, String reference) {
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             String id = entry.getResource().getId();
+            if (id == null) continue;
             try {
                 if (Pattern.matches(".*\\/" + reference + "\\/.*", id)) {
                     return aClass.cast(entry.getResource());
@@ -54,9 +55,13 @@ public class FhirUtil {
     public static boolean bundleContainsReference(Bundle b, String reference) {
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             String id = entry.getResource().getId();
+            if (id == null) continue;
             try {
                 if (Pattern.matches(".*\\/" + reference + "\\/.*", id)) {
+                    logger.debug("matched: '" + reference + "' == '" + id + "'");
                     return true;
+                } else {
+                    logger.debug("did not match: '" + reference + "' != '" + id + "'");
                 }
             } catch (NullPointerException npe) {
                 logger.error("caught " + npe.getClass().getName() + " matching reference '" + reference +
