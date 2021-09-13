@@ -58,10 +58,10 @@ public class FhirUtil {
             if (id == null) continue;
             try {
                 if (Pattern.matches(".*\\/" + reference + "\\/.*", id)) {
-                    logger.debug("matched: '" + reference + "' == '" + id + "'");
+                    logger.debug("matched: '" + id + "' contains '" + reference + "'");
                     return true;
                 } else {
-                    logger.debug("did not match: '" + reference + "' != '" + id + "'");
+                    logger.debug("did not match: '" + id + "' does not contain '" + reference + "'");
                 }
             } catch (NullPointerException npe) {
                 logger.error("caught " + npe.getClass().getName() + " matching reference '" + reference +

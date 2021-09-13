@@ -237,7 +237,9 @@ public class CDSHookExecutor implements Runnable {
         p.setStatus(Procedure.ProcedureStatus.COMPLETED);
 
         // set counseling category.  see https://www.hl7.org/fhir/valueset-procedure-category.html
-        p.getCategory().addCoding().setCode("409063005").setSystem("http://snomed.info/sct");
+        p.getCategory().addCoding()
+                .setCode("409063005")
+                .setSystem("http://snomed.info/sct");
 
         p.getCode().addCoding().setCode(c.getReferenceCode()).setSystem(c.getReferenceSystem());
 
@@ -366,6 +368,14 @@ public class CDSHookExecutor implements Runnable {
                     .setSystem(fcm.getBpHomeSystem())
                     .setDisplay(fcm.getBpHomeDisplay());
         }
+
+        // setting MeasurementSettingExt to indicate taken in a "home" setting
+        // see https://browser.ihtsdotools.org/?perspective=full&conceptId1=264362003&edition=MAIN/SNOMEDCT-US/2021-09-01&release=&languages=en
+        o.addExtension(new Extension()
+                .setUrl("http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt")
+                .setValue(new Coding()
+                        .setCode("264362003")
+                        .setSystem("http://snomed.info/sct")));
 
         o.setEffective(new DateTimeType(item.getReadingDate()));
 
