@@ -58,9 +58,6 @@ public class MedicationService extends BaseService {
     }
 
     private Bundle filterByValueSet(Bundle b, String valueSetOid, boolean includeOnMatch) {
-        Bundle filtered = new Bundle();
-        filtered.setType(Bundle.BundleType.COLLECTION);
-
         // build concept info as a simple set we can query to test inclusion
         // (these are the meds we want to show)
         ValueSet valueSet = valueSetService.getValueSet(valueSetOid);
@@ -70,15 +67,18 @@ public class MedicationService extends BaseService {
             concepts.add(codeSystem + "|" + c.getCode());
         }
 
+        Set<String> matchingIds = new HashSet<>();
+
         // filter out any of the patient's meds that aren't included in set we want to show
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
-            boolean matches = false;
+//            boolean matches = false;
             if (entry.getResource() instanceof MedicationStatement) {
                 MedicationStatement ms = (MedicationStatement) entry.getResource();
                 CodeableConcept cc = ms.getMedicationCodeableConcept();
                 for (Coding c : cc.getCoding()) {
                     if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
-                        matches = true;
+                        matchingIds.add(ms.getId());
+//                        matches = true;
                         break;
                     }
                 }
@@ -89,7 +89,8 @@ public class MedicationService extends BaseService {
                     CodeableConcept cc = mr.getMedicationCodeableConcept();
                     for (Coding c : cc.getCoding()) {
                         if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
-                            matches = true;
+                            matchingIds.add(mr.getId());
+//                            matches = true;
                             break;
                         }
                     }
@@ -100,14 +101,28 @@ public class MedicationService extends BaseService {
 
                     for (Coding c : m.getCode().getCoding()) {
                         if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
-                            matches = true;
+                            matchingIds.add(mr.getId());
+                            matchingIds.add(m.getId()); // also include the Medication resource
+//                            matches = true;
                             break;
                         }
                     }
                 }
             }
 
-            if ((matches && includeOnMatch) || (!matches && !includeOnMatch)) {
+//            if ((matches && includeOnMatch) || (!matches && !includeOnMatch)) {
+//                filtered.addEntry(entry);
+//            }
+        }
+
+        Bundle filtered = new Bundle();
+        filtered.setType(Bundle.BundleType.COLLECTION);
+
+        for (Bundle.BundleEntryComponent entry : b.getEntry()) {
+            if (includeOnMatch && matchingIds.contains(entry.getResource().getId())) {
+                filtered.addEntry(entry);
+
+            } else if (!includeOnMatch && !matchingIds.contains(entry.getResource().getId())) {
                 filtered.addEntry(entry);
             }
         }
