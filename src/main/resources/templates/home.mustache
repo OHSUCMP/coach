@@ -111,6 +111,7 @@
         <li class="selected"><a href="/">Patient Portal</a></li>
         <li><a href="/goals">My Goals</a></li>
         <li><a href="/bp-readings">Home BP Readings</a></li>
+        <li><a href="/medications">My Medications</a></li>
         <li><a href="/preferences">My Preferences</a></li>
         <li><a href="/feedback">Provider Feedback</a></li>
     {{/menuItems}}
@@ -221,7 +222,7 @@
                     <div id="currentBPGoal" data-systolic="{{currentBPGoal.systolicTarget}}" data-diastolic="{{currentBPGoal.diastolicTarget}}">
                         Your Current Blood Pressure Goal: <em><strong>Below {{currentBPGoal.systolicTarget}}/{{currentBPGoal.diastolicTarget}}</strong></em>
                     </div>
-                    <div id="currentMedications">
+                    <div id="currentMedications" data-name="{{medicationsOfInterestName}}">
                     </div>
                     <div id="adverseEvents"></div>
                 </td>

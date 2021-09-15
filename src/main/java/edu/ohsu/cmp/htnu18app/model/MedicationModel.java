@@ -13,6 +13,13 @@ public class MedicationModel implements Comparable<MedicationModel> {
     private String status;
     private Long effectiveTimestamp;
 
+    // todo : populate these fields
+    private String reason;
+    private String dose;
+    private String prescribingClinician;
+    private String issues;
+    private String priority;
+
     public MedicationModel(IBaseResource resource, Bundle bundle) throws DataException, IncompatibleResourceException {
         if (resource instanceof MedicationStatement) {
             createFromMedicationStatement((MedicationStatement) resource);
@@ -46,6 +53,27 @@ public class MedicationModel implements Comparable<MedicationModel> {
         } else {
             throw new DataException("missing effective date or period");
         }
+
+        if (ms.hasReasonCode()) {
+            reason = ms.getReasonCodeFirstRep().getText();
+
+        } else if (ms.hasReasonReference()) {
+            // todo : grab the referenced resource and set reason = that resource's most appropriate description
+            reason = ms.getReasonReferenceFirstRep().getReference();
+
+        } else {
+            reason = "";
+        }
+
+        dose = ms.hasDosage() ? ms.getDosageFirstRep().getText() : "";
+
+        prescribingClinician = ""; // todo : set this.  not quite clear how to do that cleanly with MedicationStatement
+
+        issues = ""; // todo : set this.  not sure what this should be.  only here because it's specified in the MCC app,
+                     //        and Dave wants this app to mirror the MCC system with respect to display of medications.
+                     //        there isn't anything in the MedicationStatement resource that appears to fit
+
+        priority = "";  // todo : not sure where this should come from either
     }
 
     private void createFromMedicationRequest(MedicationRequest mr, Bundle bundle) throws DataException {
@@ -80,6 +108,26 @@ public class MedicationModel implements Comparable<MedicationModel> {
         } else {
             throw new DataException("missing authored on");
         }
+
+
+        if (mr.hasReasonCode()) {
+            reason = mr.getReasonCodeFirstRep().getText();
+
+        } else if (mr.hasReasonReference()) {
+            // todo : grab the referenced resource and set reason = that resource's most appropriate description
+            reason = mr.getReasonReferenceFirstRep().getReference();
+
+        } else {
+            reason = "";
+        }
+
+        dose = mr.hasDosageInstruction() ? mr.getDosageInstructionFirstRep().getText() : "";
+
+        prescribingClinician = ""; // todo : set this.  not quite clear how to do that cleanly with MedicationRequest
+
+        issues = mr.hasDetectedIssue() ? mr.getDetectedIssueFirstRep().getDisplay() : "";
+
+        priority = mr.hasPriority() ? mr.getPriority().getDisplay() : "";
     }
 
     @Override
@@ -125,5 +173,45 @@ public class MedicationModel implements Comparable<MedicationModel> {
 
     public void setEffectiveTimestamp(Long effectiveTimestamp) {
         this.effectiveTimestamp = effectiveTimestamp;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public String getDose() {
+        return dose;
+    }
+
+    public void setDose(String dose) {
+        this.dose = dose;
+    }
+
+    public String getPrescribingClinician() {
+        return prescribingClinician;
+    }
+
+    public void setPrescribingClinician(String prescribingClinician) {
+        this.prescribingClinician = prescribingClinician;
+    }
+
+    public String getIssues() {
+        return issues;
+    }
+
+    public void setIssues(String issues) {
+        this.issues = issues;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
     }
 }

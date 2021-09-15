@@ -24,7 +24,7 @@ public class ValueSet {
     private Date updated;
 
     // see: https://attacomsian.com/blog/spring-data-jpa-many-to-many-mapping
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     @JoinTable(name = "valuesetconcept",
             joinColumns = {
                     @JoinColumn(name = "valueSetId", referencedColumnName = "id",

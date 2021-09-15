@@ -1,0 +1,108 @@
+{{#layout}}
+    {{#title}}{{applicationName}} - Goals{{/title}}
+    {{#head}}
+        <script type="text/javascript" src="js/form.js"></script>
+        <link rel="stylesheet" href="css/form.css" />
+
+        <!--        <link rel="stylesheet" href="css/recommendations.css"/>-->
+        <!--        <script type="text/javascript" src="js/recommendations.js"></script>-->
+
+        <script type="text/javascript" src="js/medications.js"></script>
+        <link rel="stylesheet" href="css/medications.css"/>
+    {{/head}}
+    {{#menuItems}}
+        <li><a href="/">Patient Portal</a></li>
+        <li><a href="/goals">My Goals</a></li>
+        <li><a href="/bp-readings">Home BP Readings</a></li>
+        <li class="selected"><a href="/medications">My Medications</a></li>
+        <li><a href="/preferences">My Preferences</a></li>
+        <li><a href="/feedback">Provider Feedback</a></li>
+    {{/menuItems}}
+    {{#content}}
+        <table class="content">
+            <tr>
+                <td id="patientInfo">
+                    <table style="margin-left: 50px">
+                        <tr>
+                            <td rowspan="2">
+                                <span class="circle" style="background-color: #b3fff0">&nbsp;</span>
+                            </td>
+                            <td colspan="2">
+                                <span style="font-size: x-large">{{patient.name}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>{{patient.age}} years</td>
+                            <td>{{patient.gender}}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <table class="content">
+            <tr>
+                <td class="heading">
+                    My {{medicationsOfInterestName}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <table id=medicationsOfInterestTable" class="data">
+                        <tr id="medicationsOfInterestTableHeader">
+                            <th>Name</th>
+                            <th>Reason</th>
+                            <th>Dose</th>
+                            <th>Prescribing Clinician</th>
+                            <th>Issues</th>
+                            <th>Priority</th>
+                        </tr>
+                        {{#medicationsOfInterest}}
+                            <tr class='medication' data-system="{{system}}" data-code="{{code}}">
+                                <td>{{description}}</td>
+                                <td>{{reason}}</td>
+                                <td>{{dose}}</td>
+                                <td>{{prescribingClinician}}</td>
+                                <td>{{issues}}</td>
+                                <td>{{priority}}</td>
+                            </tr>
+                        {{/medicationsOfInterest}}
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <table class="content">
+            <tr>
+                <td class="heading">
+                    My Other Medications
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <table id=otherMedicationsTable" class="data">
+                        <tr id="otherMedicationsTableHeader">
+                            <th>Name</th>
+                            <th>Reason</th>
+                            <th>Dose</th>
+                            <th>Prescribing Clinician</th>
+                            <th>Issues</th>
+                            <th>Priority</th>
+                        </tr>
+                        {{#otherMedications}}
+                            <tr class='medication' data-system="{{system}}" data-code="{{code}}">
+                                <td>{{description}}</td>
+                                <td>{{reason}}</td>
+                                <td>{{dose}}</td>
+                                <td>{{prescribingClinician}}</td>
+                                <td>{{issues}}</td>
+                                <td>{{priority}}</td>
+                            </tr>
+                        {{/otherMedications}}
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+    {{/content}}
+{{/layout}}

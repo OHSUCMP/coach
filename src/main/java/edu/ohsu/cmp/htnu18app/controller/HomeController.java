@@ -12,6 +12,7 @@ import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
 import edu.ohsu.cmp.htnu18app.service.EHRService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
+import edu.ohsu.cmp.htnu18app.service.MedicationService;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Resource;
@@ -46,6 +47,9 @@ public class HomeController extends BaseController {
     @Autowired
     private GoalService goalService;
 
+    @Autowired
+    private MedicationService medicationService;
+
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model) {
         boolean sessionEstablished = SessionCache.getInstance().exists(session.getId());
@@ -59,6 +63,8 @@ public class HomeController extends BaseController {
 
                 GoalModel currentBPGoal = goalService.getCurrentBPGoal(session.getId());
                 model.addAttribute("currentBPGoal", currentBPGoal);
+
+                model.addAttribute("medicationsOfInterestName", medicationService.getMedicationsOfInterestName());
 
                 List<CDSHook> list = cqfRulerService.getCDSHooks();
                 model.addAttribute("cdshooks", list);
@@ -87,7 +93,7 @@ public class HomeController extends BaseController {
         }
     }
 
-    @PostMapping("blood-pressure-observations")
+    @PostMapping("blood-pressure-observations-list")
     public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) {
         Set<BloodPressureModel> set = new TreeSet<>();
 
@@ -156,28 +162,12 @@ public class HomeController extends BaseController {
         return new ResponseEntity<>(cards, status);
     }
 
-    @PostMapping("medications")
+    @PostMapping("medications-list")
     public ResponseEntity<List<MedicationModel>> getMedications(HttpSession session) {
         try {
-            Set<MedicationModel> set = new LinkedHashSet<MedicationModel>();
+            List<MedicationModel> list = medicationService.getMedicationsOfInterest(session.getId());
 
-            // first add BP observations from configured FHIR server
-            Bundle bundle = ehrService.getMedications(session.getId());
-            for (Bundle.BundleEntryComponent entryCon : bundle.getEntry()) {
-                try {
-                    MedicationModel model = new MedicationModel(entryCon.getResource(), bundle);
-                    logger.info("got medication: " + model.getSystem() + "|" + model.getCode() + ": " + model.getDescription());
-                    set.add(model);
-
-                } catch (DataException e) {
-                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
-
-                } catch (IncompatibleResourceException ire) {
-                    logger.debug(ire.getMessage());
-                }
-            }
-
-            return new ResponseEntity<>(new ArrayList<>(set), HttpStatus.OK);
+            return new ResponseEntity<>(new ArrayList<>(list), HttpStatus.OK);
 
         } catch (HttpServerErrorException.InternalServerError ise) {
             logger.error("caught " + ise.getClass().getName() + " getting medications - " + ise.getMessage(), ise);
@@ -185,7 +175,7 @@ public class HomeController extends BaseController {
         }
     }
 
-    @PostMapping("adverse-events")
+    @PostMapping("adverse-events-list")
     public ResponseEntity<List<AdverseEventModel>> getAdverseEvents(HttpSession session) {
         try {
             List<AdverseEventModel> list = new ArrayList<>();

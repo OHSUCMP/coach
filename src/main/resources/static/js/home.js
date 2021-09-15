@@ -1,5 +1,5 @@
 async function loadBloodPressureObservations(_callback) {
-    let response = await fetch("/blood-pressure-observations", {
+    let response = await fetch("/blood-pressure-observations-list", {
         method: "POST",
         headers: {
             "Content-Type": "application/json; charset=utf-8"
@@ -20,7 +20,7 @@ async function loadBloodPressureObservations(_callback) {
 }
 
 async function loadMedications(_callback) {
-    let response = await fetch("/medications", {
+    let response = await fetch("/medications-list", {
         method: "POST",
         headers: {
             "Content-Type": "application/json; charset=utf-8"
@@ -43,14 +43,16 @@ function populateMedications() {
                 '</span>');
         });
 
-        let html = 'Your Active Anti-hypertension Medications: ' + arr.join(', ');
+        let el = $('#currentMedications');
+        let name = $(el).attr('data-name');
+        let html = 'Your Active ' + name + ': ' + arr.join(', ');
 
-        $('#currentMedications').html(html);
+        $(el).html(html);
     }
 }
 
 async function loadAdverseEvents(_callback) {
-    let response = await fetch("/adverse-events", {
+    let response = await fetch("/adverse-events-list", {
         method: "POST",
         headers: {
             "Content-Type": "application/json; charset=utf-8"
