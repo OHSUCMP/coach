@@ -69,16 +69,18 @@ public class MedicationService extends BaseService {
 
         Set<String> matchingIds = new HashSet<>();
 
-        // filter out any of the patient's meds that aren't included in set we want to show
+        // make 2 passes over bundle entries:
+        //  1st pass: identify all of the IDs for resources we want to keep, including referenced resources
+        //  2nd pass: filter bundle resources based on results of the 1st pass
+
+        // 1st pass:
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
-//            boolean matches = false;
             if (entry.getResource() instanceof MedicationStatement) {
                 MedicationStatement ms = (MedicationStatement) entry.getResource();
                 CodeableConcept cc = ms.getMedicationCodeableConcept();
                 for (Coding c : cc.getCoding()) {
                     if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
                         matchingIds.add(ms.getId());
-//                        matches = true;
                         break;
                     }
                 }
@@ -90,7 +92,6 @@ public class MedicationService extends BaseService {
                     for (Coding c : cc.getCoding()) {
                         if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
                             matchingIds.add(mr.getId());
-//                            matches = true;
                             break;
                         }
                     }
@@ -103,21 +104,17 @@ public class MedicationService extends BaseService {
                         if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
                             matchingIds.add(mr.getId());
                             matchingIds.add(m.getId()); // also include the Medication resource
-//                            matches = true;
                             break;
                         }
                     }
                 }
             }
-
-//            if ((matches && includeOnMatch) || (!matches && !includeOnMatch)) {
-//                filtered.addEntry(entry);
-//            }
         }
 
         Bundle filtered = new Bundle();
         filtered.setType(Bundle.BundleType.COLLECTION);
 
+        // 2nd pass:
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (includeOnMatch && matchingIds.contains(entry.getResource().getId())) {
                 filtered.addEntry(entry);
