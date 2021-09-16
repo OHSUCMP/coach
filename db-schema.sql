@@ -149,3 +149,14 @@ insert into adverse_event(description, conceptCode, conceptSystem) values("Synco
 insert into adverse_event(description, conceptCode, conceptSystem) values("Syncope / Loss of consciousness", "40863000", "http://snomed.info/sct");
 insert into adverse_event(description, conceptCode, conceptSystem) values("Syncope / Loss of consciousness", "419045004", "http://snomed.info/sct");
 insert into adverse_event(description, conceptCode, conceptSystem) values("Syncope / Loss of consciousness", "7862002", "http://snomed.info/sct");
+
+drop table if exists adverse_event_outcome;
+create table adverse_event_outcome (
+    id int not null auto_increment primary key,
+    patId int not null,
+    adverseEventId varchar(100) not null,
+    outcome varchar(30) not null
+);
+
+create unique index idxPatAdverseEventId on adverse_event_outcome (patId, adverseEventId);
+

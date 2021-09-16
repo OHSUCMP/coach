@@ -136,8 +136,10 @@ public class CDSHookExecutor implements Runnable {
             Bundle counselingBundle = buildCounselingBundle(p.getId());
             Bundle goalsBundle = buildGoalsBundle(p.getId());
 //            Bundle conditionsBundle = buildConditionsBundle(p.getId());
+            Bundle adverseEventsBundle = ehrService.getAdverseEvents(sessionId);
 
-            HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle, counselingBundle, goalsBundle);
+            HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle, counselingBundle, goalsBundle,
+                    adverseEventsBundle);
 
             MustacheFactory mf = new DefaultMustacheFactory();
             Mustache mustache = mf.compile("cqfruler/hookRequest.mustache");

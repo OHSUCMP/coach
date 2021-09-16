@@ -2,39 +2,21 @@ package edu.ohsu.cmp.htnu18app.model;
 
 import edu.ohsu.cmp.htnu18app.exception.DataException;
 import edu.ohsu.cmp.htnu18app.exception.IncompatibleResourceException;
-import edu.ohsu.cmp.htnu18app.exception.MethodNotImplementedException;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.AdverseEvent;
 import org.hl7.fhir.r4.model.Coding;
-import org.hl7.fhir.r4.model.Condition;
 
 public class AdverseEventModel {
     private String system;
     private String code;
     private String description;
+    private String outcome;
 
-    public AdverseEventModel(IBaseResource resource) throws DataException, IncompatibleResourceException {
-        if (resource instanceof AdverseEvent) {
-            createFromAdverseEvent((AdverseEvent) resource);
-
-        } else if (resource instanceof Condition) {
-            createFromCondition((Condition) resource);
-
-        } else {
-            throw new IncompatibleResourceException("cannot create AdverseEventModel from " + resource.getClass().getName());
-        }
-    }
-
-    private void createFromAdverseEvent(AdverseEvent ae) {
-        // stubbing this out in case we want to use it maybe at some point?
-        throw new MethodNotImplementedException();
-    }
-
-    private void createFromCondition(Condition c) {
-        Coding cfr = c.getCode().getCodingFirstRep();
-        this.system = cfr.getSystem();
-        this.code = cfr.getCode();
-        this.description = cfr.getDisplay();
+    public AdverseEventModel(AdverseEvent adverseEvent) throws DataException, IncompatibleResourceException {
+        Coding c = adverseEvent.getEvent().getCodingFirstRep();
+        this.system = c.getSystem();
+        this.code = c.getCode();
+        this.description = c.getDisplay();
+        this.outcome = adverseEvent.getOutcome().getCodingFirstRep().getCode();
     }
 
     public String getSystem() {

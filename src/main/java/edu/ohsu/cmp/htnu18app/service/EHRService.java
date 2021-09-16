@@ -3,26 +3,41 @@ package edu.ohsu.cmp.htnu18app.service;
 import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.MyAdverseEvent;
+import edu.ohsu.cmp.htnu18app.entity.app.MyAdverseEventOutcome;
 import edu.ohsu.cmp.htnu18app.fhir.FhirQueryManager;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.htnu18app.util.FhirUtil;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class EHRService extends BaseService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final int MAX_CODES_PER_QUERY = 32; // todo: auto-identify this, or at least put it in the config
+
+    private static final Date ONE_MONTH_AGO;
+    static {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        cal.add(Calendar.MONTH, -1);
+        cal.set(Calendar.HOUR, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        ONE_MONTH_AGO = cal.getTime();
+    }
+
+    @Value("${security.salt}")
+    private String salt;
 
     @Autowired
     private FhirQueryManager fhirQueryManager;
@@ -141,39 +156,7 @@ public class EHRService extends BaseService {
     }
 
     private Bundle getMedicationStatements(FHIRCredentialsWithClient fcc) {
-        Bundle b = fcc.search(fhirQueryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()));
-//        if (b == null) return null;
-//
-//        // build concept info as a simple set we can query to test inclusion
-//        // (these are the meds we want to show)
-//        ValueSet valueSet = valueSetService.getValueSet(fcm.getMedicationValueSetOid());
-//        Set<String> concepts = new HashSet<>();
-//        for (Concept c : valueSet.getConcepts()) {
-//            String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
-//            concepts.add(codeSystem + "|" + c.getCode());
-//        }
-//
-//        // filter out any of the patient's meds that aren't included in set we want to show
-//        Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
-//        while (iter.hasNext()) {
-//            Bundle.BundleEntryComponent entry = iter.next();
-//            boolean exists = false;
-//            if (entry.getResource() instanceof MedicationStatement) {
-//                MedicationStatement ms = (MedicationStatement) entry.getResource();
-//                CodeableConcept cc = ms.getMedicationCodeableConcept();
-//                for (Coding c : cc.getCoding()) {
-//                    if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
-//                        exists = true;
-//                        break;
-//                    }
-//                }
-//            }
-//            if (!exists) {
-//                iter.remove();
-//            }
-//        }
-//
-        return b;
+        return fcc.search(fhirQueryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()));
     }
 
     private Bundle getMedicationRequests(FHIRCredentialsWithClient fcc) {
@@ -195,43 +178,105 @@ public class EHRService extends BaseService {
         return b;
     }
 
-    public Bundle getAdverseEventConditions(String sessionId) {
+    public Bundle getAdverseEvents(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
 
         Bundle b = cache.getAdverseEvents();
         if (b == null) {
-            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.search(fhirQueryManager.getAdverseEventQuery(fcc.getCredentials().getPatientId()));
-            if (b == null) return null;
+            b = new Bundle();
+            b.setType(Bundle.BundleType.COLLECTION);
 
-            Set<String> codesWeCareAbout = new HashSet<String>();
-            for (MyAdverseEvent mae : adverseEventService.getAll()) {
-                codesWeCareAbout.add(mae.getConceptSystem() + "|" + mae.getConceptCode());
-            }
-
-            // filter out any of the patient's conditions that don't match a code we're interested in
-            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
-            while (iter.hasNext()) {
-                Bundle.BundleEntryComponent entry = iter.next();
-                boolean exists = false;
+            for (Bundle.BundleEntryComponent entry : getAdverseEventConditions(sessionId).getEntry()) {
                 if (entry.getResource() instanceof Condition) {
                     Condition c = (Condition) entry.getResource();
-                    if (c.getCode().hasCoding()) {
-                        for (Coding coding : c.getCode().getCoding()) {
-                            String item = coding.getSystem() + "|" + coding.getCode();
-                            if (codesWeCareAbout.contains(item)) {
-                                exists = true;
-                                break;
-                            }
-                        }
+
+                    AdverseEvent ae = new AdverseEvent();
+
+                    String aeid = "adverseevent-" + DigestUtils.sha256Hex(c.getId() + salt);
+                    ae.setId(aeid);
+
+                    MyAdverseEventOutcome outcome = adverseEventService.getOutcome(cache.getInternalPatientId(), aeid);
+                    ae.getOutcome().addCoding(new Coding()
+                            .setCode(outcome.getOutcome().getFhirValue())
+                            .setSystem("http://terminology.hl7.org/CodeSystem/adverse-event-outcome"));
+
+                    ae.setEvent(c.getCode().copy());
+                    ae.getResultingCondition().add(new Reference().setReference(c.getId()));
+
+                    if (c.hasOnsetDateTimeType()) {
+                        ae.setDate(c.getOnsetDateTimeType().getValue());
+                    } else if (c.hasRecordedDate()) {
+                        ae.setDate(c.getRecordedDate());
                     }
-                }
-                if (!exists) {
-                    iter.remove();
+
+                    if (c.hasOnsetDateTimeType()) {
+                        ae.setDetected(c.getOnsetDateTimeType().getValue());
+                    }
+
+                    if (c.hasRecordedDate()) {
+                        ae.setRecordedDate(c.getRecordedDate());
+                    }
+
+                    b.addEntry().setFullUrl("http://hl7.org/fhir/AdverseEvent/" + ae.getId()).setResource(ae);
                 }
             }
 
             cache.setAdverseEvents(b);
+        }
+
+        return b;
+    }
+
+    private Bundle getAdverseEventConditions(String sessionId) {
+        CacheData cache = SessionCache.getInstance().get(sessionId);
+
+        FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+        Bundle b = fcc.search(fhirQueryManager.getAdverseEventQuery(fcc.getCredentials().getPatientId()));
+        if (b == null) return null;
+
+        Set<String> codesWeCareAbout = new HashSet<String>();
+        for (MyAdverseEvent mae : adverseEventService.getAll()) {
+            codesWeCareAbout.add(mae.getConceptSystem() + "|" + mae.getConceptCode());
+        }
+
+        // filter out any of the patient's conditions that don't match a code we're interested in
+        Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+        while (iter.hasNext()) {
+            Bundle.BundleEntryComponent entry = iter.next();
+            boolean exists = false;
+            if (entry.getResource() instanceof Condition) {
+                Condition c = (Condition) entry.getResource();
+                if (c.getCode().hasCoding()) {
+                    for (Coding coding : c.getCode().getCoding()) {
+                        String item = coding.getSystem() + "|" + coding.getCode();
+                        if (codesWeCareAbout.contains(item)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!exists) {
+                iter.remove();
+            }
+        }
+
+        // filter out any conditions that a) have no effective date, or b) the effective date is > 1 month ago
+        iter = b.getEntry().iterator();
+        while (iter.hasNext()) {
+            Bundle.BundleEntryComponent entry = iter.next();
+            Condition c = (Condition) entry.getResource();
+            if (c.hasOnsetDateTimeType()) {
+                if (c.getOnsetDateTimeType().getValue().before(ONE_MONTH_AGO)) {
+                    iter.remove();
+                }
+            } else if (c.hasRecordedDate()) {
+                if (c.getRecordedDate().before(ONE_MONTH_AGO)) {
+                    iter.remove();
+                }
+            } else {
+                iter.remove();
+            }
         }
 
         return b;

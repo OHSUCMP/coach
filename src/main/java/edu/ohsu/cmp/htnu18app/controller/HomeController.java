@@ -13,6 +13,7 @@ import edu.ohsu.cmp.htnu18app.service.EHRService;
 import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.htnu18app.service.MedicationService;
+import org.hl7.fhir.r4.model.AdverseEvent;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Resource;
@@ -29,7 +30,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpSession;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Controller
 public class HomeController extends BaseController {
@@ -180,10 +184,10 @@ public class HomeController extends BaseController {
         try {
             List<AdverseEventModel> list = new ArrayList<>();
 
-            Bundle bundle = ehrService.getAdverseEventConditions(session.getId());
+            Bundle bundle = ehrService.getAdverseEvents(session.getId());
             for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
                 try {
-                    AdverseEventModel model = new AdverseEventModel(entryCon.getResource());
+                    AdverseEventModel model = new AdverseEventModel((AdverseEvent) entryCon.getResource());
                     list.add(model);
 
                 } catch (DataException e) {

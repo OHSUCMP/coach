@@ -1,6 +1,9 @@
 package edu.ohsu.cmp.htnu18app.service;
 
 import edu.ohsu.cmp.htnu18app.entity.app.MyAdverseEvent;
+import edu.ohsu.cmp.htnu18app.entity.app.MyAdverseEventOutcome;
+import edu.ohsu.cmp.htnu18app.entity.app.Outcome;
+import edu.ohsu.cmp.htnu18app.repository.app.AdverseEventOutcomeRepository;
 import edu.ohsu.cmp.htnu18app.repository.app.AdverseEventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +19,23 @@ public class AdverseEventService extends BaseService {
     @Autowired
     private AdverseEventRepository repository;
 
+    @Autowired
+    private AdverseEventOutcomeRepository outcomeRepository;
+
     public List<MyAdverseEvent> getAll() {
         return repository.findAll();
+    }
+
+    public MyAdverseEventOutcome getOutcome(Long internalPatientId, String adverseEventId) {
+        MyAdverseEventOutcome outcome;
+        if (outcomeRepository.existsAdverseEventForPatient(internalPatientId, adverseEventId)) {
+            outcome = outcomeRepository.findOneByPatIdAndAdverseEventId(internalPatientId, adverseEventId);
+
+        } else {
+            outcome = new MyAdverseEventOutcome(internalPatientId, adverseEventId, Outcome.ONGOING);
+            outcome = outcomeRepository.saveAndFlush(outcome);
+        }
+
+        return outcome;
     }
 }

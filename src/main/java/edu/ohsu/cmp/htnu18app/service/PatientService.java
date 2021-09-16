@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.htnu18app.service;
 
+import edu.ohsu.cmp.htnu18app.entity.app.MyPatient;
 import edu.ohsu.cmp.htnu18app.repository.app.PatientRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -12,24 +13,21 @@ import org.springframework.stereotype.Service;
 public class PatientService extends BaseService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Value("${security.salt}")
     private String salt;
 
     @Autowired
     private PatientRepository repository;
 
-    public PatientService(@Value("${security.salt}") String salt) {
-        this.salt = salt;
-    }
-
     public Long getInternalPatientId(String fhirPatientId) {
         String patIdHash = buildPatIdHash(fhirPatientId);
 
-        edu.ohsu.cmp.htnu18app.entity.app.Patient p;
+        MyPatient p;
         if (repository.existsPatientByPatIdHash(patIdHash)) {
             p = repository.findOneByPatIdHash(patIdHash);
 
         } else {
-            p = new edu.ohsu.cmp.htnu18app.entity.app.Patient(patIdHash);
+            p = new MyPatient(patIdHash);
             p = repository.save(p);
         }
 

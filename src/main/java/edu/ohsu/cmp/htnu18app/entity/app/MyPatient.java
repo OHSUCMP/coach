@@ -3,18 +3,18 @@ package edu.ohsu.cmp.htnu18app.entity.app;
 import javax.persistence.*;
 
 @Entity
-@Table(schema = "htnu18app")
-public class Patient {
+@Table(schema = "htnu18app", name = "patient")
+public class MyPatient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String patIdHash;
 
-    protected Patient() {
+    protected MyPatient() {
     }
 
-    public Patient(String patIdHash) {
+    public MyPatient(String patIdHash) {
         this.patIdHash = patIdHash;
     }
 
