@@ -42,4 +42,12 @@ public class AdverseEventModel {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public String getOutcome() {
+        return outcome;
+    }
+
+    public void setOutcome(String outcome) {
+        this.outcome = outcome;
+    }
 }
