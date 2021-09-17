@@ -206,6 +206,9 @@ public class EHRService extends BaseService {
                     AdverseEvent ae = new AdverseEvent();
                     ae.setId(aeid);
 
+                    Patient p = getPatient(sessionId);
+                    ae.setSubject(new Reference().setReference(p.getId()));
+
                     ae.getOutcome().addCoding(new Coding()
                             .setCode(outcome.getOutcome().getFhirValue())
                             .setSystem("http://terminology.hl7.org/CodeSystem/adverse-event-outcome"));
