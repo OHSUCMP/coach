@@ -153,10 +153,7 @@ insert into adverse_event(description, conceptCode, conceptSystem) values("Synco
 drop table if exists adverse_event_outcome;
 create table adverse_event_outcome (
     id int not null auto_increment primary key,
-    patId int not null,
-    adverseEventId varchar(100) not null,
+    adverseEventIdHash char(64) unique not null,
     outcome varchar(30) not null
 );
-
-create unique index idxPatAdverseEventId on adverse_event_outcome (patId, adverseEventId);
 

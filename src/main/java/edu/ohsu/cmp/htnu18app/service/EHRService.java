@@ -4,6 +4,7 @@ import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.MyAdverseEvent;
 import edu.ohsu.cmp.htnu18app.entity.app.MyAdverseEventOutcome;
+import edu.ohsu.cmp.htnu18app.entity.app.Outcome;
 import edu.ohsu.cmp.htnu18app.fhir.FhirQueryManager;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
@@ -183,19 +184,28 @@ public class EHRService extends BaseService {
 
         Bundle b = cache.getAdverseEvents();
         if (b == null) {
-            b = new Bundle();
-            b.setType(Bundle.BundleType.COLLECTION);
+            b = buildAdverseEvents(sessionId);
+            cache.setAdverseEvents(b);
+        }
 
-            for (Bundle.BundleEntryComponent entry : getAdverseEventConditions(sessionId).getEntry()) {
-                if (entry.getResource() instanceof Condition) {
-                    Condition c = (Condition) entry.getResource();
+        return b;
+    }
 
+    private Bundle buildAdverseEvents(String sessionId) {
+        Bundle b = new Bundle();
+        b.setType(Bundle.BundleType.COLLECTION);
+
+        for (Bundle.BundleEntryComponent entry : getAdverseEventConditions(sessionId).getEntry()) {
+            if (entry.getResource() instanceof Condition) {
+                Condition c = (Condition) entry.getResource();
+
+                String aeid = "adverseevent-" + DigestUtils.sha256Hex(c.getId() + salt);
+
+                MyAdverseEventOutcome outcome = adverseEventService.getOutcome(aeid);
+                if (outcome.getOutcome() == Outcome.ONGOING) {
                     AdverseEvent ae = new AdverseEvent();
-
-                    String aeid = "adverseevent-" + DigestUtils.sha256Hex(c.getId() + salt);
                     ae.setId(aeid);
 
-                    MyAdverseEventOutcome outcome = adverseEventService.getOutcome(cache.getInternalPatientId(), aeid);
                     ae.getOutcome().addCoding(new Coding()
                             .setCode(outcome.getOutcome().getFhirValue())
                             .setSystem("http://terminology.hl7.org/CodeSystem/adverse-event-outcome"));
@@ -220,8 +230,6 @@ public class EHRService extends BaseService {
                     b.addEntry().setFullUrl("http://hl7.org/fhir/AdverseEvent/" + ae.getId()).setResource(ae);
                 }
             }
-
-            cache.setAdverseEvents(b);
         }
 
         return b;

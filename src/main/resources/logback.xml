@@ -32,5 +32,6 @@
     <logger name="edu.ohsu.cmp.htnu18app.cqfruler.CDSHookExecutor" level="DEBUG" />
     <logger name="edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient" level="INFO" />
     <logger name="edu.ohsu.cmp.htnu18app.util.FhirUtil" level="INFO" />
+    <logger name="edu.ohsu.cmp.htnu18app.service.AdverseEventService" level="DEBUG" />
 
 </configuration>

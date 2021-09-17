@@ -9,8 +9,7 @@ public class MyAdverseEventOutcome {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long patId;
-    private String adverseEventId;
+    private String adverseEventIdHash;
 
     @Enumerated(EnumType.STRING)
     private Outcome outcome;
@@ -18,9 +17,8 @@ public class MyAdverseEventOutcome {
     protected MyAdverseEventOutcome() {
     }
 
-    public MyAdverseEventOutcome(Long patId, String adverseEventId, Outcome outcome) {
-        this.patId = patId;
-        this.adverseEventId = adverseEventId;
+    public MyAdverseEventOutcome(String adverseEventIdHash, Outcome outcome) {
+        this.adverseEventIdHash = adverseEventIdHash;
         this.outcome = outcome;
     }
 
@@ -32,20 +30,12 @@ public class MyAdverseEventOutcome {
         this.id = id;
     }
 
-    public Long getPatId() {
-        return patId;
+    public String getAdverseEventIdHash() {
+        return adverseEventIdHash;
     }
 
-    public void setPatId(Long patId) {
-        this.patId = patId;
-    }
-
-    public String getAdverseEventId() {
-        return adverseEventId;
-    }
-
-    public void setAdverseEventId(String adverseEventId) {
-        this.adverseEventId = adverseEventId;
+    public void setAdverseEventIdHash(String adverseEventIdHash) {
+        this.adverseEventIdHash = adverseEventIdHash;
     }
 
     public Outcome getOutcome() {
