@@ -154,6 +154,7 @@ drop table if exists adverse_event_outcome;
 create table adverse_event_outcome (
     id int not null auto_increment primary key,
     adverseEventIdHash char(64) unique not null,
-    outcome varchar(30) not null
+    outcome varchar(30) not null,
+    createdDate datetime not null
 );
 

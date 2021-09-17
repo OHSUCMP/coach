@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -41,6 +42,7 @@ public class AdverseEventService extends BaseService {
 
         } else {
             outcome = new MyAdverseEventOutcome(adverseEventIdHash, Outcome.ONGOING);
+            outcome.setCreatedDate(new Date());
             outcome = outcomeRepository.saveAndFlush(outcome);
             logger.debug("outcome with adverseEventIdHash=" + adverseEventIdHash + " does NOT exist.  created (id=" + outcome.getId() + ")");
         }

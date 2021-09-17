@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.htnu18app.entity.app;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(schema = "htnu18app", name = "adverse_event_outcome")
@@ -13,6 +14,8 @@ public class MyAdverseEventOutcome {
 
     @Enumerated(EnumType.STRING)
     private Outcome outcome;
+
+    private Date createdDate;
 
     protected MyAdverseEventOutcome() {
     }
@@ -44,5 +47,13 @@ public class MyAdverseEventOutcome {
 
     public void setOutcome(Outcome outcome) {
         this.outcome = outcome;
+    }
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
     }
 }
