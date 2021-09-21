@@ -106,10 +106,6 @@
     display: block;
 }
 
-.counselingContainer * {
-    font-size: small;
-}
-
 .counselingContainer ul.actions {
     margin-top: 0;
 }
@@ -118,17 +114,36 @@
     background-color: #eff5ff;
     padding: 5px;
     margin-bottom: 5px;
+    width: 390px;
 }
 
-.goalsContainer *, .linksContainer * {
+span.adverseEvent {
+    font-weight: bold;
+    font-style: italic;
+}
+
+.adverseEventsContainer {
+    border: 1px solid red;
+    background-color: #ffeeee;
+    padding: 2px 4px 2px 4px;
+}
+
+div.adverseEvent {
+    background-color: #ffff99;
+    padding: 5px;
+    margin-bottom: 5px;
+    width: 390px;
+}
+
+.goalsContainer *, .linksContainer *, .counselingContainer *, .adverseEventsContainer * {
     font-size: small;
 }
 
-.goalsContainer .action ul, .linksContainer .action ul {
+.goalsContainer .action ul, .linksContainer .action ul, .adverseEventsContainer .action ul {
     margin-top: 0;
 }
 
-.commitToGoalButton, .updateGoalButton {
+.commitToGoal, .updateGoal, .registerAdverseEventAction {
     width: 120px;
     text-align: center;
     margin-left: auto;
@@ -139,12 +154,12 @@
     background-color: #2e6e9e;
 }
 
-.commitToGoalButton.hover, .updateGoalButton.hover {
+.commitToGoal.hover, .updateGoal.hover, .registerAdverseEventAction.hover {
     cursor: pointer;
     background-color: #2f96b4;
 }
 
-.commitToGoalButton *, .updateGoalButton * {
+.commitToGoal *, .updateGoal *, .registerAdverseEventAction * {
     font-size: medium;
 }
 

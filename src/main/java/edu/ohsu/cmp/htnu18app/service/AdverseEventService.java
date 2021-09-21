@@ -33,7 +33,7 @@ public class AdverseEventService extends BaseService {
     }
 
     public MyAdverseEventOutcome getOutcome(String adverseEventId) {
-        String adverseEventIdHash = DigestUtils.sha256Hex(adverseEventId + salt);
+        String adverseEventIdHash = hash(adverseEventId);
 
         MyAdverseEventOutcome outcome;
         if (outcomeRepository.exists(adverseEventIdHash)) {
@@ -48,5 +48,24 @@ public class AdverseEventService extends BaseService {
         }
 
         return outcome;
+    }
+
+    public boolean setOutcome(String adverseEventId, Outcome outcome) {
+        String adverseEventIdHash = hash(adverseEventId);
+        if (outcomeRepository.exists(adverseEventIdHash)) {
+            MyAdverseEventOutcome aeo = outcomeRepository.findOneByAdverseEventIdHash(adverseEventIdHash);
+            aeo.setOutcome(outcome);
+            outcomeRepository.save(aeo);
+            return true;
+
+        } else {
+            logger.warn("attempted to set outcome=" + outcome + " for adverseEventIdHash=" + adverseEventIdHash +
+                    " but no such record found!  this shouldn't happen.  skipping -");
+            return false;
+        }
+    }
+
+    private String hash(String s) {
+        return DigestUtils.sha256Hex(s + salt);
     }
 }

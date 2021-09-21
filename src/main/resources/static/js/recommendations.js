@@ -44,46 +44,47 @@ function renderCards(cards) {
     }
 
     cards.forEach(function (card) {
-        html += "<div class='card " + card.indicator + "'>\n";
-        html += "<table style='width:100%'><tr><td>\n";
-        html += "<div class='circle'><span>XX</span></div>\n"
-        html += "</td><td>\n";
-        html += "<div class='content'>\n";
-        html += "<span class='summary heading'>" + card.summary + "</span>\n";
+        html += "<div class='card " + card.indicator + "'>";
+        html += "<table style='width:100%'><tr><td>";
+        html += "<div class='circle'><span>XX</span></div>"
+        html += "</td><td class='expand'>";
+        html += "<div class='content'>";
+        html += "<span class='summary heading'>" + card.summary + "</span>";
 
         if (card.rationale !== null) {
-            html += "<span class='rationale'>" + card.rationale + "</span>\n";
+            html += "<span class='rationale'>" + card.rationale + "</span>";
         }
 
         if (card.source.label !== null && card.source.url !== null) {
             html += "<span class='source'>";
             html += "<a href='" + card.source.url + "' target='_blank' rel='noopener noreferrer'>" +
                 card.source.label + "</a>";
-            html += "</span>\n";
+            html += "</span>";
         }
 
         if (card.links !== null) {
             html += "<div class='links'>";
             card.links.forEach(function(link) {
-                html += "<a class='link' href='" + link.url + "'>" + link.label + "</a>\n";
+                html += "<a class='link' href='" + link.url + "'>" + link.label + "</a>";
             });
-            html += "</div>\n";
+            html += "</div>";
         }
 
         html += buildCounselingHTML(card.suggestions);
 
-        html += "</td><td>\n";
+        html += "</td><td class='shrink'>";
+
+        html += buildAdverseEvents(card.suggestions);
 
         html += buildGoalsHTML(card.suggestions);
 
         html += buildLinksHTML(card.suggestions);
         // if (card.selectionBehavior !== null) {
-        //     html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>\n";
+        //     html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>";
         // }
 
-        html += "</div>\n";
-        html += "</td></tr></table>\n";
-        html += "</div>\n";
+        html += "</td></tr></table>";
+        html += "</div>";
     });
     return html;
 }
@@ -102,13 +103,54 @@ function buildCounselingHTML(suggestions) {
                     });
                     html += "</ul>";
                 }
-                html += "</div>\n";
+                html += "</div>";
             }
         });
     }
     return html !== "" ?
         "<div class='counselingContainer'>" + html + "</div>" :
         "";
+}
+
+function buildAdverseEvents(suggestions) {
+    let html = "";
+    if (suggestions != null) {
+        suggestions.forEach(function(s) {
+            if (s.type === 'adverse-event') {
+                html += "<div class='adverseEvent' data-id='" + s.id + "'>";
+                html += "<span class='heading'>" + s.label + "</span>";
+                html += "<table><tr>";
+                html += "<td class='expand'>";
+
+                let x = randomChars(5);
+                html += "<div class='action'>";
+                html += "<input name='action" + x + "' type='radio' id='action" + x + "_y' value='yes' />";
+                html += "<label for='action" + x + "_y'>Yes</label></div>";
+                html += "</div>";
+
+                html += "<div class='action'>";
+                html += "<input name='action" + x + "' type='radio' id='action" + x + "_n' value='no' />";
+                html += "<label for='action" + x + "_y'>No</label></div>";
+                html += "</div>";
+
+                html += "</td>";
+                html += "<td class='shrink'><div class='registerAdverseEventAction'><span>Register Action</span></div></td>";
+                html += "</tr>";
+
+                html += "</tr></table>";
+                html += "</div>";
+            }
+        });
+    }
+
+    if (html !== "") {
+        html = "<div class='adverseEventsContainer'>" +
+            "<div class='heading'>Have you discussed any of these conditions with your care team?</div>" +
+            html +
+            "</div>";
+    }
+
+    return html;
 }
 
 function buildGoalsHTML(suggestions) {
@@ -122,13 +164,13 @@ function buildGoalsHTML(suggestions) {
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tr>";
 
-                html += "<td>";
+                html += "<td class='expand'>";
                 if (s.type === 'goal') {
                     if (s.actions === null || s.actions.length === 0) {
                         // freeform input
                         html += "<div class='action'>";
                         html += "<input type='text' placeholder='Describe your goal here' />";
-                        html += "</div>\n";
+                        html += "</div>";
 
                     } else {
                         // predefined multiple-choice goal, these are radio buttons
@@ -155,7 +197,7 @@ function buildGoalsHTML(suggestions) {
                                 });
                             }
 
-                            html += "</div>\n";
+                            html += "</div>";
                             i++;
                         });
 
@@ -171,7 +213,7 @@ function buildGoalsHTML(suggestions) {
                         html += "<div class='action'>";
                         html += "<input type='text' class='systolic' placeholder='Systolic' /> /";
                         html += "<input type='text' class='diastolic' placeholder='Diastolic' />";
-                        html += "</div>\n";
+                        html += "</div>";
 
                     } else {
                         // predefined multiple-choice goal, these are radio buttons
@@ -181,7 +223,7 @@ function buildGoalsHTML(suggestions) {
                             let bpdata = parseBPData(action.label);
                             html += "<div class='action'>";
                             html += "<input name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + action.label + "' data-systolic='" + bpdata.systolic + "' data-diastolic='" + bpdata.diastolic + "' />";
-                            html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label></div>\n";
+                            html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label></div>";
                             i++;
                         });
 
@@ -189,11 +231,11 @@ function buildGoalsHTML(suggestions) {
                         html += "<input name='action" + x + "' type='radio' class='custom' />";
                         html += "<input type='text' class='customResponse systolic' placeholder='Systolic' disabled/> / ";
                         html += "<input type='text' class='customResponse diastolic' placeholder='Diastolic' disabled/>";
-                        html += "</div>\n";
+                        html += "</div>";
                     }
                 }
                 html += "</td>";
-                html += "<td><div class='commitToGoalButton'><span>Commit to Goal</span></div></td>\n";
+                html += "<td class='shrink'><div class='commitToGoal'><span>Commit to Goal</span></div></td>";
                 html += "</tr>";
 
                 if (s.type === 'goal') {
@@ -205,7 +247,7 @@ function buildGoalsHTML(suggestions) {
                 }
 
                 html += "</table>";
-                html += "</div>\n";
+                html += "</div>";
 
             } else if (s.type === 'update-goal') {
                 html += "<div class='goal' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
@@ -223,19 +265,19 @@ function buildGoalsHTML(suggestions) {
                     if (value === a_status) {
                         html += " selected";
                     }
-                    html += ">" + toLabel(value) + "</option>\n";
+                    html += ">" + toLabel(value) + "</option>";
                 });
 
-                html += "</select></div>\n";
+                html += "</select></div>";
 
                 html += "</td><td>";
 
-                html += "<div class='updateGoalButton'><span>Record Progress</span></div></td>\n";
+                html += "<div class='updateGoal'><span>Record Progress</span></div></td>";
                 html += "</td>";
                 html += "</tr><tr>";
 
                 html += "</td></tr></table>";
-                html += "</div>\n";
+                html += "</div>";
             }
         });
     }
@@ -312,7 +354,7 @@ function buildLinksHTML(suggestions) {
                 });
  
                 html += "</tbody></table>";
-                html += "</div>\n";
+                html += "</div>";
             }
         });
     }
@@ -334,28 +376,28 @@ function parseBPData(s) {
 
 function buildGoalData(button) {
     let goal = $(button).closest('.goal');
-    let g = {};
-    g.extGoalId = $(goal).attr('data-id');
-    g.referenceSystem = $(goal).attr('data-reference-system');
-    g.referenceCode = $(goal).attr('data-reference-code');
-    g.goalText = getGoalText(goal);
-    g.systolicTarget = 0;
-    g.diastolicTarget = 0;
-    g.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
-    return g;
+    let obj = {};
+    obj.extGoalId = $(goal).attr('data-id');
+    obj.referenceSystem = $(goal).attr('data-reference-system');
+    obj.referenceCode = $(goal).attr('data-reference-code');
+    obj.goalText = getGoalText(goal);
+    obj.systolicTarget = 0;
+    obj.diastolicTarget = 0;
+    obj.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
+    return obj;
 }
 
 function buildBPGoalData(button) {
     let goal = $(button).closest('.bpGoal');
-    let g = {};
+    let obj = {};
     // g.extGoalId = $(goal).attr('data-id');
     // g.referenceSystem = $(goal).attr('data-reference-system');
     // g.referenceCode = $(goal).attr('data-reference-code');
     let target = getGoalBPTarget(goal);
-    g.systolicTarget = target.systolic;
-    g.diastolicTarget = target.diastolic;
+    obj.systolicTarget = target.systolic;
+    obj.diastolicTarget = target.diastolic;
     // g.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
-    return g;
+    return obj;
 }
 
 function getGoalText(goal) {
@@ -415,20 +457,20 @@ function getGoalBPTarget(bpGoal) {
 
 function buildGoalUpdateData(button) {
     let goal = $(button).closest('.goal');
-    let g = {};
-    g.extGoalId = $(goal).attr('data-id');
-    g.achievementStatus = $(goal).find('.achievementStatus').find(':selected').val();
-    return g;
+    let obj = {};
+    obj.extGoalId = $(goal).attr('data-id');
+    obj.achievementStatus = $(goal).find('.achievementStatus').find(':selected').val();
+    return obj;
 }
 
 function buildCounselingData(a) {
     let counseling = $(a).closest('.counseling');
-    let c = {};
-    c.extCounselingId = $(counseling).attr('data-id');
-    c.referenceSystem = $(counseling).attr('data-reference-system');
-    c.referenceCode = $(counseling).attr('data-reference-code');
-    c.counselingText = a.innerText;
-    return c;
+    let obj = {};
+    obj.extCounselingId = $(counseling).attr('data-id');
+    obj.referenceSystem = $(counseling).attr('data-reference-system');
+    obj.referenceCode = $(counseling).attr('data-reference-code');
+    obj.counselingText = a.innerText;
+    return obj;
 }
 
 async function registerCounselingReceived(c, _callback) {
@@ -504,15 +546,44 @@ async function updateGoal(g, _callback) {
     _callback(response.status);
 }
 
+async function registerAdverseEventAction(ae, _callback) {
+    let formData = new FormData();
+    formData.append("adverseEventId", ae.adverseEventId);
+    formData.append("actionTaken", ae.actionTaken);
+
+    let response = await fetch("/adverse-event/register-action", {
+        method: "POST",
+        body: formData
+    });
+
+    await response.text();
+
+    _callback(response.status);
+}
+
+function buildAdverseEventData(button) {
+    let ae = $(button).closest('.adverseEvent');
+    let obj = {};
+    obj.adverseEventId = $(ae).attr('data-id');
+
+    let action = $(ae).find('.action');
+    let val = $(action).find("input[type='radio']:checked").val();
+    obj.actionTaken = val === 'yes';
+
+    return obj;
+}
+
+
 function hide(el) {
     $(el).fadeOut();
 }
 
 $(document).ready(function() {
-    enableHover('.commitToGoalButton');
-    enableHover('.updateGoalButton');
+    enableHover('.commitToGoal');
+    enableHover('.updateGoal');
+    enableHover('.registerAdverseEventAction');
 
-    $(document).on('click', '.goal .commitToGoalButton', function() {
+    $(document).on('click', '.goal .commitToGoal', function() {
         let g = buildGoalData(this);
         let container = $(this).closest('.goal');
 
@@ -523,7 +594,7 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('click', '.bpGoal .commitToGoalButton', function() {
+    $(document).on('click', '.bpGoal .commitToGoal', function() {
         let g = buildBPGoalData(this);
         let container = $(this).closest('.bpGoal');
 
@@ -541,7 +612,7 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('click', '.goal .updateGoalButton', function() {
+    $(document).on('click', '.goal .updateGoal', function() {
         let g = buildGoalUpdateData(this);
         let container = $(this).closest('.goal');
 
@@ -558,6 +629,17 @@ $(document).ready(function() {
         let c = buildCounselingData(this);
         registerCounselingReceived(c, function(status) {
             window.location.href = $(a).attr('href');
+        });
+    });
+
+    $(document).on('click', '.adverseEvent .registerAdverseEventAction', function() {
+        let g = buildAdverseEventData(this);
+        let container = $(this).closest('.adverseEvent');
+
+        registerAdverseEventAction(g, function(status) {
+            if (status === 200) {
+                hide(container);
+            }
         });
     });
 
