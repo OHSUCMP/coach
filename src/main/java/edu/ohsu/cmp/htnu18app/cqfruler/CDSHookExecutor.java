@@ -15,6 +15,7 @@ import edu.ohsu.cmp.htnu18app.cqfruler.model.HookRequest;
 import edu.ohsu.cmp.htnu18app.entity.app.Counseling;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.htnu18app.entity.app.MyGoal;
+import edu.ohsu.cmp.htnu18app.exception.CaseNotHandledException;
 import edu.ohsu.cmp.htnu18app.exception.SessionMissingException;
 import edu.ohsu.cmp.htnu18app.fhir.FhirConfigManager;
 import edu.ohsu.cmp.htnu18app.http.HttpRequest;
@@ -29,6 +30,7 @@ import edu.ohsu.cmp.htnu18app.service.GoalService;
 import edu.ohsu.cmp.htnu18app.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.htnu18app.util.MustacheUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,14 +134,14 @@ public class CDSHookExecutor implements Runnable {
         try {
             Patient p = ehrService.getPatient(sessionId);
 
-            Bundle bpBundle = buildBPBundle(p.getId());
-            Bundle counselingBundle = buildCounselingBundle(p.getId());
-            Bundle goalsBundle = buildGoalsBundle(p.getId());
-//            Bundle conditionsBundle = buildConditionsBundle(p.getId());
-            Bundle adverseEventsBundle = ehrService.getAdverseEvents(sessionId);
+            CompositeBundle compositeBundle = new CompositeBundle();
+            compositeBundle.consume(p);
+            compositeBundle.consume(buildBPBundle(p.getId()));
+            compositeBundle.consume(buildCounselingBundle(p.getId()));
+            compositeBundle.consume(buildGoalsBundle(p.getId()));
+            compositeBundle.consume(ehrService.getAdverseEvents(sessionId));
 
-            HookRequest request = new HookRequest(fcc.getCredentials(), p, bpBundle, counselingBundle, goalsBundle,
-                    adverseEventsBundle);
+            HookRequest request = new HookRequest(fcc.getCredentials(), compositeBundle.getBundle());
 
             MustacheFactory mf = new DefaultMustacheFactory();
             Mustache mustache = mf.compile("cqfruler/hookRequest.mustache");
@@ -210,6 +212,36 @@ public class CDSHookExecutor implements Runnable {
         }
 
         return cards;
+    }
+
+    private static final class CompositeBundle {
+        private Bundle bundle;
+
+        public CompositeBundle() {
+            bundle = new Bundle();
+            bundle.setType(Bundle.BundleType.COLLECTION);
+        }
+
+        public void consume(IBaseResource resource) {
+            if (resource != null) {
+                if (resource instanceof Bundle) {
+                    for (Bundle.BundleEntryComponent entry : ((Bundle) resource).getEntry()) {
+                        bundle.addEntry(entry.copy());
+                    }
+
+                } else if (resource instanceof Resource) {
+                    Resource r = (Resource) resource;
+                    bundle.addEntry(new Bundle.BundleEntryComponent().setFullUrl(r.getId()).setResource(r));
+
+                } else {
+                    throw new CaseNotHandledException("couldn't handle " + resource.getClass().getName());
+                }
+            }
+        }
+
+        public Bundle getBundle() {
+            return bundle;
+        }
     }
 
     private Bundle buildCounselingBundle(String patientId) {

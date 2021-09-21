@@ -36,7 +36,7 @@ public class HookRequest {
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < prefetchArr.length; i ++) {
-                sb.append("\"item").append(i).append("\":{");
+                sb.append("\"item").append(i+1).append("\":{");
 
                 sb.append("\"response\":{\"status\":\"200 OK\"},");
 
