@@ -12,9 +12,9 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>htnu18app.log</file>
+        <file>coach.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>htnu18app.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+            <fileNamePattern>coach.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
             <maxHistory>10</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
@@ -29,9 +29,9 @@
         <appender-ref ref="FILE" />
     </root>
 
-    <logger name="edu.ohsu.cmp.htnu18app.cqfruler.CDSHookExecutor" level="DEBUG" />
-    <logger name="edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient" level="INFO" />
-    <logger name="edu.ohsu.cmp.htnu18app.util.FhirUtil" level="INFO" />
-    <logger name="edu.ohsu.cmp.htnu18app.service.AdverseEventService" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.cqfruler.CDSHookExecutor" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient" level="INFO" />
+    <logger name="edu.ohsu.cmp.coach.util.FhirUtil" level="INFO" />
+    <logger name="edu.ohsu.cmp.coach.service.AdverseEventService" level="DEBUG" />
 
 </configuration>

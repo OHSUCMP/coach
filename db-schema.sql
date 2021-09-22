@@ -1,10 +1,10 @@
-create database if not exists htnu18app;
+create database if not exists coach;
 
-use htnu18app;
+use coach;
 
--- drop user if exists 'htnu18app'@'%';
--- create user 'htnu18app'@'%' identified by 'htnu18app';
--- grant all on htnu18app.* to 'htnu18app'@'%';
+-- drop user if exists 'coach'@'%';
+-- create user 'coach'@'%' identified by 'coach';
+-- grant all on coach.* to 'coach'@'%';
 
 drop table if exists patient;
 create table patient (
