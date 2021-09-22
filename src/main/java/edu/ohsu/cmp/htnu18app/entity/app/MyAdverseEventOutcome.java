@@ -16,6 +16,7 @@ public class MyAdverseEventOutcome {
     private Outcome outcome;
 
     private Date createdDate;
+    private Date modifiedDate;
 
     protected MyAdverseEventOutcome() {
     }
@@ -55,5 +56,13 @@ public class MyAdverseEventOutcome {
 
     public void setCreatedDate(Date createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public Date getModifiedDate() {
+        return modifiedDate;
+    }
+
+    public void setModifiedDate(Date modifiedDate) {
+        this.modifiedDate = modifiedDate;
     }
 }

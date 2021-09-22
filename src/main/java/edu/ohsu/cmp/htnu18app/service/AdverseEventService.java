@@ -55,6 +55,7 @@ public class AdverseEventService extends BaseService {
         if (outcomeRepository.exists(adverseEventIdHash)) {
             MyAdverseEventOutcome aeo = outcomeRepository.findOneByAdverseEventIdHash(adverseEventIdHash);
             aeo.setOutcome(outcome);
+            aeo.setModifiedDate(new Date());
             outcomeRepository.save(aeo);
             return true;
 
