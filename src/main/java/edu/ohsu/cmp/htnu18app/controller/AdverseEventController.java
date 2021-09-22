@@ -26,7 +26,6 @@ public class AdverseEventController {
                                                  @RequestParam("adverseEventId") String adverseEventId,
                                                  @RequestParam("actionTaken") Boolean actionTaken) {
 
-        // get the cache just to make sure it's defined and the user is properly authenticated
         CacheData cache = SessionCache.getInstance().get(session.getId());
 
         HttpStatus status = HttpStatus.OK;
