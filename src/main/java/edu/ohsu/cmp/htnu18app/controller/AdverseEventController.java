@@ -36,7 +36,6 @@ public class AdverseEventController {
             boolean success = adverseEventService.setOutcome(adverseEventId, Outcome.RESOLVED);
 
             if (success) {
-//                cache.setAdverseEvents(null); // setting to null triggers re-getting adverse events
                 cache.deleteSuggestion(adverseEventId);
                 message = "update successful";
 
