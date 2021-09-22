@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.htnu18app.controller;
 
+import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.Outcome;
 import edu.ohsu.cmp.htnu18app.service.AdverseEventService;
@@ -26,7 +27,7 @@ public class AdverseEventController {
                                                  @RequestParam("actionTaken") Boolean actionTaken) {
 
         // get the cache just to make sure it's defined and the user is properly authenticated
-        SessionCache.getInstance().get(session.getId());
+        CacheData cache = SessionCache.getInstance().get(session.getId());
 
         HttpStatus status = HttpStatus.OK;
         String message;
@@ -35,7 +36,10 @@ public class AdverseEventController {
             boolean success = adverseEventService.setOutcome(adverseEventId, Outcome.RESOLVED);
 
             if (success) {
+//                cache.setAdverseEvents(null); // setting to null triggers re-getting adverse events
+                cache.deleteSuggestion(adverseEventId);
                 message = "update successful";
+
             } else {
                 status = HttpStatus.INTERNAL_SERVER_ERROR;
                 message = "error - check server logs";
@@ -47,5 +51,4 @@ public class AdverseEventController {
 
         return new ResponseEntity<>(message, status);
     }
-
 }

@@ -103,21 +103,21 @@ public class CacheData {
         this.adverseEvents = adverseEvents;
     }
 
-    public boolean containsCards(String hookId) {
-        return cards.containsKey(hookId);
+    public boolean containsCards(String recommendationId) {
+        return cards.containsKey(recommendationId);
     }
 
-    public void setCards(String hookId, List<Card> list) {
-        cards.put(hookId, list);
+    public void setCards(String recommendationId, List<Card> list) {
+        cards.put(recommendationId, list);
     }
 
-    public List<Card> getCards(String hookId) {
-        return cards.get(hookId);
+    public List<Card> getCards(String recommendationId) {
+        return cards.get(recommendationId);
     }
 
-    public boolean deleteCards(String hookId) {
-        if (cards.containsKey(hookId)) {
-            cards.remove(hookId);
+    public boolean deleteCards(String recommendationId) {
+        if (cards.containsKey(recommendationId)) {
+            cards.remove(recommendationId);
             return true;
         }
         return false;
@@ -127,6 +127,12 @@ public class CacheData {
         cards.clear();
     }
 
+    /**
+     * used to clear a particular Suggestion from the cache, by ID.  very useful for updating the cache in-place
+     * after the user performs an action that should make that suggestion disappear
+     * @param id
+     * @return
+     */
     public boolean deleteSuggestion(String id) {
         boolean rval = false;
         for (Map.Entry<String, List<Card>> entry : cards.entrySet()) {

@@ -14,7 +14,7 @@ function enableDatePicker(sel) {
     });
 }
 
-async function getCachedRecommendations(_callback) {
+async function getRecommendations(_callback) {
     $(".recommendation").each(function () {
         let recommendationId = $(this).attr('data-id');
         let cardsContainer = $(this).find('.cardsContainer');
@@ -574,8 +574,10 @@ function buildAdverseEventData(button) {
 }
 
 
-function hide(el) {
-    $(el).fadeOut();
+function hide(el, _complete) {
+    $(el).addClass('hidden');
+    _complete(el);
+//    $(el).fadeOut(400, _complete(el));
 }
 
 $(document).ready(function() {
@@ -633,12 +635,18 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.adverseEvent .registerAdverseEventAction', function() {
-        let g = buildAdverseEventData(this);
+        let ae = buildAdverseEventData(this);
         let container = $(this).closest('.adverseEvent');
 
-        registerAdverseEventAction(g, function(status) {
+        registerAdverseEventAction(ae, function(status) {
             if (status === 200) {
-                hide(container);
+                hide(container, function(el) {
+                    let parent = $(el).closest('.adverseEventsContainer');
+                    let anyChildrenVisible = $(parent).find('.adverseEvent:visible').length > 0;
+                    if (parent.is(':visible') && ! anyChildrenVisible) {
+                        hide(parent);
+                    }
+                });
             }
         });
     });

@@ -4,7 +4,6 @@ import edu.ohsu.cmp.htnu18app.cache.CacheData;
 import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.entity.app.MyAdverseEvent;
 import edu.ohsu.cmp.htnu18app.entity.app.MyAdverseEventOutcome;
-import edu.ohsu.cmp.htnu18app.entity.app.Outcome;
 import edu.ohsu.cmp.htnu18app.fhir.FhirQueryManager;
 import edu.ohsu.cmp.htnu18app.model.GoalModel;
 import edu.ohsu.cmp.htnu18app.model.fhir.FHIRCredentialsWithClient;
@@ -201,37 +200,35 @@ public class EHRService extends BaseService {
 
                 String aeid = "adverseevent-" + DigestUtils.sha256Hex(c.getId() + salt);
 
-                MyAdverseEventOutcome outcome = adverseEventService.getOutcome(aeid);
-                if (outcome.getOutcome() == Outcome.ONGOING) {
-                    AdverseEvent ae = new AdverseEvent();
-                    ae.setId(aeid);
+                AdverseEvent ae = new AdverseEvent();
+                ae.setId(aeid);
 
-                    Patient p = getPatient(sessionId);
-                    ae.setSubject(new Reference().setReference(p.getId()));
+                Patient p = getPatient(sessionId);
+                ae.setSubject(new Reference().setReference(p.getId()));
 
-                    ae.getOutcome().addCoding(new Coding()
-                            .setCode(outcome.getOutcome().getFhirValue())
-                            .setSystem("http://terminology.hl7.org/CodeSystem/adverse-event-outcome"));
+                ae.setEvent(c.getCode().copy());
+                ae.getResultingCondition().add(new Reference().setReference(c.getId()));
 
-                    ae.setEvent(c.getCode().copy());
-                    ae.getResultingCondition().add(new Reference().setReference(c.getId()));
-
-                    if (c.hasOnsetDateTimeType()) {
-                        ae.setDate(c.getOnsetDateTimeType().getValue());
-                    } else if (c.hasRecordedDate()) {
-                        ae.setDate(c.getRecordedDate());
-                    }
-
-                    if (c.hasOnsetDateTimeType()) {
-                        ae.setDetected(c.getOnsetDateTimeType().getValue());
-                    }
-
-                    if (c.hasRecordedDate()) {
-                        ae.setRecordedDate(c.getRecordedDate());
-                    }
-
-                    b.addEntry().setFullUrl("http://hl7.org/fhir/AdverseEvent/" + ae.getId()).setResource(ae);
+                if (c.hasOnsetDateTimeType()) {
+                    ae.setDate(c.getOnsetDateTimeType().getValue());
+                } else if (c.hasRecordedDate()) {
+                    ae.setDate(c.getRecordedDate());
                 }
+
+                if (c.hasOnsetDateTimeType()) {
+                    ae.setDetected(c.getOnsetDateTimeType().getValue());
+                }
+
+                if (c.hasRecordedDate()) {
+                    ae.setRecordedDate(c.getRecordedDate());
+                }
+
+                MyAdverseEventOutcome outcome = adverseEventService.getOutcome(aeid);
+                ae.getOutcome().addCoding(new Coding()
+                        .setCode(outcome.getOutcome().getFhirValue())
+                        .setSystem("http://terminology.hl7.org/CodeSystem/adverse-event-outcome"));
+
+                b.addEntry().setFullUrl("http://hl7.org/fhir/AdverseEvent/" + ae.getId()).setResource(ae);
             }
         }
 

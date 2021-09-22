@@ -5,8 +5,8 @@ import edu.ohsu.cmp.htnu18app.cache.SessionCache;
 import edu.ohsu.cmp.htnu18app.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.htnu18app.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.htnu18app.entity.app.HomeBloodPressureReading;
+import edu.ohsu.cmp.htnu18app.entity.app.Outcome;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
-import edu.ohsu.cmp.htnu18app.exception.IncompatibleResourceException;
 import edu.ohsu.cmp.htnu18app.model.*;
 import edu.ohsu.cmp.htnu18app.model.recommendation.Card;
 import edu.ohsu.cmp.htnu18app.service.EHRService;
@@ -185,16 +185,18 @@ public class HomeController extends BaseController {
             List<AdverseEventModel> list = new ArrayList<>();
 
             Bundle bundle = ehrService.getAdverseEvents(session.getId());
-            for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
-                try {
-                    AdverseEventModel model = new AdverseEventModel((AdverseEvent) entryCon.getResource());
-                    list.add(model);
+            for (Bundle.BundleEntryComponent entry: bundle.getEntry()) {
+                if (entry.getResource() instanceof AdverseEvent) {
+                    try {
+                        AdverseEvent ae = (AdverseEvent) entry.getResource();
+                        AdverseEventModel model = new AdverseEventModel(ae);
+                        if (model.hasOutcome(Outcome.ONGOING)) {
+                            list.add(new AdverseEventModel(ae));
+                        }
 
-                } catch (DataException e) {
-                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
-
-                } catch (IncompatibleResourceException ire) {
-                    logger.debug(ire.getMessage());
+                    } catch (DataException e) {
+                        logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+                    }
                 }
             }
 

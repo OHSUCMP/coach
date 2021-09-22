@@ -1,17 +1,18 @@
 package edu.ohsu.cmp.htnu18app.model;
 
+import edu.ohsu.cmp.htnu18app.entity.app.Outcome;
 import edu.ohsu.cmp.htnu18app.exception.DataException;
-import edu.ohsu.cmp.htnu18app.exception.IncompatibleResourceException;
 import org.hl7.fhir.r4.model.AdverseEvent;
 import org.hl7.fhir.r4.model.Coding;
 
 public class AdverseEventModel {
+
     private String system;
     private String code;
     private String description;
-    private String outcome;
+    private String outcome;         // should map with Outcome.fhirValue
 
-    public AdverseEventModel(AdverseEvent adverseEvent) throws DataException, IncompatibleResourceException {
+    public AdverseEventModel(AdverseEvent adverseEvent) throws DataException {
         Coding c = adverseEvent.getEvent().getCodingFirstRep();
         this.system = c.getSystem();
         this.code = c.getCode();
@@ -49,5 +50,9 @@ public class AdverseEventModel {
 
     public void setOutcome(String outcome) {
         this.outcome = outcome;
+    }
+
+    public boolean hasOutcome(Outcome o) {
+        return o.getFhirValue().equals(outcome);
     }
 }

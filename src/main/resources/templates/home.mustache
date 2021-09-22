@@ -87,7 +87,7 @@
                     populateAdverseEvents();
                 });
 
-                getCachedRecommendations(function(container, cards) {
+                getRecommendations(function(container, cards) {
                     if (cards) {
                         $(container).html(renderCards(cards));
                         $(container).find('.bpGoal input.systolic').inputmask({
