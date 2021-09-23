@@ -135,7 +135,10 @@ public class CDSHookExecutor implements Runnable {
             Patient p = ehrService.getPatient(sessionId);
 
             CompositeBundle compositeBundle = new CompositeBundle();
-            compositeBundle.consume(p);
+
+//            compositeBundle.consume(p);       // don't send the patient resource, which contains nested extensions
+                                                // that CQF Ruler can't handle via prefetch
+
             compositeBundle.consume(buildBPBundle(p.getId()));
             compositeBundle.consume(buildCounselingBundle(p.getId()));
             compositeBundle.consume(buildGoalsBundle(p.getId()));
