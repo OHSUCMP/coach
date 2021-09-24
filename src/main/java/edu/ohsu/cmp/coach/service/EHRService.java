@@ -163,15 +163,26 @@ public class EHRService extends BaseService {
         Bundle b = fcc.search(fhirQueryManager.getMedicationRequestQuery(fcc.getCredentials().getPatientId()));
         if (b == null) return null;
 
+        // creating a separate bundle for Medications, instead of adding them directly to the main
+        // bundle while iterating over it (below).  this prevents ConcurrentModificationException
+        Bundle medicationBundle = new Bundle();
+        medicationBundle.setType(Bundle.BundleType.COLLECTION);
+
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (entry.getResource() instanceof MedicationRequest) {
                 MedicationRequest mr = (MedicationRequest) entry.getResource();
                 if (mr.hasMedicationReference()) {
                     if ( ! FhirUtil.bundleContainsReference(b, mr.getMedicationReference().getReference()) ) {
                         Medication m = fcc.read(Medication.class, mr.getMedicationReference().getReference());
-                        b.addEntry(new Bundle.BundleEntryComponent().setResource(m));
+                        medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
                     }
                 }
+            }
+        }
+
+        if (medicationBundle.hasEntry()) {
+            for (Bundle.BundleEntryComponent entry : medicationBundle.getEntry()) {
+                b.addEntry(entry);
             }
         }
 
