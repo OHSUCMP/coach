@@ -207,6 +207,15 @@ public class EHRService extends BaseService {
                 ae.setSubject(new Reference().setReference(p.getId()));
 
                 ae.setEvent(c.getCode().copy());
+
+                // adding custom event code to make it clear to CQF-Ruler that these AdverseEvent resources
+                // originated within the COACH application.  we don't want CQF-Ruler using AdverseEvent resources
+                // from the EHR, so we need a reliable way to differentiate them
+                ae.getEvent().addCoding(new Coding()
+                        .setCode("coach-adverse-event")
+                        .setSystem("https://coach.ohsu.edu")
+                        .setDisplay("Adverse Event reported by COACH"));
+
                 ae.getResultingCondition().add(new Reference().setReference(c.getId()));
 
                 if (c.hasOnsetDateTimeType()) {
