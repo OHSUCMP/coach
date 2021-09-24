@@ -100,12 +100,21 @@ public class MedicationService extends BaseService {
                     Medication m = FhirUtil.getResourceFromBundleByReference(b, Medication.class,
                             mr.getMedicationReference().getReference());
 
-                    for (Coding c : m.getCode().getCoding()) {
-                        if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
-                            matchingIds.add(mr.getId());
-                            matchingIds.add(m.getId()); // also include the Medication resource
-                            break;
+                    if (m != null && m.hasCode()) {
+                        CodeableConcept cc = m.getCode();
+                        if (cc.hasCoding()) {
+                            for (Coding c : cc.getCoding()) {
+                                if (concepts.contains(c.getSystem() + "|" + c.getCode())) {
+                                    matchingIds.add(mr.getId());
+                                    matchingIds.add(m.getId()); // also include the Medication resource
+                                    break;
+                                }
+                            }
                         }
+
+                    } else if (m == null) {
+                        logger.warn("no Medication found in bundle for reference=" +
+                                mr.getMedicationReference().getReference());
                     }
                 }
             }
