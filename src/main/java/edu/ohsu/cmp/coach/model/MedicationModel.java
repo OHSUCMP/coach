@@ -79,30 +79,39 @@ public class MedicationModel implements Comparable<MedicationModel> {
     private void createFromMedicationRequest(MedicationRequest mr, Bundle bundle) throws DataException {
         status = mr.getStatus().getDisplay();
 
+        CodeableConcept cc;
         if (mr.hasMedicationCodeableConcept()) {
-            CodeableConcept mcc = mr.getMedicationCodeableConcept();
-//            description = mcc.getText();
-
-            Coding c = mcc.getCodingFirstRep();
-            system = c.getSystem();
-            code = c.getCode();
-            description = c.getDisplay();
+            cc = mr.getMedicationCodeableConcept();
 
         } else if (mr.hasMedicationReference()) {
-            Medication m = FhirUtil.getResourceFromBundleByReference(bundle, Medication.class, mr.getMedicationReference().getReference());
+            String reference = mr.getMedicationReference().getReference();
+            Medication m = FhirUtil.getResourceFromBundleByReference(bundle, Medication.class, reference);
+            if (m == null) {
+                throw new DataException("Medication not found in bundle: " + reference);
 
-            if (m != null && m.hasCode()) {
-                Coding c = m.getCode().getCodingFirstRep();
-                system = c.getSystem();
-                code = c.getCode();
-                description = c.getDisplay();
+            } else if (m.hasCode()) {
+                cc = m.getCode();
 
             } else {
-                throw new DataException("medication or medication code not found in bundle: " + mr.getMedicationReference().getReference());
+                throw new DataException("no code block found for Medication: " + reference);
             }
 
         } else {
-            throw new DataException("MedicationRequest missing code and reference: " + mr.getId());
+            throw new DataException("MedicationRequest appears to be missing both MedicationCodeableConcept and MedicationReference: " + mr.getId());
+        }
+
+        Coding c = cc.getCodingFirstRep();
+        system = c.getSystem();
+        code = c.getCode();
+
+        if (c.hasDisplay()) {
+            description = c.getDisplay();
+
+        } else if (cc.hasText()) {
+            description = cc.getText();
+
+        } else {
+            throw new DataException("no description available for MedicationRequest " + mr.getId());
         }
 
         if (mr.getAuthoredOn() != null) {
