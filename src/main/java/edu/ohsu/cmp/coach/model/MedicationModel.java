@@ -98,8 +98,11 @@ public class MedicationModel implements Comparable<MedicationModel> {
                 description = c.getDisplay();
 
             } else {
-                throw new DataException("medication or medication code not found: " + mr.getMedicationReference().getReference());
+                throw new DataException("medication or medication code not found in bundle: " + mr.getMedicationReference().getReference());
             }
+
+        } else {
+            throw new DataException("MedicationRequest missing code and reference: " + mr.getId());
         }
 
         if (mr.getAuthoredOn() != null) {
@@ -108,7 +111,6 @@ public class MedicationModel implements Comparable<MedicationModel> {
         } else {
             throw new DataException("missing authored on");
         }
-
 
         if (mr.hasReasonCode()) {
             reason = mr.getReasonCodeFirstRep().getText();
