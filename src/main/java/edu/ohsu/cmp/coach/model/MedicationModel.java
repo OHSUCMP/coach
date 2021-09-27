@@ -134,7 +134,10 @@ public class MedicationModel implements Comparable<MedicationModel> {
 
         dose = mr.hasDosageInstruction() ? mr.getDosageInstructionFirstRep().getText() : "";
 
-        prescribingClinician = ""; // todo : set this.  not quite clear how to do that cleanly with MedicationRequest
+        // "recorder" is how/where it appears to be stored in POC, using that for now.
+        prescribingClinician = mr.hasRecorder() ?
+                mr.getRecorder().getDisplay() :
+                "";
 
         issues = mr.hasDetectedIssue() ? mr.getDetectedIssueFirstRep().getDisplay() : "";
 
