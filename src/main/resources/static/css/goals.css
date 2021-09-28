@@ -2,3 +2,47 @@
     text-decoration: underline;
 }
 
+.bpGoal {
+    padding: 10px 0 10px 0;
+    height: 52px;
+}
+
+.bpGoal .buttonContainer {
+    margin-top: 10px;
+
+}
+
+#updateNote {
+    display: inline-block;
+    width: 300px;
+    text-align: right;
+    vertical-align: middle;
+}
+
+.buttonContainer {
+    display: block;
+    float: right;
+}
+
+.button {
+    width: 120px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 5px 10px 5px 10px;
+    border: 1px solid black;
+    color: #fff;
+    background-color: #2e6e9e;
+}
+
+#updateBPGoal {
+    display: inline-block;
+}
+
+.button * {
+    font-size: medium;
+}
+
+input.systolic, input.diastolic {
+    width: 40px;
+}

@@ -58,10 +58,34 @@
             </tr>
         </table>
 
+        {{#bpGoal}}
+            <table id="bpContent" class="content">
+                <tr>
+                    <td class="heading">
+                        My Blood Pressure Goal
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="bpGoal">
+                            My current Blood Pressure goal is
+                            <input type='text' class='systolic' placeholder='Systolic' value="{{systolicTarget}}" />
+                            /
+                            <input type='text' class='diastolic' placeholder='Diastolic' value="{{diastolicTarget}}" />
+                            <div class="buttonContainer">
+                                <div id="updateNote"></div>
+                                <div id="updateBPGoal" class="button">Update</div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        {{/bpGoal}}
+
         <table class="content">
             <tr>
                 <td class="heading">
-                    My Goals
+                    My Other Goals
                 </td>
             </tr>
             <tr>

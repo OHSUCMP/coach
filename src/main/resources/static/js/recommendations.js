@@ -511,15 +511,9 @@ async function createGoal(g, _callback) {
 }
 
 async function updateBPGoal(g, _callback) {
-    // let targetDateTS = $.datepicker.formatDate('@', g.targetDate);
-
     let formData = new FormData();
-    // formData.append("extGoalId", g.extGoalId);
-    // formData.append("referenceSystem", g.referenceSystem);
-    // formData.append("referenceCode", g.referenceCode);
     formData.append("systolicTarget", g.systolicTarget);
     formData.append("diastolicTarget", g.diastolicTarget);
-    // formData.append("targetDateTS", targetDateTS);
 
     let response = await fetch("/goals/update-bp", {
         method: "POST",
@@ -536,7 +530,7 @@ async function updateGoal(g, _callback) {
     formData.append("extGoalId", g.extGoalId);
     formData.append("achievementStatus", g.achievementStatus);
 
-    let response = await fetch("/goals/update", {
+    let response = await fetch("/goals/set-status", {
         method: "POST",
         body: formData
     });
@@ -584,97 +578,97 @@ $(document).ready(function() {
     enableHover('.commitToGoal');
     enableHover('.updateGoal');
     enableHover('.registerAdverseEventAction');
+});
 
-    $(document).on('click', '.goal .commitToGoal', function() {
-        let g = buildGoalData(this);
-        let container = $(this).closest('.goal');
+$(document).on('click', '.goal .commitToGoal', function() {
+    let g = buildGoalData(this);
+    let container = $(this).closest('.goal');
 
-        createGoal(g, function(status) {
-            if (status === 200) {
-                hide(container);
-            }
-        });
-    });
-
-    $(document).on('click', '.bpGoal .commitToGoal', function() {
-        let g = buildBPGoalData(this);
-        let container = $(this).closest('.bpGoal');
-
-        updateBPGoal(g, function(status, g) {
-            if (status === 200) {
-                let el = $('#currentBPGoal');
-                $(el).attr('data-systolic', g.systolicTarget);
-                $(el).attr('data-diastolic', g.diastolicTarget);
-                $(el).html("Your Current Blood Pressure Goal: <em><strong>Below " + g.systolicTarget + "/" + g.diastolicTarget + "</strong></em>");
-
-                updateChart();
-
-                hide(container);
-            }
-        });
-    });
-
-    $(document).on('click', '.goal .updateGoal', function() {
-        let g = buildGoalUpdateData(this);
-        let container = $(this).closest('.goal');
-
-        updateGoal(g, function(status) {
-            if (status === 200) {
-                hide(container);
-            }
-        });
-    });
-
-    $(document).on('click', '.counseling .actions a', function(event) {
-        event.preventDefault();
-        let a = $(this);
-        let c = buildCounselingData(this);
-        registerCounselingReceived(c, function(status) {
-            window.location.href = $(a).attr('href');
-        });
-    });
-
-    $(document).on('click', '.adverseEvent .registerAdverseEventAction', function() {
-        let ae = buildAdverseEventData(this);
-        let container = $(this).closest('.adverseEvent');
-
-        registerAdverseEventAction(ae, function(status) {
-            if (status === 200) {
-                hide(container, function(el) {
-                    let parent = $(el).closest('.adverseEventsContainer');
-                    let anyChildrenVisible = $(parent).find('.adverseEvent:visible').length > 0;
-                    if (parent.is(':visible') && ! anyChildrenVisible) {
-                        hide(parent);
-                    }
-                });
-            }
-        });
-    });
-
-    $(document).on('click', '.goal .action input[type="radio"]', function() {
-        let ftrmlr = $(this).closest('.goal').find('input.freetextResponse,input.madlibResponse');
-        $(ftrmlr).prop('disabled', true);
-
-        if ($(this).hasClass('freetext')) {
-            let ftr = $(this).siblings('input.freetextResponse');
-            $(ftr).prop('disabled', false);
-            $(ftr).focus();
-
-        } else if ($(this).hasClass('madlib')) {
-            let mlr = $(this).siblings('input.madlibResponse');
-            $(mlr).prop('disabled', false);
-            $(mlr).first().focus();
+    createGoal(g, function(status) {
+        if (status === 200) {
+            hide(container);
         }
     });
+});
 
-    $(document).on('click', '.bpGoal .action input[type="radio"]', function() {
-        let el = $(this).closest('.bpGoal').find('input.customResponse');
-        if ($(this).hasClass('custom')) {
-            $(el).prop('disabled', false);
-            $(el).first().focus();
+$(document).on('click', '.bpGoal .commitToGoal', function() {
+    let g = buildBPGoalData(this);
+    let container = $(this).closest('.bpGoal');
 
-        } else {
-            $(el).prop('disabled', true);
+    updateBPGoal(g, function(status, g) {
+        if (status === 200) {
+            let el = $('#currentBPGoal');
+            $(el).attr('data-systolic', g.systolicTarget);
+            $(el).attr('data-diastolic', g.diastolicTarget);
+            $(el).html("Your Current Blood Pressure Goal: <em><strong>Below " + g.systolicTarget + "/" + g.diastolicTarget + "</strong></em>");
+
+            updateChart();
+
+            hide(container);
         }
     });
+});
+
+$(document).on('click', '.goal .updateGoal', function() {
+    let g = buildGoalUpdateData(this);
+    let container = $(this).closest('.goal');
+
+    updateGoal(g, function(status) {
+        if (status === 200) {
+            hide(container);
+        }
+    });
+});
+
+$(document).on('click', '.counseling .actions a', function(event) {
+    event.preventDefault();
+    let a = $(this);
+    let c = buildCounselingData(this);
+    registerCounselingReceived(c, function(status) {
+        window.location.href = $(a).attr('href');
+    });
+});
+
+$(document).on('click', '.adverseEvent .registerAdverseEventAction', function() {
+    let ae = buildAdverseEventData(this);
+    let container = $(this).closest('.adverseEvent');
+
+    registerAdverseEventAction(ae, function(status) {
+        if (status === 200) {
+            hide(container, function(el) {
+                let parent = $(el).closest('.adverseEventsContainer');
+                let anyChildrenVisible = $(parent).find('.adverseEvent:visible').length > 0;
+                if (parent.is(':visible') && ! anyChildrenVisible) {
+                    hide(parent);
+                }
+            });
+        }
+    });
+});
+
+$(document).on('click', '.goal .action input[type="radio"]', function() {
+    let ftrmlr = $(this).closest('.goal').find('input.freetextResponse,input.madlibResponse');
+    $(ftrmlr).prop('disabled', true);
+
+    if ($(this).hasClass('freetext')) {
+        let ftr = $(this).siblings('input.freetextResponse');
+        $(ftr).prop('disabled', false);
+        $(ftr).focus();
+
+    } else if ($(this).hasClass('madlib')) {
+        let mlr = $(this).siblings('input.madlibResponse');
+        $(mlr).prop('disabled', false);
+        $(mlr).first().focus();
+    }
+});
+
+$(document).on('click', '.bpGoal .action input[type="radio"]', function() {
+    let el = $(this).closest('.bpGoal').find('input.customResponse');
+    if ($(this).hasClass('custom')) {
+        $(el).prop('disabled', false);
+        $(el).first().focus();
+
+    } else {
+        $(el).prop('disabled', true);
+    }
 });

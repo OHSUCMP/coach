@@ -49,6 +49,7 @@ public class GoalsController extends BaseController {
     public String view(HttpSession session, Model model) {
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
+        model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
 
         List<GoalModel> list = new ArrayList<>();
         for (MyGoal g : goalService.getGoalList(session.getId())) {
@@ -95,6 +96,7 @@ public class GoalsController extends BaseController {
 
         // THERE CAN BE ONLY ONE!!!
         // (blood pressure goal, that is)
+        // todo: update existing record, instead of deleting and recreating
         goalService.deleteBPGoalIfExists(session.getId());
 
         MyGoal currentBPGoal = goalService.create(session.getId(), new MyGoal(fcm.getBpSystem(), fcm.getBpCode(), systolicTarget, diastolicTarget));
