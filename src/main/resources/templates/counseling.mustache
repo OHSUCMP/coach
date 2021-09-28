@@ -1,0 +1,54 @@
+{{#layout}}
+    {{#title}}{{applicationName}} - Counseling{{/title}}
+    {{#head}}
+        <script type="text/javascript" src="/js/counseling.js"></script>
+        <link rel="stylesheet" href="/css/counseling.css"/>
+
+        <script type="text/javascript">
+        </script>
+    {{/head}}
+    {{#menuItems}}
+        <li><a href="/">Patient Portal</a></li>
+        <li><a href="/goals">My Goals</a></li>
+        <li><a href="/bp-readings">Home BP Readings</a></li>
+        <li><a href="/medications">My Medications</a></li>
+        <li><a href="/preferences">My Preferences</a></li>
+    {{/menuItems}}
+    {{#content}}
+        <table class="content">
+            <tr>
+                <td id="patientInfo">
+                    <table style="margin-left: 50px">
+                        <tr>
+                            <td rowspan="2">
+                                <span class="circle" style="background-color: #b3fff0">&nbsp;</span>
+                            </td>
+                            <td colspan="2">
+                                <span style="font-size: x-large">{{patient.name}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>{{patient.age}} years</td>
+                            <td>{{patient.gender}}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        {{#page}}
+            <table class="content">
+                <tr>
+                    <td class="heading">
+                        Counseling: {{title}}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        {{{body}}}
+                    </td>
+                </tr>
+            </table>
+        {{/page}}
+    {{/content}}
+{{/layout}}

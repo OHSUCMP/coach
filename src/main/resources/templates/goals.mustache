@@ -1,14 +1,14 @@
 {{#layout}}
     {{#title}}{{applicationName}} - Goals{{/title}}
     {{#head}}
-        <script type="text/javascript" src="js/form.js"></script>
-        <link rel="stylesheet" href="css/form.css" />
+        <script type="text/javascript" src="/js/form.js"></script>
+        <link rel="stylesheet" href="/css/form.css" />
 
 <!--        <link rel="stylesheet" href="css/recommendations.css"/>-->
 <!--        <script type="text/javascript" src="js/recommendations.js"></script>-->
 
-        <script type="text/javascript" src="js/goals.js"></script>
-        <link rel="stylesheet" href="css/goals.css"/>
+        <script type="text/javascript" src="/js/goals.js"></script>
+        <link rel="stylesheet" href="/css/goals.css"/>
 
         <script type="text/javascript">
             $(document).ready(function () {
@@ -69,9 +69,18 @@
                     <td>
                         <div class="bpGoal">
                             My current Blood Pressure goal is
-                            <input type='text' class='systolic' placeholder='Systolic' value="{{systolicTarget}}" />
-                            /
-                            <input type='text' class='diastolic' placeholder='Diastolic' value="{{diastolicTarget}}" />
+                            <div id="bpDisplay">
+                                <strong>{{systolicTarget}}</strong> / <strong>{{diastolicTarget}}</strong>
+                                (<span id="showEditBP">Edit</span>)
+                                <br/>
+                                Current status: <strong>{{achievementStatus}}</strong>
+                            </div>
+                            <div id="bpEdit" class="hidden">
+                                <input type='text' class='systolic' placeholder='Systolic' value="{{systolicTarget}}" />
+                                /
+                                <input type='text' class='diastolic' placeholder='Diastolic' value="{{diastolicTarget}}" />
+                                (<span id="hideEditBP">View</span>)
+                            </div>
                             <div class="buttonContainer">
                                 <div id="updateNote"></div>
                                 <div id="updateBPGoal" class="button">Update</div>
