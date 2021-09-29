@@ -323,6 +323,8 @@ public class CDSHookExecutor implements Runnable {
         g.getCategoryFirstRep().addCoding().setCode(myGoal.getReferenceCode()).setSystem(myGoal.getReferenceSystem());
         g.getDescription().setText(myGoal.getGoalText());
         g.setStatusDate(myGoal.getStatusDate());
+        g.getTarget().add(new Goal.GoalTargetComponent()
+                .setDue(new DateType().setValue(myGoal.getTargetDate())));
 
         if (myGoal.isBloodPressureGoal()) {
             Goal.GoalTargetComponent systolic = new Goal.GoalTargetComponent();
