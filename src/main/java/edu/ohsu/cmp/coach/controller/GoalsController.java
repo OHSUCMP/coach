@@ -51,11 +51,14 @@ public class GoalsController extends BaseController {
         model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
         model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
 
-        List<GoalModel> list = new ArrayList<>();
+        List<GoalModel> otherGoals = new ArrayList<>();
         for (MyGoal g : goalService.getGoalList(session.getId())) {
-            list.add(new GoalModel(g));
+            if ( ! g.isBloodPressureGoal() ) {
+                otherGoals.add(new GoalModel(g));
+            }
         }
-        model.addAttribute("goals", list);
+        model.addAttribute("hasOtherGoals", otherGoals.size() > 0);
+        model.addAttribute("otherGoals", otherGoals);
 
         return "goals";
     }
@@ -96,12 +99,22 @@ public class GoalsController extends BaseController {
 
         // THERE CAN BE ONLY ONE!!!
         // (blood pressure goal, that is)
-        // todo: update existing record, instead of deleting and recreating
-        goalService.deleteBPGoalIfExists(session.getId());
 
-        MyGoal currentBPGoal = goalService.create(session.getId(), new MyGoal(fcm.getBpSystem(), fcm.getBpCode(), systolicTarget, diastolicTarget));
+//        goalService.deleteBPGoalIfExists(session.getId());
 
-        return new ResponseEntity<>(new GoalModel(currentBPGoal), HttpStatus.OK);
+        MyGoal goal = goalService.getCurrentAppBPGoal(session.getId());
+        if (goal != null) {
+            goal.setSystolicTarget(systolicTarget);
+            goal.setDiastolicTarget(diastolicTarget);
+            goal = goalService.update(goal);
+
+        } else {
+            goal = goalService.create(session.getId(), new MyGoal(
+                    fcm.getBpSystem(), fcm.getBpCode(),
+                    systolicTarget, diastolicTarget));
+        }
+
+        return new ResponseEntity<>(new GoalModel(goal), HttpStatus.OK);
     }
 
     @PostMapping("set-status")

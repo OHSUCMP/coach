@@ -2,27 +2,27 @@
     text-decoration: underline;
 }
 
-.bpGoal {
-    padding: 10px 0 10px 0;
-    height: 52px;
-}
-
-.bpGoal .buttonContainer {
-    margin-top: 10px;
-
+#updateBPGoal {
+    display: inline-block;
 }
 
 #updateNote {
     display: inline-block;
-    width: 300px;
-    text-align: right;
-    vertical-align: middle;
 }
 
-.buttonContainer {
-    display: block;
-    float: right;
+.bpGoal {
+    padding: 10px 0 10px 0;
+    height: 60px;
 }
+
+.bpGoal .buttonContainer {
+    margin-left: 20px;
+}
+
+.bpGoal > div {
+    display: inline-block;
+}
+
 
 .button {
     width: 120px;
@@ -33,10 +33,6 @@
     border: 1px solid black;
     color: #fff;
     background-color: #2e6e9e;
-}
-
-#updateBPGoal {
-    display: inline-block;
 }
 
 .button * {

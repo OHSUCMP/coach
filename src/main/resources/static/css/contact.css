@@ -28,11 +28,6 @@
     font-size: small;
 }
 
-.button.disabled {
-    color: #000;
-    background-color: #888;
-}
-
 #myChartInstructions {
     width: 500px;
     height: 265px;

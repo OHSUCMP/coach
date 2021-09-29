@@ -153,10 +153,9 @@ public class GoalService extends BaseService {
         return g;
     }
 
-//    public Goal update(String sessionId, Goal goal) {
-//        CacheData cache = SessionCache.getInstance().get(sessionId);
-//        return goalRepository.save(goal);
-//    }
+    public MyGoal update(MyGoal goal) {
+        return goalRepository.save(goal);
+    }
 
     public void deleteByGoalId(String sessionId, String extGoalId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);

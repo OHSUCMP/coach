@@ -24,8 +24,8 @@ public class GoalModel implements Comparable<GoalModel> {
     private String referenceSystem;
     private String referenceCode;
     private String goalText;
-    private Integer systolicTarget;
-    private Integer diastolicTarget;
+    private Integer systolicTarget = null;
+    private Integer diastolicTarget = null;
     private Date targetDate;
     private Date createdDate;
 
@@ -83,6 +83,14 @@ public class GoalModel implements Comparable<GoalModel> {
         return getAchievementStatus() == AchievementStatus.IN_PROGRESS;
     }
 
+    public boolean getIsAchieved() {
+        return getAchievementStatus() == AchievementStatus.ACHIEVED;
+    }
+
+    public boolean getIsNotAchieved() {
+        return getAchievementStatus() == AchievementStatus.NOT_ACHIEVED;
+    }
+
     public AchievementStatus getAchievementStatus() {
         GoalHistoryModel mostRecent = history.last();
         return mostRecent != null ?
@@ -119,6 +127,10 @@ public class GoalModel implements Comparable<GoalModel> {
 
     public String getGoalText() {
         return goalText;
+    }
+
+    public Boolean getIsBloodPressureGoal() {
+        return systolicTarget != null || diastolicTarget != null;
     }
 
     public Integer getSystolicTarget() {
