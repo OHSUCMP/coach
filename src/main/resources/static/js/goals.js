@@ -11,7 +11,7 @@ async function updateStatus(el, status) {
     });
 
     let goalHistory = await response.json();
-    if (goalHistory.status === 200) {
+    if (goalHistory) {
         let goalRow = $('tr.goal.data[data-extGoalId="' + extGoalId + '"]');
         if (goalRow) {
             $(goalRow).children('td.status').html(goalHistory.achievementStatus);

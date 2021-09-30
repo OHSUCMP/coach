@@ -3,8 +3,8 @@ package edu.ohsu.cmp.coach.controller;
 import edu.ohsu.cmp.coach.cache.CacheData;
 import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.entity.app.AchievementStatus;
-import edu.ohsu.cmp.coach.entity.app.MyGoal;
 import edu.ohsu.cmp.coach.entity.app.GoalHistory;
+import edu.ohsu.cmp.coach.entity.app.MyGoal;
 import edu.ohsu.cmp.coach.model.GoalHistoryModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.PatientModel;
@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -57,6 +58,9 @@ public class GoalsController extends BaseController {
                 otherGoals.add(new GoalModel(g));
             }
         }
+
+        Collections.sort(otherGoals);
+
         model.addAttribute("hasOtherGoals", otherGoals.size() > 0);
         model.addAttribute("otherGoals", otherGoals);
 

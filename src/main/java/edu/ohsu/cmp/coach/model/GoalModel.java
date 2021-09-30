@@ -80,7 +80,15 @@ public class GoalModel implements Comparable<GoalModel> {
 
     @Override
     public int compareTo(@NotNull GoalModel o) {
-        return createdDate.compareTo(o.getCreatedDate());
+        if (getIsInProgress() && ! o.getIsInProgress()) {
+            return -1;
+
+        } else if ( ! getIsInProgress() && o.getIsInProgress()) {
+            return 1;
+
+        } else {
+            return createdDate.compareTo(o.getCreatedDate());
+        }
     }
 
     public boolean getIsInProgress() {
