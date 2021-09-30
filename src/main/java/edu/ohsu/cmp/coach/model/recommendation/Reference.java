@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.model.recommendation;
 public class Reference {
     private String system;
     private String code;
+    private String display;
 
     public String getSystem() {
         return system;
@@ -18,5 +19,13 @@ public class Reference {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public String getDisplay() {
+        return display;
+    }
+
+    public void setDisplay(String display) {
+        this.display = display;
     }
 }

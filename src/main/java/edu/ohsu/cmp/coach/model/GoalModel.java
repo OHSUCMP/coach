@@ -3,7 +3,6 @@ package edu.ohsu.cmp.coach.model;
 import edu.ohsu.cmp.coach.entity.app.AchievementStatus;
 import edu.ohsu.cmp.coach.entity.app.GoalHistory;
 import edu.ohsu.cmp.coach.entity.app.MyGoal;
-import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import org.hl7.fhir.r4.model.Goal;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +22,7 @@ public class GoalModel implements Comparable<GoalModel> {
     private String extGoalId;
     private String referenceSystem;
     private String referenceCode;
+    private String referenceDisplay;
     private String goalText;
     private Integer systolicTarget = null;
     private Integer diastolicTarget = null;
@@ -37,6 +37,7 @@ public class GoalModel implements Comparable<GoalModel> {
         this.extGoalId = g.getExtGoalId();
         this.referenceSystem = g.getReferenceSystem();
         this.referenceCode = g.getReferenceCode();
+        this.referenceDisplay = g.getReferenceDisplay();
         this.goalText = g.getGoalText();
         this.systolicTarget = g.getSystolicTarget();
         this.diastolicTarget = g.getDiastolicTarget();
@@ -49,19 +50,22 @@ public class GoalModel implements Comparable<GoalModel> {
         }
     }
 
-    public GoalModel(Goal g, Long internalPatientId, FhirConfigManager fcm) {
+    // this constructor ONLY used to convert EHR-based BP goals into local goal model
+    public GoalModel(Goal g, Long internalPatientId, String bpSystem, String bpCode, String bpDisplay,
+                     String systolicCode, String diastolicCode) {
         this.id = null; // EHR-based
         this.patId = internalPatientId;
         this.extGoalId = g.getId();
-        this.referenceSystem = fcm.getBpSystem();
-        this.referenceCode = fcm.getBpCode();
+        this.referenceSystem = bpSystem;
+        this.referenceCode = bpCode;
+        this.referenceDisplay = bpDisplay;
         this.goalText = g.getDescription().getText();
 
         for (Goal.GoalTargetComponent gtc : g.getTarget()) {
-            if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpSystolicCode())) {
+            if (gtc.getMeasure().hasCoding(bpSystem, systolicCode)) {
                 this.systolicTarget = gtc.getDetailQuantity().getValue().intValue();
 
-            } else if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpDiastolicCode())) {
+            } else if (gtc.getMeasure().hasCoding(bpSystem, diastolicCode)) {
                 this.diastolicTarget = gtc.getDetailQuantity().getValue().intValue();
             }
         }

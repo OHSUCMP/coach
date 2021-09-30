@@ -160,7 +160,11 @@ function buildGoalsHTML(suggestions) {
             if (s.type === 'goal' || s.type === 'bp-goal') {
                 let c = s.type === 'bp-goal' ? 'bpGoal' : 'goal';
 
-                html += "<div class='" + c + "' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
+                html += "<div class='" + c + "' data-id='" + s.id +
+                    "' data-reference-system='" + s.references.system +
+                    "' data-reference-code='" + s.references.code +
+                    "' + data-reference-display='" + s.references.display + "'>";
+
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tr>";
 
@@ -380,6 +384,7 @@ function buildGoalData(button) {
     obj.extGoalId = $(goal).attr('data-id');
     obj.referenceSystem = $(goal).attr('data-reference-system');
     obj.referenceCode = $(goal).attr('data-reference-code');
+    obj.referenceDisplay = $(goal).attr('data-reference-display');
     obj.goalText = getGoalText(goal);
     obj.systolicTarget = 0;
     obj.diastolicTarget = 0;
@@ -497,6 +502,7 @@ async function createGoal(g, _callback) {
     formData.append("extGoalId", g.extGoalId);
     formData.append("referenceSystem", g.referenceSystem);
     formData.append("referenceCode", g.referenceCode);
+    formData.append("referenceDisplay", g.referenceDisplay);
     formData.append("goalText", g.goalText);
     formData.append("targetDateTS", targetDateTS);
 

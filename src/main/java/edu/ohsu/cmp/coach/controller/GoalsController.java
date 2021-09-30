@@ -68,6 +68,7 @@ public class GoalsController extends BaseController {
                                             @RequestParam("extGoalId") String extGoalId,
                                             @RequestParam("referenceSystem") String referenceSystem,
                                             @RequestParam("referenceCode") String referenceCode,
+                                            @RequestParam("referenceDisplay") String referenceDisplay,
                                             @RequestParam("goalText") String goalText,
                                             @RequestParam("targetDateTS") Long targetDateTS) {
 
@@ -75,7 +76,7 @@ public class GoalsController extends BaseController {
 
         MyGoal myGoal = goalService.getGoal(session.getId(), extGoalId);
         if (myGoal == null) {
-            myGoal = new MyGoal(extGoalId, referenceSystem, referenceCode, goalText, targetDate);
+            myGoal = new MyGoal(extGoalId, referenceSystem, referenceCode, referenceDisplay, goalText, targetDate);
             myGoal = goalService.create(session.getId(), myGoal);
 
             // remove goal from cache
@@ -110,7 +111,7 @@ public class GoalsController extends BaseController {
 
         } else {
             goal = goalService.create(session.getId(), new MyGoal(
-                    fcm.getBpSystem(), fcm.getBpCode(),
+                    fcm.getBpSystem(), fcm.getBpCode(), "Blood Pressure",
                     systolicTarget, diastolicTarget));
         }
 

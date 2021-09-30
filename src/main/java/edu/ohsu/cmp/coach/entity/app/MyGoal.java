@@ -17,6 +17,7 @@ public class MyGoal {
     private String extGoalId;
     private String referenceSystem;
     private String referenceCode;
+    private String referenceDisplay;
     private String goalText;
     private Integer systolicTarget;
     private Integer diastolicTarget;
@@ -29,18 +30,20 @@ public class MyGoal {
     protected MyGoal() {
     }
 
-    public MyGoal(String extGoalId, String referenceSystem, String referenceCode, String goalText, Date targetDate) {
+    public MyGoal(String extGoalId, String referenceSystem, String referenceCode, String referenceDisplay, String goalText, Date targetDate) {
         this.extGoalId = extGoalId;
         this.referenceSystem = referenceSystem;
         this.referenceCode = referenceCode;
+        this.referenceDisplay = referenceDisplay;
         this.goalText = goalText;
         this.targetDate = targetDate;
     }
 
-    public MyGoal(String referenceSystem, String referenceCode, Integer systolicTarget, Integer diastolicTarget) {
+    public MyGoal(String referenceSystem, String referenceCode, String referenceDisplay, Integer systolicTarget, Integer diastolicTarget) {
         this.extGoalId = GoalModel.BP_GOAL_ID;
         this.referenceSystem = referenceSystem;
         this.referenceCode = referenceCode;
+        this.referenceDisplay = referenceDisplay;
         this.goalText = "Target BP: " + systolicTarget + "/" + diastolicTarget;
         this.systolicTarget = systolicTarget;
         this.diastolicTarget = diastolicTarget;
@@ -84,6 +87,14 @@ public class MyGoal {
 
     public void setReferenceCode(String referenceCode) {
         this.referenceCode = referenceCode;
+    }
+
+    public String getReferenceDisplay() {
+        return referenceDisplay;
+    }
+
+    public void setReferenceDisplay(String referenceDisplay) {
+        this.referenceDisplay = referenceDisplay;
     }
 
     public String getGoalText() {

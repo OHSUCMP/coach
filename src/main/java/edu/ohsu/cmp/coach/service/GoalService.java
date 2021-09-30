@@ -82,6 +82,7 @@ public class GoalService extends BaseService {
             return new GoalModel(create(sessionId, new MyGoal(
                     fcm.getBpSystem(),
                     fcm.getBpCode(),
+                    "Blood Pressure",
                     GoalModel.BP_GOAL_DEFAULT_SYSTOLIC,
                     GoalModel.BP_GOAL_DEFAULT_DIASTOLIC
             )));
@@ -132,9 +133,13 @@ public class GoalService extends BaseService {
             }
         }
 
-        return currentEHRBPGoal != null ?
-                new GoalModel(currentEHRBPGoal, cache.getInternalPatientId(), fcm) :
-                null;
+        if (currentEHRBPGoal != null) {
+            return new GoalModel(currentEHRBPGoal, cache.getInternalPatientId(), fcm.getBpSystem(), fcm.getBpCode(),
+                    "Blood Pressure", fcm.getBpSystolicCode(), fcm.getBpDiastolicCode());
+
+        } else {
+            return null;
+        }
     }
 
     public MyGoal create(String sessionId, MyGoal goal) {

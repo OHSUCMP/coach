@@ -95,6 +95,7 @@
                     <td>
                         <table id="goalsTable" class="data">
                             <tr id="goalsTableHeader">
+                                <th>Category</th>
                                 <th>Goal</th>
                                 <th>Status</th>
                                 <th>Created Date</th>
@@ -102,6 +103,7 @@
                             </tr>
                             {{#otherGoals}}
                                 <tr class='goal data' data-extGoalId='{{extGoalId}}'>
+                                    <td>{{referenceDisplay}}</td>
                                     <td>{{goalText}}</td>
                                     <td class="status">
                                         {{achievementStatus}}
