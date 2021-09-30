@@ -99,6 +99,7 @@
                                 <th>Goal</th>
                                 <th>Status</th>
                                 <th>Created Date</th>
+                                <th>Target Completion Date</th>
                                 <th>&nbsp;</th>
                             </tr>
                             {{#otherGoals}}
@@ -109,6 +110,7 @@
                                         {{achievementStatus}}
                                     </td>
                                     <td>{{createdDate}}</td>
+                                    <td>{{targetDate}}</td>
                                     <td class="actions">
                                         {{! this should be kept synchronized with goals.js:buildActionsHTML(status) }}
                                         {{#isInProgress}}
@@ -121,7 +123,7 @@
                                     </td>
                                 </tr>
                                 <tr class="goal history" data-extGoalId='{{extGoalId}}'>
-                                    <td colspan="5">
+                                    <td colspan="6">
                                         <table class="no-spacing">
                                             <tr class="goalHistoryHeader">
                                                 <th>Achievement Status</th>
