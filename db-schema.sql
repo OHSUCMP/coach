@@ -36,6 +36,7 @@ create table goal (
   extGoalId varchar(100) not null,
   referenceSystem varchar(100) not null,
   referenceCode varchar(100) not null,
+  referenceDisplay varchar(255) not null,
   goalText varchar(255) not null,
   systolicTarget int,
   diastolicTarget int,
@@ -182,9 +183,9 @@ create table contact_message (
 
 insert into contact_message(messageKey, body) values("urgent-bp", "Very high blood pressure detected. Hypertensive emergency is possible. Consultation with care team is recommended.");
 insert into contact_message(messageKey, body) values("additional-bps", "Need to collect set of blood pressures. This will help provide a better overall picture of blood pressure trends.");
-insert into contact_message(messageKey, body) values("suspect-htn-stage2", "Stage 2 Hypertension suspected. Multiple blood pressure readings of &ge;140/90 mmHg indicate that a diagnosis of stage 2 hypertension may be appropriate. Consultation needed.");
-insert into contact_message(messageKey, body) values("possible-htn-stage2", "Stage 2 Hypertension possible. Blood pressure readings of &gt;140/90 mmHg may indicate that diagnosis of stage 2 hypertension can be considered.");
-insert into contact_message(messageKey, body) values("possible-htn-stage1", "Stage 1 Hypertension possible. Blood pressure readings of &gt;130/80 suggest potential hypertension. Consultation needed,");
+insert into contact_message(messageKey, body) values("suspect-htn-stage2", "Stage 2 Hypertension suspected. Multiple blood pressure readings of ≥140/90 mmHg indicate that a diagnosis of stage 2 hypertension may be appropriate. Consultation needed.");
+insert into contact_message(messageKey, body) values("possible-htn-stage2", "Stage 2 Hypertension possible. Blood pressure readings of >140/90 mmHg may indicate that diagnosis of stage 2 hypertension can be considered.");
+insert into contact_message(messageKey, body) values("possible-htn-stage1", "Stage 1 Hypertension possible. Blood pressure readings of >130/80 suggest potential hypertension. Consultation needed,");
 insert into contact_message(messageKey, body) values("office-bps", "Out of office blood pressure measurements are recommended to obtain a more complete understanding of patient blood pressure trends. Consultation recommended.");
 insert into contact_message(messageKey, body) values("ambulatory-bps", "Blood pressure variability may require use of ambulatory blood pressure monitoring to locate patterns in blood pressure. Consultation recommended.");
 insert into contact_message(messageKey, body) values("recommend-pharma-and-nonpharma", "Antihypertensive medication recommended alongside non-pharmacologic counseling. Blood pressure is above goal. Consultation with care team and patient is recommended to consider treatment options.");
