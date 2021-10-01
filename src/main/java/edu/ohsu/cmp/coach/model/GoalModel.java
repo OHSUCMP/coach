@@ -110,6 +110,10 @@ public class GoalModel implements Comparable<GoalModel> {
                 null;
     }
 
+    public String getAchievementStatusLabel() {
+        return getAchievementStatus().getLabel();
+    }
+
     public Date getStatusDate() {
         GoalHistoryModel mostRecent = history.last();
         return mostRecent != null ?

@@ -29,6 +29,7 @@
     text-align: center;
     margin-left: auto;
     margin-right: auto;
+    margin-bottom: 5px;
     padding: 5px 10px 5px 10px;
     border: 1px solid black;
     color: #fff;
@@ -41,4 +42,63 @@
 
 input.systolic, input.diastolic {
     width: 40px;
+}
+
+#goalsTable td {
+    vertical-align: top;
+}
+
+/* ATTENTION : keep synced with recommendations.css definitions BELOW */
+div.goal {
+    background-color: #eff5ff;
+    padding: 5px;
+    margin-bottom: 5px;
+    /*width: 390px;*/
+}
+
+div.goal.completed {
+    background-color: #ddd;
+}
+
+div.goal .description {
+    font-style: italic;
+}
+
+
+/* ATTENTION : keep synced with recommendations.css definitions ABOVE */
+
+span.active {
+    color: green;
+    font-weight: bold;
+}
+
+span.copleted {
+    color: gray;
+    font-weight: bold;
+}
+
+table.data {
+    border: 1px solid black;
+    border-spacing: 0;
+    margin: 4px;
+}
+
+table.goalHistory th {
+    background-color: #1d5987;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 5px;
+}
+
+table.goalHistory tr:nth-child(even) {
+    background-color: #e6f7ff;
+}
+
+table.goalHistory tr:nth-child(odd) {
+    background-color: #ccefff;
+}
+
+table.goalHistory td {
+    border: 1px solid black;
+    padding: 5px;
 }

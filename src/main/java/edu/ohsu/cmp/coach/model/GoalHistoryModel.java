@@ -39,6 +39,8 @@ public class GoalHistoryModel implements Comparable<GoalHistoryModel> {
         return achievementStatus;
     }
 
+    public String getAchievementStatusLabel() { return achievementStatus.getLabel(); }
+
     public LifecycleStatus getLifecycleStatus() {
         return lifecycleStatus;
     }

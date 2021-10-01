@@ -9,24 +9,6 @@
 
         <script type="text/javascript" src="/js/goals.js"></script>
         <link rel="stylesheet" href="/css/goals.css"/>
-
-        <script type="text/javascript">
-            $(document).ready(function () {
-                enableHover('#goalsTable .link');
-            });
-
-            $(document).on('click', '#goalsTable .markInProgress.link', function() {
-                updateStatus(this, 'IN_PROGRESS');
-            });
-
-            $(document).on('click', '#goalsTable .markAchieved.link', function() {
-                updateStatus(this, 'ACHIEVED');
-            });
-
-            $(document).on('click', '#goalsTable .markNotAchieved.link', function() {
-                updateStatus(this, 'NOT_ACHIEVED');
-            });
-        </script>
     {{/head}}
     {{#menuItems}}
         <li><a href="/">Patient Portal</a></li>
@@ -93,51 +75,68 @@
                 </tr>
                 <tr>
                     <td>
-                        <table id="goalsTable" class="data">
-                            <tr id="goalsTableHeader">
-                                <th>Category</th>
-                                <th>Goal</th>
-                                <th>Status</th>
-                                <th>Created Date</th>
-                                <th>Target Completion Date</th>
-                                <th>&nbsp;</th>
-                            </tr>
+                        <!-- blue boxes on the left, histories on the right -->
+
+                        <table id="goalsTable" class="no-spacing">
                             {{#otherGoals}}
-                                <tr class='goal data' data-extGoalId='{{extGoalId}}'>
-                                    <td>{{referenceDisplay}}</td>
-                                    <td>{{goalText}}</td>
-                                    <td class="status">
-                                        {{achievementStatus}}
+                                <tr class="goal" data-extGoalId="{{extGoalId}}">
+                                    <td>
+                                        <!-- blue box -->
+                                        <div class="goal {{#isInProgress}}active{{/isInProgress}}{{^isInProgress}}completed{{/isInProgress}}">
+                                            <span class="heading">{{referenceDisplay}}</span>
+                                            <table>
+                                                <tr>
+                                                    <td class="expand">
+                                                        <div>
+                                                            Your goal: <span class="goalText">{{goalText}}</span>
+                                                        </div>
+                                                        <div>
+                                                            Target Completion Date: <span class="targetDate">{{targetDate}}</span>
+                                                        </div>
+                                                        <div>
+                                                            Current Status:
+                                                            {{#isInProgress}}
+                                                                <span class="active">{{achievementStatusLabel}}</span>
+                                                            {{/isInProgress}}
+                                                            {{^isInProgress}}
+                                                                <span class="completed">{{achievementStatusLabel}}</span>
+                                                            {{/isInProgress}}
+                                                        </div>
+                                                    </td>
+                                                    <td class="shrink">
+                                                        {{#isInProgress}}
+                                                            <div class="markAchieved button">
+                                                                Mark Achieved
+                                                            </div>
+                                                            <div class="markNotAchieved button">
+                                                                Mark Not Achieved
+                                                            </div>
+                                                        {{/isInProgress}}
+                                                        {{^isInProgress}}
+                                                            <div class="markInProgress button">
+                                                                Mark In Progress
+                                                            </div>
+                                                        {{/isInProgress}}
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
                                     </td>
-                                    <td>{{createdDate}}</td>
-                                    <td>{{targetDate}}</td>
-                                    <td class="actions">
-                                        {{! this should be kept synchronized with goals.js:buildActionsHTML(status) }}
-                                        {{#isInProgress}}
-                                            <div class="markAchieved link">Mark Achieved</div>
-                                            <div class="markNotAchieved link">Mark Not Achieved</div>
-                                        {{/isInProgress}}
-                                        {{^isInProgress}}
-                                            <div class="markInProgress link">Mark In Progress</div>
-                                        {{/isInProgress}}
-                                    </td>
-                                </tr>
-                                <tr class="goal history" data-extGoalId='{{extGoalId}}'>
-                                    <td colspan="6">
-                                        <table class="no-spacing">
+                                    <td>
+                                        <!-- history -->
+                                        <table class="goalHistory">
                                             <tr class="goalHistoryHeader">
                                                 <th>Achievement Status</th>
                                                 <th>Date</th>
                                             </tr>
                                             {{#history}}
                                                 <tr>
-                                                    <td>{{achievementStatus}}</td>
+                                                    <td>{{achievementStatusLabel}}</td>
                                                     <td>{{createdDate}}</td>
                                                 </tr>
                                             {{/history}}
                                         </table>
                                     </td>
-                                </tr>
                                 </tr>
                             {{/otherGoals}}
                         </table>

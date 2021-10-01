@@ -5,13 +5,13 @@ import java.util.Map;
 
 public enum AchievementStatus {
     // these values taken from https://www.hl7.org/fhir/valueset-goal-achievement.html
-    IN_PROGRESS("in-progress"),
+    IN_PROGRESS("in-progress", "In Progress"),
 //    IMPROVING("improving"),
 //    WORSENING("worsening"),
 //    NO_CHANGE("no-change"),
-    ACHIEVED("achieved"),
+    ACHIEVED("achieved", "Achieved"),
 //    SUSTAINING("sustaining"),
-    NOT_ACHIEVED("not-achieved");
+    NOT_ACHIEVED("not-achieved", "Not Achieved");
 //    NO_PROGRESS("no-progress"),
 //    NOT_ATTAINABLE("not-attainable");
 
@@ -27,12 +27,18 @@ public enum AchievementStatus {
     }
 
     private final String fhirValue;
+    private final String label;
 
-    AchievementStatus(String fhirValue) {
+    AchievementStatus(String fhirValue, String label) {
         this.fhirValue = fhirValue;
+        this.label = label;
     }
 
     public String getFhirValue() {
         return fhirValue;
+    }
+
+    public String getLabel() {
+        return label;
     }
 }

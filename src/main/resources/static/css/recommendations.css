@@ -110,6 +110,7 @@
     margin-top: 0;
 }
 
+/* keep synced with goals.css */
 .goal, .link, .bpGoal {
     background-color: #eff5ff;
     padding: 5px;
@@ -143,6 +144,7 @@ div.adverseEvent {
     margin-top: 0;
 }
 
+/* keep synced with goals.css */
 .commitToGoal, .updateGoal, .registerAdverseEventAction {
     width: 120px;
     text-align: center;
@@ -154,11 +156,13 @@ div.adverseEvent {
     background-color: #2e6e9e;
 }
 
+/* keep synced with goals.css */
 .commitToGoal.hover, .updateGoal.hover, .registerAdverseEventAction.hover {
     cursor: pointer;
     background-color: #2f96b4;
 }
 
+/* keep synced with goals.css */
 .commitToGoal *, .updateGoal *, .registerAdverseEventAction * {
     font-size: medium;
 }

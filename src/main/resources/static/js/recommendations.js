@@ -196,7 +196,12 @@ function buildGoalsHTML(suggestions) {
                                         html += "<span class='madlibResponse'>" + item + '</span> ';
 
                                     } else {
-                                        html += "<input type='text' class='madlibResponse' data-type='" + item.type + "' placeholder='" + item.label + "' disabled/> ";
+                                        // html += "<input type='text' class='madlibResponse' data-type='" + item.type + "' placeholder='" + item.label + "' disabled/> ";
+                                        html += "<input type='text' class='madlibResponse' placeholder='" + item.label + "'";
+                                        if (item.defaultValue) {
+                                            html += " value='" + item.defaultValue + "'";
+                                        }
+                                        html += " disabled/> ";
                                     }
                                 });
                             }
@@ -276,7 +281,7 @@ function buildGoalsHTML(suggestions) {
 
                 html += "</td><td>";
 
-                html += "<div class='updateGoal'><span>Record Progress</span></div></td>";
+                html += "<div class='updateGoal'>Record Progress</div></td>";
                 html += "</td>";
                 html += "</tr><tr>";
 
@@ -304,29 +309,34 @@ function buildGoalInputData(s) {
     let chars = s.split('');
     while (chars.length > 0) {
         let c = chars.shift();
+
+        // parse madlib token
         if (c === '[') {
             if (buf.length > 0) {
                 arr.push(buf.join('').trim());
                 buf = [];
             }
-            let label = '';
-            let type = '';
             while (c !== ']' && chars.length > 0) {
                 c = chars.shift();
-                if (c === ':') {
-                    label = buf.join('').trim();
-                    buf = [];
-                } else if (c === ']') {
-                    type = buf.join('').trim();
-                    buf = [];
-                } else {
+                // if (c === ':') {
+                //     label = buf.join('').trim();
+                //     buf = [];
+                // } else if (c === ']') {
+                //     defaultValue = buf.join('').trim();
+                //     buf = [];
+                // } else {
+                if (c !== ']') {
                     buf.push(c);
                 }
+                // }
             }
+            let buf_arr = buf.join('').split(':');
             let obj = {
-                label:label,
-                type:type
+                label: buf_arr[0]
             };
+            if (buf_arr.length > 1) {
+                obj.defaultValue = buf_arr[1];
+            }
             arr.push(obj);
             buf = [];
 

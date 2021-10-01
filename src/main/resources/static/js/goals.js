@@ -104,3 +104,15 @@ $(document).on('click', '#updateBPGoal:not(.disabled)', function() {
         }
     });
 });
+
+$(document).on('click', '#goalsTable .markInProgress.button', function() {
+    updateStatus(this, 'IN_PROGRESS');
+});
+
+$(document).on('click', '#goalsTable .markAchieved.button', function() {
+    updateStatus(this, 'ACHIEVED');
+});
+
+$(document).on('click', '#goalsTable .markNotAchieved.button', function() {
+    updateStatus(this, 'NOT_ACHIEVED');
+});
