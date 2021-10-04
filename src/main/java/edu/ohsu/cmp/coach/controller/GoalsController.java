@@ -51,20 +51,21 @@ public class GoalsController extends BaseController {
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
         model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
-
-        List<GoalModel> otherGoals = new ArrayList<>();
-        for (MyGoal g : goalService.getGoalList(session.getId())) {
-            if ( ! g.isBloodPressureGoal() ) {
-                otherGoals.add(new GoalModel(g));
-            }
-        }
-
-        Collections.sort(otherGoals);
-
-        model.addAttribute("hasOtherGoals", otherGoals.size() > 0);
-        model.addAttribute("otherGoals", otherGoals);
+        model.addAttribute("hasOtherGoals", goalService.hasAnyNonBPGoals(session.getId()));
 
         return "goals";
+    }
+
+    @PostMapping("other-goals")
+    public ResponseEntity<List<GoalModel>> getOtherGoalsList(HttpSession session) {
+        List<GoalModel> list = new ArrayList<GoalModel>();
+        for (MyGoal g : goalService.getAllNonBPGoals(session.getId())) {
+            list.add(new GoalModel(g));
+        }
+
+        Collections.sort(list);
+
+        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
     @PostMapping("create")
@@ -122,7 +123,7 @@ public class GoalsController extends BaseController {
         return new ResponseEntity<>(new GoalModel(goal), HttpStatus.OK);
     }
 
-    @PostMapping("set-status")
+    @PostMapping("update-status")
     public ResponseEntity<GoalHistoryModel> updateStatus(HttpSession session,
                                                          @RequestParam("extGoalId") String extGoalId,
                                                          @RequestParam("achievementStatus") String achievementStatusStr) {

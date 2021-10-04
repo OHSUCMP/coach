@@ -1,38 +1,86 @@
+async function loadOtherGoals(_callback) {
+    let response = await fetch("/goals/other-goals", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    });
+
+    let goals = await response.json();
+
+    _callback(goals);
+}
+
+function populateOtherGoals() {
+    let data = window.otherGoals;
+
+    let html = '<table id="goalsTable" class="no-spacing">';
+
+    if (Array.isArray(data) && data.length > 0) {
+        data.forEach(function(g) {
+            let inProgress = g.achievementStatus === 'IN_PROGRESS';
+            let c = inProgress ? 'active' : 'completed';
+
+            // goal info and actions
+            html += "<tr class='goal' data-extGoalId='" + g.extGoalId + "'><td>";
+            html += "<div class='goal " + c + "'>";
+            html += "<span class='heading'>" + g.referenceDisplay + "</span>";
+            html += "<table><tr><td class='expand'>";
+            html += "<div>Your goal:<span class='goalText'>" + g.goalText + "</span></div>";
+            html += "<div>Target completion date:<span class='targetDate'>" + toDateString(g.targetDate) + "</span></div>";
+            html += "<div>Current status:<span class='" + c + "'>" + g.achievementStatusLabel + "</span></div>";
+            html += "</td><td class='shrink'>";
+            if (inProgress) {
+                html += "<div class='markAchieved button'>Mark Achieved</div>";
+                html += "<div class='markNotAchieved button'>Mark Not Achieved</div>";
+            } else {
+                html += "<div class='markInProgress button'>Mark In Progress</div>";
+            }
+            html += "</td></tr></table>";
+            html += "</div>";
+            html += "</td>";
+
+            // goal history
+            html += "<td><table class='goalHistory'>";
+            html += "<tr class='goalHistoryHeader'>";
+            html += "<th>Achievement Status</th>";
+            html += "<th>Date</th>";
+            html += "</tr>";
+            if (g.history) {
+                g.history.forEach(function(item) {
+                    html += "<tr>";
+                    html += "<td>" + item.achievementStatusLabel + "</td>";
+                    html += "<td class='date'>" + toDateTimeString(item.createdDate) + "</td>";
+                    html += "</tr>";
+                });
+            }
+            html += "</table></td></tr>";
+        });
+    }
+    html += "</table>";
+
+    $('#otherGoalsContainer').html(html);
+}
+
 async function updateStatus(el, status) {
-    let extGoalId = $(el).closest('tr').attr('data-extGoalId');
+    let goal = $(el).closest('tr.goal');
+    let extGoalId = $(goal).attr('data-extGoalId');
 
     let formData = new FormData();
     formData.append("extGoalId", extGoalId);
     formData.append("achievementStatus", status);
 
-    let response = await fetch("/goals/set-status", {
+    let response = await fetch("/goals/update-status", {
         method: "POST",
         body: formData
     });
 
-    let goalHistory = await response.json();
-    if (goalHistory) {
-        let goalRow = $('tr.goal.data[data-extGoalId="' + extGoalId + '"]');
-        if (goalRow) {
-            $(goalRow).children('td.status').html(goalHistory.achievementStatus);
-            $(goalRow).children('td.actions').html(buildActionsHTML(goalHistory.achievementStatus));
-        }
-        let historyTable = $('tr.goal.history[data-extGoalId="' + extGoalId + '"]').find('table');
-        if (historyTable) {
-            $(historyTable).find('tr:last').after(buildHistoryHTML(goalHistory));
-        }
+    if (response.status === 200) {
+        await loadOtherGoals(function(otherGoals) {
+            window.otherGoals = otherGoals;
+            populateOtherGoals();
+        });
     }
-}
-
-function buildActionsHTML(status) {
-    // this should be kept synchronized with goals.mustache
-    return status === 'IN_PROGRESS' ?
-        '<div class="markAchieved link">Mark Achieved</div> <div class="markNotAchieved link">Mark Not Achieved</div>' :
-        '<div class="markInProgress link">Mark In Progress</div>';
-}
-
-function buildHistoryHTML(goalHistory) {
-    return "<tr><td>" + goalHistory.achievementStatus + "</td><td>" + goalHistory.createdDate + "</td></tr>\n";
 }
 
 async function updateBPGoal(g, _callback) {

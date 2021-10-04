@@ -142,6 +142,27 @@ public class GoalService extends BaseService {
         }
     }
 
+    public boolean hasAnyNonBPGoals(String sessionId) {
+        for (MyGoal g : getGoalList(sessionId)) {
+            if ( ! g.isBloodPressureGoal() ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public List<MyGoal> getAllNonBPGoals(String sessionId) {
+        List<MyGoal> list = getGoalList(sessionId);
+        Iterator<MyGoal> iter = list.iterator();
+        while (iter.hasNext()) {
+            MyGoal g = iter.next();
+            if (g.isBloodPressureGoal()) {
+                iter.remove();
+            }
+        }
+        return list;
+    }
+
     public MyGoal create(String sessionId, MyGoal goal) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
 

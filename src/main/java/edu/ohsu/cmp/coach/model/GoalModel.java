@@ -141,6 +141,10 @@ public class GoalModel implements Comparable<GoalModel> {
         return referenceCode;
     }
 
+    public String getReferenceDisplay() {
+        return referenceDisplay;
+    }
+
     public String getGoalText() {
         return goalText;
     }

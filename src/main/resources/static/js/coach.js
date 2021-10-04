@@ -30,3 +30,25 @@ function setClipboard(value) {
     document.execCommand("copy");
     document.body.removeChild(tempInput);
 }
+
+// todo : this needs to preserve leading zeros!
+// yyyy-MM-ddThh:mm:ss.+zz:zz
+function toDateString(o) {
+    let d = new Date(Date.parse(o));
+    return d.getMonth() + "/" + d.getDay() + "/" + d.getFullYear();
+}
+
+// todo : this needs to preserve leading zeros!
+// yyyy-MM-ddThh:mm:ss.+zz:zz
+function toDateTimeString(o) {
+    let d = new Date(Date.parse(o));
+    return d.getMonth() + "/" + d.getDay() + "/" + d.getFullYear() + " " +
+        d.getHours() + ":" + pad(d.getMinutes(), '0', 2) + ":" + pad(d.getSeconds(), '0', 2);
+}
+
+function pad(o, padChar, fillToLen) {
+    let s = o.toString();
+    return s.length >= fillToLen ?
+        s :
+        padChar.repeat(fillToLen - s.length) + s;
+}
