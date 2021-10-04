@@ -10,6 +10,7 @@ public class ContactMessage {
     private Long id;
 
     private String messageKey;
+    private String subject;
     private String body;
 
     protected ContactMessage() {
@@ -29,6 +30,14 @@ public class ContactMessage {
 
     public void setMessageKey(String messageKey) {
         this.messageKey = messageKey;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
     }
 
     public String getBody() {

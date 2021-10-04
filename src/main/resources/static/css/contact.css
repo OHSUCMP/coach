@@ -28,7 +28,16 @@
     font-size: small;
 }
 
+.heading {
+    margin-bottom: 10px;
+}
+
 #myChartInstructions {
     width: 500px;
     height: 265px;
+}
+
+#subject {
+    margin-bottom: 10px;
+    font-weight: bold;
 }

@@ -5,6 +5,7 @@ import edu.ohsu.cmp.coach.entity.app.ContactMessage;
 import edu.ohsu.cmp.coach.model.PatientModel;
 import edu.ohsu.cmp.coach.service.ContactMessageService;
 import edu.ohsu.cmp.coach.service.EHRService;
+import edu.ohsu.cmp.coach.util.MustacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 public class ContactController extends BaseController {
@@ -37,14 +43,26 @@ public class ContactController extends BaseController {
             model.addAttribute("applicationName", applicationName);
             model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
-            ContactMessage contactMessage = contactMessageService.getMessage(token);
-            String message = contactMessage != null ?
-                    contactMessage.getBody() :
-                    "";
-            model.addAttribute("message", message);
-
             String mychartLoginLink = env.getProperty("mychart.login.url");
             String mychartMessageLink = env.getProperty("mychart.askAMedicalQuestion.url");
+
+            ContactMessage contactMessage = contactMessageService.getMessage(token);
+            String message = "";
+            String subject = "";
+            if (contactMessage != null) {
+                message = contactMessage.getBody();
+                subject = contactMessage.getSubject();
+                try {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("subject", URLEncoder.encode(subject, StandardCharsets.UTF_8));
+                    mychartMessageLink = MustacheUtil.compileMustache(mychartMessageLink, map);
+
+                } catch (IOException e) {
+                    logger.error("caught " + e.getClass().getName() + " compiling MyChart Message Link template: " + e.getMessage(), e);
+                }
+            }
+            model.addAttribute("subject", subject);
+            model.addAttribute("message", message);
 
             model.addAttribute("mychartLoginLink", mychartLoginLink);
             model.addAttribute("mychartMessageLink", mychartMessageLink);

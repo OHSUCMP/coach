@@ -13,11 +13,14 @@ import java.util.Map;
 
 public class MustacheUtil {
     public static String compileMustache(Audience audience, String s) throws IOException {
-        if (s == null) return null;
-        if (s.trim().isEmpty()) return "";
-
         Map<String, Object> map = new HashMap<String, Object>();
         map.put(audience.getTag(), true);
+        return compileMustache(s, map);
+    }
+
+    public static String compileMustache(String s, Map<String, Object> map) throws IOException {
+        if (s == null) return null;
+        if (s.trim().isEmpty()) return "";
 
         MustacheFactory mf = new DefaultMustacheFactory();
         Mustache m = mf.compile(new StringReader(s), "template" );

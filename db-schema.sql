@@ -178,19 +178,20 @@ drop table if exists contact_message;
 create table contact_message (
     id int not null auto_increment primary key,
     messageKey varchar(50) unique not null,
+    subject varchar(255) not null,
     body text not null
 );
 
-insert into contact_message(messageKey, body) values("urgent-bp", "Very high blood pressure detected. Hypertensive emergency is possible. Consultation with care team is recommended.");
-insert into contact_message(messageKey, body) values("additional-bps", "Need to collect set of blood pressures. This will help provide a better overall picture of blood pressure trends.");
-insert into contact_message(messageKey, body) values("suspect-htn-stage2", "Stage 2 Hypertension suspected. Multiple blood pressure readings of ≥140/90 mmHg indicate that a diagnosis of stage 2 hypertension may be appropriate. Consultation needed.");
-insert into contact_message(messageKey, body) values("possible-htn-stage2", "Stage 2 Hypertension possible. Blood pressure readings of >140/90 mmHg may indicate that diagnosis of stage 2 hypertension can be considered.");
-insert into contact_message(messageKey, body) values("possible-htn-stage1", "Stage 1 Hypertension possible. Blood pressure readings of >130/80 suggest potential hypertension. Consultation needed,");
-insert into contact_message(messageKey, body) values("office-bps", "Out of office blood pressure measurements are recommended to obtain a more complete understanding of patient blood pressure trends. Consultation recommended.");
-insert into contact_message(messageKey, body) values("ambulatory-bps", "Blood pressure variability may require use of ambulatory blood pressure monitoring to locate patterns in blood pressure. Consultation recommended.");
-insert into contact_message(messageKey, body) values("recommend-pharma-and-nonpharma", "Antihypertensive medication recommended alongside non-pharmacologic counseling. Blood pressure is above goal. Consultation with care team and patient is recommended to consider treatment options.");
-insert into contact_message(messageKey, body) values("recommend-nonpharma", "Non-pharmacologic treatment is recommended. Antihypertensive medication should be considered if blood pressure control has not improved after 3 months.");
-insert into contact_message(messageKey, body) values("recommend-pharma", "Antihypertensive medication is recommended to improve blood pressure control. Consultation with care team and patient recommended to discuss treatment options.");
-insert into contact_message(messageKey, body) values("recommend-advancing-treatment", "Additional antihypertensive medication may be needed to control blood pressure. Consultation with care team and patient recommended.");
-insert into contact_message(messageKey, body) values("untreated-adverse-event", "An adverse event associated with antihypertensive medications has been detected. If not yet addressed by patient and care team, consultation is required.");
-insert into contact_message(messageKey, body) values("treated-adverse-event", "An adverse event associated with antihypertensive medications has been detected. It has been addressed. If event recurs, consultation with care team and patient is recommended.");
+insert into contact_message(messageKey, subject, body) values("urgent-bp", "Urgent BP", "Very high blood pressure detected. Hypertensive emergency is possible. Consultation with care team is recommended.");
+insert into contact_message(messageKey, subject, body) values("additional-bps", "Additional BPs", "Need to collect set of blood pressures. This will help provide a better overall picture of blood pressure trends.");
+insert into contact_message(messageKey, subject, body) values("suspect-htn-stage2", "Suspect Hypertension Stage 2", "Stage 2 Hypertension suspected. Multiple blood pressure readings of >=140/90 mmHg indicate that a diagnosis of stage 2 hypertension may be appropriate. Consultation needed.");
+insert into contact_message(messageKey, subject, body) values("possible-htn-stage2", "Possible Hypertension Stage 2", "Stage 2 Hypertension possible. Blood pressure readings of >140/90 mmHg may indicate that diagnosis of stage 2 hypertension can be considered.");
+insert into contact_message(messageKey, subject, body) values("possible-htn-stage1", "Possible Hypertension Stage 1", "Stage 1 Hypertension possible. Blood pressure readings of >130/80 suggest potential hypertension. Consultation needed,");
+insert into contact_message(messageKey, subject, body) values("office-bps", "Office BPs", "Out of office blood pressure measurements are recommended to obtain a more complete understanding of patient blood pressure trends. Consultation recommended.");
+insert into contact_message(messageKey, subject, body) values("ambulatory-bps", "Ambulatory BPs", "Blood pressure variability may require use of ambulatory blood pressure monitoring to locate patterns in blood pressure. Consultation recommended.");
+insert into contact_message(messageKey, subject, body) values("recommend-pharma-and-nonpharma", "Recommend Pharma and Non-Pharma", "Antihypertensive medication recommended alongside non-pharmacologic counseling. Blood pressure is above goal. Consultation with care team and patient is recommended to consider treatment options.");
+insert into contact_message(messageKey, subject, body) values("recommend-nonpharma", "Recommend Non-Pharma", "Non-pharmacologic treatment is recommended. Antihypertensive medication should be considered if blood pressure control has not improved after 3 months.");
+insert into contact_message(messageKey, subject, body) values("recommend-pharma", "Recommend Pharma", "Antihypertensive medication is recommended to improve blood pressure control. Consultation with care team and patient recommended to discuss treatment options.");
+insert into contact_message(messageKey, subject, body) values("recommend-advancing-treatment", "Recommend Advancing Treatment", "Additional antihypertensive medication may be needed to control blood pressure. Consultation with care team and patient recommended.");
+insert into contact_message(messageKey, subject, body) values("untreated-adverse-event", "Untreated Adverse Event", "An adverse event associated with antihypertensive medications has been detected. If not yet addressed by patient and care team, consultation is required.");
+insert into contact_message(messageKey, subject, body) values("treated-adverse-event", "Treated Adverse Event", "An adverse event associated with antihypertensive medications has been detected. It has been addressed. If event recurs, consultation with care team and patient is recommended.");
