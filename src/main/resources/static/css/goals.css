@@ -116,3 +116,7 @@ span.goalText, span.targetDate, span.completed {
     font-weight: bold;
     color: #1d5987;
 }
+
+#noOtherGoals {
+    margin-top: 10px;
+}

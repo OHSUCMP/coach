@@ -75,13 +75,13 @@
             </table>
         {{/bpGoal}}
 
-        {{#hasOtherGoals}}
-            <table class="content">
-                <tr>
-                    <td class="heading">
-                        My Other Goals
-                    </td>
-                </tr>
+        <table class="content">
+            <tr>
+                <td class="heading">
+                    My Other Goals
+                </td>
+            </tr>
+            {{#hasOtherGoals}}
                 <tr>
                     <td>
                         <!-- blue boxes on the left, histories on the right -->
@@ -90,7 +90,16 @@
                         </div>
                     </td>
                 </tr>
+            {{/hasOtherGoals}}
+            {{^hasOtherGoals}}
+                <tr>
+                    <td>
+                        <div id="noOtherGoals">
+                            You have no other goals defined at this time.
+                        </div>
+                    </td>
+                </tr>
+            {{/hasOtherGoals}}
             </table>
-        {{/hasOtherGoals}}
     {{/content}}
 {{/layout}}
