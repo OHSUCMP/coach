@@ -38,6 +38,7 @@
 }
 
 #subject {
-    margin-bottom: 10px;
+    margin: 0 0 10px 67px;
     font-weight: bold;
+    text-indent: -67px;
 }
