@@ -45,45 +45,51 @@ function renderCards(cards) {
 
     cards.forEach(function (card) {
         html += "<div class='card " + card.indicator + "'>";
-        html += "<table style='width:100%'><tr><td>";
-        html += "<div class='circle'><span>XX</span></div>"
-        html += "</td><td class='expand'>";
-        html += "<div class='content'>";
-        html += "<span class='summary heading'>" + card.summary + "</span>";
 
-        if (card.rationale !== null) {
-            html += "<span class='rationale'>" + card.rationale + "</span>";
+        if (card.errorMessage !== null) {
+            html += "<div class='error'>" + card.errorMessage + "</div>";
+
+        } else {
+            html += "<table style='width:100%'><tr><td>";
+            html += "<div class='circle'><span>XX</span></div>"
+            html += "</td><td class='expand'>";
+            html += "<div class='content'>";
+            html += "<span class='summary heading'>" + card.summary + "</span>";
+
+            if (card.rationale !== null) {
+                html += "<span class='rationale'>" + card.rationale + "</span>";
+            }
+
+            if (card.source.label !== null && card.source.url !== null) {
+                html += "<span class='source'>";
+                html += "<a href='" + card.source.url + "' target='_blank' rel='noopener noreferrer'>" +
+                    card.source.label + "</a>";
+                html += "</span>";
+            }
+
+            if (card.links !== null) {
+                html += "<div class='links'>";
+                card.links.forEach(function(link) {
+                    html += "<a class='link' href='" + link.url + "'>" + link.label + "</a>";
+                });
+                html += "</div>";
+            }
+
+            html += buildCounselingHTML(card.suggestions);
+
+            html += "</td><td class='shrink'>";
+
+            html += buildAdverseEvents(card.suggestions);
+
+            html += buildGoalsHTML(card.suggestions);
+
+            html += buildLinksHTML(card.suggestions);
+            // if (card.selectionBehavior !== null) {
+            //     html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>";
+            // }
+
+            html += "</td></tr></table>";
         }
-
-        if (card.source.label !== null && card.source.url !== null) {
-            html += "<span class='source'>";
-            html += "<a href='" + card.source.url + "' target='_blank' rel='noopener noreferrer'>" +
-                card.source.label + "</a>";
-            html += "</span>";
-        }
-
-        if (card.links !== null) {
-            html += "<div class='links'>";
-            card.links.forEach(function(link) {
-                html += "<a class='link' href='" + link.url + "'>" + link.label + "</a>";
-            });
-            html += "</div>";
-        }
-
-        html += buildCounselingHTML(card.suggestions);
-
-        html += "</td><td class='shrink'>";
-
-        html += buildAdverseEvents(card.suggestions);
-
-        html += buildGoalsHTML(card.suggestions);
-
-        html += buildLinksHTML(card.suggestions);
-        // if (card.selectionBehavior !== null) {
-        //     html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>";
-        // }
-
-        html += "</td></tr></table>";
         html += "</div>";
     });
     return html;

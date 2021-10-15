@@ -42,7 +42,10 @@ import java.util.*;
 public class CDSHookExecutor implements Runnable {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    private static final String GENERIC_ERROR_MESSAGE = "ERROR: An error was encountered processing this recommendation.  See server logs for details.";
+
     private boolean testing;
+    private boolean showDevErrors;
     private String sessionId;
     private String cdsHooksEndpointURL;
     private EHRService ehrService;
@@ -51,7 +54,7 @@ public class CDSHookExecutor implements Runnable {
     private CounselingService counselingService;
     private FhirConfigManager fcm;
 
-    public CDSHookExecutor(boolean testing, String sessionId,
+    public CDSHookExecutor(boolean testing, boolean showDevErrors, String sessionId,
                            String cdsHooksEndpointURL,
                            EHRService ehrService,
                            HomeBloodPressureReadingService hbprService,
@@ -59,6 +62,7 @@ public class CDSHookExecutor implements Runnable {
                            CounselingService counselingService,
                            FhirConfigManager fcm) {
         this.testing = testing;
+        this.showDevErrors = showDevErrors;
         this.sessionId = sessionId;
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
         this.ehrService = ehrService;
@@ -76,6 +80,7 @@ public class CDSHookExecutor implements Runnable {
     public String toString() {
         return "CDSHookExecutor{" +
                 "testing=" + testing +
+                ", showDevErrors=" + showDevErrors +
                 ", sessionId='" + sessionId + '\'' +
                 ", cdsHooksEndpointURL='" + cdsHooksEndpointURL + '\'' +
                 ", ehrService=" + ehrService +
@@ -168,8 +173,17 @@ public class CDSHookExecutor implements Runnable {
             int code;
             String body;
             if (testing) {
-                code = 200;
-                body = "{ \"cards\": [{ \"summary\": \"Blood pressure goal not reached. Discuss treatment options\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Your recent blood pressure is above your goal. Changing your behaviors may help - see the additional options. In addition, please consult your care team to consider additional treatment options. Please review the home blood pressure measurement protocol presented on the blood pressure entry page to make sure that the tool is accurately measuring your blood pressure.{{/patient}}{{#careTeam}}BP not at goal. Consider initiating antihypertensive drug therapy with a single antihypertinsive drug with dosage titration and sequential addition of other agents to achieve the target BP.{{/careTeam}}|[ { \\\"id\\\": \\\"contact-suggestion\\\", \\\"label\\\": \\\"Contact care team BP Treatment\\\", \\\"type\\\": \\\"suggestion-link\\\", \\\"actions\\\": [{\\\"label\\\":\\\"Contact your care team about options to control your high blood pressure\\\", \\\"url\\\":\\\"/contact\\\"}] } ]|at-most-one|\", \"source\": {} }, { \"summary\": \"Discuss Smoking Cessation\", \"indicator\": \"info\", \"detail\": \"{{#patient}}You have a hypertension (high blood pressure) diagnosis and reported smoking. Reducing smoking will help lower blood pressure, the risk of stroke, and other harmful events; talk to your care team about quitting smoking.{{/patient}}{{#careTeam}}Patient reports they smoke. Counsel about quitting according to your local protocol.{{/careTeam}}| [ {\\\"id\\\": \\\"smoking-counseling\\\", \\\"type\\\":\\\"counseling-link\\\", \\\"references\\\": {\\\"system\\\":\\\"http://snomed.info/sct\\\", \\\"code\\\":\\\"225323000\\\"},\\\"label\\\": \\\"Smoking Cessation Counseling\\\",\\\"actions\\\": [{\\\"url\\\":\\\"/SmokingCessation\\\", \\\"label\\\":\\\"Click here to learn more about tobacco cessation.\\\"}]}, { \\\"id\\\": \\\"smoking-freetext-goal\\\", \\\"type\\\":\\\"goal\\\", \\\"references\\\":{\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"smoking-cessation\\\"}, \\\"label\\\": \\\"Set a Tobacco Cessation goal (freetext):\\\", \\\"actions\\\": [] }, { \\\"id\\\": \\\"radio-smoking-goal\\\", \\\"type\\\": \\\"goal\\\", \\\"references\\\": {\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"smoking-cessation\\\"}, \\\"label\\\": \\\"Set a Tobacco Cessation goal (choice):\\\", \\\"actions\\\": [ {\\\"label\\\":\\\"Reduce my smoking by [quantity:] cigarettes per [time period:day]\\\"}, {\\\"label\\\":\\\"Quit smoking completely\\\"} ] } ]|at-most-one|\", \"source\": {} }, { \"summary\": \"Discuss target blood pressure and set a blood pressure goal\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}You recently received a hypertension (high blood pressure) diagnosis. Setting goals for lowering your blood pressure has been proven to help overall health and reduce your chance of stroke or other conditions.{{/patient}}{{#careTeam}}No BP Goal set: Setting a blood pressure goal can help engage patients and improve outcomes. For most patients, choosing a target between \\u003c120-140/80-90 is recommended; lower targets may be for ASCVD, ASCVD risk \\u003e10%, multimorbidity (CKD and diabetes), or preference; higher targets may be for age, adverse events, or frailty.{{/careTeam}}|[ { \\\"id\\\": \\\"bp-radio-goal\\\", \\\"label\\\": \\\"BP Goal\\\", \\\"type\\\": \\\"bp-goal\\\", \\\"references\\\":{\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"blood-pressure\\\"}, \\\"actions\\\": [{\\\"label\\\":\\\"140/90\\\"}, {\\\"label\\\":\\\"130/80\\\"}, {\\\"label\\\":\\\"120/80\\\"}]}]|at-most-one|\", \"source\": {} } ] }";
+//                int x = (int) Math.round(Math.random());
+//                if (x == 1) {
+//                    code = 500;
+//                    body = showDevErrors ?
+//                        "ERROR: Exception in CQL Execution.Invalid Interval - the ending boundary must be greater than or equal to the starting boundary.org.opencds.cqf.cql.engine.exception.InvalidInterval: Invalid Interval - the ending boundary must be greater than or equal to the starting boundary.\tat org.opencds.cqf.cql.engine.runtime.Interval.<init>(Interval.java:55)\tat org.opencds.cqf.cql.engine.elm.execution.IntervalEvaluator.internalEvaluate(IntervalEvaluator.java:20)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.FunctionRefEvaluator.internalEvaluate(FunctionRefEvaluator.java:33)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.EndEvaluator.internalEvaluate(EndEvaluator.java:32)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.GreaterOrEqualEvaluator.internalEvaluate(GreaterOrEqualEvaluator.java:80)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.AndEvaluator.internalEvaluate(AndEvaluator.java:50)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.QueryEvaluator.evaluateWhere(QueryEvaluator.java:75)\tat org.opencds.cqf.cql.engine.elm.execution.QueryEvaluator.internalEvaluate(QueryEvaluator.java:198)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.ExpressionDefEvaluator.internalEvaluate(ExpressionDefEvaluator.java:19)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.ExpressionRefEvaluator.internalEvaluate(ExpressionRefEvaluator.java:11)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.ExistsEvaluator.internalEvaluate(ExistsEvaluator.java:28)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.NotEvaluator.internalEvaluate(NotEvaluator.java:31)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.ExpressionDefEvaluator.internalEvaluate(ExpressionDefEvaluator.java:19)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.ExpressionRefEvaluator.internalEvaluate(ExpressionRefEvaluator.java:11)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cql.engine.elm.execution.AndEvaluator.internalEvaluate(AndEvaluator.java:49)\tat org.opencds.cqf.cql.engine.elm.execution.Executable.evaluate(Executable.java:18)\tat org.opencds.cqf.cds.hooks.R4HookEvaluator.resolveActions(R4HookEvaluator.java:75)\tat org.opencds.cqf.cds.hooks.R4HookEvaluator.evaluateCdsHooksPlanDefinition(R4HookEvaluator.java:53)\tat org.opencds.cqf.cds.hooks.R4HookEvaluator.evaluateCdsHooksPlanDefinition(R4HookEvaluator.java:19)\tat org.opencds.cqf.cds.hooks.BaseHookEvaluator.evaluate(BaseHookEvaluator.java:73)\tat org.opencds.cqf.r4.servlet.CdsHooksServlet.doPost(CdsHooksServlet.java:206)\tat javax.servlet.http.HttpServlet.service(HttpServlet.java:707)\tat javax.servlet.http.HttpServlet.service(HttpServlet.java:790)\tat org.eclipse.jetty.servlet.ServletHolder$NotAsync.service(ServletHolder.java:1459)\t..." :
+//                        GENERIC_ERROR_MESSAGE;
+//
+//                } else {
+                    code = 200;
+                    body = "{ \"cards\": [{ \"summary\": \"Blood pressure goal not reached. Discuss treatment options\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Your recent blood pressure is above your goal. Changing your behaviors may help - see the additional options. In addition, please consult your care team to consider additional treatment options. Please review the home blood pressure measurement protocol presented on the blood pressure entry page to make sure that the tool is accurately measuring your blood pressure.{{/patient}}{{#careTeam}}BP not at goal. Consider initiating antihypertensive drug therapy with a single antihypertinsive drug with dosage titration and sequential addition of other agents to achieve the target BP.{{/careTeam}}|[ { \\\"id\\\": \\\"contact-suggestion\\\", \\\"label\\\": \\\"Contact care team BP Treatment\\\", \\\"type\\\": \\\"suggestion-link\\\", \\\"actions\\\": [{\\\"label\\\":\\\"Contact your care team about options to control your high blood pressure\\\", \\\"url\\\":\\\"/contact\\\"}] } ]|at-most-one|\", \"source\": {} }, { \"summary\": \"Discuss Smoking Cessation\", \"indicator\": \"info\", \"detail\": \"{{#patient}}You have a hypertension (high blood pressure) diagnosis and reported smoking. Reducing smoking will help lower blood pressure, the risk of stroke, and other harmful events; talk to your care team about quitting smoking.{{/patient}}{{#careTeam}}Patient reports they smoke. Counsel about quitting according to your local protocol.{{/careTeam}}| [ {\\\"id\\\": \\\"smoking-counseling\\\", \\\"type\\\":\\\"counseling-link\\\", \\\"references\\\": {\\\"system\\\":\\\"http://snomed.info/sct\\\", \\\"code\\\":\\\"225323000\\\"},\\\"label\\\": \\\"Smoking Cessation Counseling\\\",\\\"actions\\\": [{\\\"url\\\":\\\"/SmokingCessation\\\", \\\"label\\\":\\\"Click here to learn more about tobacco cessation.\\\"}]}, { \\\"id\\\": \\\"smoking-freetext-goal\\\", \\\"type\\\":\\\"goal\\\", \\\"references\\\":{\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"smoking-cessation\\\"}, \\\"label\\\": \\\"Set a Tobacco Cessation goal (freetext):\\\", \\\"actions\\\": [] }, { \\\"id\\\": \\\"radio-smoking-goal\\\", \\\"type\\\": \\\"goal\\\", \\\"references\\\": {\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"smoking-cessation\\\"}, \\\"label\\\": \\\"Set a Tobacco Cessation goal (choice):\\\", \\\"actions\\\": [ {\\\"label\\\":\\\"Reduce my smoking by [quantity:] cigarettes per [time period:day]\\\"}, {\\\"label\\\":\\\"Quit smoking completely\\\"} ] } ]|at-most-one|\", \"source\": {} }, { \"summary\": \"Discuss target blood pressure and set a blood pressure goal\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}You recently received a hypertension (high blood pressure) diagnosis. Setting goals for lowering your blood pressure has been proven to help overall health and reduce your chance of stroke or other conditions.{{/patient}}{{#careTeam}}No BP Goal set: Setting a blood pressure goal can help engage patients and improve outcomes. For most patients, choosing a target between \\u003c120-140/80-90 is recommended; lower targets may be for ASCVD, ASCVD risk \\u003e10%, multimorbidity (CKD and diabetes), or preference; higher targets may be for age, adverse events, or frailty.{{/careTeam}}|[ { \\\"id\\\": \\\"bp-radio-goal\\\", \\\"label\\\": \\\"BP Goal\\\", \\\"type\\\": \\\"bp-goal\\\", \\\"references\\\":{\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"blood-pressure\\\"}, \\\"actions\\\": [{\\\"label\\\":\\\"140/90\\\"}, {\\\"label\\\":\\\"130/80\\\"}, {\\\"label\\\":\\\"120/80\\\"}]}]|at-most-one|\", \"source\": {} } ] }";
+//                }
 
             } else {
                 HttpResponse httpResponse = new HttpRequest().post(cdsHooksEndpointURL + "/" + hookId, null, headers, writer.toString());
@@ -179,40 +193,48 @@ public class CDSHookExecutor implements Runnable {
 
             logger.debug("got response code=" + code + ", body=" + body);
 
-            Gson gson = new GsonBuilder().create();
-            try {
-                body = MustacheUtil.compileMustache(audience, body);
-                CDSHookResponse response = gson.fromJson(body, new TypeToken<CDSHookResponse>() {}.getType());
+            if (code < 200 || code > 299) {
+                Card card = showDevErrors ?
+                        new Card(body) :
+                        new Card(GENERIC_ERROR_MESSAGE);
+                cards.add(card);
 
-                List<String> filterGoalIds = goalService.getExtGoalIdList(sessionId);
+            } else {
+                Gson gson = new GsonBuilder().create();
+                try {
+                    body = MustacheUtil.compileMustache(audience, body);
+                    CDSHookResponse response = gson.fromJson(body, new TypeToken<CDSHookResponse>() {}.getType());
 
-                for (CDSCard cdsCard : response.getCards()) {
-                    Card card = new Card(cdsCard);
+                    List<String> filterGoalIds = goalService.getExtGoalIdList(sessionId);
 
-                    if (card.getSuggestions() != null) {
-                        Iterator<Suggestion> iter = card.getSuggestions().iterator();
-                        while (iter.hasNext()) {
-                            Suggestion s = iter.next();
-                            if (s.getType().equals(Suggestion.TYPE_GOAL) && filterGoalIds.contains(s.getId())) {
-                                iter.remove();
+                    for (CDSCard cdsCard : response.getCards()) {
+                        Card card = new Card(cdsCard);
+
+                        if (card.getSuggestions() != null) {
+                            Iterator<Suggestion> iter = card.getSuggestions().iterator();
+                            while (iter.hasNext()) {
+                                Suggestion s = iter.next();
+                                if (s.getType().equals(Suggestion.TYPE_GOAL) && filterGoalIds.contains(s.getId())) {
+                                    iter.remove();
+                                }
+                            }
+
+                            for (Suggestion s : card.getSuggestions()) {
+                                if (s.getType().equals(Suggestion.TYPE_UPDATE_GOAL)) {
+                                    MyGoal myGoal = goalService.getGoal(sessionId, s.getId());
+                                    s.setGoal(myGoal);
+                                }
                             }
                         }
 
-                        for (Suggestion s : card.getSuggestions()) {
-                            if (s.getType().equals(Suggestion.TYPE_UPDATE_GOAL)) {
-                                MyGoal myGoal = goalService.getGoal(sessionId, s.getId());
-                                s.setGoal(myGoal);
-                            }
-                        }
+                        cards.add(card);
                     }
 
-                    cards.add(card);
+                } catch (Exception e) {
+                    logger.error("caught " + e.getClass().getName() + " processing response for hookId=" + hookId + " - " + e.getMessage(), e);
+                    logger.error("\n\nBODY =\n" + body + "\n\n");
+                    throw e;
                 }
-
-            } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " processing response for hookId=" + hookId + " - " + e.getMessage(), e);
-                logger.error("\n\nBODY =\n" + body + "\n\n");
-                throw e;
             }
 
         } catch (Exception e) {

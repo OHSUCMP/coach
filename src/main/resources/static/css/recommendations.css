@@ -106,6 +106,13 @@
     display: block;
 }
 
+.card.critical > .error {
+    max-height: 100px;
+    overflow-y: scroll;
+    border: 1px solid red;
+    padding: 10px;
+}
+
 .counselingContainer ul.actions {
     margin-top: 0;
 }

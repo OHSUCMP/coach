@@ -46,6 +46,11 @@ public class FHIRCredentialsWithClient {
                     .withId(reference)
                     .execute();
         }
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("resource = " + FhirUtil.toJson(t));
+        }
+
         return t;
     }
 

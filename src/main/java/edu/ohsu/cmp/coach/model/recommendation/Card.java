@@ -25,6 +25,8 @@ public class Card {
     private String selectionBehavior;
     private List<Link> links;
 
+    private String errorMessage;
+
     public Card(CDSCard cdsCard) throws IOException {
         this.summary = cdsCard.getSummary();
         this.indicator = cdsCard.getIndicator();
@@ -53,6 +55,11 @@ public class Card {
             logger.error("JSON=" + cdsCard.getLinks());
             throw e;
         }
+    }
+
+    public Card(String errorMessage) {
+        this.indicator = "critical";
+        this.errorMessage = errorMessage;
     }
 
     public String getSummary() {
@@ -85,5 +92,9 @@ public class Card {
 
     public List<Link> getLinks() {
         return links;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
     }
 }

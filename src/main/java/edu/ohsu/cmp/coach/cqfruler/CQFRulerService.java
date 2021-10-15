@@ -23,6 +23,7 @@ public class CQFRulerService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private String cdsHooksEndpointURL;
+    private Boolean showDevErrors;
 
     @Autowired private EHRService ehrService;
     @Autowired private HomeBloodPressureReadingService hbprService;
@@ -30,13 +31,15 @@ public class CQFRulerService {
     @Autowired private CounselingService counselingService;
     @Autowired private FhirConfigManager fcm;
 
-    public CQFRulerService(@Value("${cqfruler.cdshooks.endpoint.url}") String cdsHooksEndpointURL) {
+    public CQFRulerService(@Value("${cqfruler.cdshooks.endpoint.url}") String cdsHooksEndpointURL,
+                           @Value("#{new Boolean('${security.show-dev-errors}')}") Boolean showDevErrors) {
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
+        this.showDevErrors = showDevErrors;
     }
 
     public void requestHooksExecution(String sessionId) {
         try {
-            CDSHookExecutor executor = new CDSHookExecutor(TESTING, sessionId, cdsHooksEndpointURL,
+            CDSHookExecutor executor = new CDSHookExecutor(TESTING, showDevErrors, sessionId, cdsHooksEndpointURL,
                     ehrService,
                     hbprService,
                     goalService,
