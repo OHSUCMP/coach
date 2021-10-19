@@ -35,14 +35,14 @@ function setClipboard(value) {
 // yyyy-MM-ddThh:mm:ss.+zz:zz
 function toDateString(o) {
     let d = new Date(Date.parse(o));
-    return d.getMonth() + "/" + d.getDay() + "/" + d.getFullYear();
+    return (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear();
 }
 
 // todo : this needs to preserve leading zeros!
 // yyyy-MM-ddThh:mm:ss.+zz:zz
 function toDateTimeString(o) {
     let d = new Date(Date.parse(o));
-    return d.getMonth() + "/" + d.getDay() + "/" + d.getFullYear() + " " +
+    return (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear() + " " +
         d.getHours() + ":" + pad(d.getMinutes(), '0', 2) + ":" + pad(d.getSeconds(), '0', 2);
 }
 
