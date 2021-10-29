@@ -60,11 +60,11 @@
                         {{#medicationsOfInterest}}
                             <tr class='medication' data-system="{{system}}" data-code="{{code}}">
                                 <td>{{description}}</td>
-                                <td>{{reason}}</td>
-                                <td>{{dose}}</td>
-                                <td>{{prescribingClinician}}</td>
-                                <td>{{issues}}</td>
-                                <td>{{priority}}</td>
+                                <td>{{#reason}}{{reason}}{{/reason}}</td>
+                                <td>{{#dose}}{{dose}}{{/dose}}</td>
+                                <td>{{#prescribingClinician}}{{prescribingClinician}}{{/prescribingClinician}}</td>
+                                <td>{{#issues}}{{issues}}{{/issues}}</td>
+                                <td>{{#priority}}{{priority}}{{/priority}}</td>
                             </tr>
                         {{/medicationsOfInterest}}
                     </table>
@@ -92,11 +92,11 @@
                         {{#otherMedications}}
                             <tr class='medication' data-system="{{system}}" data-code="{{code}}">
                                 <td>{{description}}</td>
-                                <td>{{reason}}</td>
-                                <td>{{dose}}</td>
-                                <td>{{prescribingClinician}}</td>
-                                <td>{{issues}}</td>
-                                <td>{{priority}}</td>
+                                <td>{{#reason}}{{reason}}{{/reason}}</td>
+                                <td>{{#dose}}{{dose}}{{/dose}}</td>
+                                <td>{{#prescribingClinician}}{{prescribingClinician}}{{/prescribingClinician}}</td>
+                                <td>{{#issues}}{{issues}}{{/issues}}</td>
+                                <td>{{#priority}}{{priority}}{{/priority}}</td>
                             </tr>
                         {{/otherMedications}}
                     </table>
