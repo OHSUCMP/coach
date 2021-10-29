@@ -6,14 +6,12 @@ import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 
-public class MedicationModel implements Comparable<MedicationModel> {
+public class MedicationModel {
     private String system;
     private String code;
     private String description;
     private String status;
     private Long effectiveTimestamp;
-
-    // todo : populate these fields
     private String reason;
     private String dose;
     private String prescribingClinician;
@@ -142,11 +140,6 @@ public class MedicationModel implements Comparable<MedicationModel> {
         issues = mr.hasDetectedIssue() ? mr.getDetectedIssueFirstRep().getDisplay() : "";
 
         priority = mr.hasPriority() ? mr.getPriority().getDisplay() : "";
-    }
-
-    @Override
-    public int compareTo(MedicationModel o) {
-        return 0;   // todo: implement this
     }
 
     public String getSystem() {

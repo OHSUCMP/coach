@@ -170,7 +170,6 @@ function buildChart() {
         type: 'line',
         data: {
             datasets: [{
-                // type: 'line',
                 type: 'scatter',
                 label: 'Systolic',
                 pointRadius: 3,
@@ -200,7 +199,7 @@ function buildChart() {
                 borderWidth: 3,
                 data: toRegressionData(data, 'systolic')
             },*/ {
-                type: 'line',
+                type: 'scatter',
                 label: 'Diastolic',
                 pointRadius: 3,
                 pointStyle: pointStyleArr,
