@@ -51,31 +51,33 @@ public class BPReadingsController extends BaseController {
 
     @PostMapping("create")
     public ResponseEntity<List<HomeBloodPressureReading>> create(HttpSession session,
-                                                                 @RequestParam("systolic1") Integer systolic1,
-                                                                 @RequestParam("diastolic1") Integer diastolic1,
-                                                                 @RequestParam("pulse1") Integer pulse1,
-                                                                 @RequestParam("systolic2") Integer systolic2,
-                                                                 @RequestParam("diastolic2") Integer diastolic2,
-                                                                 @RequestParam("pulse2") Integer pulse2,
-                                                                 @RequestParam("readingDateTS") Long readingDateTS,
-                                                                 @RequestParam("confirm") Boolean followedInstructions) {
+                                                                 @RequestParam Integer systolic1,
+                                                                 @RequestParam Integer diastolic1,
+                                                                 @RequestParam(required = false) Integer pulse1,
+                                                                 @RequestParam(required = false) Integer systolic2,
+                                                                 @RequestParam(required = false) Integer diastolic2,
+                                                                 @RequestParam(required = false) Integer pulse2,
+                                                                 @RequestParam Long readingDateTS,
+                                                                 @RequestParam Boolean followedInstructions) {
 
         // get the cache just to make sure it's defined and the user is properly authenticated
         SessionCache.getInstance().get(session.getId());
 
         Date readingDate = new Date(readingDateTS);
 
+        List<HomeBloodPressureReading> list = new ArrayList<>();
+
         HomeBloodPressureReading bpreading1 = new HomeBloodPressureReading(systolic1, diastolic1, pulse1, readingDate, followedInstructions);
         bpreading1 = hbprService.create(session.getId(), bpreading1);
+        list.add(bpreading1);
 
-        HomeBloodPressureReading bpreading2 = new HomeBloodPressureReading(systolic2, diastolic2, pulse2, readingDate, followedInstructions);
-        bpreading2 = hbprService.create(session.getId(), bpreading2);
+        if (systolic2 != null && diastolic2 != null) {
+            HomeBloodPressureReading bpreading2 = new HomeBloodPressureReading(systolic2, diastolic2, pulse2, readingDate, followedInstructions);
+            bpreading2 = hbprService.create(session.getId(), bpreading2);
+            list.add(bpreading2);
+        }
 
         cqfRulerService.requestHooksExecution(session.getId());
-
-        List<HomeBloodPressureReading> list = new ArrayList<>();
-        list.add(bpreading1);
-        list.add(bpreading2);
 
         return new ResponseEntity<>(list, HttpStatus.OK);
     }

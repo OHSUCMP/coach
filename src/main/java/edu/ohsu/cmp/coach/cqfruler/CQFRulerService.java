@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class CQFRulerService {
@@ -24,6 +24,7 @@ public class CQFRulerService {
 
     private String cdsHooksEndpointURL;
     private Boolean showDevErrors;
+    private List<String> cdsHookOrder;
 
     @Autowired private EHRService ehrService;
     @Autowired private HomeBloodPressureReadingService hbprService;
@@ -32,9 +33,11 @@ public class CQFRulerService {
     @Autowired private FhirConfigManager fcm;
 
     public CQFRulerService(@Value("${cqfruler.cdshooks.endpoint.url}") String cdsHooksEndpointURL,
-                           @Value("#{new Boolean('${security.show-dev-errors}')}") Boolean showDevErrors) {
+                           @Value("#{new Boolean('${security.show-dev-errors}')}") Boolean showDevErrors,
+                           @Value("${cqfruler.cdshooks.order.csv}") String cdsHookOrder) {
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
         this.showDevErrors = showDevErrors;
+        this.cdsHookOrder = Arrays.asList(cdsHookOrder.split("\\s*,\\s*"));
     }
 
     public void requestHooksExecution(String sessionId) {
@@ -60,6 +63,21 @@ public class CQFRulerService {
     }
 
     public List<CDSHook> getCDSHooks() throws IOException {
-        return CDSHooksUtil.getCDSHooks(TESTING, cdsHooksEndpointURL);
+        Map<String, CDSHook> map = new LinkedHashMap<>();
+        for (CDSHook cdsHook : CDSHooksUtil.getCDSHooks(TESTING, cdsHooksEndpointURL)) {
+            map.put(cdsHook.getId(), cdsHook);
+        }
+
+        List<CDSHook> list = new ArrayList<>();
+        for (String hookId : cdsHookOrder) {
+            CDSHook cdsHook = map.remove(hookId);
+            if (cdsHook != null) {
+                list.add(cdsHook);
+            }
+        }
+
+        list.addAll(map.values());
+
+        return list;
     }
 }

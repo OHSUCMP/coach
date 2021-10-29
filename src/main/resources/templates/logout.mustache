@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
     <title>Logged out</title>
+    <script type="text/javascript" src="/js/jquery-3.5.1.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            sessionStorage.clear(); // clear the browser session just in case there's anything there
+        });
+    </script>
 </head>
 <body>
     Logout successful.  Please close this browser window to ensure all local data is removed and session state cleared.

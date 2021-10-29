@@ -38,11 +38,11 @@ async function getRecommendation(id, _callback) {
 }
 
 function renderCards(cards) {
-    let html = "";
     if (cards === undefined || cards === null || cards.length === 0) {
-        return html;
+        return '';
     }
 
+    let html = "";
     cards.forEach(function (card) {
         html += "<div class='card " + card.indicator + "'>";
 
@@ -52,7 +52,7 @@ function renderCards(cards) {
         } else {
             html += "<table style='width:100%'><tr><td>";
             html += "<div class='circle'><span>XX</span></div>"
-            html += "</td><td class='expand'>";
+            html += "</td><td>"; // class='expand'>";
             html += "<div class='content'>";
             html += "<span class='summary heading'>" + card.summary + "</span>";
 
@@ -77,7 +77,7 @@ function renderCards(cards) {
 
             html += buildCounselingHTML(card.suggestions);
 
-            html += "</td><td class='shrink'>";
+            html += "</td><td>"; // class='shrink'>";
 
             html += buildAdverseEvents(card.suggestions);
 
@@ -362,7 +362,7 @@ function buildLinksHTML(suggestions) {
     if (suggestions !== null) {
         suggestions.forEach(function(s) {
             if (s.type === 'suggestion-link') {
-                html += "<div class='link'>";
+                html += "<div class='slink'>";      // 'slink' to differentiate from 'link'
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tbody>";
 

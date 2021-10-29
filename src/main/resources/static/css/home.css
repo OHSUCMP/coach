@@ -80,10 +80,15 @@ div.chartKeyItem {
     border: 1px solid #555;
 }
 
-#chartTimelineContainer .button.hover {
+#chartTimelineContainer .button:not(.selected).hover {
     cursor: pointer;
     background-color: #ddd;
     border: 1px solid #00f;
+}
+
+#chartTimelineContainer .button.selected {
+    background-color: #004466;
+    color: white;
 }
 
 #chartContainer {
@@ -97,6 +102,22 @@ div.chartKeyItem {
 
 #chartContainer .heading {
     font-size: medium;
+}
+
+#noChartData {
+    position: relative;
+    top: 25px;
+    width: 700px;
+    height: 250px;
+}
+
+#noChartData > div {
+    position: absolute;
+    top: 100px;
+    left: 300px;
+    font-size: x-large;
+    font-weight: bold;
+    color: lightgray;
 }
 
 #chart {
@@ -155,6 +176,7 @@ div.chartKeyItem {
     font-size: small;
     font-weight: bold;
     white-space: nowrap;
+    padding-left: 25px;
 }
 
 #medicationsContainer {

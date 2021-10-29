@@ -10,11 +10,18 @@
 
     <script type="text/javascript" src="/js/coach.js"></script>
     <link rel="stylesheet" href="/css/coach.css"/>
+    <script type="text/javascript" src="/js/layout.js"></script>
     <link rel="stylesheet" href="/css/layout.css"/>
 
     <script type="text/javascript">
         $(document).ready(function() {
             enableHover('#menu li');
+        });
+
+        $(document).on('click', '#refresh', function() {
+            doRefresh(function(msg) {
+                window.location.href = "/";
+            })
         });
     </script>
 
@@ -22,10 +29,15 @@
 </head>
 <body>
 <div id="menu">
-    <div id="topLeftEmptyBlock"></div>
+    <div id="topLeftBlock">
+        <div class="title">COACH</div>
+    </div>
     <ul style="margin-top: 80px">
         {{{layout.menuItems}}}
     </ul>
+</div>
+<div id="refreshContainer">
+    <span id="refresh" class="link">Refresh<span>
 </div>
 <div id="logoutContainer">
     <a href="/logout">Logout</a>

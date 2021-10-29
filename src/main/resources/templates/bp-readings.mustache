@@ -20,7 +20,7 @@
 
         <script type="text/javascript">
             $(document).ready(function () {
-                enableHover('#bpreadingsTable .link, #showHideProtocol');
+                enableHover('#showHideProtocol');
                 enableDatePicker('#readingDate');
 
                 // todo: readingDate blur occurs before selected date gets set in the input, so
@@ -48,41 +48,32 @@
 
             $(document).on('click', '#createButton', function() {
                 if (validateForm('#bpEntryContainer form', '#saveMessage')) {
-                    let systolic1 = $('#systolic1').val();
-                    let diastolic1 = $('#diastolic1').val();
-                    let pulse1 = $('#pulse1').val();
-                    let systolic2 = $('#systolic2').val();
-                    let diastolic2 = $('#diastolic2').val();
-                    let pulse2 = $('#pulse2').val();
+                    let data = buildBPReadingData();
 
-                    let readingDate = $('#readingDate').datepicker('getDate');
-                    let timeArr = $('#readingTime').val().match(/(\d+):(\d+)\s+(am|pm)/);
-                    let h = parseInt(timeArr[1]);
-                    let m = parseInt(timeArr[2]);
-                    let ampm = timeArr[3];
-                    if      (h === 12 && ampm === 'am') h = 0;
-                    else if (h  <  12 && ampm === 'pm') h += 12;
-                    readingDate.setHours(h);
-                    readingDate.setMinutes(m);
+                    createBPReading(data, function(status, list) {
+                        let el = $('#saveMessage');
+                        if (status === 200) {
+                            $(list).each(function() {
+                                appendBPReadingToTable(this);
+                                resetForm('#bpEntryContainer form');
 
-                    let confirm = $('input[type=radio][name=confirm]:checked').val() === 'yes';
+                                $(el).removeClass();
+                                $(el).addClass('success');
+                                $(el).html("Record created successfully.");
+                            });
 
-                    createBPReading(systolic1, diastolic1, pulse1, systolic2, diastolic2, pulse2, readingDate, confirm, function(list) {
-                        $(list).each(function() {
-                            appendBPReadingToTable(this);
-                            resetForm('#bpEntryContainer form');
-
-                            let el = $('#saveMessage');
+                        } else {
                             $(el).removeClass();
-                            $(el).addClass('success');
-                            $(el).html("Record created successfully.");
-                        });
+                            $(el).addClass('error');
+                            $(el).html("Error saving BP reading(s) - status " + status);
+                        }
                     });
                 }
             });
 
             $(document).on('blur', '.field', function() {
-                validateField(this);
+                let group = $(this).closest('.validationGroup');
+                validateGroup(group);
             });
 
             $(document).on('click', '#showHideProtocol', function() {
@@ -99,7 +90,7 @@
         </script>
     {{/head}}
     {{#menuItems}}
-        <li><a href="/">Patient Portal</a></li>
+        <li><a href="/">Home</a></li>
         <li><a href="/goals">My Goals</a></li>
         <li class="selected"><a href="/bp-readings">Home BP Readings</a></li>
         <li><a href="/medications">My Medications</a></li>
@@ -144,28 +135,28 @@
                                 Please enter your blood pressure measurements below. If your blood pressure device also measures
                                 your pulse rate, please enter those measurements as well.
                             </span>
-                            <div id="firstMeasurementContainer" class="container">
+                            <div id="firstMeasurementContainer" class="container validationGroup required">
                                 <span class="heading">First Measurement</span>
-                                <div class="field">
+                                <div class="field required">
                                     <label for="systolic1">SBP:</label>
-                                    <input type="text" id="systolic1" class="required" /> mm Hg<br/>
+                                    <input type="text" id="systolic1" /> mm Hg<br/>
                                 </div>
-                                <div class="field">
+                                <div class="field required">
                                     <label for="diastolic1">DBP:</label>
-                                    <input type="text" id="diastolic1" class="required" /> mm Hg<br/>
+                                    <input type="text" id="diastolic1" /> mm Hg<br/>
                                 </div>
                                 <div class="field">
                                     <label for="pulse1">Pulse:</label>
-                                    <input type="text" id="pulse1" class="required" /> bpm
+                                    <input type="text" id="pulse1" /> bpm
                                 </div>
                             </div>
-                            <div id="secondMeasurementContainer" class="container">
+                            <div id="secondMeasurementContainer" class="container validationGroup">
                                 <span class="heading">Second Measurement</span>
-                                <div class="field">
+                                <div class="field required">
                                     <label for="systolic2">SBP:</label>
                                     <input type="text" id="systolic2" /> mm Hg<br/>
                                 </div>
-                                <div class="field">
+                                <div class="field required">
                                     <label for="diastolic2">DBP:</label>
                                     <input type="text" id="diastolic2" /> mm Hg<br/>
                                 </div>
@@ -174,28 +165,26 @@
                                     <input type="text" id="pulse2" /> bpm
                                 </div>
                             </div>
-                            <span class="label">
-                                Please enter the date and approximate time of these measurements:
-                            </span>
-                            <div id="dateContainer" class="container">
-                                <div class="field">
-                                    <label for="readingDate">Date:</label>
-                                    <input id="readingDate" type="text" name="readingDate" placeholder="--Select Date--" readonly />
+                            <div id="readingTimeContainer" class="container validationGroup required">
+                                <span class="label">
+                                    Please enter the date and approximate time of these measurements:
+                                </span>
+                                <div id="dateTimeContainer" class="container">
+                                    <div class="field required">
+                                        <label for="readingDate">Date:</label>
+                                        <input id="readingDate" type="text" name="readingDate" placeholder="--Select Date--" readonly />
+                                    </div>
+                                    <div class="field required">
+                                        <label for="readingTime">Time:</label>
+                                        <input id="readingTime" type="text" name="readingTime" />
+                                    </div>
                                 </div>
                             </div>
-                            <div id="timeContainer" class="container">
-                                <div class="field">
-                                    <label for="readingTime">Time:</label>
-                                    <input id="readingTime" type="text" name="readingTime" />
-<!--                                    <select id="readingTime" name="readingTime">-->
-<!--                                    </select>-->
-                                </div>
-                            </div>
-                            <span class="label">
-                                Did you follow the below instructions when measuring your blood pressure?
-                            </span>
-                            <div id="confirmContainer" class="container">
-                                <div class="field">
+                            <div id="confirmContainer" class="container validationGroup required">
+                                <span class="label">
+                                    Did you follow the below instructions when measuring your blood pressure?
+                                </span>
+                                <div class="field required">
                                     <label for="confirmYes">Yes</label>
                                     <input id="confirmYes" type="radio" name="confirm" value="yes" />
                                     <label for="confirmNo">No</label>
@@ -276,7 +265,7 @@
                                     <td>{{readingDateString}}</td>
                                     <td>{{systolic}}</td>
                                     <td>{{diastolic}}</td>
-                                    <td>{{pulse}}</td>
+                                    <td>{{#pulse}}{{pulse}}{{/pulse}}</td>
                                     <td><span class="link" onclick="deleteBPReading({{id}})">Delete</span></td>
                                 </tr>
                             {{/bpreadings}}

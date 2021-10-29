@@ -103,32 +103,32 @@ function populateSummaryDiv() {
     // build the BP icon and other Hypertension classification stuff based on avgSystolic and avgDiastolic above
     let iconColor = 'green';
     let iconHTML = '&nbsp;';
-    let bpLabel = 'NORMAL';
+    let bpLabel = 'Average BP';
 
     if (avgSystolic > 180 || avgDiastolic > 120) { // crisis
         iconColor = 'red';
         iconHTML = '!!!';
-        bpLabel = 'Hypertension Crisis';
+        // bpLabel = 'Hypertension Crisis';
 
     } else if (avgSystolic >= 140 || avgDiastolic >= 90) { // stage 2
         iconColor = 'red';
         iconHTML = '!!';
-        bpLabel = 'Hypertension Stage 2';
+        // bpLabel = 'Hypertension Stage 2';
 
     } else if ((avgSystolic >= 130 && avgSystolic < 140) || (avgDiastolic >= 80 && avgDiastolic < 90)) { // stage 1
         iconColor = 'yellow';
         iconHTML = '!';
-        bpLabel = 'Hypertension Stage 1';
+        // bpLabel = 'Hypertension Stage 1';
 
     } else if (avgSystolic >= 120 && avgSystolic < 130 && avgDiastolic < 80) { // elevated
         iconColor = 'yellow';
         iconHTML = '!';
-        bpLabel = 'Elevated';
+        // bpLabel = 'Elevated';
 
     } else if (avgSystolic < 120 && avgDiastolic < 80) { // normal
         iconColor = 'green';
         iconHTML = '&nbsp;';
-        bpLabel = 'Normal';
+        // bpLabel = 'Normal';
     }
 
     let icon = $('#bpIcon');
@@ -147,10 +147,20 @@ function getCurrentBPGoal() {
 
 function buildChart() {
     $('#loadingChart').addClass('hidden');
+    let elNoData = $('#noChartData');
+    let ctx = $('#chart');
+
+    if (window.bpchart.data.length === 0) {
+        $(elNoData).removeClass('hidden');
+        $(ctx).addClass('hidden');
+        return;
+    }
+
+    $(elNoData).addClass('hidden');
+    $(ctx).removeClass('hidden');
 
     let goal = getCurrentBPGoal();
 
-    let ctx = $('#chart');
     $(ctx).removeClass('hidden');
     $('#chartKeyContainer, #chartTimelineContainer').removeClass('hidden');
 
@@ -160,7 +170,8 @@ function buildChart() {
         type: 'line',
         data: {
             datasets: [{
-                type: 'line',
+                // type: 'line',
+                type: 'scatter',
                 label: 'Systolic',
                 pointRadius: 3,
                 pointStyle: pointStyleArr,

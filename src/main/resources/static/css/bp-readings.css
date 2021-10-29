@@ -1,5 +1,9 @@
-.link.hover {
-    text-decoration: underline;
+#firstMeasurementContainer, #secondMeasurementContainer {
+    display: inline-block;
+}
+
+#readingTimeContainer {
+    width: 600px;
 }
 
 #showHideProtocol {
@@ -73,8 +77,4 @@
     top: 370px;
     left: 570px;
     font-size: small;
-}
-
-div.field {
-
 }

@@ -116,7 +116,6 @@ function enableDisableUpdateBPGoalButton() {
 
 $(document).ready(function() {
     enableHover('.button');
-    enableHover('.bpGoal .link');
 });
 
 $(document).on('change', 'input.systolic, input.diastolic', function() {

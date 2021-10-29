@@ -142,3 +142,19 @@ table.data td {
 .expand {
     width: 100%;
 }
+
+.link {
+    color: #004d99;
+    text-decoration: none;
+    display: block;
+}
+
+a, a:link, a:visited, a:active {
+    color: #004d99;
+    text-decoration: none;
+}
+
+.link.hover, a:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}

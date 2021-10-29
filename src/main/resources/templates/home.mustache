@@ -19,44 +19,42 @@
         <script type="text/javascript" src="/js/recommendations.js"></script>
 
         <script type="text/javascript">
-            $(document).on('click', '#adjustTimeline2M', function() {
-                let startDate = new Date();
-                startDate.setMonth(startDate.getMonth() - 2);
-                startDate.setHours(0, 0, 0);
-
-                let endDate = new Date();
-                endDate.setHours(23, 59, 59);
-
+            $(document).on('click', '#chartTimelineContainer > .button:not(.selected)', function() {
                 window.bpchart = {};
-                window.bpchart.data = truncateData(window.bpdata, startDate);
-                window.bpchart.startDate = startDate;
-                window.bpchart.endDate = endDate;
+
+                let type = $(this).attr('data-window');
+                if (type === 'all') {
+                    window.bpchart.data = window.bpdata;
+
+                } else {
+                    let startDate = new Date();
+                    let endDate = new Date();
+
+                    if (type === '2m') {
+                        startDate.setMonth(startDate.getMonth() - 2);
+                        startDate.setHours(0, 0, 0);
+                        endDate.setHours(23, 59, 59);
+
+                    } else if (type === '2y') {
+                        startDate.setFullYear(startDate.getFullYear() - 2);
+                        startDate.setHours(0, 0, 0);
+                        endDate.setHours(23, 59, 59);
+                    }
+
+                    window.bpchart.data = truncateData(window.bpdata, startDate);
+                    window.bpchart.startDate = startDate;
+                    window.bpchart.endDate = endDate;
+                }
 
                 updateChart();
-            });
 
-            $(document).on('click', '#adjustTimeline2Y', function() {
-                let startDate = new Date();
-                startDate.setFullYear(startDate.getFullYear() - 2);
-                startDate.setHours(0, 0, 0);
-                let truncatedData = truncateData(window.bpdata, startDate);
-
-                let endDate = new Date();
-                endDate.setHours(23, 59, 59);
-
-                window.bpchart = {};
-                window.bpchart.data = truncateData(window.bpdata, startDate);
-                window.bpchart.startDate = startDate;
-                window.bpchart.endDate = endDate;
-
-                updateChart();
-            });
-
-            $(document).on('click', '#adjustTimelineAll', function() {
-                window.bpchart = {};
-                window.bpchart.data = window.bpdata;
-
-                updateChart();
+                $('#chartTimelineContainer').find('.button').each(function() {
+                    if ($(this).attr('data-window') === type) {
+                        $(this).addClass('selected');
+                    } else {
+                        $(this).removeClass('selected');
+                    }
+                });
             });
 
             $(document).ready(function () {
@@ -73,6 +71,7 @@
                     window.bpchart.data = window.bpdata;
 
                     populateSummaryDiv();
+
                     buildChart();
                     // buildChartSlider();
                 });
@@ -89,26 +88,32 @@
 
                 getRecommendations(function(container, cards) {
                     if (cards) {
-                        $(container).html(renderCards(cards));
-                        $(container).find('.bpGoal input.systolic').inputmask({
-                            regex: "1?[0-9]{2}"
-                        });
-                        $(container).find('.bpGoal input.diastolic').inputmask({
-                            regex: "1?[0-9]{2}"
-                        });
-                        // $(container).find('input.madlibResponse[data-type="number"]').inputmask({
-                        //     regex: "[1-9][0-9]{0,}"
-                        // });
-                        // $(container).find('input.madlibResponse[data-type="text"]').inputmask({
-                        //     regex: "[A-Za-z' ]{1,}"
-                        // });
+                        let html = renderCards(cards);
+                        if (html === '') {
+                            $(container).closest('.recommendation').addClass('hidden');
+
+                        } else {
+                            $(container).html(html);
+                            $(container).find('.bpGoal input.systolic').inputmask({
+                                regex: "1?[0-9]{2}"
+                            });
+                            $(container).find('.bpGoal input.diastolic').inputmask({
+                                regex: "1?[0-9]{2}"
+                            });
+                            // $(container).find('input.madlibResponse[data-type="number"]').inputmask({
+                            //     regex: "[1-9][0-9]{0,}"
+                            // });
+                            // $(container).find('input.madlibResponse[data-type="text"]').inputmask({
+                            //     regex: "[A-Za-z' ]{1,}"
+                            // });
+                        }
                     }
                 });
             });
         </script>
     {{/head}}
     {{#menuItems}}
-        <li class="selected"><a href="/">Patient Portal</a></li>
+        <li class="selected"><a href="/">Home</a></li>
         <li><a href="/goals">My Goals</a></li>
         <li><a href="/bp-readings">Home BP Readings</a></li>
         <li><a href="/medications">My Medications</a></li>
@@ -210,9 +215,12 @@
                                     </div>
                                     <div id="chartTimelineContainer" class="hidden">
                                         <span class="heading">Timeline</span>
-                                        <span id="adjustTimeline2M" class="button">2 months</span>
-                                        <span id="adjustTimeline2Y" class="button">2 years</span>
-                                        <span id="adjustTimelineAll" class="button">All</span>
+                                        <span class="button" data-window="2m">2 months</span>
+                                        <span class="button" data-window="2y">2 years</span>
+                                        <span class="button selected" data-window="all">All</span>
+                                    </div>
+                                    <div id="noChartData" class="hidden">
+                                        <div>No Data</div>
                                     </div>
                                     <canvas id="chart" class="hidden" width="700" height=250"></canvas>
                                 </div>
@@ -221,6 +229,7 @@
                     </table>
                     <div id="currentBPGoal" data-systolic="{{currentBPGoal.systolicTarget}}" data-diastolic="{{currentBPGoal.diastolicTarget}}">
                         Your Current Blood Pressure Goal: <em><strong>Below {{currentBPGoal.systolicTarget}}/{{currentBPGoal.diastolicTarget}}</strong></em>
+                        (<a href="/goals">update</a>)
                     </div>
                     <div id="currentMedications" data-name="{{medicationsOfInterestName}}">
                     </div>

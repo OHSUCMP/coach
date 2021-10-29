@@ -63,7 +63,7 @@
     display: block;
     font-weight: bold;
     font-size: medium;
-    margin-top: 8px;
+    /*margin-top: 8px;*/
 }
 
 .card .rationale {
@@ -102,7 +102,7 @@
     display: block;
 }
 
-.card .link {
+.card .slink {
     display: block;
 }
 
@@ -118,7 +118,7 @@
 }
 
 /* keep synced with goals.css */
-.goal, .link, .bpGoal {
+.goal, #linksContainer .slink, .bpGoal {
     background-color: #eff5ff;
     padding: 5px;
     margin-bottom: 5px;

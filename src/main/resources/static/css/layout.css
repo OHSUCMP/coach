@@ -1,10 +1,17 @@
-#topLeftEmptyBlock {
+#topLeftBlock {
     position: absolute;
     top: 0;
     left: 0;
     width: 150px;
     height: 80px;
     background-color: #004466;
+    text-align: center;
+}
+
+#topLeftBlock > div.title {
+    margin-top: 21px;
+    color: white;
+    font-size: xx-large;
 }
 
 #menu {
@@ -34,13 +41,23 @@
     background-color: #b3fff0;
 }
 
+#menu link.hover, #menu a:hover {
+    text-decoration: none !important;
+}
+
+#menu li:not(.selected) a {
+    color: black;
+}
+
 #menu li.selected a {
     color: white;
 }
 
-#menu a:link, #menu a:visited, #menu a:hover, #menu a:active {
-    color: black;
-    text-decoration: none;
+#refreshContainer {
+    position: absolute;
+    top: 45px;
+    left: 940px;
+    z-index: 9;
 }
 
 #logoutContainer {

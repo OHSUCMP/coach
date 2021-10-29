@@ -52,3 +52,7 @@ function pad(o, padChar, fillToLen) {
         s :
         padChar.repeat(fillToLen - s.length) + s;
 }
+
+$(document).ready(function() {
+    enableHover('.link');
+});

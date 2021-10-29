@@ -50,4 +50,26 @@ public class SessionCache {
         }
         return false;
     }
+
+    /**
+     * clears all data but retains credentials and other info that should persist
+     * @param sessionId
+     * @return
+     */
+    public boolean flush(String sessionId) {
+        if (map.containsKey(sessionId)) {
+            CacheData cacheData = map.remove(sessionId);
+
+            Audience audience = cacheData.getAudience();
+            FHIRCredentialsWithClient fcc = cacheData.getFhirCredentialsWithClient();
+            Long internalPatientId = cacheData.getInternalPatientId();
+
+            map.put(sessionId, new CacheData(audience, fcc, internalPatientId));
+
+            return true;
+
+        } else {
+            return false;
+        }
+    }
 }

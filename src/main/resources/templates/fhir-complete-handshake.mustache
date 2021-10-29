@@ -38,6 +38,9 @@
 
         $(document).ready(function () {
             FHIR.oauth2.ready(function (client) {
+                if ( ! {{cacheCredentials}} ) {
+                    sessionStorage.clear(); // flush credentials stored here by SMART on FHIR
+                }
                 prepareSession(client);
             });
         });

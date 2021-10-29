@@ -18,7 +18,7 @@ create table home_bp_reading (
     patId int not null,
     systolic int not null,
     diastolic int not null,
-    pulse int not null,
+    pulse int,
     readingDate datetime not null,
     followedInstructions tinyint(1) not null,
     createdDate datetime not null

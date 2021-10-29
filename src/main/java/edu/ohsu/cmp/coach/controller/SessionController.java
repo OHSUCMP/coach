@@ -12,7 +12,6 @@ import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,9 +24,6 @@ import javax.servlet.http.HttpSession;
 @Controller
 public class SessionController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Autowired
-    private Environment env;
 
     @Autowired
     private PatientService patientService;
@@ -96,5 +92,13 @@ public class SessionController extends BaseController {
     public ResponseEntity<?> clearSession(HttpSession session) {
         SessionCache.getInstance().remove(session.getId());
         return ResponseEntity.ok("session cleared");
+    }
+
+    @PostMapping("refresh")
+    public ResponseEntity<?> refresh(HttpSession session) {
+        logger.info("refreshing data for session " + session.getId());
+        SessionCache.getInstance().flush(session.getId());
+        cqfRulerService.requestHooksExecution(session.getId());
+        return ResponseEntity.ok("flushed cached data");
     }
 }

@@ -13,6 +13,7 @@ import edu.ohsu.cmp.coach.service.EHRService;
 import edu.ohsu.cmp.coach.service.GoalService;
 import edu.ohsu.cmp.coach.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.coach.service.MedicationService;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.AdverseEvent;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
@@ -31,9 +32,8 @@ import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 @Controller
 public class HomeController extends BaseController {
@@ -56,9 +56,12 @@ public class HomeController extends BaseController {
 
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model) {
-        boolean sessionEstablished = SessionCache.getInstance().exists(session.getId());
+        SessionCache cache = SessionCache.getInstance();
+        boolean sessionEstablished = cache.exists(session.getId());
+
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
+
         if (sessionEstablished) {
             logger.info("requesting data for session " + session.getId());
 
@@ -93,13 +96,16 @@ public class HomeController extends BaseController {
             return "home";
 
         } else {
+            Boolean cacheCredentials = StringUtils.equals(env.getProperty("security.browser.cache-credentials"), "true");
+            model.addAttribute("cacheCredentials", cacheCredentials);
             return "fhir-complete-handshake";
         }
     }
 
     @PostMapping("blood-pressure-observations-list")
     public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) {
-        Set<BloodPressureModel> set = new TreeSet<>();
+//        Set<BloodPressureModel> set = new TreeSet<>();
+        List<BloodPressureModel> list = new ArrayList<>();
 
         // first add BP observations from configured FHIR server
         Bundle bundle = ehrService.getBloodPressureObservations(session.getId());
@@ -107,7 +113,7 @@ public class HomeController extends BaseController {
             if (entryCon.getResource() instanceof Observation) {
                 Observation o = (Observation) entryCon.getResource();
                 try {
-                    set.add(new BloodPressureModel(o, fcm));
+                    list.add(new BloodPressureModel(o, fcm));
 
                 } catch (DataException e) {
                     logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
@@ -122,10 +128,12 @@ public class HomeController extends BaseController {
         // now incorporate Home Blood Pressure Readings that the user entered themself into the system
         List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(session.getId());
         for (HomeBloodPressureReading item : hbprList) {
-            set.add(new BloodPressureModel(item));
+            list.add(new BloodPressureModel(item));
         }
 
-        return new ResponseEntity<>(new ArrayList<>(set), HttpStatus.OK);
+        Collections.sort(list, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()) * -1);
+
+        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
     @PostMapping("recommendation")

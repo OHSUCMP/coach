@@ -24,27 +24,58 @@ function enableDatePicker(sel) {
     });
 }
 
-async function createBPReading(systolic1, diastolic1, pulse1, systolic2, diastolic2, pulse2, readingDate, confirm, _callback) {
-    let readingDateTS = $.datepicker.formatDate('@', readingDate);
+function buildBPReadingData() {
+    let data = {};
+    data.systolic1 = $('#systolic1').val();
+    data.diastolic1 = $('#diastolic1').val();
+    let pulse1 = $('#pulse1').val();
+    if (pulse1 !== '') data.pulse1 = pulse1;
+    let systolic2 = $('#systolic2').val();
+    if (systolic2 !== '') data.systolic2 = systolic2;
+    let diastolic2 = $('#diastolic2').val();
+    if (diastolic2 !== '') data.diastolic2 = diastolic2;
+    let pulse2 = $('#pulse2').val();
+    if (pulse2 !== '') data.pulse2 = pulse2;
+
+    let readingDate = $('#readingDate').datepicker('getDate');
+    let timeArr = $('#readingTime').val().match(/(\d+):(\d+)\s+(am|pm)/);
+    let h = parseInt(timeArr[1]);
+    let m = parseInt(timeArr[2]);
+    let ampm = timeArr[3];
+    if      (h === 12 && ampm === 'am') h = 0;
+    else if (h  <  12 && ampm === 'pm') h += 12;
+    readingDate.setHours(h);
+    readingDate.setMinutes(m);
+
+    data.readingDate = readingDate;
+
+    data.followedInstructions = $('input[type=radio][name=confirm]:checked').val() === 'yes';
+
+    return data;
+}
+
+async function createBPReading(data, _callback) {
+    let readingDateTS = $.datepicker.formatDate('@', data.readingDate);
 
     let formData = new FormData();
-    formData.append("systolic1", systolic1);
-    formData.append("diastolic1", diastolic1);
-    formData.append("pulse1", pulse1);
-    formData.append("systolic2", systolic2);
-    formData.append("diastolic2", diastolic2);
-    formData.append("pulse2", pulse2);
+    formData.append("systolic1", data.systolic1);
+    formData.append("diastolic1", data.diastolic1);
+    if (data.pulse1)        formData.append("pulse1", data.pulse1);
+    if (data.systolic2)     formData.append("systolic2", data.systolic2);
+    if (data.diastolic2)    formData.append("diastolic2", data.diastolic2);
+    if (data.pulse2)        formData.append("pulse2", data.pulse2);
     formData.append("readingDateTS", readingDateTS);
-    formData.append("confirm", confirm);
+    formData.append("followedInstructions", data.followedInstructions);
 
     let response = await fetch("/bp-readings/create", {
         method: "POST",
         body: formData
     });
 
+    let status = response.status;
     let bpreadings = await response.json();
 
-    _callback(bpreadings);
+    _callback(status, bpreadings);
 }
 
 function appendBPReadingToTable(obj) {
@@ -57,7 +88,7 @@ function appendBPReadingToTable(obj) {
         "<td>" + obj.readingDateString + "</td>" +
         "<td>" + obj.systolic + "</td>" +
         "<td>" + obj.diastolic + "</td>" +
-        "<td>" + obj.pulse + "</td>" +
+        "<td>" + (obj.pulse === null ? '' : obj.pulse) + "</td>" +
         "<td><span class=\"link\" onclick=\"deleteBPReading(" + obj.id + ")\">Delete</span></td>" +
         "</tr>\n";
 
