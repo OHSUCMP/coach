@@ -32,24 +32,21 @@
     padding: 0;
 }
 
-#menu li {
+#menu .anchor {
     font-size: larger;
     padding: 5px;
 }
 
-#menu li.hover {
+#menu .anchor.hover {
     background-color: #b3fff0;
-}
-
-#menu link.hover, #menu a:hover {
     text-decoration: none !important;
 }
 
-#menu li:not(.selected) a {
+#menu li.anchor:not(.selected) {
     color: black;
 }
 
-#menu li.selected a {
+#menu .anchor.selected {
     color: white;
 }
 

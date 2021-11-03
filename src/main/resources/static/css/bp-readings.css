@@ -2,7 +2,7 @@
     display: inline-block;
 }
 
-#readingTimeContainer {
+#readingTimeContainer, #confirmContainer {
     width: 600px;
 }
 
