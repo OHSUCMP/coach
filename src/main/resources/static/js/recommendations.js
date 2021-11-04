@@ -50,7 +50,7 @@ function renderCards(cards) {
             html += "<div class='error'>" + card.errorMessage + "</div>";
 
         } else {
-            html += "<table style='width:100%'><tr><td>";
+            html += "<table style='width:100%'><tr><td class='shrink'>";
             html += "<img src='/images/" + card.indicator + "-icon.png' class='icon' alt='" + card.indicator + "' />";
             // html += "<div class='circle'><span>XX</span></div>"
             html += "</td><td>"; // class='expand'>";
