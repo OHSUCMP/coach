@@ -46,6 +46,7 @@
                     window.bpchart.endDate = endDate;
                 }
 
+                populateSummaryDiv();
                 updateChart();
 
                 $('#chartTimelineContainer').find('.button').each(function() {
@@ -71,9 +72,7 @@
                     window.bpchart.data = window.bpdata;
 
                     populateSummaryDiv();
-
                     buildChart();
-                    // buildChartSlider();
                 });
 
                 loadMedications(function(meds) {

@@ -82,7 +82,7 @@ function populateAdverseEvents() {
 }
 
 function populateSummaryDiv() {
-    let data = window.bpdata;
+    let data = window.bpchart.data;
     let totalSystolic = 0;
     let totalDiastolic = 0;
     let avgSystolic = 0;
