@@ -101,40 +101,27 @@ function populateSummaryDiv() {
     $('#avgDiastolic').html(avgDiastolic);
 
     // build the BP icon and other Hypertension classification stuff based on avgSystolic and avgDiastolic above
-    let iconColor = 'green';
-    let iconHTML = '&nbsp;';
-    let bpLabel = 'Average BP';
+    let indicator = 'info';
 
     if (avgSystolic > 180 || avgDiastolic > 120) { // crisis
-        iconColor = 'red';
-        iconHTML = '!!!';
-        // bpLabel = 'Hypertension Crisis';
+        indicator = 'critical';
 
     } else if (avgSystolic >= 140 || avgDiastolic >= 90) { // stage 2
-        iconColor = 'red';
-        iconHTML = '!!';
-        // bpLabel = 'Hypertension Stage 2';
+        indicator = 'critical';
 
     } else if ((avgSystolic >= 130 && avgSystolic < 140) || (avgDiastolic >= 80 && avgDiastolic < 90)) { // stage 1
-        iconColor = 'yellow';
-        iconHTML = '!';
-        // bpLabel = 'Hypertension Stage 1';
+        indicator = 'warning';
 
     } else if (avgSystolic >= 120 && avgSystolic < 130 && avgDiastolic < 80) { // elevated
-        iconColor = 'yellow';
-        iconHTML = '!';
-        // bpLabel = 'Elevated';
+        indicator = 'warning';
 
     } else if (avgSystolic < 120 && avgDiastolic < 80) { // normal
-        iconColor = 'green';
-        iconHTML = '&nbsp;';
-        // bpLabel = 'Normal';
+        indicator = 'info';
     }
 
-    let icon = $('#bpIcon');
-    $(icon).attr('style', 'background-color: ' + iconColor);
-    $(icon).html(iconHTML);
-    $('#bpLabel').html(bpLabel + ':');
+    let el = $('#bpIcon');
+    $(el).html("<img src='/images/" + indicator + "-icon.png' class='icon' alt='" + indicator + "' />");
+    $('#bpLabel').html('Average BP:');
 }
 
 function getCurrentBPGoal() {

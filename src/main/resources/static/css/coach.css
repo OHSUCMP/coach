@@ -30,6 +30,10 @@ span.circle, div.circle {
     font-weight: bold;
 }
 
+img.icon {
+    width: 40px;
+}
+
 #patientInfo {
     display: block;
     font-weight: bold;

@@ -28,16 +28,8 @@
     font-size: small;
 }
 
-.card .circle {
-    display: inline-block;
-    vertical-align: top;
-    margin-top: 5px;
-    padding: 4px;
-    font-size: small;
-}
-
-.card .circle span {
-
+.card .icon {
+    margin-right: 10px;
 }
 
 .card .content {
@@ -118,7 +110,7 @@
 }
 
 /* keep synced with goals.css */
-.goal, #linksContainer .slink, .bpGoal {
+.goal, .linksContainer .slink, .bpGoal {
     background-color: #eff5ff;
     padding: 5px;
     margin-bottom: 5px;
