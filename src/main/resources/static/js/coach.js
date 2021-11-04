@@ -61,3 +61,11 @@ $(document).ready(function() {
 $(document).on('click', '.anchor:not(.selected)', function() {
     window.location.href = $(this).attr('data-href');
 });
+
+$(document).on('click', 'a', function() {
+    let href = $(this).attr('href').toLowerCase();
+    if (href.startsWith('http://') || href.startsWith('https://')) {
+        $(this).attr('target', '_blank');
+    }
+    return true;
+});

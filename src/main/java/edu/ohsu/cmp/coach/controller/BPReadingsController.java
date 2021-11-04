@@ -1,6 +1,5 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.cache.CacheData;
 import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
@@ -85,12 +84,13 @@ public class BPReadingsController extends BaseController {
     @PostMapping("delete")
     public ResponseEntity<String> delete(HttpSession session,
                                          @RequestParam("id") Long id) {
+
+        // get the cache just to make sure it's defined and the user is properly authenticated
+        SessionCache.getInstance().get(session.getId());
+
         try {
-            CacheData cache = SessionCache.getInstance().get(session.getId());
-
             hbprService.delete(session.getId(), id);
-
-            cache.deleteAllCards();
+            cqfRulerService.requestHooksExecution(session.getId());
 
             return new ResponseEntity<>("OK", HttpStatus.OK);
 
