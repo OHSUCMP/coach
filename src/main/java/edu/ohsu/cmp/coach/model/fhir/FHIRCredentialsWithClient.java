@@ -43,7 +43,7 @@ public class FHIRCredentialsWithClient {
         } else {
             t = client.read()
                     .resource(aClass)
-                    .withId(reference)
+                    .withId(FhirUtil.extractIdFromReference(reference))
                     .execute();
         }
 

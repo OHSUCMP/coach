@@ -36,11 +36,15 @@ public class FhirUtil {
         }
     }
 
-    public static <T extends IBaseResource> T getResourceFromBundleByReference(Bundle b, Class<T> aClass, String reference) {
+    public static String extractIdFromReference(String reference) {
         int index = reference.indexOf('/');
-        String referenceId = index >= 0 ?
+        return index >= 0 ?
                 reference.substring(index + 1) :
                 reference;
+    }
+
+    public static <T extends IBaseResource> T getResourceFromBundleByReference(Bundle b, Class<T> aClass, String reference) {
+        String referenceId = extractIdFromReference(reference);
 
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             Resource r = entry.getResource();
@@ -62,10 +66,7 @@ public class FhirUtil {
     }
 
     public static boolean bundleContainsReference(Bundle b, String reference) {
-        int index = reference.indexOf('/');
-        String referenceId = index >= 0 ?
-                reference.substring(index + 1) :
-                reference;
+        String referenceId = extractIdFromReference(reference);
 
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             Resource r = entry.getResource();
