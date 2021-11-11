@@ -41,10 +41,16 @@ public class FHIRCredentialsWithClient {
             t = FhirUtil.getResourceFromBundleByReference(bundle, aClass, reference);
 
         } else {
-            t = client.read()
-                    .resource(aClass)
-                    .withId(FhirUtil.extractIdFromReference(reference))
-                    .execute();
+            String id = FhirUtil.extractIdFromReference(reference);
+            try {
+                t = client.read()
+                        .resource(aClass)
+                        .withId(id)
+                        .execute();
+            } catch (InvalidRequestException ire) {
+                logger.error("caught " + ire.getClass().getName() + " reading " + aClass.getName() + " with id='" + id + "' - " + ire.getMessage());
+                throw ire;
+            }
         }
 
         if (logger.isDebugEnabled()) {
