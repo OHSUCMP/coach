@@ -302,6 +302,22 @@ public class EHRService extends BaseService {
                 if (c.getRecordedDate().before(ONE_MONTH_AGO)) {
                     iter.remove();
                 }
+            } else if (c.hasEncounter()) {
+                Encounter e = fcc.read(Encounter.class, c.getEncounter().getReference(), b);
+                if (e != null) {
+                    if (e.getStatus().equals(Encounter.EncounterStatus.FINISHED)) {
+                        if (e.hasPeriod()) {
+                            Period p = e.getPeriod();
+                            if (p.hasStart() && p.getStart().before(ONE_MONTH_AGO)) {
+                                iter.remove();
+                            } else if (p.hasEnd() && p.getEnd().before(ONE_MONTH_AGO)) {
+                                iter.remove();
+                            }
+                        }
+                    }
+                } else {
+                    iter.remove();
+                }
             } else {
                 iter.remove();
             }
