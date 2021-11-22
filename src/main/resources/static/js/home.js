@@ -88,7 +88,9 @@ function populateSummaryDiv() {
     let avgSystolic = 0;
     let avgDiastolic = 0;
 
-    if (Array.isArray(data) && data.length > 0) {
+    let hasData = Array.isArray(data) && data.length > 0;
+
+    if (hasData) {
         data.forEach(function (o) {
             totalSystolic += o.systolic.value;
             totalDiastolic += o.diastolic.value;
@@ -122,6 +124,18 @@ function populateSummaryDiv() {
     let el = $('#bpIcon');
     $(el).html("<img src='/images/" + indicator + "-icon.png' class='icon' alt='" + indicator + "' />");
     $('#bpLabel').html('Average BP:');
+
+    let el2 = $('#bpGoalMetLabel');
+    if (hasData) {
+        let currentBPGoal = getCurrentBPGoal();
+        if (avgSystolic > currentBPGoal.systolic || avgDiastolic > currentBPGoal.diastolic) {
+            $(el2).html('You are above goal');
+        } else {
+            $(el2).html('You are at goal');
+        }
+    } else {
+        $(el2).html('');
+    }
 }
 
 function getCurrentBPGoal() {

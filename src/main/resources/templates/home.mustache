@@ -148,13 +148,13 @@
             </tr>
             <tr>
                 <td id="highBPControlContainer">
-                    <table width="100%">
+                    <table class="expand">
                         <tr>
-                            <td width="200" style="vertical-align: top">
+                            <td style="width:200px; vertical-align: top">
                                 <span style="font-weight: bold; white-space: nowrap">Your blood pressure:</span>
                                 <br/>
-                                <div style="margin-top: 60px">
-                                    <table align="center">
+                                <div id="avgBPContainer">
+                                    <table style="text-align:center">
                                         <tr>
                                             <td colspan="3">
                                                 <span id="bpLabel"></span>
@@ -164,21 +164,26 @@
                                             <td rowspan="3">
                                                 <div id="bpIcon"></div>
                                             </td>
-                                            <td id="avgSystolic" align="center">X</td>
+                                            <td id="avgSystolic">X</td>
                                             <td style="vertical-align: bottom; font-size: small">systolic</td>
                                         </tr>
                                         <tr>
-                                            <td width="50"><hr/></td>
+                                            <td style="width:50px"><hr/></td>
                                             <td>&nbsp;</td>
                                         </tr>
                                         <tr>
-                                            <td id="avgDiastolic" align="center">Y</td>
+                                            <td id="avgDiastolic">Y</td>
                                             <td style="vertical-align: top; font-size: small">diastolic</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="3">
+                                                <span id="bpGoalMetLabel"></span>
+                                            </td>
                                         </tr>
                                     </table>
                                 </div>
                             </td>
-                            <td width="500">
+                            <td style="width:500px">
                                 <div id="chartContainer">
                                     <div id="loadingChart">Loading Chart ...</div>
                                     <div id="legend">
