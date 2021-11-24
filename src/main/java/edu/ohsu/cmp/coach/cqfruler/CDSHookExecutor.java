@@ -238,10 +238,17 @@ public class CDSHookExecutor implements Runnable {
             }
 
         } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " processing hookId=" + hookId + " - " + e.getMessage(), e);
+            String msg = "caught " + e.getClass().getName() + " processing hookId=" + hookId + " - " + e.getMessage();
+            logger.error(msg, e);
 
             if (e instanceof IOException) {
                 throw (IOException) e;
+
+            } else {
+                Card card = showDevErrors ?
+                        new Card(msg) :
+                        new Card(GENERIC_ERROR_MESSAGE);
+                cards.add(card);
             }
         }
 

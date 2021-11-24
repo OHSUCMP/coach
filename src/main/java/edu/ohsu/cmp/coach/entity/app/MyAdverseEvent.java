@@ -12,6 +12,7 @@ public class MyAdverseEvent {
     private String description;
     private String conceptCode;
     private String conceptSystem;
+    private String conceptSystemOID;
 
     protected MyAdverseEvent() {
     }
@@ -46,5 +47,13 @@ public class MyAdverseEvent {
 
     public void setConceptSystem(String conceptSystem) {
         this.conceptSystem = conceptSystem;
+    }
+
+    public String getConceptSystemOID() {
+        return conceptSystemOID;
+    }
+
+    public void setConceptSystemOID(String conceptSystemOID) {
+        this.conceptSystemOID = conceptSystemOID;
     }
 }

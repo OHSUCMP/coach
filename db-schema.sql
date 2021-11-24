@@ -76,7 +76,8 @@ create table adverse_event (
     id int not null auto_increment primary key,
     description varchar(255) not null,
     conceptCode varchar(50) not null,
-    conceptSystem varchar(100) not null
+    conceptSystem varchar(100) not null,
+    conceptSystemOID varchar(50) not null
 );
 
 -- FHIR terminology systems: https://www.hl7.org/fhir/terminologies-systems.html
@@ -86,70 +87,70 @@ create table adverse_event (
 -- SNOMEDCT: http://snomed.info/sct
 -- CPT: http://www.ama-assn.org/go/cpt
 
-insert into adverse_event(description, conceptCode, conceptSystem) values("Acute kidney problem", "N17", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Acute kidney problem", "N17.0", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Acute kidney problem", "N17.1", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Acute kidney problem", "N17.2", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Acute kidney problem", "N17.8", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Acute kidney problem", "N17.9", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Bradycardia", "I49.5", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Bradycardia", "I49.8", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Bradycardia", "R00.1", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Bradycardia", "427.81", "http://hl7.org/fhir/sid/icd-9-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Bradycardia", "427.89", "http://hl7.org/fhir/sid/icd-9-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Bradycardia", "251162005", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Bradycardia", "29894000", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Bradycardia", "397841007", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Bradycardia", "44602002", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Bradycardia", "49044005", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Bradycardia", "49710005", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Electrolyte problems / metabolic panel", "80048", "http://www.ama-assn.org/go/cpt");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Electrolyte problems / metabolic panel", "80053", "http://www.ama-assn.org/go/cpt");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Electrolyte problems / metabolic panel", "80069", "http://www.ama-assn.org/go/cpt");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Electrolyte problems / metabolic panel", "82310", "http://www.ama-assn.org/go/cpt");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Fall", "W19", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Fall", "W11", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Fall", "W13", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Fall", "W12", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Fall", "W14", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Fall", "W15", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Fall", "W06", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Fall", "W07", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Fall", "W09", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "I95.0", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "I95.1", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "I95.2", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "I95.3", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "I95.81", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "I95.89", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "I95.9", "http://hl7.org/fhir/sid/icd-10-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "458", "http://hl7.org/fhir/sid/icd-9-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "458.1", "http://hl7.org/fhir/sid/icd-9-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "458.21", "http://hl7.org/fhir/sid/icd-9-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "458.29", "http://hl7.org/fhir/sid/icd-9-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "458.8", "http://hl7.org/fhir/sid/icd-9-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "458.9", "http://hl7.org/fhir/sid/icd-9-cm");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "195506001", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "200113008", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "200114002", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "230664009", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "234171009", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "271870002", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "286963007", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "371073003", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "408667000", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "408668005", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "429561008", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "45007003", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "61933008", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "70247006", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "75181005", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "77545000", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Hypotension", "88887003", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Syncope / Loss of consciousness", "32834005", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Syncope / Loss of consciousness", "40863000", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Syncope / Loss of consciousness", "419045004", "http://snomed.info/sct");
-insert into adverse_event(description, conceptCode, conceptSystem) values("Syncope / Loss of consciousness", "7862002", "http://snomed.info/sct");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Acute kidney problem", "N17", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Acute kidney problem", "N17.0", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Acute kidney problem", "N17.1", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Acute kidney problem", "N17.2", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Acute kidney problem", "N17.8", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Acute kidney problem", "N17.9", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Bradycardia", "I49.5", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Bradycardia", "I49.8", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Bradycardia", "R00.1", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Bradycardia", "427.81", "http://hl7.org/fhir/sid/icd-9-cm", "2.16.840.1.113883.6.42");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Bradycardia", "427.89", "http://hl7.org/fhir/sid/icd-9-cm", "2.16.840.1.113883.6.42");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Bradycardia", "251162005", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Bradycardia", "29894000", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Bradycardia", "397841007", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Bradycardia", "44602002", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Bradycardia", "49044005", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Bradycardia", "49710005", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Electrolyte problems / metabolic panel", "80048", "http://www.ama-assn.org/go/cpt", "2.16.840.1.113883.6.12");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Electrolyte problems / metabolic panel", "80053", "http://www.ama-assn.org/go/cpt", "2.16.840.1.113883.6.12");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Electrolyte problems / metabolic panel", "80069", "http://www.ama-assn.org/go/cpt", "2.16.840.1.113883.6.12");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Electrolyte problems / metabolic panel", "82310", "http://www.ama-assn.org/go/cpt", "2.16.840.1.113883.6.12");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Fall", "W19", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Fall", "W11", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Fall", "W13", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Fall", "W12", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Fall", "W14", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Fall", "W15", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Fall", "W06", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Fall", "W07", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Fall", "W09", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "I95.0", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "I95.1", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "I95.2", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "I95.3", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "I95.81", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "I95.89", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "I95.9", "http://hl7.org/fhir/sid/icd-10-cm", "2.16.840.1.113883.6.90");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "458", "http://hl7.org/fhir/sid/icd-9-cm", "2.16.840.1.113883.6.42");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "458.1", "http://hl7.org/fhir/sid/icd-9-cm", "2.16.840.1.113883.6.42");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "458.21", "http://hl7.org/fhir/sid/icd-9-cm", "2.16.840.1.113883.6.42");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "458.29", "http://hl7.org/fhir/sid/icd-9-cm", "2.16.840.1.113883.6.42");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "458.8", "http://hl7.org/fhir/sid/icd-9-cm", "2.16.840.1.113883.6.42");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "458.9", "http://hl7.org/fhir/sid/icd-9-cm", "2.16.840.1.113883.6.42");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "195506001", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "200113008", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "200114002", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "230664009", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "234171009", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "271870002", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "286963007", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "371073003", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "408667000", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "408668005", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "429561008", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "45007003", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "61933008", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "70247006", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "75181005", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "77545000", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Hypotension", "88887003", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Syncope / Loss of consciousness", "32834005", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Syncope / Loss of consciousness", "40863000", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Syncope / Loss of consciousness", "419045004", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
+insert into adverse_event(description, conceptCode, conceptSystem, conceptSystemOID) values("Syncope / Loss of consciousness", "7862002", "http://snomed.info/sct", "2.16.840.1.113883.6.96");
 
 drop table if exists adverse_event_outcome;
 create table adverse_event_outcome (

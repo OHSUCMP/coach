@@ -9,6 +9,7 @@ import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,8 @@ public class EHRService extends BaseService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final int MAX_CODES_PER_QUERY = 32; // todo: auto-identify this, or at least put it in the config
+    private static final String URN_OID_PREFIX = "urn:oid:";
+    private static final String URL_PREFIX = "http://";
 
     private static final Date ONE_MONTH_AGO;
     static {
@@ -262,9 +265,14 @@ public class EHRService extends BaseService {
         Bundle b = fcc.search(fhirQueryManager.getAdverseEventQuery(fcc.getCredentials().getPatientId()));
         if (b == null) return null;
 
-        Set<String> codesWeCareAbout = new HashSet<String>();
+        Map<String, List<MyAdverseEvent>> codesWeCareAbout = new HashMap<>();
+//        Set<String> codesWeCareAbout = new HashSet<String>();
         for (MyAdverseEvent mae : adverseEventService.getAll()) {
-            codesWeCareAbout.add(mae.getConceptSystem() + "|" + mae.getConceptCode());
+            if ( ! codesWeCareAbout.containsKey(mae.getConceptCode()) ) {
+                codesWeCareAbout.put(mae.getConceptCode(), new ArrayList<>());
+            }
+            codesWeCareAbout.get(mae.getConceptCode()).add(mae);
+//            codesWeCareAbout.add(mae.getConceptSystem() + "|" + mae.getConceptCode());
         }
 
         // filter out any of the patient's conditions that don't match a code we're interested in
@@ -276,11 +284,36 @@ public class EHRService extends BaseService {
                 Condition c = (Condition) entry.getResource();
                 if (c.getCode().hasCoding()) {
                     for (Coding coding : c.getCode().getCoding()) {
-                        String item = coding.getSystem() + "|" + coding.getCode();
-                        if (codesWeCareAbout.contains(item)) {
-                            exists = true;
-                            break;
+                        List<MyAdverseEvent> list = codesWeCareAbout.get(coding.getCode());
+                        if (list != null) {
+                            for (MyAdverseEvent mae : list) {
+                                if (StringUtils.startsWith(coding.getSystem(), URN_OID_PREFIX)) {
+                                    if (StringUtils.equals(coding.getSystem(), URN_OID_PREFIX + mae.getConceptSystemOID())) {
+                                        // e.g. "urn:oid:2.16.840.1.113883.6.90"
+                                        exists = true;
+                                    }
+
+                                } else if (StringUtils.startsWith(coding.getSystem(), URL_PREFIX)) {
+                                    if (StringUtils.equals(coding.getSystem(), mae.getConceptSystem())) {
+                                        // e.g. "http://snomed.info/sct"
+                                        exists = true;
+                                    } else if (StringUtils.startsWith(coding.getSystem(), mae.getConceptSystem() + "/")) {
+                                        // e.g. "http://hl7.org/fhir/sid/icd-9-cm/diagnosis"
+                                        exists = true;
+                                    }
+
+                                } else if (StringUtils.equals(coding.getSystem(), mae.getConceptSystem())) {
+                                    // for any system that's not an OID or a URL, demand exact match.  I can't think of
+                                    // any examples of what this might be in practice, but if it matches exactly, who
+                                    // am I to judge?
+                                    exists = true;
+                                }
+
+                                if (exists) break;
+                            }
                         }
+
+                        if (exists) break;
                     }
                 }
             }
