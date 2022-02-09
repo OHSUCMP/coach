@@ -60,7 +60,11 @@ public class SessionController extends BaseController {
 
 //        if ( ! cache.exists(session.getId()) ) {
         FHIRCredentials credentials = new FHIRCredentials(serverUrl, bearerToken, patientId, userId);
-        IGenericClient client = FhirUtil.buildClient(credentials.getServerURL(), credentials.getBearerToken());
+        IGenericClient client = FhirUtil.buildClient(
+                credentials.getServerURL(),
+                credentials.getBearerToken(),
+                Integer.parseInt(env.getProperty("socket.timeout-seconds"))
+        );
         FHIRCredentialsWithClient credentialsWithClient = new FHIRCredentialsWithClient(credentials, client);
 
         Long internalPatientId = patientService.getInternalPatientId(patientId);

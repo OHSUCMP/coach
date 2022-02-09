@@ -16,8 +16,9 @@ import java.util.regex.Pattern;
 public class FhirUtil {
     private static final Logger logger = LoggerFactory.getLogger(FhirUtil.class);
 
-    public static IGenericClient buildClient(String serverUrl, String bearerToken) {
+    public static IGenericClient buildClient(String serverUrl, String bearerToken, int timeout) {
         FhirContext ctx = FhirContext.forR4();
+        ctx.getRestfulClientFactory().setSocketTimeout(timeout * 1000);
         IGenericClient client = ctx.newRestfulGenericClient(serverUrl);
 
         BearerTokenAuthInterceptor authInterceptor = new BearerTokenAuthInterceptor(bearerToken);
