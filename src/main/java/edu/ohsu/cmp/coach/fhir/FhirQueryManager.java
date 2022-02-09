@@ -96,7 +96,7 @@ public class FhirQueryManager {
         return template.replaceAll(TOKEN_ID, params.get(TOKEN_ID))
                 .replaceAll(TOKEN_SUBJECT, params.get(TOKEN_SUBJECT))
                 .replaceAll(TOKEN_CODE, params.get(TOKEN_CODE))
-                .replaceAll(TOKEN_RELATIVE_DATE, buildRelativeDate(extract(TOKEN_RELATIVE_DATE, adverseEventQuery)));
+                .replaceAll(TOKEN_RELATIVE_DATE, buildRelativeDate(extract(TOKEN_RELATIVE_DATE, template)));
     }
 
     private String buildRelativeDate(String s) {
