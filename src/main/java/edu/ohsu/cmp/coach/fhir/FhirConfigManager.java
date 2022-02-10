@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.fhir;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ public class FhirConfigManager {
     @Value("${bp.value.code}")      private String bpValueCode;
     @Value("${bp.value.system}")    private String bpValueSystem;
     @Value("${bp.value.unit}")      private String bpValueUnit;
+    @Value("${bp.limit}")           private String bpLimit;
 
     @Value("${medication.valueset.oid}")    private String medicationValueSetOid;
 
@@ -59,6 +61,12 @@ public class FhirConfigManager {
 
     public String getBpValueUnit() {
         return bpValueUnit;
+    }
+
+    public Integer getBpLimit() {
+        return StringUtils.isEmpty(bpLimit) ?
+                null :
+                Integer.parseInt(bpLimit);
     }
 
     public String getMedicationValueSetOid() {

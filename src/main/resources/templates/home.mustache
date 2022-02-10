@@ -35,8 +35,8 @@
                         startDate.setHours(0, 0, 0);
                         endDate.setHours(23, 59, 59);
 
-                    } else if (type === '2y') {
-                        startDate.setFullYear(startDate.getFullYear() - 2);
+                    } else if (type === '1y') {
+                        startDate.setFullYear(startDate.getFullYear() - 1);
                         startDate.setHours(0, 0, 0);
                         endDate.setHours(23, 59, 59);
                     }
@@ -218,7 +218,7 @@
                                     <div id="chartTimelineContainer" class="hidden">
                                         <span class="heading">Timeline</span>
                                         <span class="button" data-window="2m">2 months</span>
-                                        <span class="button" data-window="2y">2 years</span>
+                                        <span class="button" data-window="1y">1 year</span>
                                         <span class="button selected" data-window="all">All</span>
                                     </div>
                                     <div id="noChartData" class="hidden">

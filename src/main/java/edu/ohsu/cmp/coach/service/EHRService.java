@@ -74,7 +74,8 @@ public class EHRService extends BaseService {
             b = fcc.search(fhirQueryManager.getObservationQueryCode(
                     fcc.getCredentials().getPatientId(),
                     fcm.getBpSystem(), fcm.getBpCode()
-            ));
+                ), fcm.getBpLimit()
+            );
 
             cache.setObservations(b);
         }
