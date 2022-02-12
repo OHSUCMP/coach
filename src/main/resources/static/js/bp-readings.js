@@ -84,6 +84,8 @@ function appendBPReadingToTable(obj) {
 
     // note : keep this section synced with bp-readings.mustache
 
+    // todo : obj was HomeBloodPressureReading, ***IS NOW*** BloodPressureModel
+
     let html = "<tr class='data' data-id='" + obj.id + "' data-timestamp='" + obj.readingDateTimestamp + "'>" +
         "<td>" + obj.readingDateString + "</td>" +
         "<td>" + obj.systolic + "</td>" +

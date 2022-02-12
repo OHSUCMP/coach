@@ -4,20 +4,17 @@ import edu.ohsu.cmp.coach.cache.CacheData;
 import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.coach.cqfruler.model.CDSHook;
-import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.entity.app.Outcome;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
+import edu.ohsu.cmp.coach.service.BloodPressureService;
 import edu.ohsu.cmp.coach.service.EHRService;
 import edu.ohsu.cmp.coach.service.GoalService;
-import edu.ohsu.cmp.coach.service.HomeBloodPressureReadingService;
 import edu.ohsu.cmp.coach.service.MedicationService;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.AdverseEvent;
 import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +29,6 @@ import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Controller
@@ -46,7 +42,10 @@ public class HomeController extends BaseController {
     private CQFRulerService cqfRulerService;
 
     @Autowired
-    private HomeBloodPressureReadingService hbprService;
+    private BloodPressureService bpService;
+
+//    @Autowired
+//    private HomeBloodPressureReadingService hbprService;
 
     @Autowired
     private GoalService goalService;
@@ -104,35 +103,7 @@ public class HomeController extends BaseController {
 
     @PostMapping("blood-pressure-observations-list")
     public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) {
-//        Set<BloodPressureModel> set = new TreeSet<>();
-        List<BloodPressureModel> list = new ArrayList<>();
-
-        // first add BP observations from configured FHIR server
-        Bundle bundle = ehrService.getBloodPressureObservations(session.getId());
-        for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
-            if (entryCon.getResource() instanceof Observation) {
-                Observation o = (Observation) entryCon.getResource();
-                try {
-                    list.add(new BloodPressureModel(o, fcm));
-
-                } catch (DataException e) {
-                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
-                }
-
-            } else {
-                Resource r = entryCon.getResource();
-                logger.warn("ignoring " + r.getClass().getName() + " (id=" + r.getId() + ") while building Blood Pressure Observations");
-            }
-        }
-
-        // now incorporate Home Blood Pressure Readings that the user entered themself into the system
-        List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(session.getId());
-        for (HomeBloodPressureReading item : hbprList) {
-            list.add(new BloodPressureModel(item));
-        }
-
-        Collections.sort(list, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()) * -1);
-
+        List<BloodPressureModel> list = bpService.getBloodPressureReadings(session.getId());
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
 

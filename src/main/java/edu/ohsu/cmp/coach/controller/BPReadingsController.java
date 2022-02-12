@@ -4,6 +4,7 @@ import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.model.PatientModel;
+import edu.ohsu.cmp.coach.service.BloodPressureService;
 import edu.ohsu.cmp.coach.service.EHRService;
 import edu.ohsu.cmp.coach.service.HomeBloodPressureReadingService;
 import org.slf4j.Logger;
@@ -35,6 +36,9 @@ public class BPReadingsController extends BaseController {
     private HomeBloodPressureReadingService hbprService;
 
     @Autowired
+    private BloodPressureService bpService;
+
+    @Autowired
     private CQFRulerService cqfRulerService;
 
     @GetMapping(value={"", "/"})
@@ -64,13 +68,21 @@ public class BPReadingsController extends BaseController {
 
         Date readingDate = new Date(readingDateTS);
 
-        List<HomeBloodPressureReading> list = new ArrayList<>();
+//        List<BloodPressureModel> list = new ArrayList<>();
+//        BloodPressureModel bpm1 = new BloodPressureModel(systolic1, diastolic1, pulse1, readingDate, followedInstructions);
+//        bpm1 = bpService.create(session.getId(), bpm1);
+//        list.add(bpm1);
 
+        List<HomeBloodPressureReading> list = new ArrayList<>();
         HomeBloodPressureReading bpreading1 = new HomeBloodPressureReading(systolic1, diastolic1, pulse1, readingDate, followedInstructions);
         bpreading1 = hbprService.create(session.getId(), bpreading1);
         list.add(bpreading1);
 
         if (systolic2 != null && diastolic2 != null) {
+//            BloodPressureModel bpm2 = new BloodPressureModel(systolic2, diastolic2, pulse2, readingDate, followedInstructions);
+//            bpm2 = bpService.create(session.getId(), bpm2);
+//            list.add(bpm2);
+
             HomeBloodPressureReading bpreading2 = new HomeBloodPressureReading(systolic2, diastolic2, pulse2, readingDate, followedInstructions);
             bpreading2 = hbprService.create(session.getId(), bpreading2);
             list.add(bpreading2);

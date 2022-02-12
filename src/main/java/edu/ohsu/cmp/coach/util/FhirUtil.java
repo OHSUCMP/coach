@@ -16,6 +16,30 @@ import java.util.regex.Pattern;
 public class FhirUtil {
     private static final Logger logger = LoggerFactory.getLogger(FhirUtil.class);
 
+    public static Bundle truncate(Bundle bundle, Integer limit) {
+
+        // note: this function doesn't differentiate between resource types in a Bundle, so it
+        //       could behave weirdly if the Bundle includes other associated resources (e.g. via _include)
+        //       works fine for filtering BP observations, though, which is the initial use case.
+        //       we'll cross this bridge if and when we ever come to it
+
+        if (limit == null || bundle.getEntry().size() <= limit) {
+            return bundle;
+        }
+
+        Bundle truncatedBundle = new Bundle();
+        truncatedBundle.setType(Bundle.BundleType.COLLECTION);
+
+        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+            if (truncatedBundle.getEntry().size() >= limit) {
+                break;
+            }
+            truncatedBundle.getEntry().add(entry);
+        }
+
+        return truncatedBundle;
+    }
+
     public static IGenericClient buildClient(String serverUrl, String bearerToken, int timeout) {
         FhirContext ctx = FhirContext.forR4();
         ctx.getRestfulClientFactory().setSocketTimeout(timeout * 1000);

@@ -33,5 +33,6 @@
     <logger name="edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient" level="INFO" />
     <logger name="edu.ohsu.cmp.coach.util.FhirUtil" level="INFO" />
     <logger name="edu.ohsu.cmp.coach.service.AdverseEventService" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.service.EHRService" level="DEBUG" />
 
 </configuration>

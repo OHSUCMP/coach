@@ -28,6 +28,9 @@ public class EHRService extends BaseService {
     private static final String URN_OID_PREFIX = "urn:oid:";
     private static final String URL_PREFIX = "http://";
 
+    private static final String CONDITION_CLINICALSTATUS_SYSTEM = "http://terminology.hl7.org/CodeSystem/condition-clinical";
+    private static final String CONDITION_VERIFICATIONSTATUS_SYSTEM = "http://terminology.hl7.org/CodeSystem/condition-ver-status";
+
     private static final Date ONE_MONTH_AGO;
     static {
         Calendar cal = Calendar.getInstance();
@@ -77,6 +80,25 @@ public class EHRService extends BaseService {
                 ), fcm.getBpLimit()
             );
 
+            // handle modifier flags
+            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+            while (iter.hasNext()) {
+                Bundle.BundleEntryComponent entry = iter.next();
+                Resource r = entry.getResource();
+                if (r instanceof Observation) {
+                    Observation o = (Observation) r;
+
+                    // only allow "final", "amended", "corrected" status to pass
+
+                    if (o.getStatus() != Observation.ObservationStatus.FINAL &&
+                            o.getStatus() != Observation.ObservationStatus.AMENDED &&
+                            o.getStatus() != Observation.ObservationStatus.CORRECTED) {
+                        logger.debug("removing Observation " + o.getId() + " (invalid status)");
+                        iter.remove();
+                    }
+                }
+            }
+
             cache.setObservations(b);
         }
         return b;
@@ -105,9 +127,49 @@ public class EHRService extends BaseService {
 //                }
 //            }
 
+            // handle modifier flags
+            filterConditions(b);
+
             cache.setConditions(b);
         }
         return b;
+    }
+
+    /**
+     * filters Conditions in a Bundle by their necessary modifier and other flags or codes
+     * @param b
+     */
+    private void filterConditions(Bundle b) {
+        Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+        while (iter.hasNext()) {
+            Bundle.BundleEntryComponent entry = iter.next();
+            Resource r = entry.getResource();
+            if (r instanceof Condition) {
+                Condition c = (Condition) r;
+
+                if (c.hasClinicalStatus()) {
+                    // only allow "active", "recurrence", and "relapse" clinicalStatus to pass
+
+                    CodeableConcept cc = c.getClinicalStatus();
+                    if (!cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "active") &&
+                            !cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "recurrence") &&
+                            !cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "relapse")) {
+                        logger.debug("removing Condition " + c.getId() + " (invalid clinicalStatus)");
+                        iter.remove();
+                    }
+                }
+
+                if (c.hasVerificationStatus()) {
+                    // only allow "confirmed" verificationStatus to pass
+
+                    CodeableConcept cc = c.getVerificationStatus();
+                    if (!cc.hasCoding(CONDITION_VERIFICATIONSTATUS_SYSTEM, "confirmed")) {
+                        logger.debug("removing Condition " + c.getId() + " (invalid verificationStatus)");
+                        iter.remove();
+                    }
+                }
+            }
+        }
     }
 
     public Bundle getCurrentGoals(String sessionId) {
@@ -119,22 +181,31 @@ public class EHRService extends BaseService {
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
             b = fcc.search(fhirQueryManager.getGoalQuery(fcc.getCredentials().getPatientId()));
 
-            // filter out any resources that aren't Active, In-Progress Goals
+            // handle modifier and other flags
             Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
             while (iter.hasNext()) {
-                Bundle.BundleEntryComponent btc = iter.next();
-                boolean active = false;
-                boolean inProgress = false;
-                if (btc.getResource() instanceof org.hl7.fhir.r4.model.Goal) {
-                    org.hl7.fhir.r4.model.Goal g = (org.hl7.fhir.r4.model.Goal) btc.getResource();
-                    active = g.getLifecycleStatus() == org.hl7.fhir.r4.model.Goal.GoalLifecycleStatus.ACTIVE;
-                    inProgress = g.getAchievementStatus().hasCoding(
-                            GoalModel.ACHIEVEMENT_STATUS_CODING_SYSTEM,
-                            GoalModel.ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE
-                    );
-                }
-                if (!active || !inProgress) {
-                    iter.remove();
+                Bundle.BundleEntryComponent entry = iter.next();
+                Resource r = entry.getResource();
+                if (r instanceof Goal) {
+                    Goal g = (Goal) r;
+
+                    if (g.getLifecycleStatus() != Goal.GoalLifecycleStatus.ACTIVE) {
+                        // only allow "active" lifecycleStatus
+                        logger.debug("removing Goal " + g.getId() + " (invalid lifecycleStatus)");
+                        iter.remove();
+                    }
+
+                    if (g.hasAchievementStatus()) {
+                        // if achievementStatus is set, require "in-progress"
+
+                        CodeableConcept cc = g.getAchievementStatus();
+                        if (!cc.hasCoding(
+                                GoalModel.ACHIEVEMENT_STATUS_CODING_SYSTEM,
+                                GoalModel.ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE)) {
+                            logger.debug("removing Goal " + g.getId() + " (invalid achievementStatus)");
+                            iter.remove();
+                        }
+                    }
                 }
             }
 
@@ -150,6 +221,8 @@ public class EHRService extends BaseService {
 
         Bundle b = cache.getMedications();
         if (b == null) {
+            logger.info("requesting Medication data for session " + sessionId);
+
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
             b = getMedicationStatements(fcc);
             if (b == null) b = getMedicationRequests(fcc);
@@ -160,12 +233,61 @@ public class EHRService extends BaseService {
     }
 
     private Bundle getMedicationStatements(FHIRCredentialsWithClient fcc) {
-        return fcc.search(fhirQueryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()));
+        Bundle b = fcc.search(fhirQueryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()));
+        if (b == null) return null;
+
+        // handle modifier and other flags
+
+        Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+        while (iter.hasNext()) {
+            Bundle.BundleEntryComponent entry = iter.next();
+            Resource r = entry.getResource();
+            if (r instanceof MedicationStatement) {
+                MedicationStatement ms = (MedicationStatement) r;
+                if (ms.getStatus() != MedicationStatement.MedicationStatementStatus.ACTIVE) {
+                    // require "active" status
+                    logger.debug("removing MedicationStatement " + ms.getId() + " (invalid status)");
+                    iter.remove();
+                }
+            }
+        }
+
+        return b;
     }
 
     private Bundle getMedicationRequests(FHIRCredentialsWithClient fcc) {
         Bundle b = fcc.search(fhirQueryManager.getMedicationRequestQuery(fcc.getCredentials().getPatientId()));
         if (b == null) return null;
+
+        // handle modifier and other flags
+        // MUST HAPPEN BEFORE we append associated Medication records (below)
+
+        Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+        while (iter.hasNext()) {
+            Bundle.BundleEntryComponent entry = iter.next();
+            Resource r = entry.getResource();
+            if (r instanceof MedicationRequest) {
+                MedicationRequest mr = (MedicationRequest) r;
+
+                // status = active
+                if (mr.getStatus() != MedicationRequest.MedicationRequestStatus.ACTIVE) {
+                    logger.debug("removing MedicationRequest " + mr.getId() + " (invalid status)");
+                    iter.remove();
+                }
+
+                // intent = order
+                if (mr.getIntent() != MedicationRequest.MedicationRequestIntent.ORDER) {
+                    logger.debug("removing MedicationRequest " + mr.getId() + " (invalid intent)");
+                    iter.remove();
+                }
+
+                // doNotPerform = false
+                if (mr.hasDoNotPerform() && !mr.getDoNotPerform()) {
+                    logger.debug("removing MedicationRequest " + mr.getId() + " (doNotPerform)");
+                    iter.remove();
+                }
+            }
+        }
 
         // creating a separate bundle for Medications, instead of adding them directly to the main
         // bundle while iterating over it (below).  this prevents ConcurrentModificationException
@@ -198,6 +320,8 @@ public class EHRService extends BaseService {
 
         Bundle b = cache.getAdverseEvents();
         if (b == null) {
+            logger.info("requesting AdverseEvent data for session " + sessionId);
+
             b = buildAdverseEvents(sessionId);
             cache.setAdverseEvents(b);
         }
@@ -206,57 +330,70 @@ public class EHRService extends BaseService {
     }
 
     private Bundle buildAdverseEvents(String sessionId) {
-        Bundle b = new Bundle();
-        b.setType(Bundle.BundleType.COLLECTION);
+        Bundle adverseEventBundle = new Bundle();
+        adverseEventBundle.setType(Bundle.BundleType.COLLECTION);
 
-        for (Bundle.BundleEntryComponent entry : getAdverseEventConditions(sessionId).getEntry()) {
+        Bundle b = getAdverseEventConditions(sessionId);
+        if (b == null) return null;
+
+        // handle modifier and other flags
+
+        filterConditions(b);
+
+        for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (entry.getResource() instanceof Condition) {
                 Condition c = (Condition) entry.getResource();
 
-                String aeid = "adverseevent-" + DigestUtils.sha256Hex(c.getId() + salt);
+                AdverseEvent ae = buildAdverseEvent(sessionId, c);
 
-                AdverseEvent ae = new AdverseEvent();
-                ae.setId(aeid);
-
-                Patient p = getPatient(sessionId);
-                ae.setSubject(new Reference().setReference(p.getId()));
-
-                ae.setEvent(c.getCode().copy());
-
-                // HACK: adding custom event code to make it clear to CQF-Ruler that these AdverseEvent resources
-                //       originated within the COACH application.  we don't want CQF-Ruler using AdverseEvent
-                //       resources from the EHR, so we need a reliable way to differentiate them
-                ae.getEvent().addCoding(new Coding()
-                        .setCode("coach-adverse-event")
-                        .setSystem("https://coach.ohsu.edu")
-                        .setDisplay("Adverse Event reported by COACH"));
-
-                ae.getResultingCondition().add(new Reference().setReference(c.getId()));
-
-                if (c.hasOnsetDateTimeType()) {
-                    ae.setDate(c.getOnsetDateTimeType().getValue());
-                } else if (c.hasRecordedDate()) {
-                    ae.setDate(c.getRecordedDate());
-                }
-
-                if (c.hasOnsetDateTimeType()) {
-                    ae.setDetected(c.getOnsetDateTimeType().getValue());
-                }
-
-                if (c.hasRecordedDate()) {
-                    ae.setRecordedDate(c.getRecordedDate());
-                }
-
-                MyAdverseEventOutcome outcome = adverseEventService.getOutcome(aeid);
-                ae.getOutcome().addCoding(new Coding()
-                        .setCode(outcome.getOutcome().getFhirValue())
-                        .setSystem("http://terminology.hl7.org/CodeSystem/adverse-event-outcome"));
-
-                b.addEntry().setFullUrl("http://hl7.org/fhir/AdverseEvent/" + ae.getId()).setResource(ae);
+                adverseEventBundle.addEntry().setFullUrl("http://hl7.org/fhir/AdverseEvent/" + ae.getId()).setResource(ae);
             }
         }
 
-        return b;
+        return adverseEventBundle;
+    }
+
+    private AdverseEvent buildAdverseEvent(String sessionId, Condition c) {
+        String aeid = "adverseevent-" + DigestUtils.sha256Hex(c.getId() + salt);
+
+        AdverseEvent ae = new AdverseEvent();
+        ae.setId(aeid);
+
+        Patient p = getPatient(sessionId);
+        ae.setSubject(new Reference().setReference(p.getId()));
+
+        ae.setEvent(c.getCode().copy());
+
+        // HACK: adding custom event code to make it clear to CQF-Ruler that these AdverseEvent resources
+        //       originated within the COACH application.  we don't want CQF-Ruler using AdverseEvent
+        //       resources from the EHR, so we need a reliable way to differentiate them
+        ae.getEvent().addCoding(new Coding()
+                .setCode("coach-adverse-event")
+                .setSystem("https://coach.ohsu.edu")
+                .setDisplay("Adverse Event reported by COACH"));
+
+        ae.getResultingCondition().add(new Reference().setReference(c.getId()));
+
+        if (c.hasOnsetDateTimeType()) {
+            ae.setDate(c.getOnsetDateTimeType().getValue());
+        } else if (c.hasRecordedDate()) {
+            ae.setDate(c.getRecordedDate());
+        }
+
+        if (c.hasOnsetDateTimeType()) {
+            ae.setDetected(c.getOnsetDateTimeType().getValue());
+        }
+
+        if (c.hasRecordedDate()) {
+            ae.setRecordedDate(c.getRecordedDate());
+        }
+
+        MyAdverseEventOutcome outcome = adverseEventService.getOutcome(aeid);
+        ae.getOutcome().addCoding(new Coding()
+                .setCode(outcome.getOutcome().getFhirValue())
+                .setSystem("http://terminology.hl7.org/CodeSystem/adverse-event-outcome"));
+
+        return ae;
     }
 
     private Bundle getAdverseEventConditions(String sessionId) {

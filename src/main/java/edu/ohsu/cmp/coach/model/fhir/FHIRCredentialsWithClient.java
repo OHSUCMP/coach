@@ -87,7 +87,7 @@ public class FHIRCredentialsWithClient {
                 logger.debug("bundle = " + FhirUtil.toJson(bundle));
             }
 
-            return truncate(bundle, limit);
+            return FhirUtil.truncate(bundle, limit);
 
         } else {
             Bundle compositeBundle = new Bundle();
@@ -118,31 +118,8 @@ public class FHIRCredentialsWithClient {
                 logger.debug("compositeBundle = " + FhirUtil.toJson(compositeBundle));
             }
 
-            return truncate(compositeBundle, limit);
+            return FhirUtil.truncate(compositeBundle, limit);
         }
     }
 
-    private Bundle truncate(Bundle bundle, Integer limit) {
-
-        // note: this function doesn't differentiate between resource types in a Bundle, so it
-        //       could behave weirdly if the Bundle includes other associated resources (e.g. via _include)
-        //       works fine for filtering BP observations, though, which is the initial use case.
-        //       we'll cross this bridge if and when we ever come to it
-
-        if (limit == null || bundle.getEntry().size() <= limit) {
-            return bundle;
-        }
-
-        Bundle truncatedBundle = new Bundle();
-        truncatedBundle.setType(Bundle.BundleType.COLLECTION);
-
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            if (truncatedBundle.getEntry().size() >= limit) {
-                break;
-            }
-            truncatedBundle.getEntry().add(entry);
-        }
-
-        return truncatedBundle;
-    }
 }
