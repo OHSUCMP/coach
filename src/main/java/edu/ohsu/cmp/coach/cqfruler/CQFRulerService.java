@@ -2,10 +2,7 @@ package edu.ohsu.cmp.coach.cqfruler;
 
 import edu.ohsu.cmp.coach.cqfruler.model.CDSHook;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
-import edu.ohsu.cmp.coach.service.CounselingService;
-import edu.ohsu.cmp.coach.service.EHRService;
-import edu.ohsu.cmp.coach.service.GoalService;
-import edu.ohsu.cmp.coach.service.HomeBloodPressureReadingService;
+import edu.ohsu.cmp.coach.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +24,7 @@ public class CQFRulerService {
     private List<String> cdsHookOrder;
 
     @Autowired private EHRService ehrService;
-    @Autowired private HomeBloodPressureReadingService hbprService;
+    @Autowired private BloodPressureService bpService;
     @Autowired private GoalService goalService;
     @Autowired private CounselingService counselingService;
     @Autowired private FhirConfigManager fcm;
@@ -44,7 +41,7 @@ public class CQFRulerService {
         try {
             CDSHookExecutor executor = new CDSHookExecutor(TESTING, showDevErrors, sessionId, cdsHooksEndpointURL,
                     ehrService,
-                    hbprService,
+                    bpService,
                     goalService,
                     counselingService,
                     fcm);

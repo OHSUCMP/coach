@@ -5,6 +5,7 @@ import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.entity.app.MyAdverseEvent;
 import edu.ohsu.cmp.coach.entity.app.MyAdverseEventOutcome;
 import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
+import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.util.FhirUtil;
@@ -54,6 +55,9 @@ public class EHRService extends BaseService {
     @Autowired
     private AdverseEventService adverseEventService;
 
+    @Value("${fhir.observation.bp-write}")
+    private Boolean storeRemotely;
+
     public Patient getPatient(String sessionId) {
         CacheData cache = SessionCache.getInstance().get(sessionId);
         Patient p = cache.getPatient();
@@ -80,7 +84,12 @@ public class EHRService extends BaseService {
                 ), fcm.getBpLimit()
             );
 
+            // can't modify list b while iterating over it and sometimes removing elements.
+            Bundle additionalResources = new Bundle();
+            additionalResources.setType(Bundle.BundleType.COLLECTION);
+
             // handle modifier flags
+            // also check associated Encounter records to strip those that don't meet criteria
             Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
             while (iter.hasNext()) {
                 Bundle.BundleEntryComponent entry = iter.next();
@@ -95,13 +104,102 @@ public class EHRService extends BaseService {
                             o.getStatus() != Observation.ObservationStatus.CORRECTED) {
                         logger.debug("removing Observation " + o.getId() + " (invalid status)");
                         iter.remove();
+                        continue;
+                    }
+
+                    if ( ! o.hasEncounter() ) {
+                        logger.debug("removing Observation " + o.getId() + " - no Encounter referenced");
+                        iter.remove();
+                        continue;
+                    }
+
+                    // Observation has an Encounter, so check it to make sure it's also what we want
+
+                    String encRef = o.getEncounter().getReference();
+                    boolean inBundle = FhirUtil.bundleContainsReference(b, encRef);
+
+                    Encounter e = inBundle ?
+                            FhirUtil.getResourceFromBundleByReference(b, Encounter.class, encRef) :
+                            fcc.read(Encounter.class, encRef);
+
+                    // only allow Observations associated with FINISHED Encounters
+                    if (e == null || ! e.hasStatus() || e.getStatus() != Encounter.EncounterStatus.FINISHED) {
+                        logger.debug("removing Observation " + o.getId() + " - missing Encounter, or Encounter status != FINISHED");
+                        iter.remove();
+                        continue;
+                    }
+
+                    if ( ! BloodPressureModel.isAmbEncounter(e) && ! BloodPressureModel.isHomeHealthEncounter(e) ) {
+                        logger.debug("removing Observation " + o.getId() + " - Encounter has inappropriate class " + e.getClass_().getSystem() + "|" + e.getClass_().getCode());
+                        iter.remove();
+                        continue;
+                    }
+
+                    if ( ! inBundle ) {
+                        logger.debug("adding Encounter " + e.getId() + " to Bundle for Observation " + o.getId());
+                        additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(e));
+                    }
+
+                    if (storeRemotely && BloodPressureModel.isHomeHealthEncounter(e)) {
+                        // Home Health BP Observations are probably created by COACH, if storeRemotely=true.
+                        // these could have associated Pulse and "followed protocol" Observations.
+                        // get those and include them in the resultant Bundle.
+
+                        Observation pulseObservation = getSupplementalObservationForEncounter(fcc, e.getId(),
+                                fcm.getPulseSystem(), fcm.getPulseCode());
+
+                        if (pulseObservation != null) {
+                            logger.debug("adding pulse Observation " + pulseObservation.getId() + " to Bundle for Observation " + o.getId());
+
+                            additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(pulseObservation));
+                        }
+
+                        Observation protocolObservation = getSupplementalObservationForEncounter(fcc, e.getId(),
+                                fcm.getProtocolSystem(), fcm.getProtocolCode());
+
+                        if (protocolObservation != null) {
+                            logger.debug("adding protocol Observation " + protocolObservation.getId() + " to Bundle for Observation " + o.getId());
+                            additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(protocolObservation));
+                        }
                     }
                 }
             }
 
+            // add Encounters for retained Observations that were missing from the original Bundle
+            b.getEntry().addAll(additionalResources.getEntry());
+
             cache.setObservations(b);
         }
         return b;
+    }
+
+    private Observation getSupplementalObservationForEncounter(FHIRCredentialsWithClient fcc, String encounterRef,
+                                                               String system, String code) {
+        Bundle b = fcc.search(fhirQueryManager.getObservationByEncounterQueryCode(
+                fcc.getCredentials().getPatientId(),
+                encounterRef,
+                system, code)
+        );
+
+        Observation observation = null;
+
+        // handle modifier flags
+        for (Bundle.BundleEntryComponent entry : b.getEntry()) {
+            Resource r = entry.getResource();
+            if (r instanceof Observation) {
+                Observation o = (Observation) r;
+
+                // only allow "final", "amended", "corrected" status to pass
+
+                if (o.getStatus() == Observation.ObservationStatus.FINAL ||
+                        o.getStatus() == Observation.ObservationStatus.AMENDED ||
+                        o.getStatus() == Observation.ObservationStatus.CORRECTED) {
+                    observation = o;
+                }
+            }
+        }
+
+        return observation;
     }
 
     public Bundle getConditions(String sessionId) {
@@ -156,6 +254,7 @@ public class EHRService extends BaseService {
                             !cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "relapse")) {
                         logger.debug("removing Condition " + c.getId() + " (invalid clinicalStatus)");
                         iter.remove();
+                        continue;
                     }
                 }
 
@@ -193,6 +292,7 @@ public class EHRService extends BaseService {
                         // only allow "active" lifecycleStatus
                         logger.debug("removing Goal " + g.getId() + " (invalid lifecycleStatus)");
                         iter.remove();
+                        continue;
                     }
 
                     if (g.hasAchievementStatus()) {
@@ -273,12 +373,14 @@ public class EHRService extends BaseService {
                 if (mr.getStatus() != MedicationRequest.MedicationRequestStatus.ACTIVE) {
                     logger.debug("removing MedicationRequest " + mr.getId() + " (invalid status)");
                     iter.remove();
+                    continue;
                 }
 
                 // intent = order
                 if (mr.getIntent() != MedicationRequest.MedicationRequestIntent.ORDER) {
                     logger.debug("removing MedicationRequest " + mr.getId() + " (invalid intent)");
                     iter.remove();
+                    continue;
                 }
 
                 // doNotPerform = false
@@ -337,9 +439,6 @@ public class EHRService extends BaseService {
         if (b == null) return null;
 
         // handle modifier and other flags
-
-        filterConditions(b);
-
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (entry.getResource() instanceof Condition) {
                 Condition c = (Condition) entry.getResource();
@@ -403,14 +502,15 @@ public class EHRService extends BaseService {
         Bundle b = fcc.search(fhirQueryManager.getAdverseEventQuery(fcc.getCredentials().getPatientId()));
         if (b == null) return null;
 
+        // process to ensure only valid modifier flags
+        filterConditions(b);
+
         Map<String, List<MyAdverseEvent>> codesWeCareAbout = new HashMap<>();
-//        Set<String> codesWeCareAbout = new HashSet<String>();
         for (MyAdverseEvent mae : adverseEventService.getAll()) {
             if ( ! codesWeCareAbout.containsKey(mae.getConceptCode()) ) {
                 codesWeCareAbout.put(mae.getConceptCode(), new ArrayList<>());
             }
             codesWeCareAbout.get(mae.getConceptCode()).add(mae);
-//            codesWeCareAbout.add(mae.getConceptSystem() + "|" + mae.getConceptCode());
         }
 
         // filter out any of the patient's conditions that don't match a code we're interested in
@@ -493,6 +593,8 @@ public class EHRService extends BaseService {
                 iter.remove();
             }
         }
+
+        // todo: filter duplicates by code
 
         return b;
     }

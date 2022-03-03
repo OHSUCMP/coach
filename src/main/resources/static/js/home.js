@@ -9,11 +9,11 @@ async function loadBloodPressureObservations(_callback) {
     let bpdata = await response.json();
 
     bpdata.forEach(function(item) {
-        item.timestamp = new Date(item.timestamp);
+        item.readingDate = new Date(item.readingDate);
     });
 
     bpdata.sort(function (a, b) {
-        return a.timestamp - b.timestamp;
+        return a.readingDate - b.readingDate;
     });
 
     _callback(bpdata);
@@ -362,7 +362,7 @@ function buildChartSlider() {
 
 function truncateData(data, startDate) {
     return jQuery.grep(data, function (item) {
-        return item.timestamp >= startDate;
+        return item.readingDate >= startDate;
     });
 }
 
@@ -371,7 +371,7 @@ function toScatterData(data, type) {
     data.forEach(function (item) {
         let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
         arr.push({
-            x: new Date(item.timestamp),
+            x: new Date(item.readingDate),
             y: val
         });
     });
@@ -396,7 +396,7 @@ function toTrendLineData(data, type) {
         let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
 
         if (lastDate !== null) {
-            let diff = item.timestamp.getTime() - lastDate.getTime();
+            let diff = item.readingDate.getTime() - lastDate.getTime();
             diffArr.push(diff);
             let avgDiff = Math.round(diffArr.reduce((a, b) => a + b, 0) / diffArr.length);
 
@@ -415,10 +415,10 @@ function toTrendLineData(data, type) {
         }
 
         tempArr.push({
-            timestamp: item.timestamp,
+            timestamp: item.readingDate,
             val: val
         });
-        lastDate = item.timestamp;
+        lastDate = item.readingDate;
     });
 
     if (tempArr.length > 0) {   // process final records
@@ -479,7 +479,7 @@ function getDateRange(data) {
     let maxDate = null;
 
     data.forEach(function (item) {
-        let d = item.timestamp;
+        let d = item.readingDate;
         if (minDate == null || d < minDate) {
             minDate = d;
         }

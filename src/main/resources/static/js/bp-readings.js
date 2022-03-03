@@ -86,12 +86,11 @@ function appendBPReadingToTable(obj) {
 
     // todo : obj was HomeBloodPressureReading, ***IS NOW*** BloodPressureModel
 
-    let html = "<tr class='data' data-id='" + obj.id + "' data-timestamp='" + obj.readingDateTimestamp + "'>" +
+    let html = "<tr class='data' data-timestamp='" + obj.readingDateTimestamp + "'>" +
         "<td>" + obj.readingDateString + "</td>" +
-        "<td>" + obj.systolic + "</td>" +
-        "<td>" + obj.diastolic + "</td>" +
-        "<td>" + (obj.pulse === null ? '' : obj.pulse) + "</td>" +
-        "<td><span class=\"link\" onclick=\"deleteBPReading(" + obj.id + ")\">Delete</span></td>" +
+        "<td>" + obj.systolic.value + "</td>" +
+        "<td>" + obj.diastolic.value + "</td>" +
+        "<td>" + (obj.pulse === null ? '' : obj.pulse.value) + "</td>" +
         "</tr>\n";
 
     // now sort
@@ -104,22 +103,4 @@ function appendBPReadingToTable(obj) {
     });
 
     $(container).html(sortedData);
-}
-
-async function deleteBPReading(id) {
-    let formData = new FormData();
-    formData.append("id", id);
-
-    let response = await fetch("/bp-readings/delete", {
-        method: "POST",
-        body: formData
-    });
-
-    if (response.status === 200) {
-        $("#bpreadingsTable tr.data[data-id='" + id + "']").remove();
-
-    } else {
-        let msg = await response.text();
-        alert(msg);
-    }
 }

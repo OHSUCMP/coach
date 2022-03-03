@@ -20,14 +20,12 @@ import edu.ohsu.cmp.coach.exception.SessionMissingException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
+import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
-import edu.ohsu.cmp.coach.service.CounselingService;
-import edu.ohsu.cmp.coach.service.EHRService;
-import edu.ohsu.cmp.coach.service.GoalService;
-import edu.ohsu.cmp.coach.service.HomeBloodPressureReadingService;
+import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -49,7 +47,7 @@ public class CDSHookExecutor implements Runnable {
     private String sessionId;
     private String cdsHooksEndpointURL;
     private EHRService ehrService;
-    private HomeBloodPressureReadingService hbprService;
+    private BloodPressureService bpService;
     private GoalService goalService;
     private CounselingService counselingService;
     private FhirConfigManager fcm;
@@ -57,7 +55,7 @@ public class CDSHookExecutor implements Runnable {
     public CDSHookExecutor(boolean testing, boolean showDevErrors, String sessionId,
                            String cdsHooksEndpointURL,
                            EHRService ehrService,
-                           HomeBloodPressureReadingService hbprService,
+                           BloodPressureService bpService,
                            GoalService goalService,
                            CounselingService counselingService,
                            FhirConfigManager fcm) {
@@ -66,7 +64,7 @@ public class CDSHookExecutor implements Runnable {
         this.sessionId = sessionId;
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
         this.ehrService = ehrService;
-        this.hbprService = hbprService;
+        this.bpService = bpService;
         this.goalService = goalService;
         this.counselingService = counselingService;
         this.fcm = fcm;
@@ -84,7 +82,7 @@ public class CDSHookExecutor implements Runnable {
                 ", sessionId='" + sessionId + '\'' +
                 ", cdsHooksEndpointURL='" + cdsHooksEndpointURL + '\'' +
                 ", ehrService=" + ehrService +
-                ", hbprService=" + hbprService +
+                ", bpService=" + bpService +
                 ", goalService=" + goalService +
                 ", counselingService=" + counselingService +
                 ", fcm=" + fcm +
@@ -382,23 +380,35 @@ public class CDSHookExecutor implements Runnable {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
-        // add to new bundle so as to not modify what's in the cache
-        for (Bundle.BundleEntryComponent bec : ehrService.getBloodPressureObservations(sessionId).getEntry()) {
-            bundle.addEntry(bec);
+        for (BloodPressureModel bpm : bpService.getBloodPressureReadings(sessionId)) {
+            Bundle bpReadingBundle = bpm.toBundle(patientId, fcm);
+            for (Bundle.BundleEntryComponent entry : bpReadingBundle.getEntry()) {
+                bundle.addEntry(entry);
+            }
         }
 
-        // inject home blood pressure readings into Bundle for evaluation by CQF Ruler
-        List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
-        for (HomeBloodPressureReading item : hbprList) {
-//            String uuid = UUID.randomUUID().toString();
-//            Encounter e = buildEncounter(uuid, patientId, item.getReadingDate());
-//            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
-
-            Observation o = buildHomeBloodPressureObservation(patientId, item);
-
-            // todo: should the URL be different?
-            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Observation/" + o.getId()).setResource(o);
-        }
+//        // add to new bundle so as to not modify what's in the cache
+//        for (Bundle.BundleEntryComponent bec : ehrService.getBloodPressureObservations(sessionId).getEntry()) {
+//            bundle.addEntry(bec);
+//        }
+//
+//        // inject home blood pressure readings into Bundle for evaluation by CQF Ruler
+//        List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
+//        for (HomeBloodPressureReading item : hbprList) {
+////            String uuid = UUID.randomUUID().toString();
+////            Encounter e = buildEncounter(uuid, patientId, item.getReadingDate());
+////            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
+//            BloodPressureModel bpm = new BloodPressureModel(item, fcm);
+//            Bundle bpReadingBundle = bpm.toBundle(patientId, fcm);
+//            for (Bundle.BundleEntryComponent entry : bpReadingBundle.getEntry()) {
+//                bundle.addEntry(entry);
+//            }
+//
+////            Observation o = buildHomeBloodPressureObservation(patientId, item);
+////
+////            // todo: should the URL be different?
+////            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Observation/" + o.getId()).setResource(o);
+//        }
 
         return bundle;
     }
@@ -408,7 +418,9 @@ public class CDSHookExecutor implements Runnable {
 
         e.setId("encounter-" + uuid);
         e.setStatus(Encounter.EncounterStatus.FINISHED);
-        e.getClass_().setSystem("http://terminology.hl7.org/CodeSystem/v3-ActCode").setCode("AMB").setDisplay("ambulatory");
+        e.getClass_().setSystem(BloodPressureModel.ENCOUNTER_CLASS_SYSTEM)
+                .setCode(BloodPressureModel.ENCOUNTER_CLASS_AMB)
+                .setDisplay("ambulatory");
 
         e.setSubject(new Reference().setReference(patientId));
 
@@ -433,7 +445,13 @@ public class CDSHookExecutor implements Runnable {
 
         o.setId("observation-bp-" + uuid);
         o.setSubject(new Reference().setReference(patientId));
+
+// todo : we're now associating BP observations with Encounters.  setting Encounter reference here is commented out ...
+//        is there something in the downstream CQL that expects/requires/cares about this Observation *not* having
+//        an associated Encounter?
+
 //        o.setEncounter(new Reference().setReference(encounterId));
+
         o.setStatus(Observation.ObservationStatus.FINAL);
         o.getCode().addCoding()
                 .setCode(fcm.getBpCode())

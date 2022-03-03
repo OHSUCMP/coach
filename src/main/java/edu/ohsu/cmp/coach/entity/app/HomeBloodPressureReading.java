@@ -1,15 +1,16 @@
 package edu.ohsu.cmp.coach.entity.app;
 
+import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.model.BloodPressureModel;
+
 import javax.persistence.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Entity
 @Table(schema = "coach", name = "home_bp_reading")
 public class HomeBloodPressureReading {
 
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy h:mm a");
+//    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy h:mm a");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,6 +34,19 @@ public class HomeBloodPressureReading {
         this.pulse = pulse;
         this.readingDate = readingDate;
         this.followedInstructions = followedInstructions;
+    }
+
+    // used during create, do not set ID
+    public HomeBloodPressureReading(BloodPressureModel bpm) throws DataException {
+        if (bpm.getSource() != BloodPressureModel.Source.HOME) {
+            throw new DataException("cannot convert BloodPressureModel with source=" +
+                    bpm.getSource() + " to HomeBloodPressureReading");
+        }
+        this.systolic = bpm.getSystolic().getValue().intValue();
+        this.diastolic = bpm.getDiastolic().getValue().intValue();
+        this.pulse = bpm.getPulse().getValue().intValue();
+        this.readingDate = bpm.getReadingDate();
+        this.followedInstructions = bpm.getFollowedProtocol();
     }
 
     public Long getId() {
@@ -79,16 +93,16 @@ public class HomeBloodPressureReading {
         return readingDate;
     }
 
-    public String getReadingDateString() {
-        return DATE_FORMAT.format(readingDate);
-    }
+//    public String getReadingDateString() {
+//        return DATE_FORMAT.format(readingDate);
+//    }
 
-    public Long getReadingDateTimestamp() {
-        return readingDate.getTime();
-    }
+//    public Long getReadingDateTimestamp() {
+//        return readingDate.getTime();
+//    }
 
-    public void setReadingDate(Date readingTimestamp) {
-        this.readingDate = readingTimestamp;
+    public void setReadingDate(Date readingDate) {
+        this.readingDate = readingDate;
     }
 
     public Boolean getFollowedInstructions() {

@@ -1,9 +1,6 @@
 package edu.ohsu.cmp.coach.model;
 
-import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Coding;
-import org.hl7.fhir.r4.model.Extension;
-import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +20,26 @@ public class PatientModel {
 
     public PatientModel(Patient p) {
         this.id = p.getId();
-        this.name = p.getNameFirstRep().getNameAsSingleString();
+
+        String officialName = null;
+        String usualName = null;
+        String defaultName = null;
+        if (p.hasName()) {
+            defaultName = p.getNameFirstRep().getNameAsSingleString();
+            for (HumanName hn : p.getName()) {
+                if (officialName == null && hn.getUse() == HumanName.NameUse.OFFICIAL) {
+                    officialName = buildName(hn);
+                } else if (usualName == null && hn.getUse() == HumanName.NameUse.USUAL) {
+                    usualName = buildName(hn);
+                }
+            }
+        }
+        if      (officialName != null)  this.name = officialName;
+        else if (usualName != null)     this.name = usualName;
+        else {
+            logger.warn("no OFFICIAL or USUAL name for patient " + p.getId() + " - using default");
+            this.name = defaultName;
+        }
 
         if (p.getBirthDate() != null) {
             LocalDate start = p.getBirthDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -46,7 +62,6 @@ public class PatientModel {
                 } else if (c.hasCode()) {
                     logger.debug("setting gender=" + c.getCode() + " from extension Coding.code for Patient with id=" + id);
                     gender = c.getCode();
-
                 }
             }
 
@@ -67,5 +82,31 @@ public class PatientModel {
 
     public String getName() {
         return name;
+    }
+
+    public Long getAge() {
+        return age;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+///////////////////////////////////////////////////////////////////////////////////
+// private methods
+//
+
+    private String buildName(HumanName hn) {
+        if (hn != null) {
+            if (hn.hasText()) {
+                // if the name element has text, just use that
+                return hn.getText();
+
+            } else if (hn.hasFamily() && hn.hasGiven()) {
+                // otherwise, construct it from parts, providing those exist
+                return hn.getGivenAsSingleString() + " " + hn.getFamily();
+            }
+        }
+        return null;
     }
 }

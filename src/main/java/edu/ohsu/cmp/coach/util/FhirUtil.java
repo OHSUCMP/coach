@@ -6,11 +6,14 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class FhirUtil {
@@ -90,6 +93,24 @@ public class FhirUtil {
         return null;
     }
 
+    public static List<Observation> getObservationsFromBundleByEncounterReference(Bundle b,
+                                                                                  String encounterReference) {
+        String referenceId = extractIdFromReference(FhirUtil.toRelativeReference(encounterReference));
+
+        List<Observation> list = new ArrayList<>();
+        for (Bundle.BundleEntryComponent entry : b.getEntry()) {
+            if (entry.getResource() instanceof Observation) {
+                Observation o = (Observation) entry.getResource();
+
+                if (o.hasEncounter() &&
+                        Pattern.matches("(.*\\/)?" + referenceId + "(\\/.*)?", o.getEncounter().getReference())) {
+                    list.add(o);
+                }
+            }
+        }
+        return list;
+    }
+
     public static boolean bundleContainsReference(Bundle b, String reference) {
         String referenceId = extractIdFromReference(reference);
 
@@ -118,5 +139,23 @@ public class FhirUtil {
         IParser parser = ctx.newJsonParser();
         parser.setPrettyPrint(true);
         return parser.encodeResourceToString(r);
+    }
+
+    public static String toRelativeReference(String reference) {
+        if (reference.startsWith("http://") || reference.startsWith("https://")) {
+            String s = reference;
+            // convert https://api.logicahealth.org/htnu18r42/data/Patient/MedicationTest/_history/4
+            // into Patient/MedicationTest
+            int suffixPos = s.indexOf("/_history/");
+            if (suffixPos > 0) {
+                s = s.substring(0, suffixPos);
+            }
+
+            String[] parts = s.split("\\/");
+            return parts[parts.length - 2] + "/" + parts[parts.length - 1];
+
+        } else {
+            return reference;
+        }
     }
 }

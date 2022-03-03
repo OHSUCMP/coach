@@ -64,6 +64,10 @@ public class CacheData {
     }
 
     public Bundle getObservations() {
+        // todo : this and other cache requests need to block if the system is in the process of populating the cache.
+        //        otherwise, expensive operations to populate the cache run simultaneously.
+        //        it's an annoying race condition
+
         return observations;
     }
 

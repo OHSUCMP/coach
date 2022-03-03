@@ -2,11 +2,10 @@ package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.cqfruler.CQFRulerService;
-import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
+import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.PatientModel;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
 import edu.ohsu.cmp.coach.service.EHRService;
-import edu.ohsu.cmp.coach.service.HomeBloodPressureReadingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +31,8 @@ public class BPReadingsController extends BaseController {
     @Autowired
     private EHRService ehrService;
 
-    @Autowired
-    private HomeBloodPressureReadingService hbprService;
+//    @Autowired
+//    private HomeBloodPressureReadingService hbprService;
 
     @Autowired
     private BloodPressureService bpService;
@@ -46,46 +45,48 @@ public class BPReadingsController extends BaseController {
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
 
-        List<HomeBloodPressureReading> bpreadings = hbprService.getHomeBloodPressureReadings(session.getId());
+        List<BloodPressureModel> bpreadings = bpService.getHomeBloodPressureReadings(session.getId());
         model.addAttribute("bpreadings", bpreadings);
 
         return "bp-readings";
     }
 
     @PostMapping("create")
-    public ResponseEntity<List<HomeBloodPressureReading>> create(HttpSession session,
-                                                                 @RequestParam Integer systolic1,
-                                                                 @RequestParam Integer diastolic1,
-                                                                 @RequestParam(required = false) Integer pulse1,
-                                                                 @RequestParam(required = false) Integer systolic2,
-                                                                 @RequestParam(required = false) Integer diastolic2,
-                                                                 @RequestParam(required = false) Integer pulse2,
-                                                                 @RequestParam Long readingDateTS,
-                                                                 @RequestParam Boolean followedInstructions) {
+    public ResponseEntity<List<BloodPressureModel>> create(HttpSession session,
+                                                           @RequestParam Integer systolic1,
+                                                           @RequestParam Integer diastolic1,
+                                                           @RequestParam(required = false) Integer pulse1,
+                                                           @RequestParam(required = false) Integer systolic2,
+                                                           @RequestParam(required = false) Integer diastolic2,
+                                                           @RequestParam(required = false) Integer pulse2,
+                                                           @RequestParam Long readingDateTS,
+                                                           @RequestParam Boolean followedInstructions) {
 
         // get the cache just to make sure it's defined and the user is properly authenticated
         SessionCache.getInstance().get(session.getId());
 
         Date readingDate = new Date(readingDateTS);
 
-//        List<BloodPressureModel> list = new ArrayList<>();
-//        BloodPressureModel bpm1 = new BloodPressureModel(systolic1, diastolic1, pulse1, readingDate, followedInstructions);
-//        bpm1 = bpService.create(session.getId(), bpm1);
-//        list.add(bpm1);
+        List<BloodPressureModel> list = new ArrayList<>();
+        BloodPressureModel bpm1 = new BloodPressureModel(BloodPressureModel.Source.HOME,
+                systolic1, diastolic1, pulse1, readingDate, followedInstructions, fcm);
+        bpm1 = bpService.create(session.getId(), bpm1);
+        list.add(bpm1);
 
-        List<HomeBloodPressureReading> list = new ArrayList<>();
-        HomeBloodPressureReading bpreading1 = new HomeBloodPressureReading(systolic1, diastolic1, pulse1, readingDate, followedInstructions);
-        bpreading1 = hbprService.create(session.getId(), bpreading1);
-        list.add(bpreading1);
+//        List<HomeBloodPressureReading> list = new ArrayList<>();
+//        HomeBloodPressureReading bpreading1 = new HomeBloodPressureReading(systolic1, diastolic1, pulse1, readingDate, followedInstructions);
+//        bpreading1 = hbprService.create(session.getId(), bpreading1);
+//        list.add(bpreading1);
 
         if (systolic2 != null && diastolic2 != null) {
-//            BloodPressureModel bpm2 = new BloodPressureModel(systolic2, diastolic2, pulse2, readingDate, followedInstructions);
-//            bpm2 = bpService.create(session.getId(), bpm2);
-//            list.add(bpm2);
+            BloodPressureModel bpm2 = new BloodPressureModel(BloodPressureModel.Source.HOME,
+                    systolic2, diastolic2, pulse2, readingDate, followedInstructions, fcm);
+            bpm2 = bpService.create(session.getId(), bpm2);
+            list.add(bpm2);
 
-            HomeBloodPressureReading bpreading2 = new HomeBloodPressureReading(systolic2, diastolic2, pulse2, readingDate, followedInstructions);
-            bpreading2 = hbprService.create(session.getId(), bpreading2);
-            list.add(bpreading2);
+//            HomeBloodPressureReading bpreading2 = new HomeBloodPressureReading(systolic2, diastolic2, pulse2, readingDate, followedInstructions);
+//            bpreading2 = hbprService.create(session.getId(), bpreading2);
+//            list.add(bpreading2);
         }
 
         cqfRulerService.requestHooksExecution(session.getId());
@@ -95,13 +96,13 @@ public class BPReadingsController extends BaseController {
 
     @PostMapping("delete")
     public ResponseEntity<String> delete(HttpSession session,
-                                         @RequestParam("id") Long id) {
+                                         @RequestParam("id") String id) {
 
         // get the cache just to make sure it's defined and the user is properly authenticated
         SessionCache.getInstance().get(session.getId());
 
         try {
-            hbprService.delete(session.getId(), id);
+            bpService.delete(session.getId(), id);
             cqfRulerService.requestHooksExecution(session.getId());
 
             return new ResponseEntity<>("OK", HttpStatus.OK);

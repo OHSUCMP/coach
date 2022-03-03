@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.fhir;
 
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
 public class FhirQueryManager {
     private static final String TOKEN_ID = "\\{id}";
     private static final String TOKEN_SUBJECT = "\\{subject}";
+    private static final String TOKEN_ENCOUNTER = "\\{encounter}";
     private static final String TOKEN_CODE = "\\{code}";
 
     private static final String TOKEN_RELATIVE_DATE = "\\{now([-+])([mMdDyY0-9]+)}"; // "\\{now[-+][mMdDyY0-9]+}";
@@ -25,13 +27,14 @@ public class FhirQueryManager {
     private static final Pattern PATTERN_RELATIVE_DATE_PART = Pattern.compile("([0-9]+)([mMdDyY])");
     private static final DateFormat FHIR_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
-    @Value("${Patient.Lookup}")             private String patientLookup;
-    @Value("${Observation.Query.code}")     private String observationQueryCode;
-    @Value("${Condition.Query}")            private String conditionQuery;
-    @Value("${Goal.Query}")                 private String goalQuery;
-    @Value("${MedicationStatement.Query}")  private String medicationStatementQuery;
-    @Value("${MedicationRequest.Query}")    private String medicationRequestQuery;
-    @Value("${AdverseEvent.Query}")         private String adverseEventQuery;
+    @Value("${Patient.Lookup}")                     private String patientLookup;
+    @Value("${Observation.Query.code}")             private String observationQueryCode;
+    @Value("${Observation.ByEncounterQuery.code}")  private String observationByEncounterQueryCode;
+    @Value("${Condition.Query}")                    private String conditionQuery;
+    @Value("${Goal.Query}")                         private String goalQuery;
+    @Value("${MedicationStatement.Query}")          private String medicationStatementQuery;
+    @Value("${MedicationRequest.Query}")            private String medicationRequestQuery;
+    @Value("${AdverseEvent.Query}")                 private String adverseEventQuery;
 
     public String getPatientLookup(String id) {
         return buildQuery(patientLookup, params()
@@ -42,6 +45,14 @@ public class FhirQueryManager {
     public String getObservationQueryCode(String patientId, String system, String code) {
         return buildQuery(observationQueryCode, params()
                 .add(TOKEN_SUBJECT, patientId)
+                .add(TOKEN_CODE, system + '|' + code)
+        );
+    }
+
+    public String getObservationByEncounterQueryCode(String patientId, String encounterRef, String system, String code) {
+        return buildQuery(observationByEncounterQueryCode, params()
+                .add(TOKEN_SUBJECT, patientId)
+                .add(TOKEN_ENCOUNTER, FhirUtil.toRelativeReference(encounterRef))
                 .add(TOKEN_CODE, system + '|' + code)
         );
     }
@@ -96,6 +107,7 @@ public class FhirQueryManager {
         return template.replaceAll(TOKEN_ID, params.get(TOKEN_ID))
                 .replaceAll(TOKEN_SUBJECT, params.get(TOKEN_SUBJECT))
                 .replaceAll(TOKEN_CODE, params.get(TOKEN_CODE))
+                .replaceAll(TOKEN_ENCOUNTER, params.get(TOKEN_ENCOUNTER))
                 .replaceAll(TOKEN_RELATIVE_DATE, buildRelativeDate(extract(TOKEN_RELATIVE_DATE, template)));
     }
 

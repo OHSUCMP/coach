@@ -122,4 +122,17 @@ public class FHIRCredentialsWithClient {
         }
     }
 
+    public Bundle transact(Bundle bundle) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("transacting Bundle: " + FhirUtil.toJson(bundle));
+        }
+
+        Bundle response = client.transaction().withBundle(bundle).execute();
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("transaction response: " + FhirUtil.toJson(response));
+        }
+
+        return response;
+    }
 }
