@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.cache.CacheData;
+import edu.ohsu.cmp.coach.cache.UserCache;
 import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.coach.cqfruler.model.CDSHook;
@@ -116,7 +116,7 @@ public class HomeController extends BaseController {
         // DOES NOT ACTUALLY FIRE A CALL ANYWHERE - ONLY SEARCHES CACHE
         // actual calls are fired in an asynchronous thread by CQFRulerService on login
 
-        CacheData cache = SessionCache.getInstance().get(session.getId());
+        UserCache cache = SessionCache.getInstance().get(session.getId());
 
         List<Card> cards = null;
         HttpStatus status = HttpStatus.REQUEST_TIMEOUT;

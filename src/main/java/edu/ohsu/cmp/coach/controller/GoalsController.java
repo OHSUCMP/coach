@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.cache.CacheData;
+import edu.ohsu.cmp.coach.cache.UserCache;
 import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.entity.app.AchievementStatus;
 import edu.ohsu.cmp.coach.entity.app.GoalHistory;
@@ -85,7 +85,7 @@ public class GoalsController extends BaseController {
             myGoal = goalService.create(session.getId(), myGoal);
 
             // remove goal from cache
-            CacheData cache = SessionCache.getInstance().get(session.getId());
+            UserCache cache = SessionCache.getInstance().get(session.getId());
             cache.deleteSuggestion(extGoalId);
 
             return new ResponseEntity<>(new GoalModel(myGoal), HttpStatus.OK);

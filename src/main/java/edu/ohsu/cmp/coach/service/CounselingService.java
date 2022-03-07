@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.cache.CacheData;
+import edu.ohsu.cmp.coach.cache.UserCache;
 import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.entity.app.Counseling;
 import edu.ohsu.cmp.coach.entity.app.CounselingPage;
@@ -22,17 +22,17 @@ public class CounselingService extends BaseService {
     private CounselingPageRepository pageRepository;
 
     public List<Counseling> getCounselingList(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
         return repository.findAllByPatId(cache.getInternalPatientId());
     }
 
     public Counseling getCounseling(String sessionId, String extCounselingId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
         return repository.findOneByPatIdAndExtCounselingId(cache.getInternalPatientId(), extCounselingId);
     }
 
     public Counseling create(String sessionId, Counseling counseling) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
         counseling.setPatId(cache.getInternalPatientId());
         counseling.setCreatedDate(new Date());
         return repository.save(counseling);

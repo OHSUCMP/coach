@@ -6,7 +6,7 @@ import com.github.mustachejava.MustacheFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import edu.ohsu.cmp.coach.cache.CacheData;
+import edu.ohsu.cmp.coach.cache.UserCache;
 import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.cqfruler.model.CDSCard;
 import edu.ohsu.cmp.coach.cqfruler.model.CDSHook;
@@ -92,7 +92,7 @@ public class CDSHookExecutor implements Runnable {
     @Override
     public void run() {
         try {
-            CacheData cache = SessionCache.getInstance().get(sessionId);
+            UserCache cache = SessionCache.getInstance().get(sessionId);
 
             cache.deleteAllCards();
 

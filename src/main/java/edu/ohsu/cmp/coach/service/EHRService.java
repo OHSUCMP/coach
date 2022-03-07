@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.cache.CacheData;
 import edu.ohsu.cmp.coach.cache.SessionCache;
+import edu.ohsu.cmp.coach.cache.UserCache;
 import edu.ohsu.cmp.coach.entity.app.MyAdverseEvent;
 import edu.ohsu.cmp.coach.entity.app.MyAdverseEventOutcome;
 import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 @Service
 public class EHRService extends BaseService {
@@ -59,119 +60,231 @@ public class EHRService extends BaseService {
     private Boolean storeRemotely;
 
     public Patient getPatient(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
-        Patient p = cache.getPatient();
-        if (p == null) {
-            logger.info("requesting Patient data for session " + sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
+        return cache.getResource(UserCache.CacheType.PATIENT, new Callable<Patient>() {
+            @Override
+            public Patient call() throws Exception {
+                logger.info("requesting Patient data for session " + sessionId);
 
-            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            p = fcc.read(Patient.class, fhirQueryManager.getPatientLookup(fcc.getCredentials().getPatientId()));
-            cache.setPatient(p);
-        }
-        return p;
+                FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+                return fcc.read(Patient.class, fhirQueryManager.getPatientLookup(fcc.getCredentials().getPatientId()));
+            }
+        });
     }
+//        Patient p = cache.getPatient();
+//        if (p == null) {
+//            logger.info("requesting Patient data for session " + sessionId);
+//
+//            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+//            p = fcc.read(Patient.class, fhirQueryManager.getPatientLookup(fcc.getCredentials().getPatientId()));
+//            cache.setPatient(p);
+//        }
+//        return p;
+//    }
 
     public Bundle getBloodPressureObservations(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
-        Bundle b = cache.getObservations();
-        if (b == null) {
-            logger.info("requesting Blood Pressure Observations for session " + sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
+//        Bundle b = cache.getObservations();
 
-            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.search(fhirQueryManager.getObservationQueryCode(
-                    fcc.getCredentials().getPatientId(),
-                    fcm.getBpSystem(), fcm.getBpCode()
-                ), fcm.getBpLimit()
-            );
+        return cache.getResource(UserCache.CacheType.OBSERVATIONS, new Callable<Bundle>() {
+            @Override
+            public Bundle call() throws Exception {
+                logger.info("requesting Blood Pressure Observations for session " + sessionId);
 
-            // can't modify list b while iterating over it and sometimes removing elements.
-            Bundle additionalResources = new Bundle();
-            additionalResources.setType(Bundle.BundleType.COLLECTION);
+                FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+                Bundle b = fcc.search(fhirQueryManager.getObservationQueryCode(
+                        fcc.getCredentials().getPatientId(),
+                        fcm.getBpSystem(), fcm.getBpCode()
+                        ), fcm.getBpLimit()
+                );
 
-            // handle modifier flags
-            // also check associated Encounter records to strip those that don't meet criteria
-            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
-            while (iter.hasNext()) {
-                Bundle.BundleEntryComponent entry = iter.next();
-                Resource r = entry.getResource();
-                if (r instanceof Observation) {
-                    Observation o = (Observation) r;
+                // can't modify list b while iterating over it and sometimes removing elements.
+                Bundle additionalResources = new Bundle();
+                additionalResources.setType(Bundle.BundleType.COLLECTION);
 
-                    // only allow "final", "amended", "corrected" status to pass
+                // handle modifier flags
+                // also check associated Encounter records to strip those that don't meet criteria
+                Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+                while (iter.hasNext()) {
+                    Bundle.BundleEntryComponent entry = iter.next();
+                    Resource r = entry.getResource();
+                    if (r instanceof Observation) {
+                        Observation o = (Observation) r;
 
-                    if (o.getStatus() != Observation.ObservationStatus.FINAL &&
-                            o.getStatus() != Observation.ObservationStatus.AMENDED &&
-                            o.getStatus() != Observation.ObservationStatus.CORRECTED) {
-                        logger.debug("removing Observation " + o.getId() + " (invalid status)");
-                        iter.remove();
-                        continue;
-                    }
+                        // only allow "final", "amended", "corrected" status to pass
 
-                    if ( ! o.hasEncounter() ) {
-                        logger.debug("removing Observation " + o.getId() + " - no Encounter referenced");
-                        iter.remove();
-                        continue;
-                    }
-
-                    // Observation has an Encounter, so check it to make sure it's also what we want
-
-                    String encRef = o.getEncounter().getReference();
-                    boolean inBundle = FhirUtil.bundleContainsReference(b, encRef);
-
-                    Encounter e = inBundle ?
-                            FhirUtil.getResourceFromBundleByReference(b, Encounter.class, encRef) :
-                            fcc.read(Encounter.class, encRef);
-
-                    // only allow Observations associated with FINISHED Encounters
-                    if (e == null || ! e.hasStatus() || e.getStatus() != Encounter.EncounterStatus.FINISHED) {
-                        logger.debug("removing Observation " + o.getId() + " - missing Encounter, or Encounter status != FINISHED");
-                        iter.remove();
-                        continue;
-                    }
-
-                    if ( ! BloodPressureModel.isAmbEncounter(e) && ! BloodPressureModel.isHomeHealthEncounter(e) ) {
-                        logger.debug("removing Observation " + o.getId() + " - Encounter has inappropriate class " + e.getClass_().getSystem() + "|" + e.getClass_().getCode());
-                        iter.remove();
-                        continue;
-                    }
-
-                    if ( ! inBundle ) {
-                        logger.debug("adding Encounter " + e.getId() + " to Bundle for Observation " + o.getId());
-                        additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(e));
-                    }
-
-                    if (storeRemotely && BloodPressureModel.isHomeHealthEncounter(e)) {
-                        // Home Health BP Observations are probably created by COACH, if storeRemotely=true.
-                        // these could have associated Pulse and "followed protocol" Observations.
-                        // get those and include them in the resultant Bundle.
-
-                        Observation pulseObservation = getSupplementalObservationForEncounter(fcc, e.getId(),
-                                fcm.getPulseSystem(), fcm.getPulseCode());
-
-                        if (pulseObservation != null) {
-                            logger.debug("adding pulse Observation " + pulseObservation.getId() + " to Bundle for Observation " + o.getId());
-
-                            additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(pulseObservation));
+                        if (o.getStatus() != Observation.ObservationStatus.FINAL &&
+                                o.getStatus() != Observation.ObservationStatus.AMENDED &&
+                                o.getStatus() != Observation.ObservationStatus.CORRECTED) {
+                            logger.debug("removing Observation " + o.getId() + " (invalid status)");
+                            iter.remove();
+                            continue;
                         }
 
-                        Observation protocolObservation = getSupplementalObservationForEncounter(fcc, e.getId(),
-                                fcm.getProtocolSystem(), fcm.getProtocolCode());
+                        if (!o.hasEncounter()) {
+                            logger.debug("removing Observation " + o.getId() + " - no Encounter referenced");
+                            iter.remove();
+                            continue;
+                        }
 
-                        if (protocolObservation != null) {
-                            logger.debug("adding protocol Observation " + protocolObservation.getId() + " to Bundle for Observation " + o.getId());
-                            additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(protocolObservation));
+                        // Observation has an Encounter, so check it to make sure it's also what we want
+
+                        String encRef = o.getEncounter().getReference();
+                        boolean inBundle = FhirUtil.bundleContainsReference(b, encRef);
+
+                        Encounter e = inBundle ?
+                                FhirUtil.getResourceFromBundleByReference(b, Encounter.class, encRef) :
+                                fcc.read(Encounter.class, encRef);
+
+                        // only allow Observations associated with FINISHED Encounters
+                        if (e == null || !e.hasStatus() || e.getStatus() != Encounter.EncounterStatus.FINISHED) {
+                            logger.debug("removing Observation " + o.getId() + " - missing Encounter, or Encounter status != FINISHED");
+                            iter.remove();
+                            continue;
+                        }
+
+                        if (!BloodPressureModel.isAmbEncounter(e) && !BloodPressureModel.isHomeHealthEncounter(e)) {
+                            logger.debug("removing Observation " + o.getId() + " - Encounter has inappropriate class " + e.getClass_().getSystem() + "|" + e.getClass_().getCode());
+                            iter.remove();
+                            continue;
+                        }
+
+                        if (!inBundle) {
+                            logger.debug("adding Encounter " + e.getId() + " to Bundle for Observation " + o.getId());
+                            additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(e));
+                        }
+
+                        if (storeRemotely && BloodPressureModel.isHomeHealthEncounter(e)) {
+                            // Home Health BP Observations are probably created by COACH, if storeRemotely=true.
+                            // these could have associated Pulse and "followed protocol" Observations.
+                            // get those and include them in the resultant Bundle.
+
+                            Observation pulseObservation = getSupplementalObservationForEncounter(fcc, e.getId(),
+                                    fcm.getPulseSystem(), fcm.getPulseCode());
+
+                            if (pulseObservation != null) {
+                                logger.debug("adding pulse Observation " + pulseObservation.getId() + " to Bundle for Observation " + o.getId());
+
+                                additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(pulseObservation));
+                            }
+
+                            Observation protocolObservation = getSupplementalObservationForEncounter(fcc, e.getId(),
+                                    fcm.getProtocolSystem(), fcm.getProtocolCode());
+
+                            if (protocolObservation != null) {
+                                logger.debug("adding protocol Observation " + protocolObservation.getId() + " to Bundle for Observation " + o.getId());
+                                additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(protocolObservation));
+                            }
                         }
                     }
                 }
+
+                // add Encounters for retained Observations that were missing from the original Bundle
+                b.getEntry().addAll(additionalResources.getEntry());
+
+                return b;
             }
-
-            // add Encounters for retained Observations that were missing from the original Bundle
-            b.getEntry().addAll(additionalResources.getEntry());
-
-            cache.setObservations(b);
-        }
-        return b;
+        });
     }
+
+//        if (b == null) {
+//            logger.info("requesting Blood Pressure Observations for session " + sessionId);
+//
+//            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+//            b = fcc.search(fhirQueryManager.getObservationQueryCode(
+//                    fcc.getCredentials().getPatientId(),
+//                    fcm.getBpSystem(), fcm.getBpCode()
+//                ), fcm.getBpLimit()
+//            );
+//
+//            // can't modify list b while iterating over it and sometimes removing elements.
+//            Bundle additionalResources = new Bundle();
+//            additionalResources.setType(Bundle.BundleType.COLLECTION);
+//
+//            // handle modifier flags
+//            // also check associated Encounter records to strip those that don't meet criteria
+//            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+//            while (iter.hasNext()) {
+//                Bundle.BundleEntryComponent entry = iter.next();
+//                Resource r = entry.getResource();
+//                if (r instanceof Observation) {
+//                    Observation o = (Observation) r;
+//
+//                    // only allow "final", "amended", "corrected" status to pass
+//
+//                    if (o.getStatus() != Observation.ObservationStatus.FINAL &&
+//                            o.getStatus() != Observation.ObservationStatus.AMENDED &&
+//                            o.getStatus() != Observation.ObservationStatus.CORRECTED) {
+//                        logger.debug("removing Observation " + o.getId() + " (invalid status)");
+//                        iter.remove();
+//                        continue;
+//                    }
+//
+//                    if ( ! o.hasEncounter() ) {
+//                        logger.debug("removing Observation " + o.getId() + " - no Encounter referenced");
+//                        iter.remove();
+//                        continue;
+//                    }
+//
+//                    // Observation has an Encounter, so check it to make sure it's also what we want
+//
+//                    String encRef = o.getEncounter().getReference();
+//                    boolean inBundle = FhirUtil.bundleContainsReference(b, encRef);
+//
+//                    Encounter e = inBundle ?
+//                            FhirUtil.getResourceFromBundleByReference(b, Encounter.class, encRef) :
+//                            fcc.read(Encounter.class, encRef);
+//
+//                    // only allow Observations associated with FINISHED Encounters
+//                    if (e == null || ! e.hasStatus() || e.getStatus() != Encounter.EncounterStatus.FINISHED) {
+//                        logger.debug("removing Observation " + o.getId() + " - missing Encounter, or Encounter status != FINISHED");
+//                        iter.remove();
+//                        continue;
+//                    }
+//
+//                    if ( ! BloodPressureModel.isAmbEncounter(e) && ! BloodPressureModel.isHomeHealthEncounter(e) ) {
+//                        logger.debug("removing Observation " + o.getId() + " - Encounter has inappropriate class " + e.getClass_().getSystem() + "|" + e.getClass_().getCode());
+//                        iter.remove();
+//                        continue;
+//                    }
+//
+//                    if ( ! inBundle ) {
+//                        logger.debug("adding Encounter " + e.getId() + " to Bundle for Observation " + o.getId());
+//                        additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(e));
+//                    }
+//
+//                    if (storeRemotely && BloodPressureModel.isHomeHealthEncounter(e)) {
+//                        // Home Health BP Observations are probably created by COACH, if storeRemotely=true.
+//                        // these could have associated Pulse and "followed protocol" Observations.
+//                        // get those and include them in the resultant Bundle.
+//
+//                        Observation pulseObservation = getSupplementalObservationForEncounter(fcc, e.getId(),
+//                                fcm.getPulseSystem(), fcm.getPulseCode());
+//
+//                        if (pulseObservation != null) {
+//                            logger.debug("adding pulse Observation " + pulseObservation.getId() + " to Bundle for Observation " + o.getId());
+//
+//                            additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(pulseObservation));
+//                        }
+//
+//                        Observation protocolObservation = getSupplementalObservationForEncounter(fcc, e.getId(),
+//                                fcm.getProtocolSystem(), fcm.getProtocolCode());
+//
+//                        if (protocolObservation != null) {
+//                            logger.debug("adding protocol Observation " + protocolObservation.getId() + " to Bundle for Observation " + o.getId());
+//                            additionalResources.addEntry(new Bundle.BundleEntryComponent().setResource(protocolObservation));
+//                        }
+//                    }
+//                }
+//            }
+//
+//            // add Encounters for retained Observations that were missing from the original Bundle
+//            b.getEntry().addAll(additionalResources.getEntry());
+//
+//            cache.setObservations(b);
+//        }
+//        return b;
+//    }
 
     private Observation getSupplementalObservationForEncounter(FHIRCredentialsWithClient fcc, String encounterRef,
                                                                String system, String code) {
@@ -203,35 +316,50 @@ public class EHRService extends BaseService {
     }
 
     public Bundle getConditions(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
-        Bundle b = cache.getConditions();
-        if (b == null) {
-            logger.info("requesting Conditions for session " + sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
+        return cache.getResource(UserCache.CacheType.CONDITIONS, new Callable<Bundle>() {
+            @Override
+            public Bundle call() throws Exception {
+                logger.info("requesting Conditions for session " + sessionId);
 
-            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.search(fhirQueryManager.getConditionQuery(fcc.getCredentials().getPatientId()));
+                FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+                Bundle b = fcc.search(fhirQueryManager.getConditionQuery(fcc.getCredentials().getPatientId()));
 
-//            List<String> hypertensionValueSetOIDs = new ArrayList<>();
-//            hypertensionValueSetOIDs.add("2.16.840.1.113883.3.3157.4012");
-//            hypertensionValueSetOIDs.add("2.16.840.1.113762.1.4.1032.10");
-//
-//            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
-//            while (iter.hasNext()) {
-//                Bundle.BundleEntryComponent item = iter.next();
-//                if (item.getResource() instanceof Condition) {
-//                    Condition c = (Condition) item.getResource();
-//
-//                    // todo : filter conditions down to only those that have codings associated with the indicated value sets
-//                }
-//            }
+                // handle modifier flags
+                filterConditions(b);
 
-            // handle modifier flags
-            filterConditions(b);
-
-            cache.setConditions(b);
-        }
-        return b;
+                return b;
+            }
+        });
     }
+//        Bundle b = cache.getConditions();
+//        if (b == null) {
+//            logger.info("requesting Conditions for session " + sessionId);
+//
+//            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+//            b = fcc.search(fhirQueryManager.getConditionQuery(fcc.getCredentials().getPatientId()));
+//
+////            List<String> hypertensionValueSetOIDs = new ArrayList<>();
+////            hypertensionValueSetOIDs.add("2.16.840.1.113883.3.3157.4012");
+////            hypertensionValueSetOIDs.add("2.16.840.1.113762.1.4.1032.10");
+////
+////            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+////            while (iter.hasNext()) {
+////                Bundle.BundleEntryComponent item = iter.next();
+////                if (item.getResource() instanceof Condition) {
+////                    Condition c = (Condition) item.getResource();
+////
+////                    // todo : filter conditions down to only those that have codings associated with the indicated value sets
+////                }
+////            }
+//
+//            // handle modifier flags
+//            filterConditions(b);
+//
+//            cache.setConditions(b);
+//        }
+//        return b;
+//    }
 
     /**
      * filters Conditions in a Bundle by their necessary modifier and other flags or codes
@@ -272,65 +400,117 @@ public class EHRService extends BaseService {
     }
 
     public Bundle getCurrentGoals(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
-        Bundle b = cache.getCurrentGoals();
-        if (b == null) {
-            logger.info("requesting Goals for session " + sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
+        return cache.getResource(UserCache.CacheType.CURRENT_GOALS, new Callable<Bundle>() {
+            @Override
+            public Bundle call() throws Exception {
+                logger.info("requesting Goals for session " + sessionId);
 
-            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = fcc.search(fhirQueryManager.getGoalQuery(fcc.getCredentials().getPatientId()));
+                FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+                Bundle b = fcc.search(fhirQueryManager.getGoalQuery(fcc.getCredentials().getPatientId()));
 
-            // handle modifier and other flags
-            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
-            while (iter.hasNext()) {
-                Bundle.BundleEntryComponent entry = iter.next();
-                Resource r = entry.getResource();
-                if (r instanceof Goal) {
-                    Goal g = (Goal) r;
+                // handle modifier and other flags
+                Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+                while (iter.hasNext()) {
+                    Bundle.BundleEntryComponent entry = iter.next();
+                    Resource r = entry.getResource();
+                    if (r instanceof Goal) {
+                        Goal g = (Goal) r;
 
-                    if (g.getLifecycleStatus() != Goal.GoalLifecycleStatus.ACTIVE) {
-                        // only allow "active" lifecycleStatus
-                        logger.debug("removing Goal " + g.getId() + " (invalid lifecycleStatus)");
-                        iter.remove();
-                        continue;
-                    }
-
-                    if (g.hasAchievementStatus()) {
-                        // if achievementStatus is set, require "in-progress"
-
-                        CodeableConcept cc = g.getAchievementStatus();
-                        if (!cc.hasCoding(
-                                GoalModel.ACHIEVEMENT_STATUS_CODING_SYSTEM,
-                                GoalModel.ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE)) {
-                            logger.debug("removing Goal " + g.getId() + " (invalid achievementStatus)");
+                        if (g.getLifecycleStatus() != Goal.GoalLifecycleStatus.ACTIVE) {
+                            // only allow "active" lifecycleStatus
+                            logger.debug("removing Goal " + g.getId() + " (invalid lifecycleStatus)");
                             iter.remove();
+                            continue;
+                        }
+
+                        if (g.hasAchievementStatus()) {
+                            // if achievementStatus is set, require "in-progress"
+
+                            CodeableConcept cc = g.getAchievementStatus();
+                            if (!cc.hasCoding(
+                                    GoalModel.ACHIEVEMENT_STATUS_CODING_SYSTEM,
+                                    GoalModel.ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE)) {
+                                logger.debug("removing Goal " + g.getId() + " (invalid achievementStatus)");
+                                iter.remove();
+                            }
                         }
                     }
                 }
+
+                return b;
             }
-
-            cache.setCurrentGoals(b);
-        }
-
-        return b;
+        });
     }
+//        Bundle b = cache.getCurrentGoals();
+//        if (b == null) {
+//            logger.info("requesting Goals for session " + sessionId);
+//
+//            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+//            b = fcc.search(fhirQueryManager.getGoalQuery(fcc.getCredentials().getPatientId()));
+//
+//            // handle modifier and other flags
+//            Iterator<Bundle.BundleEntryComponent> iter = b.getEntry().iterator();
+//            while (iter.hasNext()) {
+//                Bundle.BundleEntryComponent entry = iter.next();
+//                Resource r = entry.getResource();
+//                if (r instanceof Goal) {
+//                    Goal g = (Goal) r;
+//
+//                    if (g.getLifecycleStatus() != Goal.GoalLifecycleStatus.ACTIVE) {
+//                        // only allow "active" lifecycleStatus
+//                        logger.debug("removing Goal " + g.getId() + " (invalid lifecycleStatus)");
+//                        iter.remove();
+//                        continue;
+//                    }
+//
+//                    if (g.hasAchievementStatus()) {
+//                        // if achievementStatus is set, require "in-progress"
+//
+//                        CodeableConcept cc = g.getAchievementStatus();
+//                        if (!cc.hasCoding(
+//                                GoalModel.ACHIEVEMENT_STATUS_CODING_SYSTEM,
+//                                GoalModel.ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE)) {
+//                            logger.debug("removing Goal " + g.getId() + " (invalid achievementStatus)");
+//                            iter.remove();
+//                        }
+//                    }
+//                }
+//            }
+//
+//            cache.setCurrentGoals(b);
+//        }
+//
+//        return b;
+//    }
 
     @Transactional
     public Bundle getMedications(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
+        return cache.getResource(UserCache.CacheType.MEDICATIONS, new Callable<Bundle>() {
+            @Override
+            public Bundle call() throws Exception {
+                logger.info("requesting Medication data for session " + sessionId);
 
-        Bundle b = cache.getMedications();
-        if (b == null) {
-            logger.info("requesting Medication data for session " + sessionId);
-
-            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            b = getMedicationStatements(fcc);
-            if (b == null) b = getMedicationRequests(fcc);
-            cache.setMedications(b);
-        }
-
-        return b;
+                FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+                Bundle b = getMedicationStatements(fcc);
+                if (b == null) b = getMedicationRequests(fcc);
+                return b;
+            }
+        });
     }
+//        Bundle b = cache.getMedications();
+//        if (b == null) {
+//            logger.info("requesting Medication data for session " + sessionId);
+//
+//            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+//            b = getMedicationStatements(fcc);
+//            if (b == null) b = getMedicationRequests(fcc);
+//            cache.setMedications(b);
+//        }
+//
+//        return b;
+//    }
 
     private Bundle getMedicationStatements(FHIRCredentialsWithClient fcc) {
         Bundle b = fcc.search(fhirQueryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()));
@@ -418,18 +598,25 @@ public class EHRService extends BaseService {
     }
 
     public Bundle getAdverseEvents(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
-
-        Bundle b = cache.getAdverseEvents();
-        if (b == null) {
-            logger.info("requesting AdverseEvent data for session " + sessionId);
-
-            b = buildAdverseEvents(sessionId);
-            cache.setAdverseEvents(b);
-        }
-
-        return b;
+        UserCache cache = SessionCache.getInstance().get(sessionId);
+        return cache.getResource(UserCache.CacheType.ADVERSE_EVENTS, new Callable<Bundle>() {
+            @Override
+            public Bundle call() throws Exception {
+                logger.info("requesting AdverseEvent data for session " + sessionId);
+                return buildAdverseEvents(sessionId);
+            }
+        });
     }
+//        Bundle b = cache.getAdverseEvents();
+//        if (b == null) {
+//            logger.info("requesting AdverseEvent data for session " + sessionId);
+//
+//            b = buildAdverseEvents(sessionId);
+//            cache.setAdverseEvents(b);
+//        }
+//
+//        return b;
+//    }
 
     private Bundle buildAdverseEvents(String sessionId) {
         Bundle adverseEventBundle = new Bundle();
@@ -496,7 +683,7 @@ public class EHRService extends BaseService {
     }
 
     private Bundle getAdverseEventConditions(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
 
         FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
         Bundle b = fcc.search(fhirQueryManager.getAdverseEventQuery(fcc.getCredentials().getPatientId()));

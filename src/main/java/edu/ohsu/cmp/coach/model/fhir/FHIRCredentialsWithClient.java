@@ -127,7 +127,9 @@ public class FHIRCredentialsWithClient {
             logger.debug("transacting Bundle: " + FhirUtil.toJson(bundle));
         }
 
-        Bundle response = client.transaction().withBundle(bundle).execute();
+        Bundle response = client.transaction().withBundle(bundle)
+                .withAdditionalHeader("Prefer", "return=representation")
+                .execute();
 
         if (logger.isDebugEnabled()) {
             logger.debug("transaction response: " + FhirUtil.toJson(response));

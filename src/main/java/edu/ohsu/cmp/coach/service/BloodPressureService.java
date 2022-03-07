@@ -1,17 +1,14 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.cache.CacheData;
 import edu.ohsu.cmp.coach.cache.SessionCache;
+import edu.ohsu.cmp.coach.cache.UserCache;
 import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.MethodNotImplementedException;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.util.FhirUtil;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,12 +62,13 @@ public class BloodPressureService extends BaseService {
     }
 
     public BloodPressureModel create(String sessionId, BloodPressureModel bpm) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
 
         // create home BP reading
 
         if (storeRemotely) {
-            String patientId = cache.getPatient().getId();
+            String patientId = cache.getResource(UserCache.CacheType.PATIENT, Patient.class).getId();
+//            String patientId = cache.getPatient().getId();
             Bundle bundle = bpm.toBundle(patientId, fcm);
 
             // modify bundle to be appropriate for submission as a CREATE TRANSACTION
@@ -88,10 +86,59 @@ public class BloodPressureService extends BaseService {
             // write BP reading to the FHIR server
 
             FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
-            Bundle response = fcc.transact(bundle);
+            Bundle responseBundle = fcc.transact(bundle);
 
             // todo : process response
-            logger.info("create: TODO: PROCESS RESPONSE");
+
+            // read each response resource, and append to the OBSERVATIONS cache if created
+            // also, create a fresh BloodPressureModel resource constructed from the actual resources
+
+            Encounter encounter = null;
+            Observation bpObservation = null;
+            Observation pulseObservation = null;
+            Observation protocolObservation = null;
+
+            for (Bundle.BundleEntryComponent entry : responseBundle.getEntry()) {
+                if (entry.hasResponse()) {
+                    Bundle.BundleEntryResponseComponent response = entry.getResponse();
+                    if (response.hasStatus() && response.getStatus().equals("201 Created")) {
+                        logger.debug("successfully created " + response.getLocation());
+                        if (entry.hasResource()) {
+                            Resource r = entry.getResource();
+
+                            if (r instanceof Encounter) {
+                                encounter = (Encounter) r;
+
+                            } else if (r instanceof Observation) {
+                                Observation o = (Observation) r;
+                                if (o.hasCode()) {
+                                    if (o.getCode().hasCoding(fcm.getBpSystem(), fcm.getBpCode())) {
+                                        bpObservation = o;
+
+                                    } else if (o.getCode().hasCoding(fcm.getPulseSystem(), fcm.getPulseCode())) {
+                                        pulseObservation = o;
+
+                                    } else if (o.getCode().hasCoding(fcm.getProtocolSystem(), fcm.getProtocolCode())) {
+                                        protocolObservation = o;
+                                    }
+                                }
+                            }
+
+                            logger.debug("resource " + r.getId() + " returned with response, appending to cache");
+                            cache.addResourceToBundle(UserCache.CacheType.OBSERVATIONS, r);
+                        }
+                    }
+                }
+            }
+
+            try {
+                return new BloodPressureModel(encounter, bpObservation, pulseObservation, protocolObservation, fcm);
+
+            } catch (DataException de) {
+                logger.error("caught " + de.getClass().getName() +
+                        " attempting to construct BloodPressureModel from remote create response - " +
+                        de.getMessage(), de);
+            }
 
         } else {
             try {

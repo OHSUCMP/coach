@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.cache.CacheData;
+import edu.ohsu.cmp.coach.cache.UserCache;
 import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.entity.app.Outcome;
 import edu.ohsu.cmp.coach.service.AdverseEventService;
@@ -26,7 +26,7 @@ public class AdverseEventController {
                                                  @RequestParam("adverseEventId") String adverseEventId,
                                                  @RequestParam("actionTaken") Boolean actionTaken) {
 
-        CacheData cache = SessionCache.getInstance().get(session.getId());
+        UserCache cache = SessionCache.getInstance().get(session.getId());
 
         HttpStatus status = HttpStatus.OK;
         String message;

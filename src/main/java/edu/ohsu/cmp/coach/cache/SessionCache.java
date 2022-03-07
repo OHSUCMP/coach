@@ -17,7 +17,7 @@ public class SessionCache {
         return cache;
     }
 
-    private Map<String, CacheData> map = new ConcurrentHashMap<String, CacheData>();
+    private Map<String, UserCache> map = new ConcurrentHashMap<String, UserCache>();
 
     private SessionCache() {
         // private constructor, singleton class
@@ -30,11 +30,11 @@ public class SessionCache {
     public synchronized void set(String sessionId, Audience audience,
                                  FHIRCredentialsWithClient fhirCredentialsWithClient,
                                  Long internalPatientId) {
-        CacheData cacheData = new CacheData(audience, fhirCredentialsWithClient, internalPatientId);
-        map.put(sessionId, cacheData);
+        UserCache userCache = new UserCache(audience, fhirCredentialsWithClient, internalPatientId);
+        map.put(sessionId, userCache);
     }
 
-    public synchronized CacheData get(String sessionId) throws SessionMissingException {
+    public synchronized UserCache get(String sessionId) throws SessionMissingException {
         if (map.containsKey(sessionId)) {
             return map.get(sessionId);
 
@@ -58,13 +58,13 @@ public class SessionCache {
      */
     public boolean flush(String sessionId) {
         if (map.containsKey(sessionId)) {
-            CacheData cacheData = map.remove(sessionId);
+            UserCache userCache = map.remove(sessionId);
 
-            Audience audience = cacheData.getAudience();
-            FHIRCredentialsWithClient fcc = cacheData.getFhirCredentialsWithClient();
-            Long internalPatientId = cacheData.getInternalPatientId();
+            Audience audience = userCache.getAudience();
+            FHIRCredentialsWithClient fcc = userCache.getFhirCredentialsWithClient();
+            Long internalPatientId = userCache.getInternalPatientId();
 
-            map.put(sessionId, new CacheData(audience, fcc, internalPatientId));
+            map.put(sessionId, new UserCache(audience, fcc, internalPatientId));
 
             return true;
 

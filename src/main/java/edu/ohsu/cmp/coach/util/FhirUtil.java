@@ -142,20 +142,22 @@ public class FhirUtil {
     }
 
     public static String toRelativeReference(String reference) {
-        if (reference.startsWith("http://") || reference.startsWith("https://")) {
-            String s = reference;
-            // convert https://api.logicahealth.org/htnu18r42/data/Patient/MedicationTest/_history/4
-            // into Patient/MedicationTest
-            int suffixPos = s.indexOf("/_history/");
-            if (suffixPos > 0) {
-                s = s.substring(0, suffixPos);
-            }
+        String s = reference;
+        // convert https://api.logicahealth.org/htnu18r42/data/Patient/MedicationTest/_history/4 into
+        //         Patient/MedicationTest
+        // convert Encounter/1146/_history/1 into Encounter/1146
 
+        int suffixPos = s.indexOf("/_history/");
+        if (suffixPos > 0) {
+            s = s.substring(0, suffixPos);
+        }
+
+        if (reference.startsWith("http://") || reference.startsWith("https://")) {
             String[] parts = s.split("\\/");
             return parts[parts.length - 2] + "/" + parts[parts.length - 1];
 
         } else {
-            return reference;
+            return s;
         }
     }
 }

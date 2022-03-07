@@ -35,5 +35,6 @@
     <logger name="edu.ohsu.cmp.coach.service.AdverseEventService" level="DEBUG" />
     <logger name="edu.ohsu.cmp.coach.service.EHRService" level="DEBUG" />
     <logger name="edu.ohsu.cmp.coach.model.PatientModel" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.cache.UserCache" level="DEBUG" />
 
 </configuration>

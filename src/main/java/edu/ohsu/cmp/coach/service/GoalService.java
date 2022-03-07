@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.cache.CacheData;
+import edu.ohsu.cmp.coach.cache.UserCache;
 import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.entity.app.AchievementStatus;
 import edu.ohsu.cmp.coach.entity.app.GoalHistory;
@@ -39,12 +39,12 @@ public class GoalService extends BaseService {
     }
 
     public List<MyGoal> getGoalList(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
         return goalRepository.findAllByPatId(cache.getInternalPatientId());
     }
 
     public MyGoal getGoal(String sessionId, String extGoalId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
         return goalRepository.findOneByPatIdAndExtGoalId(cache.getInternalPatientId(), extGoalId);
     }
 
@@ -54,7 +54,7 @@ public class GoalService extends BaseService {
      * app-based BP goal if no goal exists
      */
     public GoalModel getCurrentBPGoal(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
 
         GoalModel ehrBPGoal = getCurrentEHRBPGoal(sessionId);
 
@@ -90,13 +90,13 @@ public class GoalService extends BaseService {
     }
 
     public MyGoal getCurrentAppBPGoal(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
         return goalRepository.findCurrentBPGoal(cache.getInternalPatientId());
     }
 
     // utility function to get the latest BP goal from the EHR
     private GoalModel getCurrentEHRBPGoal(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
 
         org.hl7.fhir.r4.model.Goal currentEHRBPGoal = null;
 
@@ -164,7 +164,7 @@ public class GoalService extends BaseService {
     }
 
     public MyGoal create(String sessionId, MyGoal goal) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
 
         goal.setPatId(cache.getInternalPatientId());
         goal.setCreatedDate(new Date());
@@ -184,12 +184,12 @@ public class GoalService extends BaseService {
     }
 
     public void deleteByGoalId(String sessionId, String extGoalId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
         goalRepository.deleteByGoalIdForPatient(extGoalId, cache.getInternalPatientId());
     }
 
     public void deleteBPGoalIfExists(String sessionId) {
-        CacheData cache = SessionCache.getInstance().get(sessionId);
+        UserCache cache = SessionCache.getInstance().get(sessionId);
         goalRepository.deleteBPGoalForPatient(cache.getInternalPatientId());
     }
 }
