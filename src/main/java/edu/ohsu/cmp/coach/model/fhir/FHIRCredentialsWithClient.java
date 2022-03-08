@@ -125,6 +125,8 @@ public class FHIRCredentialsWithClient {
     public Bundle search(String fhirQuery, Integer limit) {
         if (fhirQuery == null || fhirQuery.trim().equals("")) return null;
 
+        logger.info("search: " + fhirQuery);
+
         Bundle bundle;
         try {
             bundle = client.search()
