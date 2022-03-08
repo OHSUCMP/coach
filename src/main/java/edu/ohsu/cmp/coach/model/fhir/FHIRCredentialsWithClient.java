@@ -56,7 +56,8 @@ public class FHIRCredentialsWithClient {
         logger.info("read by identifier: " + identifier + " (" + aClass.getName() + ")");
 
         String s = toIdentifierString(identifier);
-        Bundle b = search("?identifier=" + s);
+        Bundle b = search(aClass.getSimpleName() + "/?identifier=" + s);
+
         if (b.getEntry().size() == 0) {
             logger.warn("couldn't find resource with identifier=" + s);
             return null;
