@@ -5,12 +5,11 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -71,6 +70,50 @@ public class FhirUtil {
         return index >= 0 ?
                 reference.substring(index + 1) :
                 reference;
+    }
+
+    public static <T extends IBaseResource> T getResourceFromBundleByReference(Bundle b, Class<T> aClass, Reference reference) {
+        logger.info("get resource by reference: " + reference + " (" + aClass.getName() + ")");
+
+        if (reference == null) return null;
+
+        if (reference.hasReference()) {
+            return getResourceFromBundleByReference(b, aClass, reference.getReference());
+
+        } else if (reference.hasIdentifier()) {
+            return getResourceFromBundleByIdentifier(b, aClass, reference.getIdentifier());
+
+        } else {
+            logger.warn("Reference does not contain reference or identifier!  returning null");
+        }
+
+        return null;
+    }
+
+    public static <T extends IBaseResource> T getResourceFromBundleByIdentifier(Bundle b, Class<T> aClass, Identifier identifier) {
+        for (Bundle.BundleEntryComponent entry : b.getEntry()) {
+            Resource r = entry.getResource();
+            if (r.getClass().isAssignableFrom(aClass)) {
+                try {
+                    Method m = r.getClass().getMethod("getIdentifier");
+                    Identifier id = (Identifier) m.invoke(r);
+                    if (id != null) {
+                        boolean systemMatch = (!id.hasSystem() && !identifier.hasSystem()) ||
+                                (id.hasSystem() && identifier.hasSystem() && id.getSystem().equals(identifier.getSystem()));
+                        boolean valueMatch = (!id.hasValue() && !identifier.hasValue()) ||
+                                (id.hasValue() && identifier.hasValue() && id.getValue().equals(identifier.getValue()));
+
+                        if (systemMatch && valueMatch) {
+                            return aClass.cast(r);
+                        }
+                    }
+
+                } catch (Exception e) {
+                    logger.error("caught " + e.getClass().getName() + " attempting to get resource from bundle by identifier - " + e.getMessage(), e);
+                }
+            }
+        }
+        return null;
     }
 
     public static <T extends IBaseResource> T getResourceFromBundleByReference(Bundle b, Class<T> aClass, String reference) {

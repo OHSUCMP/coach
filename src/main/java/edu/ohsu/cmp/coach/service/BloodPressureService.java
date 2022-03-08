@@ -193,7 +193,7 @@ public class BloodPressureService extends BaseService {
                     // this Observation is a blood-pressure reading
 
                     try {
-                        Encounter enc = FhirUtil.getResourceFromBundleByReference(bundle, Encounter.class, o.getEncounter().getReference());
+                        Encounter enc = FhirUtil.getResourceFromBundleByReference(bundle, Encounter.class, o.getEncounter());
 
                         Observation pulseObservation = null;
                         Observation protocolObservation = null;
