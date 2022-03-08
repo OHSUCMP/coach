@@ -3,10 +3,17 @@ package edu.ohsu.cmp.coach.model.fhir;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FHIRCredentialsWithClient {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -25,6 +32,56 @@ public class FHIRCredentialsWithClient {
 
     public IGenericClient getClient() {
         return client;
+    }
+
+    public <T extends IBaseResource> T read(Class<T> aClass, Reference reference) {
+        logger.info("read by reference: " + reference + " (" + aClass.getName() + ")");
+
+        if (reference == null) return null;
+
+        if (reference.hasReference()) {
+            return read(aClass, reference.getReference());
+
+        } else if (reference.hasIdentifier()) {
+            return read(aClass, reference.getIdentifier());
+
+        } else {
+            logger.warn("Reference does not contain reference or identifier!  returning null");
+        }
+
+        return null;
+    }
+
+    public <T extends IBaseResource> T read(Class<T> aClass, Identifier identifier) {
+        logger.info("read by identifier: " + identifier + " (" + aClass.getName() + ")");
+
+        String s = toIdentifierString(identifier);
+        Bundle b = search("?identifier=" + s);
+        if (b.getEntry().size() == 0) {
+            logger.warn("couldn't find resource with identifier=" + s);
+            return null;
+
+        } else if (b.getEntry().size() == 1) {
+            Resource r = b.getEntryFirstRep().getResource();
+            logger.debug("found " + r.getClass().getName() + " with identifier=" + s);
+            return aClass.cast(r);
+
+        } else {
+            Resource r = b.getEntryFirstRep().getResource();
+            logger.warn("found " + b.getEntry().size() + " resources associated with identifier=" + s +
+                    "!  returning first match (" + r.getClass().getName() + ") -");
+            return aClass.cast(r);
+        }
+    }
+
+    private String toIdentifierString(Identifier identifier) {
+        if (identifier == null) return null;
+
+        List<String> parts = new ArrayList<>();
+        if (identifier.hasSystem()) parts.add(identifier.getSystem());
+        if (identifier.hasValue()) parts.add(identifier.getValue());
+
+        return StringUtils.join(parts, "|");
     }
 
     public <T extends IBaseResource> T read(Class<T> aClass, String reference) {

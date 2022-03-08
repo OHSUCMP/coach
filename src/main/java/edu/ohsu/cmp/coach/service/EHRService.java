@@ -128,13 +128,30 @@ public class EHRService extends BaseService {
                         }
 
                         // Observation has an Encounter, so check it to make sure it's also what we want
+                        // note: Encounter may not have "reference", may have an "identifier" instead
 
-                        String encRef = o.getEncounter().getReference();
-                        boolean inBundle = FhirUtil.bundleContainsReference(b, encRef);
+                        Boolean inBundle = null;
+                        Encounter e = null;
 
-                        Encounter e = inBundle ?
-                                FhirUtil.getResourceFromBundleByReference(b, Encounter.class, encRef) :
-                                fcc.read(Encounter.class, encRef);
+                        if (o.getEncounter().hasReference()) {
+                            String encRef = o.getEncounter().getReference();
+                            inBundle = FhirUtil.bundleContainsReference(b, encRef);
+                            e = fcc.read(Encounter.class, encRef, b);
+
+//                            e = inBundle ?
+//                                    FhirUtil.getResourceFromBundleByReference(b, Encounter.class, encRef) :
+//                                    fcc.read(Encounter.class, encRef);
+
+                        } else if (o.getEncounter().hasIdentifier()) {  // Epic office visits use this
+                            Identifier encId = o.getEncounter().getIdentifier();
+
+                            // todo : check if object is in the bundle.  not so easy because that code is generic to the Resource object,
+                            //        but the identifier element isn't on Resource, it's on select implementations of Resource.
+                            //        for now, just presume it's not
+                            inBundle = false;
+
+                            e = fcc.read(Encounter.class, encId);
+                        }
 
                         // only allow Observations associated with FINISHED Encounters
                         if (e == null || !e.hasStatus() || e.getStatus() != Encounter.EncounterStatus.FINISHED) {

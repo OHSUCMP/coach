@@ -65,6 +65,8 @@ public class FhirUtil {
     }
 
     public static String extractIdFromReference(String reference) {
+        if (reference == null) return null;
+
         int index = reference.indexOf('/');
         return index >= 0 ?
                 reference.substring(index + 1) :
@@ -112,6 +114,8 @@ public class FhirUtil {
     }
 
     public static boolean bundleContainsReference(Bundle b, String reference) {
+        if (reference == null) return false;
+
         String referenceId = extractIdFromReference(reference);
 
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
