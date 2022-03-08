@@ -61,17 +61,27 @@ public class FHIRCredentialsWithClient {
         if (b.getEntry().size() == 0) {
             logger.warn("couldn't find resource with identifier=" + s);
             return null;
+        }
 
-        } else if (b.getEntry().size() == 1) {
-            Resource r = b.getEntryFirstRep().getResource();
-            logger.debug("found " + r.getClass().getName() + " with identifier=" + s);
+        Resource r = null;
+
+        try {
+            r = b.getEntryFirstRep().getResource();
+
+            if (b.getEntry().size() == 1) {
+                logger.debug("found " + r.getClass().getName() + " with identifier=" + s);
+
+            } else {
+                logger.warn("found " + b.getEntry().size() + " resources associated with identifier=" + s +
+                        "!  returning first match (" + r.getClass().getName() + ") -");
+            }
+
             return aClass.cast(r);
 
-        } else {
-            Resource r = b.getEntryFirstRep().getResource();
-            logger.warn("found " + b.getEntry().size() + " resources associated with identifier=" + s +
-                    "!  returning first match (" + r.getClass().getName() + ") -");
-            return aClass.cast(r);
+        } catch (ClassCastException cce) {
+            logger.error("caught " + cce.getClass().getName() + " attempting to cast " + r.getClass().getName() + " to " + aClass.getName());
+            logger.debug(r.getClass().getName() + " : " + FhirUtil.toJson(r));
+            throw cce;
         }
     }
 
