@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,12 +14,15 @@ public class PatientModel {
 
     private static final String GENDER_EXTENSION_URL = "http://hl7.org/fhir/StructureDefinition/patient-genderIdentity";
 
+    private Patient sourcePatient;
+
     private String id;
     private String name;
     private Long age;
     private String gender;
 
     public PatientModel(Patient p) {
+        this.sourcePatient = p;
         this.id = p.getId();
 
         String officialName = null;
@@ -74,6 +78,11 @@ public class PatientModel {
         if (gender == null && p.hasGender()) {
             gender = p.getGender().getDisplay();
         }
+    }
+
+    @JsonIgnore
+    public Patient getSourcePatient() {
+        return sourcePatient;
     }
 
     public String getId() {

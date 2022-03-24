@@ -3,7 +3,6 @@ package edu.ohsu.cmp.coach.model.fhir;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import edu.ohsu.cmp.coach.util.FhirUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Identifier;
@@ -12,11 +11,10 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class FHIRCredentialsWithClient {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private static final int QUERY_COUNT = 500; // bigger is better?  bigger => fewer queries to execute
 
     private FHIRCredentials credentials;
     private IGenericClient client;
@@ -34,16 +32,16 @@ public class FHIRCredentialsWithClient {
         return client;
     }
 
-    public <T extends IBaseResource> T read(Class<T> aClass, Reference reference) {
+    public <T extends IBaseResource> T readByReference(Class<T> aClass, Reference reference) {
         logger.info("read by reference: " + reference + " (" + aClass.getName() + ")");
 
         if (reference == null) return null;
 
         if (reference.hasReference()) {
-            return read(aClass, reference.getReference());
+            return readByReference(aClass, reference.getReference());
 
         } else if (reference.hasIdentifier()) {
-            return read(aClass, reference.getIdentifier());
+            return readByIdentifier(aClass, reference.getIdentifier());
 
         } else {
             logger.warn("Reference does not contain reference or identifier!  returning null");
@@ -52,66 +50,64 @@ public class FHIRCredentialsWithClient {
         return null;
     }
 
-    public <T extends IBaseResource> T read(Class<T> aClass, Identifier identifier) {
+    public <T extends IBaseResource> T readByIdentifier(Class<T> aClass, Identifier identifier) {
+        return readByIdentifier(aClass, identifier, null);
+    }
+
+    public <T extends IBaseResource> T readByIdentifier(Class<T> aClass, Identifier identifier, Bundle bundle) {
         logger.info("read by identifier: " + identifier + " (" + aClass.getName() + ")");
 
-        String s = toIdentifierString(identifier);
-        Bundle b = search(aClass.getSimpleName() + "/?identifier=" + s);
+        if (bundle != null && FhirUtil.bundleContainsResourceWithIdentifier(bundle, identifier)) {
+            return FhirUtil.getResourceFromBundleByIdentifier(bundle, aClass, identifier);
 
-        if (b.getEntry().size() == 0) {
-            logger.warn("couldn't find resource with identifier=" + s);
-            return null;
-        }
+        } else {
+            String s = FhirUtil.toIdentifierString(identifier);
+            Bundle b = search(aClass.getSimpleName() + "/?identifier=" + s);
 
-        Resource r = null;
-
-        try {
-            r = b.getEntryFirstRep().getResource();
-
-            if (b.getEntry().size() == 1) {
-                logger.debug("found " + r.getClass().getName() + " with identifier=" + s);
-
-            } else {
-                logger.warn("found " + b.getEntry().size() + " resources associated with identifier=" + s +
-                        "!  returning first match (" + r.getClass().getName() + ") -");
+            if (b.getEntry().size() == 0) {
+                logger.warn("couldn't find resource with identifier=" + s);
+                return null;
             }
 
-            return aClass.cast(r);
+            Resource r = null;
 
-        } catch (ClassCastException cce) {
-            logger.error("caught " + cce.getClass().getName() + " attempting to cast " + r.getClass().getName() + " to " + aClass.getName());
-            logger.debug(r.getClass().getName() + " : " + FhirUtil.toJson(r));
-            throw cce;
+            try {
+                r = b.getEntryFirstRep().getResource();
+
+                if (b.getEntry().size() == 1) {
+                    logger.debug("found " + r.getClass().getName() + " with identifier=" + s);
+
+                } else {
+                    logger.warn("found " + b.getEntry().size() + " resources associated with identifier=" + s +
+                            "!  returning first match (" + r.getClass().getName() + ") -");
+                }
+
+                return aClass.cast(r);
+
+            } catch (ClassCastException cce) {
+                logger.error("caught " + cce.getClass().getName() + " attempting to cast " + r.getClass().getName() + " to " + aClass.getName());
+                logger.debug(r.getClass().getName() + " : " + FhirUtil.toJson(r));
+                throw cce;
+            }
         }
     }
 
-    private String toIdentifierString(Identifier identifier) {
-        if (identifier == null) return null;
-
-        List<String> parts = new ArrayList<>();
-        if (identifier.hasSystem()) parts.add(identifier.getSystem());
-        if (identifier.hasValue()) parts.add(identifier.getValue());
-
-        return StringUtils.join(parts, "|");
-    }
-
-    public <T extends IBaseResource> T read(Class<T> aClass, String reference) {
-        return read(aClass, reference, null);
+    public <T extends IBaseResource> T readByReference(Class<T> aClass, String reference) {
+        return readByReference(aClass, reference, null);
     }
 
     // version of the read function that first queries the referenced Bundle for the referenced resource
     // only executes API service call if the referenced resource isn't found
-    public <T extends IBaseResource> T read(Class<T> aClass, String reference, Bundle bundle) {
+    public <T extends IBaseResource> T readByReference(Class<T> aClass, String reference, Bundle bundle) {
         logger.info("read: " + reference + " (" + aClass.getName() + ")");
 
-        T t;
         if (bundle != null && FhirUtil.bundleContainsReference(bundle, reference)) {
-            t = FhirUtil.getResourceFromBundleByReference(bundle, aClass, reference);
+            return FhirUtil.getResourceFromBundleByReference(bundle, aClass, reference);
 
         } else {
             String id = FhirUtil.extractIdFromReference(reference);
             try {
-                t = client.read()
+                return client.read()
                         .resource(aClass)
                         .withId(id)
                         .execute();
@@ -120,12 +116,6 @@ public class FHIRCredentialsWithClient {
                 throw ire;
             }
         }
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("resource = " + FhirUtil.toJson(t));
-        }
-
-        return t;
     }
 
     // search function to facilitate getting large datasets involving multi-paginated queries
@@ -142,6 +132,7 @@ public class FHIRCredentialsWithClient {
         try {
             bundle = client.search()
                     .byUrl(credentials.getServerURL() + '/' + fhirQuery)
+                    .count(QUERY_COUNT)
                     .returnBundle(Bundle.class)
                     .execute();
 

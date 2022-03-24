@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.exception.DataException;
@@ -14,15 +15,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
-public class BloodPressureModel {
-//    public static final String SYSTEM = "http://loinc.org";
-//    public static final String CODE = "55284-4";
-//    public static final String SYSTOLIC_CODE = "8480-6";
-//    public static final String DIASTOLIC_CODE = "8462-4";
-//    public static final String VALUE_SYSTEM = "http://unitsofmeasure.org";
-//    public static final String VALUE_CODE = "mm[Hg]";
-//    public static final String VALUE_UNIT = "mmHg";
-
+public class BloodPressureModel implements FHIRCompatible {
     public static final String ENCOUNTER_CLASS_SYSTEM = "http://terminology.hl7.org/CodeSystem/v3-ActCode";
     public static final String ENCOUNTER_CLASS_AMB = "AMB";
     public static final String ENCOUNTER_CLASS_HOMEHEALTH = "HH";
@@ -33,6 +26,11 @@ public class BloodPressureModel {
     public static final String URN_UUID = "urn:uuid:";
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy h:mm a");
+
+    private Encounter sourceEncounter;
+    private Observation sourceBPObservation;
+    private Observation sourcePulseObservation;
+    private Observation sourceProtocolObservation;
 
     private Source source;
     private QuantityModel systolic;
@@ -97,6 +95,11 @@ public class BloodPressureModel {
     public BloodPressureModel(Encounter enc, Observation bpObservation,
                               Observation pulseObservation, Observation protocolObservation,
                               FhirConfigManager fcm) throws DataException {
+
+        this.sourceEncounter = enc;
+        this.sourceBPObservation = bpObservation;
+        this.sourcePulseObservation = pulseObservation;
+        this.sourceProtocolObservation = protocolObservation;
 
         // todo : set id.  but to what?  first Observation's id?  what about the others?  how is id used?  do we need
         //        to retain the ids for the Encounter and other Observations?
@@ -170,6 +173,31 @@ public class BloodPressureModel {
         }
     }
 
+    @Override
+    public Bundle toBundle() {
+        return FhirUtil.bundleResources(sourceBPObservation, sourceEncounter, sourcePulseObservation, sourceProtocolObservation);
+    }
+
+    @JsonIgnore
+    public Encounter getSourceEncounter() {
+        return sourceEncounter;
+    }
+
+    @JsonIgnore
+    public Observation getSourceBPObservation() {
+        return sourceBPObservation;
+    }
+
+    @JsonIgnore
+    public Observation getSourcePulseObservation() {
+        return sourcePulseObservation;
+    }
+
+    @JsonIgnore
+    public Observation getSourceProtocolObservation() {
+        return sourceProtocolObservation;
+    }
+
     public Source getSource() {
         return source;
     }
@@ -210,25 +238,37 @@ public class BloodPressureModel {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
-        // Logica doesn't handle absolute URLs in references well.  it's possible other FHIR server
-        // implementations don't handle them well either.
-        String patientIdRef = FhirUtil.toRelativeReference(patientId);
+        if (sourceEncounter != null && sourceBPObservation != null) {
+            bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(sourceEncounter));
+            bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(sourceBPObservation));
+            if (sourcePulseObservation != null) {
+                bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(sourcePulseObservation));
+            }
+            if (sourceProtocolObservation != null) {
+                bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(sourceProtocolObservation));
+            }
 
-        Encounter enc = buildNewHomeHealthEncounter(patientIdRef);
-        bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(enc));
+        } else {
+            // Logica doesn't handle absolute URLs in references well.  it's possible other FHIR server
+            // implementations don't handle them well either.
+            String patientIdRef = FhirUtil.toRelativeReference(patientId);
 
-        Observation bpObservation = buildHomeHealthBloodPressureObservation(patientIdRef, enc, fcm);
-        bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(bpObservation));
+            Encounter enc = buildNewHomeHealthEncounter(patientIdRef);
+            bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(enc));
 
-        Observation pulseObservation = pulse != null ?
-                buildPulseObservation(patientIdRef, enc, fcm) :
-                null;
-        bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(pulseObservation));
+            Observation bpObservation = buildHomeHealthBloodPressureObservation(patientIdRef, enc, fcm);
+            bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(bpObservation));
 
-        Observation followedInstructionsObservation = followedProtocol != null ?
-                buildProtocolObservation(patientIdRef, enc, fcm) :
-                null;
-        bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(followedInstructionsObservation));
+            Observation pulseObservation = pulse != null ?
+                    buildPulseObservation(patientIdRef, enc, fcm) :
+                    null;
+            bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(pulseObservation));
+
+            Observation protocolObservation = followedProtocol != null ?
+                    buildProtocolObservation(patientIdRef, enc, fcm) :
+                    null;
+            bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(protocolObservation));
+        }
 
         return bundle;
     }

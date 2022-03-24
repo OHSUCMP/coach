@@ -1,7 +1,6 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.cache.UserCache;
-import edu.ohsu.cmp.coach.cache.SessionCache;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.entity.app.Counseling;
 import edu.ohsu.cmp.coach.entity.app.CounselingPage;
 import edu.ohsu.cmp.coach.repository.app.CounselingPageRepository;
@@ -22,18 +21,18 @@ public class CounselingService extends BaseService {
     private CounselingPageRepository pageRepository;
 
     public List<Counseling> getCounselingList(String sessionId) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
-        return repository.findAllByPatId(cache.getInternalPatientId());
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        return repository.findAllByPatId(workspace.getInternalPatientId());
     }
 
     public Counseling getCounseling(String sessionId, String extCounselingId) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
-        return repository.findOneByPatIdAndExtCounselingId(cache.getInternalPatientId(), extCounselingId);
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        return repository.findOneByPatIdAndExtCounselingId(workspace.getInternalPatientId(), extCounselingId);
     }
 
     public Counseling create(String sessionId, Counseling counseling) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
-        counseling.setPatId(cache.getInternalPatientId());
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        counseling.setPatId(workspace.getInternalPatientId());
         counseling.setCreatedDate(new Date());
         return repository.save(counseling);
     }

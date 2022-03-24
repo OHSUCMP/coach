@@ -1,7 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.cache.UserCache;
-import edu.ohsu.cmp.coach.cache.SessionCache;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.entity.app.Outcome;
 import edu.ohsu.cmp.coach.service.AdverseEventService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +15,7 @@ import javax.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/adverse-event")
-public class AdverseEventController {
+public class AdverseEventController extends BaseController {
 
     @Autowired
     private AdverseEventService adverseEventService;
@@ -26,7 +25,7 @@ public class AdverseEventController {
                                                  @RequestParam("adverseEventId") String adverseEventId,
                                                  @RequestParam("actionTaken") Boolean actionTaken) {
 
-        UserCache cache = SessionCache.getInstance().get(session.getId());
+        UserWorkspace workspace = workspaceService.get(session.getId());
 
         HttpStatus status = HttpStatus.OK;
         String message;
@@ -35,7 +34,7 @@ public class AdverseEventController {
             boolean success = adverseEventService.setOutcome(adverseEventId, Outcome.RESOLVED);
 
             if (success) {
-                cache.deleteSuggestion(adverseEventId);
+                workspace.deleteSuggestion(adverseEventId);
                 message = "update successful";
 
             } else {

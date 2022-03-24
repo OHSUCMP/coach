@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.cqfruler;
+package edu.ohsu.cmp.coach.service;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
@@ -6,152 +6,118 @@ import com.github.mustachejava.MustacheFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import edu.ohsu.cmp.coach.cache.UserCache;
-import edu.ohsu.cmp.coach.cache.SessionCache;
-import edu.ohsu.cmp.coach.cqfruler.model.CDSCard;
-import edu.ohsu.cmp.coach.cqfruler.model.CDSHook;
-import edu.ohsu.cmp.coach.cqfruler.model.CDSHookResponse;
-import edu.ohsu.cmp.coach.cqfruler.model.HookRequest;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import edu.ohsu.cmp.coach.util.CDSHooksUtil;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSCard;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSHookResponse;
+import edu.ohsu.cmp.coach.model.cqfruler.HookRequest;
 import edu.ohsu.cmp.coach.entity.app.Counseling;
 import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.entity.app.MyGoal;
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
-import edu.ohsu.cmp.coach.exception.SessionMissingException;
-import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
+import edu.ohsu.cmp.coach.model.AdverseEventModel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
-import edu.ohsu.cmp.coach.service.*;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
 
-public class CDSHookExecutor implements Runnable {
+@Service
+public class RecommendationService extends BaseService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private static final boolean TESTING = false;   // true: use hard-coded 'canned' responses from CQF Ruler (fast, cheap)
+                                                    // false: make CQF Ruler calls (slow, expensive)
 
     private static final String GENERIC_ERROR_MESSAGE = "ERROR: An error was encountered processing this recommendation.  See server logs for details.";
 
-    private boolean testing;
-    private boolean showDevErrors;
-    private String sessionId;
     private String cdsHooksEndpointURL;
-    private EHRService ehrService;
+    private Boolean showDevErrors;
+    private List<String> cdsHookOrder;
+
+
+    @Autowired
     private BloodPressureService bpService;
+
+    @Autowired
     private GoalService goalService;
+
+    @Autowired
     private CounselingService counselingService;
-    private FhirConfigManager fcm;
 
-    public CDSHookExecutor(boolean testing, boolean showDevErrors, String sessionId,
-                           String cdsHooksEndpointURL,
-                           EHRService ehrService,
-                           BloodPressureService bpService,
-                           GoalService goalService,
-                           CounselingService counselingService,
-                           FhirConfigManager fcm) {
-        this.testing = testing;
-        this.showDevErrors = showDevErrors;
-        this.sessionId = sessionId;
+    public RecommendationService(@Value("${cqfruler.cdshooks.endpoint.url}") String cdsHooksEndpointURL,
+                                 @Value("#{new Boolean('${security.show-dev-errors}')}") Boolean showDevErrors,
+                                 @Value("${cqfruler.cdshooks.order.csv}") String cdsHookOrder) {
         this.cdsHooksEndpointURL = cdsHooksEndpointURL;
-        this.ehrService = ehrService;
-        this.bpService = bpService;
-        this.goalService = goalService;
-        this.counselingService = counselingService;
-        this.fcm = fcm;
+        this.showDevErrors = showDevErrors;
+        this.cdsHookOrder = Arrays.asList(cdsHookOrder.split("\\s*,\\s*"));
     }
 
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    @Override
-    public String toString() {
-        return "CDSHookExecutor{" +
-                "testing=" + testing +
-                ", showDevErrors=" + showDevErrors +
-                ", sessionId='" + sessionId + '\'' +
-                ", cdsHooksEndpointURL='" + cdsHooksEndpointURL + '\'' +
-                ", ehrService=" + ehrService +
-                ", bpService=" + bpService +
-                ", goalService=" + goalService +
-                ", counselingService=" + counselingService +
-                ", fcm=" + fcm +
-                '}';
-    }
-
-    @Override
-    public void run() {
-        try {
-            UserCache cache = SessionCache.getInstance().get(sessionId);
-
-            cache.deleteAllCards();
-
-            List<CDSHook> hooks = null;
-            try {
-                hooks = CDSHooksUtil.getCDSHooks(testing, cdsHooksEndpointURL);
-
-            } catch (IOException e) {
-                logger.error("caught " + e.getClass().getName() + " getting CDS Hooks - " + e.getMessage(), e);
-            }
-
-            if (hooks != null) {
-                for (CDSHook hook : hooks) {
-                    try {
-                        List<Card> cards = getCardsForHook(sessionId, hook.getId(),
-                                cache.getFhirCredentialsWithClient(),
-                                cache.getAudience());
-
-                        cache.setCards(hook.getId(), cards);
-
-                        logger.info("cards generated for sessionId=" + sessionId + ", hookId=" + hook.getId());
-
-                    } catch (IOException e) {
-                        logger.error("caught " + e.getClass().getName() + " executing hook '" + hook.getId() + "' - " + e.getMessage(), e);
-                    }
-                }
-            }
-
-        } catch (SessionMissingException sme) {
-            logger.error("caught " + sme.getClass().getName() + " attempting to execute CDS Hooks - aborting", sme);
+    public List<CDSHook> getCDSHooks() throws IOException {
+        Map<String, CDSHook> map = new LinkedHashMap<>();
+        for (CDSHook cdsHook : CDSHooksUtil.getCDSHooks(TESTING, cdsHooksEndpointURL)) {
+            map.put(cdsHook.getId(), cdsHook);
         }
+
+        List<CDSHook> list = new ArrayList<>();
+        for (String hookId : cdsHookOrder) {
+            CDSHook cdsHook = map.remove(hookId);
+            if (cdsHook != null) {
+                list.add(cdsHook);
+            }
+        }
+
+        list.addAll(map.values());
+
+        return list;
     }
 
-////////////////////////////////////////////////////////////////////////
-// private methods
-//
-    private List<Card> getCardsForHook(String sessionId, String hookId,
-                                       FHIRCredentialsWithClient fcc, Audience audience) throws IOException {
+    public List<Card> getCards(String sessionId, String hookId) throws IOException {
+        logger.debug("BEGIN getting cards for session=" + sessionId + ", hookId=" + hookId);
+
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        Audience audience = workspace.getAudience();
 
         List<Card> cards = new ArrayList<>();
 
         try {
-            Patient p = ehrService.getPatient(sessionId);
+            Patient p = workspace.getPatient().getSourcePatient();
 
             CompositeBundle compositeBundle = new CompositeBundle();
 
 //            compositeBundle.consume(p);       // don't send the patient resource, which contains nested extensions
                                                 // that CQF Ruler can't handle via prefetch
 
-            compositeBundle.consume(buildBPBundle(p.getId()));
-            compositeBundle.consume(buildCounselingBundle(p.getId()));
-            compositeBundle.consume(buildGoalsBundle(p.getId()));
+            compositeBundle.consume(buildBPBundle(sessionId, p.getId()));
+            compositeBundle.consume(buildCounselingBundle(sessionId, p.getId()));
+            compositeBundle.consume(buildGoalsBundle(sessionId, p.getId()));
 
             // HACK: if the patient has no Adverse Events, we must construct a fake one to send to
             //       CQF-Ruler to prevent it from querying the FHIR server for them and consequently
             //       blowing up
-            Bundle adverseEventsBundle = ehrService.getAdverseEvents(sessionId);
-            if (adverseEventsBundle.hasEntry()) {
-                compositeBundle.consume(adverseEventsBundle);
+            List<AdverseEventModel> adverseEvents = workspace.getAdverseEvents();
+            if (adverseEvents.size() > 0) {
+                for (AdverseEventModel adverseEvent : workspace.getAdverseEvents()) {
+                    compositeBundle.consume(adverseEvent.toBundle());
+                }
             } else {
                 compositeBundle.consume(buildFakeAdverseEventHACK(sessionId));
             }
@@ -170,7 +136,7 @@ public class CDSHookExecutor implements Runnable {
 
             int code;
             String body;
-            if (testing) {
+            if (TESTING) {
 //                int x = (int) Math.round(Math.random());
 //                if (x == 1) {
 //                    code = 500;
@@ -179,8 +145,8 @@ public class CDSHookExecutor implements Runnable {
 //                        GENERIC_ERROR_MESSAGE;
 //
 //                } else {
-                    code = 200;
-                    body = "{ \"cards\": [{ \"summary\": \"Blood pressure goal not reached. Discuss treatment options\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Your recent blood pressure is above your goal. Changing your behaviors may help - see the additional options. In addition, please consult your care team to consider additional treatment options. Please review the home blood pressure measurement protocol presented on the blood pressure entry page to make sure that the tool is accurately measuring your blood pressure.{{/patient}}{{#careTeam}}BP not at goal. Consider initiating antihypertensive drug therapy with a single antihypertinsive drug with dosage titration and sequential addition of other agents to achieve the target BP.{{/careTeam}}|[ { \\\"id\\\": \\\"contact-suggestion\\\", \\\"label\\\": \\\"Contact care team BP Treatment\\\", \\\"type\\\": \\\"suggestion-link\\\", \\\"actions\\\": [{\\\"label\\\":\\\"Contact your care team about options to control your high blood pressure\\\", \\\"url\\\":\\\"/contact\\\"}] } ]|at-most-one|\", \"source\": {} }, { \"summary\": \"Discuss Smoking Cessation\", \"indicator\": \"info\", \"detail\": \"{{#patient}}You have a hypertension (high blood pressure) diagnosis and reported smoking. Reducing smoking will help lower blood pressure, the risk of stroke, and other harmful events; talk to your care team about quitting smoking.{{/patient}}{{#careTeam}}Patient reports they smoke. Counsel about quitting according to your local protocol.{{/careTeam}}| [ {\\\"id\\\": \\\"smoking-counseling\\\", \\\"type\\\":\\\"counseling-link\\\", \\\"references\\\": {\\\"system\\\":\\\"http://snomed.info/sct\\\", \\\"code\\\":\\\"225323000\\\"},\\\"label\\\": \\\"Smoking Cessation Counseling\\\",\\\"actions\\\": [{\\\"url\\\":\\\"/SmokingCessation\\\", \\\"label\\\":\\\"Click here to learn more about tobacco cessation.\\\"}]}, { \\\"id\\\": \\\"smoking-freetext-goal\\\", \\\"type\\\":\\\"goal\\\", \\\"references\\\":{\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"smoking-cessation\\\"}, \\\"label\\\": \\\"Set a Tobacco Cessation goal (freetext):\\\", \\\"actions\\\": [] }, { \\\"id\\\": \\\"radio-smoking-goal\\\", \\\"type\\\": \\\"goal\\\", \\\"references\\\": {\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"smoking-cessation\\\"}, \\\"label\\\": \\\"Set a Tobacco Cessation goal (choice):\\\", \\\"actions\\\": [ {\\\"label\\\":\\\"Reduce my smoking by [quantity:] cigarettes per [time period:day]\\\"}, {\\\"label\\\":\\\"Quit smoking completely\\\"} ] } ]|at-most-one|\", \"source\": {} }, { \"summary\": \"Discuss target blood pressure and set a blood pressure goal\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}You recently received a hypertension (high blood pressure) diagnosis. Setting goals for lowering your blood pressure has been proven to help overall health and reduce your chance of stroke or other conditions.{{/patient}}{{#careTeam}}No BP Goal set: Setting a blood pressure goal can help engage patients and improve outcomes. For most patients, choosing a target between \\u003c120-140/80-90 is recommended; lower targets may be for ASCVD, ASCVD risk \\u003e10%, multimorbidity (CKD and diabetes), or preference; higher targets may be for age, adverse events, or frailty.{{/careTeam}}|[ { \\\"id\\\": \\\"bp-radio-goal\\\", \\\"label\\\": \\\"BP Goal\\\", \\\"type\\\": \\\"bp-goal\\\", \\\"references\\\":{\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"blood-pressure\\\"}, \\\"actions\\\": [{\\\"label\\\":\\\"140/90\\\"}, {\\\"label\\\":\\\"130/80\\\"}, {\\\"label\\\":\\\"120/80\\\"}]}]|at-most-one|\", \"source\": {} } ] }";
+                code = 200;
+                body = "{ \"cards\": [{ \"summary\": \"Blood pressure goal not reached. Discuss treatment options\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}Your recent blood pressure is above your goal. Changing your behaviors may help - see the additional options. In addition, please consult your care team to consider additional treatment options. Please review the home blood pressure measurement protocol presented on the blood pressure entry page to make sure that the tool is accurately measuring your blood pressure.{{/patient}}{{#careTeam}}BP not at goal. Consider initiating antihypertensive drug therapy with a single antihypertinsive drug with dosage titration and sequential addition of other agents to achieve the target BP.{{/careTeam}}|[ { \\\"id\\\": \\\"contact-suggestion\\\", \\\"label\\\": \\\"Contact care team BP Treatment\\\", \\\"type\\\": \\\"suggestion-link\\\", \\\"actions\\\": [{\\\"label\\\":\\\"Contact your care team about options to control your high blood pressure\\\", \\\"url\\\":\\\"/contact\\\"}] } ]|at-most-one|\", \"source\": {} }, { \"summary\": \"Discuss Smoking Cessation\", \"indicator\": \"info\", \"detail\": \"{{#patient}}You have a hypertension (high blood pressure) diagnosis and reported smoking. Reducing smoking will help lower blood pressure, the risk of stroke, and other harmful events; talk to your care team about quitting smoking.{{/patient}}{{#careTeam}}Patient reports they smoke. Counsel about quitting according to your local protocol.{{/careTeam}}| [ {\\\"id\\\": \\\"smoking-counseling\\\", \\\"type\\\":\\\"counseling-link\\\", \\\"references\\\": {\\\"system\\\":\\\"http://snomed.info/sct\\\", \\\"code\\\":\\\"225323000\\\"},\\\"label\\\": \\\"Smoking Cessation Counseling\\\",\\\"actions\\\": [{\\\"url\\\":\\\"/SmokingCessation\\\", \\\"label\\\":\\\"Click here to learn more about tobacco cessation.\\\"}]}, { \\\"id\\\": \\\"smoking-freetext-goal\\\", \\\"type\\\":\\\"goal\\\", \\\"references\\\":{\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"smoking-cessation\\\"}, \\\"label\\\": \\\"Set a Tobacco Cessation goal (freetext):\\\", \\\"actions\\\": [] }, { \\\"id\\\": \\\"radio-smoking-goal\\\", \\\"type\\\": \\\"goal\\\", \\\"references\\\": {\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"smoking-cessation\\\"}, \\\"label\\\": \\\"Set a Tobacco Cessation goal (choice):\\\", \\\"actions\\\": [ {\\\"label\\\":\\\"Reduce my smoking by [quantity:] cigarettes per [time period:day]\\\"}, {\\\"label\\\":\\\"Quit smoking completely\\\"} ] } ]|at-most-one|\", \"source\": {} }, { \"summary\": \"Discuss target blood pressure and set a blood pressure goal\", \"indicator\": \"warning\", \"detail\": \"{{#patient}}You recently received a hypertension (high blood pressure) diagnosis. Setting goals for lowering your blood pressure has been proven to help overall health and reduce your chance of stroke or other conditions.{{/patient}}{{#careTeam}}No BP Goal set: Setting a blood pressure goal can help engage patients and improve outcomes. For most patients, choosing a target between \\u003c120-140/80-90 is recommended; lower targets may be for ASCVD, ASCVD risk \\u003e10%, multimorbidity (CKD and diabetes), or preference; higher targets may be for age, adverse events, or frailty.{{/careTeam}}|[ { \\\"id\\\": \\\"bp-radio-goal\\\", \\\"label\\\": \\\"BP Goal\\\", \\\"type\\\": \\\"bp-goal\\\", \\\"references\\\":{\\\"system\\\":\\\"https//coach-dev.ohsu.edu\\\", \\\"code\\\":\\\"blood-pressure\\\"}, \\\"actions\\\": [{\\\"label\\\":\\\"140/90\\\"}, {\\\"label\\\":\\\"130/80\\\"}, {\\\"label\\\":\\\"120/80\\\"}]}]|at-most-one|\", \"source\": {} } ] }";
 //                }
 
             } else {
@@ -219,7 +185,7 @@ public class CDSHookExecutor implements Runnable {
 
                             for (Suggestion s : card.getSuggestions()) {
                                 if (s.getType().equals(Suggestion.TYPE_UPDATE_GOAL)) {
-                                    MyGoal myGoal = goalService.getGoal(sessionId, s.getId());
+                                    MyGoal myGoal = goalService.getLocalGoal(sessionId, s.getId());
                                     s.setGoal(myGoal);
                                 }
                             }
@@ -248,6 +214,9 @@ public class CDSHookExecutor implements Runnable {
                         new Card(GENERIC_ERROR_MESSAGE);
                 cards.add(card);
             }
+
+        } finally {
+            logger.debug("DONE getting cards for session=" + sessionId + ", hookId=" + hookId);
         }
 
         return cards;
@@ -283,7 +252,7 @@ public class CDSHookExecutor implements Runnable {
         }
     }
 
-    private Bundle buildCounselingBundle(String patientId) {
+    private Bundle buildCounselingBundle(String sessionId, String patientId) {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
@@ -321,16 +290,10 @@ public class CDSHookExecutor implements Runnable {
         return p;
     }
 
-    private Bundle buildGoalsBundle(String patientId) {
-        Bundle bundle = new Bundle();
-        bundle.setType(Bundle.BundleType.COLLECTION);
+    private Bundle buildGoalsBundle(String sessionId, String patientId) {
+        Bundle bundle = FhirUtil.toBundle(workspaceService.get(sessionId).getGoals());
 
-        // add to new bundle so as to not modify what's in the cache
-        for (Bundle.BundleEntryComponent bec : ehrService.getCurrentGoals(sessionId).getEntry()) {
-            bundle.addEntry(bec);
-        }
-
-        List<MyGoal> myGoalList = goalService.getGoalList(sessionId);
+        List<MyGoal> myGoalList = goalService.getLocalGoalList(sessionId);
         for (MyGoal g : myGoalList) {
             Goal goal = buildGoal(patientId, g);
             bundle.addEntry().setFullUrl("http://hl7.org/fhir/Goal/" + goal.getId()).setResource(goal);
@@ -376,7 +339,7 @@ public class CDSHookExecutor implements Runnable {
         return g;
     }
 
-    private Bundle buildBPBundle(String patientId) {
+    private Bundle buildBPBundle(String sessionId, String patientId) {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
@@ -386,29 +349,6 @@ public class CDSHookExecutor implements Runnable {
                 bundle.addEntry(entry);
             }
         }
-
-//        // add to new bundle so as to not modify what's in the cache
-//        for (Bundle.BundleEntryComponent bec : ehrService.getBloodPressureObservations(sessionId).getEntry()) {
-//            bundle.addEntry(bec);
-//        }
-//
-//        // inject home blood pressure readings into Bundle for evaluation by CQF Ruler
-//        List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
-//        for (HomeBloodPressureReading item : hbprList) {
-////            String uuid = UUID.randomUUID().toString();
-////            Encounter e = buildEncounter(uuid, patientId, item.getReadingDate());
-////            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
-//            BloodPressureModel bpm = new BloodPressureModel(item, fcm);
-//            Bundle bpReadingBundle = bpm.toBundle(patientId, fcm);
-//            for (Bundle.BundleEntryComponent entry : bpReadingBundle.getEntry()) {
-//                bundle.addEntry(entry);
-//            }
-//
-////            Observation o = buildHomeBloodPressureObservation(patientId, item);
-////
-////            // todo: should the URL be different?
-////            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Observation/" + o.getId()).setResource(o);
-//        }
 
         return bundle;
     }
@@ -510,7 +450,8 @@ public class CDSHookExecutor implements Runnable {
         AdverseEvent ae = new AdverseEvent();
         ae.setId(aeid);
 
-        Patient p = ehrService.getPatient(sessionId);
+        Patient p = workspaceService.get(sessionId).getPatient().getSourcePatient();
+
         ae.setSubject(new Reference().setReference(p.getId()));
 
         ae.getEvent().addCoding(new Coding()

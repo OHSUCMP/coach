@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import edu.ohsu.cmp.coach.cqfruler.model.CDSCard;
-import edu.ohsu.cmp.coach.cqfruler.model.Source;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSCard;
+import edu.ohsu.cmp.coach.model.cqfruler.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

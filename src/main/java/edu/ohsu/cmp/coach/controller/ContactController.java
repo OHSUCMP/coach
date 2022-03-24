@@ -1,8 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.cache.SessionCache;
 import edu.ohsu.cmp.coach.entity.app.ContactMessage;
-import edu.ohsu.cmp.coach.model.PatientModel;
 import edu.ohsu.cmp.coach.service.ContactMessageService;
 import edu.ohsu.cmp.coach.service.EHRService;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
@@ -37,11 +35,11 @@ public class ContactController extends BaseController {
 
     @GetMapping("contact")
     public String view(HttpSession session, Model model, @RequestParam("token") String token) {
-        if (SessionCache.getInstance().exists(session.getId())) {
+        if (workspaceService.exists(session.getId())) {
             logger.info("showing contact form for session " + session.getId());
 
             model.addAttribute("applicationName", applicationName);
-            model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
+            model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
 
             String mychartLoginLink = env.getProperty("mychart.login.url");
             String mychartMessageLink = env.getProperty("mychart.askAMedicalQuestion.url");

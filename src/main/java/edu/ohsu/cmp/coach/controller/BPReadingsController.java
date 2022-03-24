@@ -1,9 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.cache.SessionCache;
-import edu.ohsu.cmp.coach.cqfruler.CQFRulerService;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
-import edu.ohsu.cmp.coach.model.PatientModel;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
 import edu.ohsu.cmp.coach.service.EHRService;
 import org.slf4j.Logger;
@@ -31,19 +28,13 @@ public class BPReadingsController extends BaseController {
     @Autowired
     private EHRService ehrService;
 
-//    @Autowired
-//    private HomeBloodPressureReadingService hbprService;
-
     @Autowired
     private BloodPressureService bpService;
-
-    @Autowired
-    private CQFRulerService cqfRulerService;
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
         model.addAttribute("applicationName", applicationName);
-        model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
+        model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
 
         List<BloodPressureModel> bpreadings = bpService.getHomeBloodPressureReadings(session.getId());
         model.addAttribute("bpreadings", bpreadings);
@@ -63,7 +54,7 @@ public class BPReadingsController extends BaseController {
                                                            @RequestParam Boolean followedInstructions) {
 
         // get the cache just to make sure it's defined and the user is properly authenticated
-        SessionCache.getInstance().get(session.getId());
+        workspaceService.get(session.getId());
 
         Date readingDate = new Date(readingDateTS);
 
@@ -73,23 +64,14 @@ public class BPReadingsController extends BaseController {
         bpm1 = bpService.create(session.getId(), bpm1);
         list.add(bpm1);
 
-//        List<HomeBloodPressureReading> list = new ArrayList<>();
-//        HomeBloodPressureReading bpreading1 = new HomeBloodPressureReading(systolic1, diastolic1, pulse1, readingDate, followedInstructions);
-//        bpreading1 = hbprService.create(session.getId(), bpreading1);
-//        list.add(bpreading1);
-
         if (systolic2 != null && diastolic2 != null) {
             BloodPressureModel bpm2 = new BloodPressureModel(BloodPressureModel.Source.HOME,
                     systolic2, diastolic2, pulse2, readingDate, followedInstructions, fcm);
             bpm2 = bpService.create(session.getId(), bpm2);
             list.add(bpm2);
-
-//            HomeBloodPressureReading bpreading2 = new HomeBloodPressureReading(systolic2, diastolic2, pulse2, readingDate, followedInstructions);
-//            bpreading2 = hbprService.create(session.getId(), bpreading2);
-//            list.add(bpreading2);
         }
 
-        cqfRulerService.requestHooksExecution(session.getId());
+        workspaceService.get(session.getId()).runRecommendations();
 
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
@@ -99,11 +81,11 @@ public class BPReadingsController extends BaseController {
                                          @RequestParam("id") String id) {
 
         // get the cache just to make sure it's defined and the user is properly authenticated
-        SessionCache.getInstance().get(session.getId());
+        workspaceService.get(session.getId());
 
         try {
             bpService.delete(session.getId(), id);
-            cqfRulerService.requestHooksExecution(session.getId());
+            workspaceService.get(session.getId()).runRecommendations();
 
             return new ResponseEntity<>("OK", HttpStatus.OK);
 

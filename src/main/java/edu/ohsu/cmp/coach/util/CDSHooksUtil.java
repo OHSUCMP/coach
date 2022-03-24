@@ -1,10 +1,10 @@
-package edu.ohsu.cmp.coach.cqfruler;
+package edu.ohsu.cmp.coach.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import edu.ohsu.cmp.coach.cqfruler.model.CDSHook;
-import edu.ohsu.cmp.coach.cqfruler.model.CDSServices;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSServices;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 

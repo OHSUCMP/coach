@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.cqfruler.model;
+package edu.ohsu.cmp.coach.model.cqfruler;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;

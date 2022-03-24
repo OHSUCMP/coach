@@ -1,23 +1,22 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.cache.SessionCache;
-import edu.ohsu.cmp.coach.cache.UserCache;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.MethodNotImplementedException;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
-import edu.ohsu.cmp.coach.util.FhirUtil;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class BloodPressureService extends BaseService {
@@ -34,6 +33,61 @@ public class BloodPressureService extends BaseService {
     @Value("${fhir.observation.bp-write}")
     private Boolean storeRemotely;
 
+    public List<BloodPressureModel> buildBloodPressureList(String sessionId) throws DataException {
+        Map<String, List<Observation>> encounterObservationsMap = new HashMap<>();
+        Bundle observationBundle = ehrService.getObservations(sessionId);
+        if (observationBundle.hasEntry()) {
+            for (Bundle.BundleEntryComponent entry : observationBundle.getEntry()) {
+                if (entry.hasResource() && entry.getResource() instanceof Observation) {
+                    Observation observation = (Observation) entry.getResource();
+                    for (String key : buildKeys(observation.getEncounter())) {
+                        if ( ! encounterObservationsMap.containsKey(key) ) {
+                            encounterObservationsMap.put(key, new ArrayList<>());
+                        }
+                        encounterObservationsMap.get(key).add(observation);
+                    }
+                }
+            }
+        }
+
+        List<BloodPressureModel> list = new ArrayList<>();
+
+        for (Encounter encounter : workspaceService.get(sessionId).getEncounters()) {
+
+            // don't we always want to get supplemental pulse and protocol observations if they exist?
+            // I think so ... ?
+            boolean doSupplemental = true; // storeRemotely && BloodPressureModel.isHomeHealthEncounter(encounter);
+
+            Observation bpObservation = null;
+            Observation pulseObservation = null;
+            Observation protocolObservation = null;
+
+            for (String key : buildKeys(encounter.getId(), encounter.getIdentifier())) {
+                if (encounterObservationsMap.containsKey(key)) {
+                    for (Observation o : encounterObservationsMap.get(key)) {
+                        if (bpObservation == null && o.hasCode() && o.getCode().hasCoding(fcm.getBpSystem(), fcm.getBpCode())) {
+                            bpObservation = o;
+
+                        } else if (doSupplemental && pulseObservation == null && o.getCode().hasCoding(fcm.getPulseSystem(), fcm.getPulseCode())) {
+                            pulseObservation = o;
+
+                        } else if (doSupplemental && protocolObservation == null && o.getCode().hasCoding(fcm.getProtocolSystem(), fcm.getProtocolCode())) {
+                            protocolObservation = o;
+                        }
+                    }
+                }
+            }
+
+            if (bpObservation != null) {
+                list.add(new BloodPressureModel(
+                        encounter, bpObservation, pulseObservation, protocolObservation, fcm)
+                );
+            }
+        }
+
+        return list;
+    }
+
     public List<BloodPressureModel> getHomeBloodPressureReadings(String sessionId) {
         List<BloodPressureModel> list = new ArrayList<>();
         for (BloodPressureModel entry : getBloodPressureReadings(sessionId)) {
@@ -45,7 +99,8 @@ public class BloodPressureService extends BaseService {
     }
 
     public List<BloodPressureModel> getBloodPressureReadings(String sessionId) {
-        List<BloodPressureModel> list = buildRemoteBloodPressureReadings(sessionId);
+        List<BloodPressureModel> list = new ArrayList<>();
+        list.addAll(workspaceService.get(sessionId).getBloodPressures());
 
         if ( ! storeRemotely ) {
             list.addAll(buildLocalBloodPressureReadings(sessionId));
@@ -62,13 +117,12 @@ public class BloodPressureService extends BaseService {
     }
 
     public BloodPressureModel create(String sessionId, BloodPressureModel bpm) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
+        UserWorkspace workspace = workspaceService.get(sessionId);
 
         // create home BP reading
 
         if (storeRemotely) {
-            String patientId = cache.getResource(UserCache.CacheType.PATIENT, Patient.class).getId();
-//            String patientId = cache.getPatient().getId();
+            String patientId = workspaceService.get(sessionId).getPatient().getSourcePatient().getId();
             Bundle bundle = bpm.toBundle(patientId, fcm);
 
             // modify bundle to be appropriate for submission as a CREATE TRANSACTION
@@ -85,7 +139,7 @@ public class BloodPressureService extends BaseService {
 
             // write BP reading to the FHIR server
 
-            FHIRCredentialsWithClient fcc = cache.getFhirCredentialsWithClient();
+            FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
             Bundle responseBundle = fcc.transact(bundle);
 
             // todo : process response
@@ -123,16 +177,16 @@ public class BloodPressureService extends BaseService {
                                     }
                                 }
                             }
-
-                            logger.debug("resource " + r.getId() + " returned with response, appending to cache");
-                            cache.addResourceToBundle(UserCache.CacheType.OBSERVATIONS, r);
                         }
                     }
                 }
             }
 
             try {
-                return new BloodPressureModel(encounter, bpObservation, pulseObservation, protocolObservation, fcm);
+                BloodPressureModel bpm2 = new BloodPressureModel(encounter, bpObservation, pulseObservation,
+                        protocolObservation, fcm);
+                workspaceService.get(sessionId).getBloodPressures().add(bpm2);
+                return bpm2;
 
             } catch (DataException de) {
                 logger.error("caught " + de.getClass().getName() +
@@ -178,55 +232,6 @@ public class BloodPressureService extends BaseService {
 ///////////////////////////////////////////////////////////////////////////////////////
 // private methods
 //
-
-    private List<BloodPressureModel> buildRemoteBloodPressureReadings(String sessionId) {
-        List<BloodPressureModel> list = new ArrayList<>();
-
-        // note : ehrService.getBloodPressureObservations() generates a Bundle containing BP, Pulse, and Protocol
-        //        Observations, if any exist.
-        Bundle bundle = ehrService.getBloodPressureObservations(sessionId);
-
-        for (Bundle.BundleEntryComponent entry: bundle.getEntry()) {
-            if (entry.getResource() instanceof Observation) {
-                Observation o = (Observation) entry.getResource();
-                if (o.hasCode() && o.getCode().hasCoding(fcm.getBpSystem(), fcm.getBpCode())) {
-                    // this Observation is a blood-pressure reading
-
-                    try {
-                        Encounter enc = FhirUtil.getResourceFromBundleByReference(bundle, Encounter.class, o.getEncounter());
-
-                        Observation pulseObservation = null;
-                        Observation protocolObservation = null;
-
-                        if (storeRemotely && BloodPressureModel.isHomeHealthEncounter(enc)) {
-                            for (Observation o2 : FhirUtil.getObservationsFromBundleByEncounterReference(bundle, enc.getId())) {
-                                if (o2.hasCode()) {
-                                    if (pulseObservation == null && o2.getCode().hasCoding(fcm.getPulseSystem(), fcm.getPulseCode())) {
-                                        pulseObservation = o2;
-
-                                    } else if (protocolObservation == null && o2.getCode().hasCoding(fcm.getProtocolSystem(), fcm.getProtocolCode())) {
-                                        protocolObservation = o2;
-                                    }
-                                }
-                            }
-                        }
-
-                        list.add(new BloodPressureModel(enc, o, pulseObservation, protocolObservation, fcm));
-
-                    } catch (DataException e) {
-                        logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
-                    }
-                }
-
-
-            } else {
-                Resource r = entry.getResource();
-                logger.warn("ignoring " + r.getClass().getName() + " (id=" + r.getId() + ") while building Blood Pressure Observations");
-            }
-        }
-
-        return list;
-    }
 
     private List<BloodPressureModel> buildLocalBloodPressureReadings(String sessionId) {
         List<BloodPressureModel> list = new ArrayList<>();

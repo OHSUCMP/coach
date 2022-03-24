@@ -1,12 +1,16 @@
 package edu.ohsu.cmp.coach.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.exception.IncompatibleResourceException;
 import edu.ohsu.cmp.coach.util.FhirUtil;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 
 public class MedicationModel {
+
+    private MedicationStatement sourceMedicationStatement;
+    private MedicationRequest sourceMedicationRequest;
+    private Medication sourceMedicationRequestMedication;
+
     private String system;
     private String code;
     private String description;
@@ -18,19 +22,9 @@ public class MedicationModel {
     private String issues;
     private String priority;
 
-    public MedicationModel(IBaseResource resource, Bundle bundle) throws DataException, IncompatibleResourceException {
-        if (resource instanceof MedicationStatement) {
-            createFromMedicationStatement((MedicationStatement) resource);
+    public MedicationModel(MedicationStatement ms) throws DataException {
+        sourceMedicationStatement = ms;
 
-        } else if (resource instanceof MedicationRequest) {
-            createFromMedicationRequest((MedicationRequest) resource, bundle);
-
-        } else {
-            throw new IncompatibleResourceException("cannot create MedicationModel from " + resource.getClass().getName());
-        }
-    }
-
-    private void createFromMedicationStatement(MedicationStatement ms) throws DataException {
         status = ms.getStatus().getDisplay();
 
         CodeableConcept mcc = ms.getMedicationCodeableConcept();
@@ -68,13 +62,15 @@ public class MedicationModel {
         prescribingClinician = ""; // todo : set this.  not quite clear how to do that cleanly with MedicationStatement
 
         issues = ""; // todo : set this.  not sure what this should be.  only here because it's specified in the MCC app,
-                     //        and Dave wants this app to mirror the MCC system with respect to display of medications.
-                     //        there isn't anything in the MedicationStatement resource that appears to fit
+        //        and Dave wants this app to mirror the MCC system with respect to display of medications.
+        //        there isn't anything in the MedicationStatement resource that appears to fit
 
         priority = "";  // todo : not sure where this should come from either
     }
 
-    private void createFromMedicationRequest(MedicationRequest mr, Bundle bundle) throws DataException {
+    public MedicationModel(MedicationRequest mr, Bundle bundle) throws DataException {
+        sourceMedicationRequest = mr;
+
         status = mr.getStatus().getDisplay();
 
         CodeableConcept cc;
@@ -88,6 +84,7 @@ public class MedicationModel {
                 throw new DataException("Medication not found in bundle: " + reference);
 
             } else if (m.hasCode()) {
+                sourceMedicationRequestMedication = m;
                 cc = m.getCode();
 
             } else {
@@ -140,6 +137,52 @@ public class MedicationModel {
         issues = mr.hasDetectedIssue() ? mr.getDetectedIssueFirstRep().getDisplay() : "";
 
         priority = mr.hasPriority() ? mr.getPriority().getDisplay() : "";
+    }
+
+    public boolean matches(String system, String code) {
+        if (this.system.equals(system) && this.code.equals(code)) {
+            return true;
+
+        } else if (sourceMedicationStatement != null) {
+            for (Coding c : sourceMedicationStatement.getMedicationCodeableConcept().getCoding()) {
+                if (c.getSystem().equals(system) && c.getCode().equals(code)) {
+                    return true;
+                }
+            }
+
+        } else if (sourceMedicationRequest != null) {
+            if (sourceMedicationRequest.hasMedicationCodeableConcept()) {
+                for (Coding c : sourceMedicationRequest.getMedicationCodeableConcept().getCoding()) {
+                    if (c.getSystem().equals(system) && c.getCode().equals(code)) {
+                        return true;
+                    }
+                }
+
+            } else if (sourceMedicationRequest.hasMedicationReference() && sourceMedicationRequestMedication != null) {
+                for (Coding c : sourceMedicationRequestMedication.getCode().getCoding()) {
+                    if (c.getSystem().equals(system) && c.getCode().equals(code)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    @JsonIgnore
+    public MedicationStatement getSourceMedicationStatement() {
+        return sourceMedicationStatement;
+    }
+
+    @JsonIgnore
+    public MedicationRequest getSourceMedicationRequest() {
+        return sourceMedicationRequest;
+    }
+
+    @JsonIgnore
+    public Medication getSourceMedicationRequestMedication() {
+        return sourceMedicationRequestMedication;
     }
 
     public String getSystem() {

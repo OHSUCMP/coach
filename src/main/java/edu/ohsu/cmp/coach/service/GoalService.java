@@ -1,7 +1,6 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.cache.UserCache;
-import edu.ohsu.cmp.coach.cache.SessionCache;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.entity.app.AchievementStatus;
 import edu.ohsu.cmp.coach.entity.app.GoalHistory;
 import edu.ohsu.cmp.coach.entity.app.MyGoal;
@@ -9,7 +8,7 @@ import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.repository.app.GoalHistoryRepository;
 import edu.ohsu.cmp.coach.repository.app.GoalRepository;
 import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.Goal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,22 +29,39 @@ public class GoalService extends BaseService {
     @Autowired
     private GoalHistoryRepository goalHistoryRepository;
 
+    public List<GoalModel> buildCurrentGoals(String sessionId) {
+        List<GoalModel> list = new ArrayList<>();
+
+        Bundle b = ehrService.getGoals(sessionId);
+
+        if (b == null) return null;
+
+        for (Bundle.BundleEntryComponent entry : b.getEntry()) {
+            if (entry.getResource() instanceof Goal) {
+                Goal g = (Goal) entry.getResource();
+                list.add(new GoalModel(g, fcm));
+            }
+        }
+
+        return list;
+    }
+
     public List<String> getExtGoalIdList(String sessionId) {
         List<String> list = new ArrayList<>();
-        for (MyGoal g : getGoalList(sessionId)) {
+        for (MyGoal g : getLocalGoalList(sessionId)) {
             list.add(g.getExtGoalId());
         }
         return list;
     }
 
-    public List<MyGoal> getGoalList(String sessionId) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
-        return goalRepository.findAllByPatId(cache.getInternalPatientId());
+    public List<MyGoal> getLocalGoalList(String sessionId) {
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        return goalRepository.findAllByPatId(workspace.getInternalPatientId());
     }
 
-    public MyGoal getGoal(String sessionId, String extGoalId) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
-        return goalRepository.findOneByPatIdAndExtGoalId(cache.getInternalPatientId(), extGoalId);
+    public MyGoal getLocalGoal(String sessionId, String extGoalId) {
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        return goalRepository.findOneByPatIdAndExtGoalId(workspace.getInternalPatientId(), extGoalId);
     }
 
     /**
@@ -54,11 +70,12 @@ public class GoalService extends BaseService {
      * app-based BP goal if no goal exists
      */
     public GoalModel getCurrentBPGoal(String sessionId) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
+        // goals can be stored locally and in the EHR.  so get current BP goals from each source, then
+        // return whichever is more current, creating a fresh local goal if none could be found.
 
         GoalModel ehrBPGoal = getCurrentEHRBPGoal(sessionId);
 
-        MyGoal g = getCurrentAppBPGoal(sessionId);
+        MyGoal g = getCurrentLocalBPGoal(sessionId);
         GoalModel bpGoal = g != null ?
                 new GoalModel(g) :
                 null;
@@ -89,61 +106,33 @@ public class GoalService extends BaseService {
         }
     }
 
-    public MyGoal getCurrentAppBPGoal(String sessionId) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
-        return goalRepository.findCurrentBPGoal(cache.getInternalPatientId());
+    public MyGoal getCurrentLocalBPGoal(String sessionId) {
+        return goalRepository.findCurrentBPGoal(
+                workspaceService.get(sessionId).getInternalPatientId()
+        );
     }
 
     // utility function to get the latest BP goal from the EHR
     private GoalModel getCurrentEHRBPGoal(String sessionId) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
+        GoalModel currentEHRBPGoal = null;
 
-        org.hl7.fhir.r4.model.Goal currentEHRBPGoal = null;
+        List<GoalModel> goals = workspaceService.get(sessionId).getGoals();
+        for (GoalModel goal : goals) {
+            if (goal.isEHRGoal() && goal.isBPGoal()) {
+                if (currentEHRBPGoal == null) {
+                    currentEHRBPGoal = goal;
 
-        Bundle bundle = ehrService.getCurrentGoals(sessionId);
-
-        for (Bundle.BundleEntryComponent entryCon: bundle.getEntry()) {
-            if (entryCon.getResource() instanceof org.hl7.fhir.r4.model.Goal) {
-                org.hl7.fhir.r4.model.Goal g = (org.hl7.fhir.r4.model.Goal) entryCon.getResource();
-
-                boolean hasSystolicTarget = false;
-                boolean hasDiastolicTarget = false;
-
-                for (org.hl7.fhir.r4.model.Goal.GoalTargetComponent gtc : g.getTarget()) {
-                    if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpSystolicCode())) {
-                        hasSystolicTarget = true;
-
-                    } else if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpDiastolicCode())) {
-                        hasDiastolicTarget = true;
-                    }
+                } else if (goal.compareTo(currentEHRBPGoal) < 0) {
+                    currentEHRBPGoal = goal;
                 }
-
-                if (hasSystolicTarget && hasDiastolicTarget) {
-                    if (currentEHRBPGoal == null) {
-                        currentEHRBPGoal = g;
-
-                    } else if (g.getStartDateType().getValue().compareTo(currentEHRBPGoal.getStartDateType().getValue()) < 0) {
-                        currentEHRBPGoal = g;
-                    }
-                }
-
-            } else {
-                Resource r = entryCon.getResource();
-                logger.warn("ignoring " + r.getClass().getName() + " (id=" + r.getId() + ") while finding Current EHR BP Goal");
             }
         }
 
-        if (currentEHRBPGoal != null) {
-            return new GoalModel(currentEHRBPGoal, cache.getInternalPatientId(), fcm.getBpSystem(), fcm.getBpCode(),
-                    "Blood Pressure", fcm.getBpSystolicCode(), fcm.getBpDiastolicCode());
-
-        } else {
-            return null;
-        }
+        return currentEHRBPGoal;
     }
 
-    public boolean hasAnyNonBPGoals(String sessionId) {
-        for (MyGoal g : getGoalList(sessionId)) {
+    public boolean hasAnyLocalNonBPGoals(String sessionId) {
+        for (MyGoal g : getLocalGoalList(sessionId)) {
             if ( ! g.isBloodPressureGoal() ) {
                 return true;
             }
@@ -151,8 +140,8 @@ public class GoalService extends BaseService {
         return false;
     }
 
-    public List<MyGoal> getAllNonBPGoals(String sessionId) {
-        List<MyGoal> list = getGoalList(sessionId);
+    public List<MyGoal> getAllLocalNonBPGoals(String sessionId) {
+        List<MyGoal> list = getLocalGoalList(sessionId);
         Iterator<MyGoal> iter = list.iterator();
         while (iter.hasNext()) {
             MyGoal g = iter.next();
@@ -164,9 +153,9 @@ public class GoalService extends BaseService {
     }
 
     public MyGoal create(String sessionId, MyGoal goal) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
+        UserWorkspace workspace = workspaceService.get(sessionId);
 
-        goal.setPatId(cache.getInternalPatientId());
+        goal.setPatId(workspace.getInternalPatientId());
         goal.setCreatedDate(new Date());
 
         MyGoal g = goalRepository.save(goal);
@@ -184,12 +173,12 @@ public class GoalService extends BaseService {
     }
 
     public void deleteByGoalId(String sessionId, String extGoalId) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
-        goalRepository.deleteByGoalIdForPatient(extGoalId, cache.getInternalPatientId());
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        goalRepository.deleteByGoalIdForPatient(extGoalId, workspace.getInternalPatientId());
     }
 
     public void deleteBPGoalIfExists(String sessionId) {
-        UserCache cache = SessionCache.getInstance().get(sessionId);
-        goalRepository.deleteBPGoalForPatient(cache.getInternalPatientId());
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        goalRepository.deleteBPGoalForPatient(workspace.getInternalPatientId());
     }
 }

@@ -1,8 +1,12 @@
 package edu.ohsu.cmp.coach.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.entity.app.AchievementStatus;
 import edu.ohsu.cmp.coach.entity.app.GoalHistory;
 import edu.ohsu.cmp.coach.entity.app.MyGoal;
+import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.util.FhirUtil;
+import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Goal;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,15 +14,16 @@ import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class GoalModel implements Comparable<GoalModel> {
+public class GoalModel implements FHIRCompatible, Comparable<GoalModel> {
     public static final String BP_GOAL_ID = "bp-goal";
     public static final Integer BP_GOAL_DEFAULT_SYSTOLIC = 140;
     public static final Integer BP_GOAL_DEFAULT_DIASTOLIC = 90;
     public static final String ACHIEVEMENT_STATUS_CODING_SYSTEM = "http://terminology.hl7.org/CodeSystem/goal-achievement";
     public static final String ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE = "in-progress";
 
+    private Goal sourceGoal;
+
     private Long id;
-    private Long patId;
     private String extGoalId;
     private String referenceSystem;
     private String referenceCode;
@@ -33,7 +38,6 @@ public class GoalModel implements Comparable<GoalModel> {
 
     public GoalModel(MyGoal g) {
         this.id = g.getId();
-        this.patId = g.getPatId();
         this.extGoalId = g.getExtGoalId();
         this.referenceSystem = g.getReferenceSystem();
         this.referenceCode = g.getReferenceCode();
@@ -51,21 +55,22 @@ public class GoalModel implements Comparable<GoalModel> {
     }
 
     // this constructor ONLY used to convert EHR-based BP goals into local goal model
-    public GoalModel(Goal g, Long internalPatientId, String bpSystem, String bpCode, String bpDisplay,
-                     String systolicCode, String diastolicCode) {
+    public GoalModel(Goal g, FhirConfigManager fcm) {
+        sourceGoal = g;
+
         this.id = null; // EHR-based
-        this.patId = internalPatientId;
+//        this.patId = null; // EHR-based
         this.extGoalId = g.getId();
-        this.referenceSystem = bpSystem;
-        this.referenceCode = bpCode;
-        this.referenceDisplay = bpDisplay;
+        this.referenceSystem = fcm.getBpSystem();
+        this.referenceCode = fcm.getBpCode();
+        this.referenceDisplay = "Blood Pressure";
         this.goalText = g.getDescription().getText();
 
         for (Goal.GoalTargetComponent gtc : g.getTarget()) {
-            if (gtc.getMeasure().hasCoding(bpSystem, systolicCode)) {
+            if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpSystolicCode())) {
                 this.systolicTarget = gtc.getDetailQuantity().getValue().intValue();
 
-            } else if (gtc.getMeasure().hasCoding(bpSystem, diastolicCode)) {
+            } else if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpDiastolicCode())) {
                 this.diastolicTarget = gtc.getDetailQuantity().getValue().intValue();
             }
         }
@@ -74,8 +79,17 @@ public class GoalModel implements Comparable<GoalModel> {
         this.createdDate = g.getStartDateType().getValue();
     }
 
+    @Override
+    public Bundle toBundle() {
+        return FhirUtil.bundleResources(sourceGoal);
+    }
+
     public boolean isEHRGoal() {
-        return id == null;
+        return sourceGoal != null;
+    }
+
+    public boolean isBPGoal() {
+        return systolicTarget != null && diastolicTarget != null;
     }
 
     @Override
@@ -121,12 +135,13 @@ public class GoalModel implements Comparable<GoalModel> {
                 null;
     }
 
-    public Long getId() {
-        return id;
+    @JsonIgnore
+    public Goal getSourceGoal() {
+        return sourceGoal;
     }
 
-    public Long getPatId() {
-        return patId;
+    public Long getId() {
+        return id;
     }
 
     public String getExtGoalId() {

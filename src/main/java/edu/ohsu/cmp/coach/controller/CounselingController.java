@@ -2,7 +2,6 @@ package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.app.Counseling;
 import edu.ohsu.cmp.coach.model.CounselingPageModel;
-import edu.ohsu.cmp.coach.model.PatientModel;
 import edu.ohsu.cmp.coach.service.CounselingService;
 import edu.ohsu.cmp.coach.service.EHRService;
 import org.slf4j.Logger;
@@ -30,7 +29,7 @@ public class CounselingController extends BaseController {
     @GetMapping("{key}")
     public String view(HttpSession session, Model model, @PathVariable(value="key") String key) {
         model.addAttribute("applicationName", applicationName);
-        model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
+        model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
 
         CounselingPageModel page = new CounselingPageModel(counselingService.getPage(key));
 

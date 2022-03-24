@@ -1,16 +1,13 @@
 package edu.ohsu.cmp.coach.fhir;
 
-import edu.ohsu.cmp.coach.util.FhirUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,13 +25,15 @@ public class FhirQueryManager {
     private static final DateFormat FHIR_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     @Value("${Patient.Lookup}")                     private String patientLookup;
-    @Value("${Observation.Query.code}")             private String observationQueryCode;
-    @Value("${Observation.ByEncounterQuery.code}")  private String observationByEncounterQueryCode;
-    @Value("${Condition.Query}")                    private String conditionQuery;
+
+//    @Value("${Base.Query}")                         private String baseQuery;
+
+    @Value("${Encounter.Query}")                    private String encounterQuery;
+    @Value("${Observation.Query}")                  private String observationQuery;
+    @Value("${Condition.EncounterDiagnosis.Query}") private String encounterDiagnosisConditionQuery;
     @Value("${Goal.Query}")                         private String goalQuery;
     @Value("${MedicationStatement.Query}")          private String medicationStatementQuery;
     @Value("${MedicationRequest.Query}")            private String medicationRequestQuery;
-    @Value("${AdverseEvent.Query}")                 private String adverseEventQuery;
 
     public String getPatientLookup(String id) {
         return buildQuery(patientLookup, params()
@@ -42,25 +41,38 @@ public class FhirQueryManager {
         );
     }
 
-    public String getObservationQueryCode(String patientId, String system, String code) {
-        return buildQuery(observationQueryCode, params()
+    public boolean hasEncounterQuery() {
+        return StringUtils.isNotEmpty(encounterQuery);
+    }
+
+    public String getEncounterQuery(String patientId) {
+        return buildQuery(encounterQuery, params()
                 .add(TOKEN_SUBJECT, patientId)
-                .add(TOKEN_CODE, system + '|' + code)
         );
     }
 
-    public String getObservationByEncounterQueryCode(String patientId, String encounterRef, String system, String code) {
-        return buildQuery(observationByEncounterQueryCode, params()
+    public boolean hasObservationQuery() {
+        return StringUtils.isNotEmpty(observationQuery);
+    }
+
+    public String getObservationQuery(String patientId) {
+        return buildQuery(observationQuery, params()
                 .add(TOKEN_SUBJECT, patientId)
-                .add(TOKEN_ENCOUNTER, FhirUtil.toRelativeReference(encounterRef))
-                .add(TOKEN_CODE, system + '|' + code)
         );
     }
 
-    public String getConditionQuery(String patientId) {
-        return buildQuery(conditionQuery, params()
+    public boolean hasEncounterDiagnosisConditionQuery() {
+        return StringUtils.isNotEmpty(encounterDiagnosisConditionQuery);
+    }
+
+    public String getEncounterDiagnosisConditionQuery(String patientId) {
+        return buildQuery(encounterDiagnosisConditionQuery, params()
                 .add(TOKEN_SUBJECT, patientId)
         );
+    }
+
+    public boolean hasGoalQuery() {
+        return StringUtils.isNotEmpty(goalQuery);
     }
 
     public String getGoalQuery(String patientId) {
@@ -69,10 +81,18 @@ public class FhirQueryManager {
         );
     }
 
+    public boolean hasMedicationStatementQuery() {
+        return StringUtils.isNotEmpty(medicationStatementQuery);
+    }
+
     public String getMedicationStatementQuery(String patientId) {
         return buildQuery(medicationStatementQuery, params()
                 .add(TOKEN_SUBJECT, patientId)
         );
+    }
+
+    public boolean hasMedicationRequestQuery() {
+        return StringUtils.isNotEmpty(medicationRequestQuery);
     }
 
     public String getMedicationRequestQuery(String patientId) {
@@ -81,27 +101,21 @@ public class FhirQueryManager {
         );
     }
 
-    public String getAdverseEventQuery(String patientId) {
-        return buildQuery(adverseEventQuery, params()
-                .add(TOKEN_SUBJECT, patientId)
-                .add(TOKEN_RELATIVE_DATE, buildRelativeDate(extract(TOKEN_RELATIVE_DATE, adverseEventQuery)))
-        );
-    }
 
-    public static Params params() {
+//////////////////////////////////////////////////////////////////////
+// private methods
+//
+
+    private static Params params() {
         return new Params();
     }
 
-    public static final class Params extends HashMap<String, String> {
+    private static final class Params extends HashMap<String, String> {
         public Params add(String key, String value) {
             put(key, value);
             return this;
         }
     }
-
-//////////////////////////////////////////////////////////////////////
-// private methods
-//
 
     private String buildQuery(String template, Map<String, String> params) {
         return template.replaceAll(TOKEN_ID, params.get(TOKEN_ID))

@@ -7,8 +7,6 @@ public class CounselingPageModel {
     private String title;
     private String body;
 
-
-
     public CounselingPageModel(CounselingPage counselingPage) {
         this.key = counselingPage.getPageKey();
         this.title = counselingPage.getTitle();

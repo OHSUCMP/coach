@@ -1,20 +1,18 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.cache.UserCache;
-import edu.ohsu.cmp.coach.cache.SessionCache;
-import edu.ohsu.cmp.coach.cqfruler.CQFRulerService;
-import edu.ohsu.cmp.coach.cqfruler.model.CDSHook;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.entity.app.Outcome;
-import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.model.*;
+import edu.ohsu.cmp.coach.model.AdverseEventModel;
+import edu.ohsu.cmp.coach.model.BloodPressureModel;
+import edu.ohsu.cmp.coach.model.GoalModel;
+import edu.ohsu.cmp.coach.model.MedicationModel;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
-import edu.ohsu.cmp.coach.service.EHRService;
 import edu.ohsu.cmp.coach.service.GoalService;
 import edu.ohsu.cmp.coach.service.MedicationService;
+import edu.ohsu.cmp.coach.service.RecommendationService;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.r4.model.AdverseEvent;
-import org.hl7.fhir.r4.model.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,16 +34,10 @@ public class HomeController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private EHRService ehrService;
-
-    @Autowired
-    private CQFRulerService cqfRulerService;
+    private RecommendationService recommendationService;
 
     @Autowired
     private BloodPressureService bpService;
-
-//    @Autowired
-//    private HomeBloodPressureReadingService hbprService;
 
     @Autowired
     private GoalService goalService;
@@ -55,8 +47,7 @@ public class HomeController extends BaseController {
 
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model) {
-        SessionCache cache = SessionCache.getInstance();
-        boolean sessionEstablished = cache.exists(session.getId());
+        boolean sessionEstablished = workspaceService.exists(session.getId());
 
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
@@ -65,28 +56,17 @@ public class HomeController extends BaseController {
             logger.info("requesting data for session " + session.getId());
 
             try {
-                model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
+                UserWorkspace workspace = workspaceService.get(session.getId());
+
+                model.addAttribute("patient", workspace.getPatient());
 
                 GoalModel currentBPGoal = goalService.getCurrentBPGoal(session.getId());
                 model.addAttribute("currentBPGoal", currentBPGoal);
 
                 model.addAttribute("medicationsOfInterestName", medicationService.getMedicationsOfInterestName());
 
-                List<CDSHook> list = cqfRulerService.getCDSHooks();
+                List<CDSHook> list = recommendationService.getCDSHooks();
                 model.addAttribute("cdshooks", list);
-
-                // CQF Ruler is a performance bottleneck.  It is presumed that hitting it with many
-                // concurrent requests will further degrade performance for everyone.  Therefore,
-                // the app places all Ruler requests into a queue, such that only one request is made
-                // at a time.  The queue is constructed in such a way that if any user submits a Ruler
-                // request, and they already have a request in the queue, that existing queue item
-                // is replaced with the new one, efficiently improving performance
-                int pos = cqfRulerService.getQueuePosition(session.getId());
-                String queuePosition;
-                if (pos == -1)      queuePosition = "NOT QUEUED";
-                else if (pos == 0)  queuePosition = "CURRENTLY RUNNING";
-                else                queuePosition = String.valueOf(pos);
-                model.addAttribute("queuePosition", queuePosition);
 
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " building home page", e);
@@ -111,38 +91,19 @@ public class HomeController extends BaseController {
     public ResponseEntity<List<Card>> getRecommendation(HttpSession session,
                                                         @RequestParam("id") String hookId) {
 
-        // attempt to get cached recommendations every 5 seconds for up to what, 1 hour?
+        try {
+            UserWorkspace workspace = workspaceService.get(session.getId());
 
-        // DOES NOT ACTUALLY FIRE A CALL ANYWHERE - ONLY SEARCHES CACHE
-        // actual calls are fired in an asynchronous thread by CQFRulerService on login
+            List<Card> cards = workspace.getCards(hookId);
+            logger.info("got cards for hookId=" + hookId + "!");
 
-        UserCache cache = SessionCache.getInstance().get(session.getId());
+            return new ResponseEntity<>(cards, HttpStatus.OK);
 
-        List<Card> cards = null;
-        HttpStatus status = HttpStatus.REQUEST_TIMEOUT;
-
-        for (int i = 0; i < 720; i ++) {
-            cards = cache.getCards(hookId);
-
-            if (cards != null) {
-                logger.info("got cards for hookId=" + hookId + "!");
-                status = HttpStatus.OK;
-                break;
-
-            } else {
-                try {
-                    Thread.sleep(5000);
-
-                } catch (InterruptedException e) {
-                    logger.error("caught " + e.getClass().getName() + " getting cached cards for hookId=" + hookId +
-                            " (attempt " + i + ")", e);
-                    status = HttpStatus.INTERNAL_SERVER_ERROR;
-                    break;
-                }
-            }
+        } catch (RuntimeException re) {
+            logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
+                    re.getMessage(), re);
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        return new ResponseEntity<>(cards, status);
     }
 
     @PostMapping("medications-list")
@@ -163,19 +124,9 @@ public class HomeController extends BaseController {
         try {
             List<AdverseEventModel> list = new ArrayList<>();
 
-            Bundle bundle = ehrService.getAdverseEvents(session.getId());
-            for (Bundle.BundleEntryComponent entry: bundle.getEntry()) {
-                if (entry.getResource() instanceof AdverseEvent) {
-                    try {
-                        AdverseEvent ae = (AdverseEvent) entry.getResource();
-                        AdverseEventModel model = new AdverseEventModel(ae);
-                        if (model.hasOutcome(Outcome.ONGOING)) {
-                            list.add(new AdverseEventModel(ae));
-                        }
-
-                    } catch (DataException e) {
-                        logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
-                    }
+            for (AdverseEventModel ae : workspaceService.get(session.getId()).getAdverseEvents()) {
+                if (ae.hasOutcome(Outcome.ONGOING)) {
+                    list.add(ae);
                 }
             }
 

@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.entity.app.MyPatient;
+import edu.ohsu.cmp.coach.model.PatientModel;
 import edu.ohsu.cmp.coach.repository.app.PatientRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -18,6 +19,13 @@ public class PatientService extends BaseService {
 
     @Autowired
     private PatientRepository repository;
+
+    @Autowired
+    private EHRService ehrService;
+
+    public PatientModel buildPatient(String sessionId) {
+        return new PatientModel(ehrService.getPatient(sessionId));
+    }
 
     public Long getInternalPatientId(String fhirPatientId) {
         String patIdHash = buildPatIdHash(fhirPatientId);

@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.cqfruler.model;
+package edu.ohsu.cmp.coach.model.cqfruler;
 
 import java.util.List;
 

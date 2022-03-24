@@ -1,7 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.model.MedicationModel;
-import edu.ohsu.cmp.coach.model.PatientModel;
 import edu.ohsu.cmp.coach.service.EHRService;
 import edu.ohsu.cmp.coach.service.MedicationService;
 import org.apache.commons.lang3.StringUtils;
@@ -14,7 +13,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.http.HttpSession;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/medications")
@@ -30,7 +32,7 @@ public class MedicationsController extends BaseController {
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
         model.addAttribute("applicationName", applicationName);
-        model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
+        model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
 
         List<MedicationModel> medicationsOfInterest = filterDuplicates(medicationService.getMedicationsOfInterest(session.getId()));
         medicationsOfInterest.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));

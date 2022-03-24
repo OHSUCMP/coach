@@ -1,13 +1,11 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.cache.UserCache;
-import edu.ohsu.cmp.coach.cache.SessionCache;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.entity.app.AchievementStatus;
 import edu.ohsu.cmp.coach.entity.app.GoalHistory;
 import edu.ohsu.cmp.coach.entity.app.MyGoal;
 import edu.ohsu.cmp.coach.model.GoalHistoryModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
-import edu.ohsu.cmp.coach.model.PatientModel;
 import edu.ohsu.cmp.coach.service.EHRService;
 import edu.ohsu.cmp.coach.service.GoalHistoryService;
 import edu.ohsu.cmp.coach.service.GoalService;
@@ -43,15 +41,12 @@ public class GoalsController extends BaseController {
     @Autowired
     private GoalHistoryService goalHistoryService;
 
-//    @Autowired
-//    private CQFRulerService cqfRulerService;
-
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
         model.addAttribute("applicationName", applicationName);
-        model.addAttribute("patient", new PatientModel(ehrService.getPatient(session.getId())));
+        model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
         model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
-        model.addAttribute("hasOtherGoals", goalService.hasAnyNonBPGoals(session.getId()));
+        model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(session.getId()));
 
         return "goals";
     }
@@ -59,7 +54,7 @@ public class GoalsController extends BaseController {
     @PostMapping("other-goals")
     public ResponseEntity<List<GoalModel>> getOtherGoalsList(HttpSession session) {
         List<GoalModel> list = new ArrayList<GoalModel>();
-        for (MyGoal g : goalService.getAllNonBPGoals(session.getId())) {
+        for (MyGoal g : goalService.getAllLocalNonBPGoals(session.getId())) {
             list.add(new GoalModel(g));
         }
 
@@ -79,14 +74,15 @@ public class GoalsController extends BaseController {
 
         Date targetDate = new Date(targetDateTS);
 
-        MyGoal myGoal = goalService.getGoal(session.getId(), extGoalId);
+        MyGoal myGoal = goalService.getLocalGoal(session.getId(), extGoalId);
         if (myGoal == null) {
             myGoal = new MyGoal(extGoalId, referenceSystem, referenceCode, referenceDisplay, goalText, targetDate);
             myGoal = goalService.create(session.getId(), myGoal);
 
-            // remove goal from cache
-            UserCache cache = SessionCache.getInstance().get(session.getId());
-            cache.deleteSuggestion(extGoalId);
+            // the goal was created in response to a suggestion.
+            // they took the suggestion, so remove it from the list to consider
+            UserWorkspace workspace = workspaceService.get(session.getId());
+            workspace.deleteSuggestion(extGoalId);
 
             return new ResponseEntity<>(new GoalModel(myGoal), HttpStatus.OK);
 
@@ -108,7 +104,7 @@ public class GoalsController extends BaseController {
 
 //        goalService.deleteBPGoalIfExists(session.getId());
 
-        MyGoal goal = goalService.getCurrentAppBPGoal(session.getId());
+        MyGoal goal = goalService.getCurrentLocalBPGoal(session.getId());
         if (goal != null) {
             goal.setSystolicTarget(systolicTarget);
             goal.setDiastolicTarget(diastolicTarget);
@@ -128,7 +124,7 @@ public class GoalsController extends BaseController {
                                                          @RequestParam("extGoalId") String extGoalId,
                                                          @RequestParam("achievementStatus") String achievementStatusStr) {
 
-        MyGoal g = goalService.getGoal(session.getId(), extGoalId);
+        MyGoal g = goalService.getLocalGoal(session.getId(), extGoalId);
         GoalHistory gh = new GoalHistory(AchievementStatus.valueOf(achievementStatusStr), g);
         gh = goalHistoryService.create(gh);
 
