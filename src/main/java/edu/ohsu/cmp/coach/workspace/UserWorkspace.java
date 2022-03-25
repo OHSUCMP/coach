@@ -2,10 +2,10 @@ package edu.ohsu.cmp.coach.workspace;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.*;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
@@ -23,11 +23,15 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public class UserWorkspace {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    public static final int POOL_SIZE = 2;
 
     private static final String CACHE_PATIENT = "Patient";
     private static final String CACHE_ENCOUNTER = "Encounter";
@@ -45,6 +49,8 @@ public class UserWorkspace {
 
     private Cache cache;
     private Cache cardCache;
+
+    private ExecutorService executorService;
 
 
     public UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
@@ -64,6 +70,8 @@ public class UserWorkspace {
         cardCache = Caffeine.newBuilder()
                 .expireAfterWrite(1, TimeUnit.DAYS)
                 .build();
+
+        executorService = Executors.newFixedThreadPool(POOL_SIZE);
     }
 
     public Audience getAudience() {
@@ -78,7 +86,22 @@ public class UserWorkspace {
         return internalPatientId;
     }
 
-    public void populate() {
+    public void populate(boolean runInNewThread) {
+        if (runInNewThread) {
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    doPopulate();
+                }
+            };
+            executorService.submit(runnable);
+        } else {
+            doPopulate();
+        }
+    }
+
+    private void doPopulate() {
+        logger.info("BEGIN populating workspace for session=" + sessionId);
         getPatient();
         getGoals();
         getEncounters();
@@ -86,6 +109,18 @@ public class UserWorkspace {
         getAdverseEvents();
         getMedications();
         getAllCards();
+        logger.info("DONE populating workspace for session=" + sessionId);
+    }
+
+    public void runRecommendations() {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                deleteAllCards();
+                getAllCards();
+            }
+        };
+        executorService.submit(runnable);
     }
 
     public void clearCaches() {
@@ -223,17 +258,6 @@ public class UserWorkspace {
                 }
             }
         });
-    }
-
-    public void runRecommendations() {
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                deleteAllCards();
-                getAllCards();
-            }
-        };
-        runnable.run();
     }
 
     public void deleteCards(String recommendationId) {

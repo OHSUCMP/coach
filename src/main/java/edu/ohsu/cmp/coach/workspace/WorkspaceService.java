@@ -49,28 +49,6 @@ public class WorkspaceService {
         map.put(sessionId, userWorkspace);
     }
 
-    public void populate(String sessionId, boolean runInNewThread) throws SessionMissingException {
-        if (runInNewThread) {
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    doPopulate(sessionId);
-                }
-            });
-
-        } else {
-            doPopulate(sessionId);
-        }
-    }
-
-    private void doPopulate(String sessionId) throws SessionMissingException {
-        UserWorkspace workspace = get(sessionId);
-
-        logger.info("BEGIN populating workspace for session=" + sessionId);
-        workspace.populate();
-        logger.info("DONE populating workspace for session=" + sessionId);
-    }
-
     public UserWorkspace get(String sessionId) throws SessionMissingException {
         if (map.containsKey(sessionId)) {
             return map.get(sessionId);

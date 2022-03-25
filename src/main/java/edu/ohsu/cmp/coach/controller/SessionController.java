@@ -5,6 +5,7 @@ import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +60,7 @@ public class SessionController extends BaseController {
 
         String sessionId = session.getId();
         workspaceService.init(sessionId, audience, credentialsWithClient);
-        workspaceService.populate(sessionId, true);
+        workspaceService.get(sessionId).populate(true);
 
         return ResponseEntity.ok("session configured successfully");
     }
@@ -79,8 +80,9 @@ public class SessionController extends BaseController {
     @PostMapping("refresh")
     public ResponseEntity<?> refresh(HttpSession session) {
         logger.info("refreshing data for session " + session.getId());
-        workspaceService.get(session.getId()).clearCaches();
-        workspaceService.populate(session.getId(), true);
+        UserWorkspace workspace = workspaceService.get(session.getId());
+        workspace.clearCaches();
+        workspace.populate(true);
         return ResponseEntity.ok("refreshing");
     }
 }
