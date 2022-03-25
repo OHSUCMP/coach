@@ -18,6 +18,7 @@ public class FhirQueryManager {
     private static final String TOKEN_SUBJECT = "\\{subject}";
     private static final String TOKEN_ENCOUNTER = "\\{encounter}";
     private static final String TOKEN_CODE = "\\{code}";
+    private static final String TOKEN_CATEGORY = "\\{category}";
 
     private static final String TOKEN_RELATIVE_DATE = "\\{now([-+])([mMdDyY0-9]+)}"; // "\\{now[-+][mMdDyY0-9]+}";
     private static final Pattern PATTERN_RELATIVE_DATE = Pattern.compile("now([-+])([mMdDyY0-9]+)");
@@ -28,12 +29,12 @@ public class FhirQueryManager {
 
 //    @Value("${Base.Query}")                         private String baseQuery;
 
-    @Value("${Encounter.Query}")                    private String encounterQuery;
-    @Value("${Observation.Query}")                  private String observationQuery;
-    @Value("${Condition.EncounterDiagnosis.Query}") private String encounterDiagnosisConditionQuery;
-    @Value("${Goal.Query}")                         private String goalQuery;
-    @Value("${MedicationStatement.Query}")          private String medicationStatementQuery;
-    @Value("${MedicationRequest.Query}")            private String medicationRequestQuery;
+    @Value("${Encounter.Query}")            private String encounterQuery;
+    @Value("${Observation.Query}")          private String observationQuery;
+    @Value("${Condition.Query}")            private String conditionQuery;
+    @Value("${Goal.Query}")                 private String goalQuery;
+    @Value("${MedicationStatement.Query}")  private String medicationStatementQuery;
+    @Value("${MedicationRequest.Query}")    private String medicationRequestQuery;
 
     public String getPatientLookup(String id) {
         return buildQuery(patientLookup, params()
@@ -55,19 +56,21 @@ public class FhirQueryManager {
         return StringUtils.isNotEmpty(observationQuery);
     }
 
-    public String getObservationQuery(String patientId) {
+    public String getObservationQuery(String patientId, String category) {
         return buildQuery(observationQuery, params()
                 .add(TOKEN_SUBJECT, patientId)
+                .add(TOKEN_CATEGORY, category)
         );
     }
 
-    public boolean hasEncounterDiagnosisConditionQuery() {
-        return StringUtils.isNotEmpty(encounterDiagnosisConditionQuery);
+    public boolean hasConditionQuery() {
+        return StringUtils.isNotEmpty(conditionQuery);
     }
 
-    public String getEncounterDiagnosisConditionQuery(String patientId) {
-        return buildQuery(encounterDiagnosisConditionQuery, params()
+    public String getConditionQuery(String patientId, String category) {
+        return buildQuery(conditionQuery, params()
                 .add(TOKEN_SUBJECT, patientId)
+                .add(TOKEN_CATEGORY, category)
         );
     }
 
@@ -118,11 +121,10 @@ public class FhirQueryManager {
     }
 
     private String buildQuery(String template, Map<String, String> params) {
-        return template.replaceAll(TOKEN_ID, params.get(TOKEN_ID))
-                .replaceAll(TOKEN_SUBJECT, params.get(TOKEN_SUBJECT))
-                .replaceAll(TOKEN_CODE, params.get(TOKEN_CODE))
-                .replaceAll(TOKEN_ENCOUNTER, params.get(TOKEN_ENCOUNTER))
-                .replaceAll(TOKEN_RELATIVE_DATE, buildRelativeDate(extract(TOKEN_RELATIVE_DATE, template)));
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            template = template.replaceAll(entry.getKey(), entry.getValue());
+        }
+        return template.replaceAll(TOKEN_RELATIVE_DATE, buildRelativeDate(extract(TOKEN_RELATIVE_DATE, template)));
     }
 
     private String buildRelativeDate(String s) {

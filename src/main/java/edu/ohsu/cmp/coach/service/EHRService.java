@@ -47,7 +47,7 @@ public class EHRService extends BaseService {
         return patient;
     }
 
-    public List<Encounter> buildEncounterList(String sessionId) {
+    public List<Encounter> getEncounters(String sessionId) {
         logger.info("getting Encounters for session=" + sessionId);
 
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
@@ -72,13 +72,18 @@ public class EHRService extends BaseService {
         return list;
     }
 
-    public Bundle getObservations(String sessionId) {
-        logger.info("getting Observations for session=" + sessionId);
+    public Bundle getVitalsObservations(String sessionId) {
+        return getObservations(sessionId, "vital-signs");
+    }
+
+    public Bundle getObservations(String sessionId, String category) {
+        logger.info("getting " + category + " Observations for session=" + sessionId);
 
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
 
         Bundle bundle = fcc.search(fhirQueryManager.getObservationQuery(
-                fcc.getCredentials().getPatientId()
+                fcc.getCredentials().getPatientId(),
+                category
         ));
 
         if (bundle.hasEntry()) {
@@ -109,12 +114,18 @@ public class EHRService extends BaseService {
         return bundle;
     }
 
+
     public Bundle getEncounterDiagnosisConditions(String sessionId) {
-        logger.info("getting encounter-diagnosis Conditions for session=" + sessionId);
+        return getConditions(sessionId, "encounter-diagnosis");
+    }
+
+    public Bundle getConditions(String sessionId, String category) {
+        logger.info("getting " + category + " Conditions for session=" + sessionId);
 
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        Bundle bundle = fcc.search(fhirQueryManager.getEncounterDiagnosisConditionQuery(
-                fcc.getCredentials().getPatientId()
+        Bundle bundle = fcc.search(fhirQueryManager.getConditionQuery(
+                fcc.getCredentials().getPatientId(),
+                category
         ));
 
         // handle modifier flags

@@ -142,7 +142,7 @@ public class UserWorkspace {
             public Map<String, Encounter> apply(String s) {
                 EHRService svc = ctx.getBean(EHRService.class);
                 Map<String, Encounter> map = new LinkedHashMap<>();
-                for (Encounter encounter : svc.buildEncounterList(sessionId)) {
+                for (Encounter encounter : svc.getEncounters(sessionId)) {
                     for (String key : FhirUtil.buildKeys(encounter.getId(), encounter.getIdentifier())) {
                         map.put(key, encounter);
                     }

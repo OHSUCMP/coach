@@ -35,7 +35,7 @@ public class BloodPressureService extends BaseService {
 
     public List<BloodPressureModel> buildBloodPressureList(String sessionId) throws DataException {
         Map<String, List<Observation>> encounterObservationsMap = new HashMap<>();
-        Bundle observationBundle = ehrService.getObservations(sessionId);
+        Bundle observationBundle = ehrService.getVitalsObservations(sessionId);
         if (observationBundle.hasEntry()) {
             for (Bundle.BundleEntryComponent entry : observationBundle.getEntry()) {
                 if (entry.hasResource() && entry.getResource() instanceof Observation) {
