@@ -29,7 +29,8 @@ public class BloodPressureService extends BaseService {
     @Autowired
     private HomeBloodPressureReadingService hbprService;
 
-    // todo : complete this
+    @Autowired
+    private FHIRService fhirService;
 
     @Value("${fhir.observation.bp-write}")
     private Boolean storeRemotely;
@@ -147,11 +148,9 @@ public class BloodPressureService extends BaseService {
             // write BP reading to the FHIR server
 
             FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-            Bundle responseBundle = fcc.transact(bundle);
+            Bundle responseBundle = fhirService.transact(fcc, bundle);
 
-            // todo : process response
-
-            // read each response resource, and append to the OBSERVATIONS cache if created
+            // read each response resource, and append to the BP cache if created
             // also, create a fresh BloodPressureModel resource constructed from the actual resources
 
             Encounter encounter = null;

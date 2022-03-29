@@ -37,10 +37,13 @@ public class EHRService extends BaseService {
     @Autowired
     private FhirQueryManager fhirQueryManager;
 
+    @Autowired
+    private FHIRService fhirService;
+
     public Patient getPatient(String sessionId) {
         logger.info("getting Patient for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        return fcc.readByReference(Patient.class,
+        return fhirService.readByReference(fcc, Patient.class,
                 fhirQueryManager.getPatientLookup(fcc.getCredentials().getPatientId())
         );
     }
@@ -48,7 +51,7 @@ public class EHRService extends BaseService {
     public List<Encounter> getEncounters(String sessionId) {
         logger.info("getting Encounters for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        Bundle bundle = fcc.search(fhirQueryManager.getEncounterQuery(fcc.getCredentials().getPatientId()),
+        Bundle bundle = fhirService.search(fcc, fhirQueryManager.getEncounterQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {
@@ -85,7 +88,7 @@ public class EHRService extends BaseService {
     public Bundle getObservations(String sessionId, String code, Integer limit) {
         logger.info("getting " + code + " Observations for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        return fcc.search(fhirQueryManager.getObservationCodeQuery(fcc.getCredentials().getPatientId(), code),
+        return fhirService.search(fcc, fhirQueryManager.getObservationCodeQuery(fcc.getCredentials().getPatientId(), code),
                 new Function<Resource, Boolean>() {
             @Override
             public Boolean apply(Resource resource) {
@@ -116,7 +119,7 @@ public class EHRService extends BaseService {
     public Bundle getConditions(String sessionId, String category) {
         logger.info("getting " + category + " Conditions for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        return fcc.search(fhirQueryManager.getConditionQuery(fcc.getCredentials().getPatientId(), category),
+        return fhirService.search(fcc, fhirQueryManager.getConditionQuery(fcc.getCredentials().getPatientId(), category),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {
@@ -151,7 +154,7 @@ public class EHRService extends BaseService {
     public Bundle getGoals(String sessionId) {
         logger.info("getting Goals for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        return fcc.search(fhirQueryManager.getGoalQuery(fcc.getCredentials().getPatientId()),
+        return fhirService.search(fcc, fhirQueryManager.getGoalQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {
@@ -183,7 +186,7 @@ public class EHRService extends BaseService {
     public Bundle getMedicationStatements(String sessionId) {
         logger.info("getting MedicationStatements for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        return fcc.search(fhirQueryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()),
+        return fhirService.search(fcc, fhirQueryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {
@@ -204,7 +207,7 @@ public class EHRService extends BaseService {
         logger.info("getting MedicationRequests for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
 
-        Bundle bundle = fcc.search(fhirQueryManager.getMedicationRequestQuery(fcc.getCredentials().getPatientId()),
+        Bundle bundle = fhirService.search(fcc, fhirQueryManager.getMedicationRequestQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {
@@ -245,7 +248,7 @@ public class EHRService extends BaseService {
                     MedicationRequest mr = (MedicationRequest) entry.getResource();
                     if (mr.hasMedicationReference()) {
                         if ( ! FhirUtil.bundleContainsReference(bundle, mr.getMedicationReference()) ) {
-                            Medication m = fcc.readByReference(Medication.class, mr.getMedicationReference());
+                            Medication m = fhirService.readByReference(fcc, Medication.class, mr.getMedicationReference());
                             medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
                         }
                     }
