@@ -325,9 +325,9 @@ public class RecommendationService extends BaseService {
 
         e.setId("encounter-" + uuid);
         e.setStatus(Encounter.EncounterStatus.FINISHED);
-        e.getClass_().setSystem(BloodPressureModel.ENCOUNTER_CLASS_SYSTEM)
-                .setCode(BloodPressureModel.ENCOUNTER_CLASS_AMB)
-                .setDisplay("ambulatory");
+        e.getClass_().setSystem(fcm.getEncounterClassSystem())
+                .setCode(fcm.getEncounterClassAMBCode())
+                .setDisplay(fcm.getEncounterClassAMBDisplay());
 
         e.setSubject(new Reference().setReference(patientId));
 

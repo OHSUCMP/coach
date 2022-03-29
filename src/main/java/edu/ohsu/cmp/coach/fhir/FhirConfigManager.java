@@ -9,6 +9,12 @@ import org.springframework.stereotype.Component;
 @PropertySource("${fhirconfig.file}")
 public class FhirConfigManager {
 
+    @Value("${encounter.class.system}")         private String encounterClassSystem;
+    @Value("${encounter.class.amb.code}")       private String encounterClassAMBCode;
+    @Value("${encounter.class.amb.display}")    private String encounterClassAMBDisplay;
+    @Value("${encounter.class.hh.code}")        private String encounterClassHHCode;
+    @Value("${encounter.class.hh.display}")     private String encounterClassHHDisplay;
+
     @Value("${bp.system}")          private String bpSystem;
     @Value("${bp.code}")            private String bpCode;
     @Value("${bp.display}")         private String bpDisplay;
@@ -41,6 +47,26 @@ public class FhirConfigManager {
     @Value("${protocol.answer.no}")         private String protocolAnswerNo;
 
     @Value("${medication.valueset.oid}")    private String medicationValueSetOid;
+
+    public String getEncounterClassSystem() {
+        return encounterClassSystem;
+    }
+
+    public String getEncounterClassAMBCode() {
+        return encounterClassAMBCode;
+    }
+
+    public String getEncounterClassAMBDisplay() {
+        return encounterClassAMBDisplay;
+    }
+
+    public String getEncounterClassHHCode() {
+        return encounterClassHHCode;
+    }
+
+    public String getEncounterClassHHDisplay() {
+        return encounterClassHHDisplay;
+    }
 
     public String getBpSystem() {
         return bpSystem;

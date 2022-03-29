@@ -66,11 +66,10 @@ public class FhirQueryManager {
         return StringUtils.isNotEmpty(observationCodeQuery);
     }
 
-    public String getObservationCodeQuery(String patientId, String code, Integer limit) {
+    public String getObservationCodeQuery(String patientId, String code) {
         return buildQuery(observationCodeQuery, params()
                 .add(TOKEN_SUBJECT, patientId)
-                .add(TOKEN_CODE, code),
-                limit
+                .add(TOKEN_CODE, code)
         );
     }
 

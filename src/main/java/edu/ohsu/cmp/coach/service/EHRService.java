@@ -1,7 +1,6 @@
 package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
-import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.util.FhirUtil;
@@ -13,8 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 
 
 /**
@@ -41,30 +40,41 @@ public class EHRService extends BaseService {
     public Patient getPatient(String sessionId) {
         logger.info("getting Patient for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        Patient patient = fcc.readByReference(Patient.class,
+        return fcc.readByReference(Patient.class,
                 fhirQueryManager.getPatientLookup(fcc.getCredentials().getPatientId())
         );
-        return patient;
     }
 
     public List<Encounter> getEncounters(String sessionId) {
         logger.info("getting Encounters for session=" + sessionId);
-
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
+        Bundle bundle = fcc.search(fhirQueryManager.getEncounterQuery(fcc.getCredentials().getPatientId()),
+                new Function<Resource, Boolean>() {
+                    @Override
+                    public Boolean apply(Resource resource) {
+                        if (resource instanceof Encounter) {
+                            Encounter encounter = (Encounter) resource;
+                            if (encounter.getStatus() != Encounter.EncounterStatus.FINISHED) {
+                                logger.debug("removing Encounter " + encounter.getId() + " - invalid status");
+                                return false;
+                            }
 
-        Bundle bundle = fcc.search(fhirQueryManager.getEncounterQuery(
-                fcc.getCredentials().getPatientId()
-        ));
+                            if (!FhirUtil.isAmbEncounter(fcm, encounter) && !FhirUtil.isHomeHealthEncounter(fcm, encounter)) {
+                                logger.debug("removing Encounter " + encounter.getId() + " - invalid class");
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    }
+                }
+        );
 
         List<Encounter> list = new ArrayList<>();
         if (bundle.hasEntry()) {
             for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
                 if (entry.hasResource() && entry.getResource() instanceof Encounter) {
-                    Encounter encounter = (Encounter) entry.getResource();
-                    if (encounter.getStatus() == Encounter.EncounterStatus.FINISHED &&
-                            (BloodPressureModel.isAmbEncounter(encounter) || BloodPressureModel.isHomeHealthEncounter(encounter))) {
-                        list.add(encounter);
-                    }
+                    list.add((Encounter) entry.getResource());
                 }
             }
         }
@@ -74,42 +84,30 @@ public class EHRService extends BaseService {
 
     public Bundle getObservations(String sessionId, String code, Integer limit) {
         logger.info("getting " + code + " Observations for session=" + sessionId);
-
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-
-        Bundle bundle = fcc.search(fhirQueryManager.getObservationCodeQuery(
-                fcc.getCredentials().getPatientId(),
-                code, limit
-        ), limit);
-
-        if (bundle.hasEntry()) {
-            Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
-            while (iter.hasNext()) {
-                Bundle.BundleEntryComponent entry = iter.next();
-                if (entry.hasResource() && entry.getResource() instanceof Observation) {
-                    Observation observation = (Observation) entry.getResource();
-
-                    // only allow "final", "amended", "corrected" status to pass
-
+        return fcc.search(fhirQueryManager.getObservationCodeQuery(fcc.getCredentials().getPatientId(), code),
+                new Function<Resource, Boolean>() {
+            @Override
+            public Boolean apply(Resource resource) {
+                if (resource instanceof Observation) {
+                    Observation observation = (Observation) resource;
                     if (observation.getStatus() != Observation.ObservationStatus.FINAL &&
                             observation.getStatus() != Observation.ObservationStatus.AMENDED &&
                             observation.getStatus() != Observation.ObservationStatus.CORRECTED) {
-                        logger.debug("removing Observation " + observation.getId() + " (invalid status)");
-                        iter.remove();
-                        continue;
+                        logger.debug("removing Observation " + observation.getId() + " - invalid status");
+                        return false;
                     }
 
                     if (!observation.hasEncounter()) {
                         logger.debug("removing Observation " + observation.getId() + " - no Encounter referenced");
-                        iter.remove();
+                        return false;
                     }
                 }
+
+                return true;
             }
-        }
-
-        return bundle;
+        }, limit);
     }
-
 
     public Bundle getEncounterDiagnosisConditions(String sessionId) {
         return getConditions(sessionId, "encounter-diagnosis");
@@ -117,171 +115,145 @@ public class EHRService extends BaseService {
 
     public Bundle getConditions(String sessionId, String category) {
         logger.info("getting " + category + " Conditions for session=" + sessionId);
-
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        Bundle bundle = fcc.search(fhirQueryManager.getConditionQuery(
-                fcc.getCredentials().getPatientId(),
-                category
-        ));
+        return fcc.search(fhirQueryManager.getConditionQuery(fcc.getCredentials().getPatientId(), category),
+                new Function<Resource, Boolean>() {
+                    @Override
+                    public Boolean apply(Resource resource) {
+                        if (resource instanceof Condition) {
+                            Condition c = (Condition) resource;
 
-        // handle modifier flags
-        Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
-        while (iter.hasNext()) {
-            Bundle.BundleEntryComponent entry = iter.next();
-            Resource r = entry.getResource();
-            if (r instanceof Condition) {
-                Condition c = (Condition) r;
+                            if (c.hasClinicalStatus()) {
+                                CodeableConcept cc = c.getClinicalStatus();
+                                if (!cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "active") &&
+                                        !cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "recurrence") &&
+                                        !cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "relapse")) {
+                                    logger.debug("removing Condition " + c.getId() + " - invalid clinicalStatus");
+                                    return false;
+                                }
+                            }
 
-                if (c.hasClinicalStatus()) {
-                    // only allow "active", "recurrence", and "relapse" clinicalStatus to pass
+                            if (c.hasVerificationStatus()) {
+                                CodeableConcept cc = c.getVerificationStatus();
+                                if (!cc.hasCoding(CONDITION_VERIFICATIONSTATUS_SYSTEM, "confirmed")) {
+                                    logger.debug("removing Condition " + c.getId() + " - invalid verificationStatus");
+                                    return false;
+                                }
+                            }
+                        }
 
-                    CodeableConcept cc = c.getClinicalStatus();
-                    if (!cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "active") &&
-                            !cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "recurrence") &&
-                            !cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "relapse")) {
-                        logger.debug("removing Condition " + c.getId() + " (invalid clinicalStatus)");
-                        iter.remove();
-                        continue;
+                        return true;
                     }
                 }
-
-                if (c.hasVerificationStatus()) {
-                    // only allow "confirmed" verificationStatus to pass
-
-                    CodeableConcept cc = c.getVerificationStatus();
-                    if (!cc.hasCoding(CONDITION_VERIFICATIONSTATUS_SYSTEM, "confirmed")) {
-                        logger.debug("removing Condition " + c.getId() + " (invalid verificationStatus)");
-                        iter.remove();
-                    }
-                }
-            }
-        }
-
-        return bundle;
+        );
     }
 
     public Bundle getGoals(String sessionId) {
         logger.info("getting Goals for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
+        return fcc.search(fhirQueryManager.getGoalQuery(fcc.getCredentials().getPatientId()),
+                new Function<Resource, Boolean>() {
+                    @Override
+                    public Boolean apply(Resource resource) {
+                        if (resource instanceof Goal) {
+                            Goal g = (Goal) resource;
 
-        Bundle bundle = fcc.search(fhirQueryManager.getGoalQuery(
-                fcc.getCredentials().getPatientId()
-        ));
+                            if (g.getLifecycleStatus() != Goal.GoalLifecycleStatus.ACTIVE) {
+                                logger.debug("removing Goal " + g.getId() + " - invalid lifecycleStatus");
+                                return false;
+                            }
 
-        Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
-        while (iter.hasNext()) {
-            Bundle.BundleEntryComponent entry = iter.next();
-            Resource r = entry.getResource();
-            if (r instanceof Goal) {
-                Goal g = (Goal) r;
+                            if (g.hasAchievementStatus()) {
+                                CodeableConcept cc = g.getAchievementStatus();
+                                if (!cc.hasCoding(
+                                        GoalModel.ACHIEVEMENT_STATUS_CODING_SYSTEM,
+                                        GoalModel.ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE)) {
+                                    logger.debug("removing Goal " + g.getId() + " - invalid achievementStatus");
+                                    return false;
+                                }
+                            }
+                        }
 
-                if (g.getLifecycleStatus() != Goal.GoalLifecycleStatus.ACTIVE) {
-                    // only allow "active" lifecycleStatus
-                    logger.debug("removing Goal " + g.getId() + " (invalid lifecycleStatus)");
-                    iter.remove();
-                    continue;
-                }
-
-                if (g.hasAchievementStatus()) {
-                    // if achievementStatus is set, require "in-progress"
-
-                    CodeableConcept cc = g.getAchievementStatus();
-                    if (!cc.hasCoding(
-                            GoalModel.ACHIEVEMENT_STATUS_CODING_SYSTEM,
-                            GoalModel.ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE)) {
-                        logger.debug("removing Goal " + g.getId() + " (invalid achievementStatus)");
-                        iter.remove();
+                        return true;
                     }
                 }
-            }
-        }
-
-        return bundle;
+        );
     }
 
     public Bundle getMedicationStatements(String sessionId) {
         logger.info("getting MedicationStatements for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-
-        Bundle bundle = fcc.search(fhirQueryManager.getMedicationStatementQuery(
-                fcc.getCredentials().getPatientId()
-        ));
-
-        if (bundle == null) return null;    // optional considering MedicationRequest
-
-        Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
-        while (iter.hasNext()) {
-            Bundle.BundleEntryComponent entry = iter.next();
-            Resource r = entry.getResource();
-            if (r instanceof MedicationStatement) {
-                MedicationStatement ms = (MedicationStatement) r;
-                if (ms.getStatus() != MedicationStatement.MedicationStatementStatus.ACTIVE) {
-                    // require "active" status
-                    logger.debug("removing MedicationStatement " + ms.getId() + " (invalid status)");
-                    iter.remove();
+        return fcc.search(fhirQueryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()),
+                new Function<Resource, Boolean>() {
+                    @Override
+                    public Boolean apply(Resource resource) {
+                        if (resource instanceof MedicationStatement) {
+                            MedicationStatement ms = (MedicationStatement) resource;
+                            if (ms.getStatus() != MedicationStatement.MedicationStatementStatus.ACTIVE) {
+                                logger.debug("removing MedicationStatement " + ms.getId() + " - invalid status");
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
                 }
-            }
-        }
-
-        return bundle;
+        );
     }
 
     public Bundle getMedicationRequests(String sessionId) {
         logger.info("getting MedicationRequests for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
 
-        Bundle bundle = fcc.search(fhirQueryManager.getMedicationRequestQuery(
-                fcc.getCredentials().getPatientId()
-        ));
+        Bundle bundle = fcc.search(fhirQueryManager.getMedicationRequestQuery(fcc.getCredentials().getPatientId()),
+                new Function<Resource, Boolean>() {
+                    @Override
+                    public Boolean apply(Resource resource) {
+                        if (resource instanceof MedicationRequest) {
+                            MedicationRequest mr = (MedicationRequest) resource;
+
+                            if (mr.getStatus() != MedicationRequest.MedicationRequestStatus.ACTIVE) {
+                                logger.debug("removing MedicationRequest " + mr.getId() + " - invalid status");
+                                return false;
+                            }
+
+                            if (mr.getIntent() != MedicationRequest.MedicationRequestIntent.ORDER) {
+                                logger.debug("removing MedicationRequest " + mr.getId() + " - invalid intent");
+                                return false;
+                            }
+
+                            if (mr.hasDoNotPerform() && !mr.getDoNotPerform()) {
+                                logger.debug("removing MedicationRequest " + mr.getId() + " - doNotPerform");
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    }
+                }
+        );
 
         if (bundle == null) return null;    // optional considering MedicationStatement
 
-        Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
-        while (iter.hasNext()) {
-            Bundle.BundleEntryComponent entry = iter.next();
-            Resource r = entry.getResource();
-            if (r instanceof MedicationRequest) {
-                MedicationRequest mr = (MedicationRequest) r;
+        if (bundle.hasEntry()) {
+            // creating a separate bundle for Medications, instead of adding them directly to the main
+            // bundle while iterating over it (below).  this prevents ConcurrentModificationException
+            Bundle medicationBundle = new Bundle();
+            medicationBundle.setType(Bundle.BundleType.COLLECTION);
 
-                if (mr.getStatus() != MedicationRequest.MedicationRequestStatus.ACTIVE) {
-                    logger.debug("removing MedicationRequest " + mr.getId() + " (invalid status)");
-                    iter.remove();
-                    continue;
-                }
-
-                if (mr.getIntent() != MedicationRequest.MedicationRequestIntent.ORDER) {
-                    logger.debug("removing MedicationRequest " + mr.getId() + " (invalid intent)");
-                    iter.remove();
-                    continue;
-                }
-
-                if (mr.hasDoNotPerform() && !mr.getDoNotPerform()) {
-                    logger.debug("removing MedicationRequest " + mr.getId() + " (doNotPerform)");
-                    iter.remove();
-                }
-            }
-        }
-
-        // creating a separate bundle for Medications, instead of adding them directly to the main
-        // bundle while iterating over it (below).  this prevents ConcurrentModificationException
-        Bundle medicationBundle = new Bundle();
-        medicationBundle.setType(Bundle.BundleType.COLLECTION);
-
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            if (entry.getResource() instanceof MedicationRequest) {
-                MedicationRequest mr = (MedicationRequest) entry.getResource();
-                if (mr.hasMedicationReference()) {
-                    if ( ! FhirUtil.bundleContainsReference(bundle, mr.getMedicationReference()) ) {
-                        Medication m = fcc.readByReference(Medication.class, mr.getMedicationReference());
-                        medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
+            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+                if (entry.getResource() instanceof MedicationRequest) {
+                    MedicationRequest mr = (MedicationRequest) entry.getResource();
+                    if (mr.hasMedicationReference()) {
+                        if ( ! FhirUtil.bundleContainsReference(bundle, mr.getMedicationReference()) ) {
+                            Medication m = fcc.readByReference(Medication.class, mr.getMedicationReference());
+                            medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
+                        }
                     }
                 }
             }
-        }
 
-        if (medicationBundle.hasEntry()) {
-            for (Bundle.BundleEntryComponent entry : medicationBundle.getEntry()) {
-                bundle.addEntry(entry);
+            if (medicationBundle.hasEntry()) {
+                bundle.getEntry().addAll(medicationBundle.getEntry());
             }
         }
 

@@ -16,10 +16,6 @@ import java.util.Date;
 import java.util.UUID;
 
 public class BloodPressureModel implements FHIRCompatible {
-    public static final String ENCOUNTER_CLASS_SYSTEM = "http://terminology.hl7.org/CodeSystem/v3-ActCode";
-    public static final String ENCOUNTER_CLASS_AMB = "AMB";
-    public static final String ENCOUNTER_CLASS_HOMEHEALTH = "HH";
-
     public static final String OBSERVATION_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category";
     public static final String OBSERVATION_CATEGORY_CODE = "vital-signs";
 
@@ -51,18 +47,6 @@ public class BloodPressureModel implements FHIRCompatible {
         OTHER,
         UNKNOWN
     }
-
-//////////////////////////////////////////////////////////////////////////////
-// static helper methods
-//
-    public static boolean isAmbEncounter(Encounter e) {
-        return e != null && e.getClass_().is(ENCOUNTER_CLASS_SYSTEM, ENCOUNTER_CLASS_AMB);
-    }
-
-    public static boolean isHomeHealthEncounter(Encounter e) {
-        return e != null && e.getClass_().is(ENCOUNTER_CLASS_SYSTEM, ENCOUNTER_CLASS_HOMEHEALTH);
-    }
-
 
 //////////////////////////////////////////////////////////////////////////////
 // instance methods
@@ -105,9 +89,9 @@ public class BloodPressureModel implements FHIRCompatible {
         //        to retain the ids for the Encounter and other Observations?
 
 
-        if (isAmbEncounter(enc))                source = Source.OFFICE;
-        else if (isHomeHealthEncounter(enc))    source = Source.HOME;
-        else                                    source = Source.UNKNOWN;
+        if (FhirUtil.isAmbEncounter(fcm, enc))              source = Source.OFFICE;
+        else if (FhirUtil.isHomeHealthEncounter(fcm, enc))  source = Source.HOME;
+        else                                                source = Source.UNKNOWN;
 
         for (Observation.ObservationComponentComponent occ : bpObservation.getComponent()) {
             ValueType valueType = ValueType.UNKNOWN;
@@ -253,7 +237,7 @@ public class BloodPressureModel implements FHIRCompatible {
             // implementations don't handle them well either.
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
 
-            Encounter enc = buildNewHomeHealthEncounter(patientIdRef);
+            Encounter enc = buildNewHomeHealthEncounter(fcm, patientIdRef);
             bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(enc));
 
             Observation bpObservation = buildHomeHealthBloodPressureObservation(patientIdRef, enc, fcm);
@@ -277,16 +261,16 @@ public class BloodPressureModel implements FHIRCompatible {
 //////////////////////////////////////////////////////////////////////////////
 // private methods
 //
-    private Encounter buildNewHomeHealthEncounter(String patientId) {
+    private Encounter buildNewHomeHealthEncounter(FhirConfigManager fcm, String patientId) {
         Encounter e = new Encounter();
 
         e.setId(genTemporaryId());
 
         e.setStatus(Encounter.EncounterStatus.FINISHED);
 
-        e.getClass_().setSystem(BloodPressureModel.ENCOUNTER_CLASS_SYSTEM)
-                .setCode(BloodPressureModel.ENCOUNTER_CLASS_HOMEHEALTH)
-                .setDisplay("home health");
+        e.getClass_().setSystem(fcm.getEncounterClassSystem())
+                .setCode(fcm.getEncounterClassHHCode())
+                .setDisplay(fcm.getEncounterClassHHDisplay());
 
         e.setSubject(new Reference().setReference(patientId));
 

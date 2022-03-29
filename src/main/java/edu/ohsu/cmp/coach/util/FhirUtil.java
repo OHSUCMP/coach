@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
+import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.FHIRCompatible;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -27,6 +28,14 @@ public class FhirUtil {
         client.registerInterceptor(authInterceptor);
 
         return client;
+    }
+
+    public static boolean isAmbEncounter(FhirConfigManager fcm, Encounter e) {
+        return e != null && e.getClass_().is(fcm.getEncounterClassSystem(), fcm.getEncounterClassAMBCode());
+    }
+
+    public static boolean isHomeHealthEncounter(FhirConfigManager fcm, Encounter e) {
+        return e != null && e.getClass_().is(fcm.getEncounterClassSystem(), fcm.getEncounterClassHHCode());
     }
 
     public static List<String> buildKeys(Reference reference) {

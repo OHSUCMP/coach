@@ -12,6 +12,9 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
+import java.util.function.Function;
+
 public class FHIRCredentialsWithClient {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -121,10 +124,14 @@ public class FHIRCredentialsWithClient {
 
     // search function to facilitate getting large datasets involving multi-paginated queries
     public Bundle search(String fhirQuery) {
-        return search(fhirQuery, null);
+        return search(fhirQuery, null, null);
     }
 
-    public Bundle search(String fhirQuery, Integer limit) {
+    public Bundle search(String fhirQuery, Function<Resource, Boolean> validityFunction) {
+        return search(fhirQuery, validityFunction, null);
+    }
+
+    public Bundle search(String fhirQuery, Function<Resource, Boolean> validityFunction, Integer limit) {
         if (fhirQuery == null || fhirQuery.trim().equals("")) return null;
 
         logger.info("search: executing query: " + fhirQuery);
@@ -142,6 +149,10 @@ public class FHIRCredentialsWithClient {
         } catch (InvalidRequestException ire) {
             logger.error("caught " + ire.getClass().getName() + " executing search: " + fhirQuery, ire);
             throw ire;
+        }
+
+        if (validityFunction != null) {
+            filterInvalidResources(bundle, validityFunction);
         }
 
         boolean hitLimit = limit != null && bundle.hasEntry() && bundle.getEntry().size() >= limit;
@@ -162,6 +173,10 @@ public class FHIRCredentialsWithClient {
                 bundle = client.loadPage().next(bundle).execute();
 
                 logger.info("search (page " + page + "): " + fhirQuery + " (size=" + bundle.getTotal() + ")");
+
+                if (validityFunction != null) {
+                    filterInvalidResources(bundle, validityFunction);
+                }
 
                 compositeBundle.consume(bundle);
 
@@ -194,5 +209,20 @@ public class FHIRCredentialsWithClient {
         }
 
         return response;
+    }
+
+    private void filterInvalidResources(Bundle bundle, Function<Resource, Boolean> validityFunction) {
+        if (bundle != null && bundle.hasEntry()) {
+            Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
+            while (iter.hasNext()) {
+                Bundle.BundleEntryComponent entry = iter.next();
+                if (entry.hasResource()) {
+                    boolean isValid = validityFunction.apply(entry.getResource());
+                    if ( ! isValid ) {
+                        iter.remove();
+                    }
+                }
+            }
+        }
     }
 }
