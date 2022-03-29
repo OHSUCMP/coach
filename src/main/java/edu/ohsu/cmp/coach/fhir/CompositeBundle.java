@@ -33,4 +33,8 @@ public class CompositeBundle {
     public Bundle getBundle() {
         return bundle;
     }
+
+    public int size() {
+        return bundle.hasEntry() ? bundle.getEntry().size() : 0;
+    }
 }

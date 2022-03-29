@@ -80,7 +80,7 @@ public class EHRService extends BaseService {
         Bundle bundle = fcc.search(fhirQueryManager.getObservationCodeQuery(
                 fcc.getCredentials().getPatientId(),
                 code, limit
-        ));
+        ), limit);
 
         if (bundle.hasEntry()) {
             Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();

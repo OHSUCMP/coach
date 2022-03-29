@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.model.fhir;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
+import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
@@ -143,43 +144,39 @@ public class FHIRCredentialsWithClient {
             throw ire;
         }
 
-        if (bundle.getLink(Bundle.LINK_NEXT) == null) {
+        boolean hitLimit = limit != null && bundle.hasEntry() && bundle.getEntry().size() >= limit;
+
+        if (bundle.getLink(Bundle.LINK_NEXT) == null || hitLimit) {
+            bundle = FhirUtil.truncate(bundle, limit);
             if (logger.isDebugEnabled()) {
                 logger.debug("bundle = " + FhirUtil.toJson(bundle));
             }
-
-            return FhirUtil.truncate(bundle, limit);
+            return bundle;
 
         } else {
-            Bundle compositeBundle = new Bundle();
-            compositeBundle.setType(Bundle.BundleType.COLLECTION);
-
-            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-                compositeBundle.getEntry().add(entry);
-            }
+            CompositeBundle compositeBundle = new CompositeBundle();
+            compositeBundle.consume(bundle);
 
             int page = 2;
-            while (bundle.getLink(Bundle.LINK_NEXT) != null) {
-                if (limit != null && compositeBundle.getEntry().size() >= limit) {
-                    break;
-                }
-
+            while (bundle.getLink(Bundle.LINK_NEXT) != null && ! hitLimit) {
                 bundle = client.loadPage().next(bundle).execute();
 
                 logger.info("search (page " + page + "): " + fhirQuery + " (size=" + bundle.getTotal() + ")");
 
-                for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-                    compositeBundle.getEntry().add(entry);
-                }
+                compositeBundle.consume(bundle);
+
+                hitLimit = limit != null && compositeBundle.size() >= limit;
 
                 page ++;
             }
 
+            bundle = limit != null ?
+                    FhirUtil.truncate(compositeBundle.getBundle(), limit) :
+                    compositeBundle.getBundle();
             if (logger.isDebugEnabled()) {
-                logger.debug("compositeBundle = " + FhirUtil.toJson(compositeBundle));
+                logger.debug("bundle = " + FhirUtil.toJson(bundle));
             }
-
-            return FhirUtil.truncate(compositeBundle, limit);
+            return bundle;
         }
     }
 
