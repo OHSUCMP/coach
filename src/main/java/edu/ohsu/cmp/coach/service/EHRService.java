@@ -72,18 +72,14 @@ public class EHRService extends BaseService {
         return list;
     }
 
-    public Bundle getVitalsObservations(String sessionId) {
-        return getObservations(sessionId, "vital-signs");
-    }
-
-    public Bundle getObservations(String sessionId, String category) {
-        logger.info("getting " + category + " Observations for session=" + sessionId);
+    public Bundle getObservations(String sessionId, String code, Integer limit) {
+        logger.info("getting " + code + " Observations for session=" + sessionId);
 
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
 
-        Bundle bundle = fcc.search(fhirQueryManager.getObservationQuery(
+        Bundle bundle = fcc.search(fhirQueryManager.getObservationCodeQuery(
                 fcc.getCredentials().getPatientId(),
-                category
+                code, limit
         ));
 
         if (bundle.hasEntry()) {

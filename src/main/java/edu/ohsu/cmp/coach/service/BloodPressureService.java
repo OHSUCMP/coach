@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.service;
 
+import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.exception.DataException;
@@ -35,7 +36,13 @@ public class BloodPressureService extends BaseService {
 
     public List<BloodPressureModel> buildBloodPressureList(String sessionId) throws DataException {
         Map<String, List<Observation>> encounterObservationsMap = new HashMap<>();
-        Bundle observationBundle = ehrService.getVitalsObservations(sessionId);
+
+        CompositeBundle compositeBundle = new CompositeBundle();
+        compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getBpSystem() + "|" + fcm.getBpCode(), fcm.getBpLimit()));
+        compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getPulseSystem() + "|" + fcm.getPulseCode(), null));
+        compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getProtocolSystem() + "|" + fcm.getProtocolCode(), null));
+        Bundle observationBundle = compositeBundle.getBundle();
+
         if (observationBundle.hasEntry()) {
             for (Bundle.BundleEntryComponent entry : observationBundle.getEntry()) {
                 if (entry.hasResource() && entry.getResource() instanceof Observation) {

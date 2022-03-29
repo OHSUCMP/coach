@@ -27,10 +27,9 @@ public class FhirQueryManager {
 
     @Value("${Patient.Lookup}")                     private String patientLookup;
 
-//    @Value("${Base.Query}")                         private String baseQuery;
-
     @Value("${Encounter.Query}")            private String encounterQuery;
-    @Value("${Observation.Query}")          private String observationQuery;
+    @Value("${Observation.Category.Query}") private String observationCategoryQuery;
+    @Value("${Observation.Code.Query}")     private String observationCodeQuery;
     @Value("${Condition.Query}")            private String conditionQuery;
     @Value("${Goal.Query}")                 private String goalQuery;
     @Value("${MedicationStatement.Query}")  private String medicationStatementQuery;
@@ -52,14 +51,26 @@ public class FhirQueryManager {
         );
     }
 
-    public boolean hasObservationQuery() {
-        return StringUtils.isNotEmpty(observationQuery);
+    public boolean hasObservationCategoryQuery() {
+        return StringUtils.isNotEmpty(observationCategoryQuery);
     }
 
-    public String getObservationQuery(String patientId, String category) {
-        return buildQuery(observationQuery, params()
+    public String getObservationCategoryQuery(String patientId, String category) {
+        return buildQuery(observationCategoryQuery, params()
                 .add(TOKEN_SUBJECT, patientId)
                 .add(TOKEN_CATEGORY, category)
+        );
+    }
+
+    public boolean hasObservationCodeQuery() {
+        return StringUtils.isNotEmpty(observationCodeQuery);
+    }
+
+    public String getObservationCodeQuery(String patientId, String code, Integer limit) {
+        return buildQuery(observationCodeQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+                .add(TOKEN_CODE, code),
+                limit
         );
     }
 
@@ -121,10 +132,17 @@ public class FhirQueryManager {
     }
 
     private String buildQuery(String template, Map<String, String> params) {
+        return buildQuery(template, params, null);
+    }
+
+    private String buildQuery(String template, Map<String, String> params, Integer limit) {
         for (Map.Entry<String, String> entry : params.entrySet()) {
             template = template.replaceAll(entry.getKey(), entry.getValue());
         }
-        return template.replaceAll(TOKEN_RELATIVE_DATE, buildRelativeDate(extract(TOKEN_RELATIVE_DATE, template)));
+        template = template.replaceAll(TOKEN_RELATIVE_DATE, buildRelativeDate(extract(TOKEN_RELATIVE_DATE, template)));
+        return limit != null ?
+                template + "&_count=" + limit + "&_total=" + limit :
+                template;
     }
 
     private String buildRelativeDate(String s) {

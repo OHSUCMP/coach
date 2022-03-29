@@ -8,7 +8,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.coach.entity.app.Counseling;
 import edu.ohsu.cmp.coach.entity.app.MyGoal;
-import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
+import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.AdverseEventModel;
@@ -25,7 +25,6 @@ import edu.ohsu.cmp.coach.util.CDSHooksUtil;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -218,36 +217,6 @@ public class RecommendationService extends BaseService {
         }
 
         return cards;
-    }
-
-    private static final class CompositeBundle {
-        private Bundle bundle;
-
-        public CompositeBundle() {
-            bundle = new Bundle();
-            bundle.setType(Bundle.BundleType.COLLECTION);
-        }
-
-        public void consume(IBaseResource resource) {
-            if (resource != null) {
-                if (resource instanceof Bundle) {
-                    for (Bundle.BundleEntryComponent entry : ((Bundle) resource).getEntry()) {
-                        bundle.addEntry(entry.copy());
-                    }
-
-                } else if (resource instanceof Resource) {
-                    Resource r = (Resource) resource;
-                    bundle.addEntry(new Bundle.BundleEntryComponent().setFullUrl(r.getId()).setResource(r));
-
-                } else {
-                    throw new CaseNotHandledException("couldn't handle " + resource.getClass().getName());
-                }
-            }
-        }
-
-        public Bundle getBundle() {
-            return bundle;
-        }
     }
 
     private Bundle buildCounselingBundle(String sessionId, String patientId) {
