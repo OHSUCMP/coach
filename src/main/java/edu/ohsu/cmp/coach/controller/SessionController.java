@@ -60,7 +60,7 @@ public class SessionController extends BaseController {
 
         String sessionId = session.getId();
         workspaceService.init(sessionId, audience, credentialsWithClient);
-        workspaceService.get(sessionId).populate(true);
+        workspaceService.get(sessionId).populate();
 
         return ResponseEntity.ok("session configured successfully");
     }
@@ -79,10 +79,10 @@ public class SessionController extends BaseController {
 
     @PostMapping("refresh")
     public ResponseEntity<?> refresh(HttpSession session) {
-        logger.info("refreshing data for session " + session.getId());
+        logger.info("refreshing data for session=" + session.getId());
         UserWorkspace workspace = workspaceService.get(session.getId());
         workspace.clearCaches();
-        workspace.populate(true);
+        workspace.populate();
         return ResponseEntity.ok("refreshing");
     }
 }

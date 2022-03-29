@@ -6,27 +6,25 @@ import com.github.mustachejava.MustacheFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import edu.ohsu.cmp.coach.util.CDSHooksUtil;
-import edu.ohsu.cmp.coach.model.cqfruler.CDSCard;
-import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
-import edu.ohsu.cmp.coach.model.cqfruler.CDSHookResponse;
-import edu.ohsu.cmp.coach.model.cqfruler.HookRequest;
 import edu.ohsu.cmp.coach.entity.app.Counseling;
-import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.entity.app.MyGoal;
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.AdverseEventModel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSCard;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSHookResponse;
+import edu.ohsu.cmp.coach.model.cqfruler.HookRequest;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
+import edu.ohsu.cmp.coach.util.CDSHooksUtil;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
-import org.apache.commons.lang3.StringUtils;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
@@ -70,7 +68,7 @@ public class RecommendationService extends BaseService {
         this.cdsHookOrder = Arrays.asList(cdsHookOrder.split("\\s*,\\s*"));
     }
 
-    public List<CDSHook> getCDSHooks() throws IOException {
+    public List<CDSHook> getOrderedCDSHooks() throws IOException {
         Map<String, CDSHook> map = new LinkedHashMap<>();
         for (CDSHook cdsHook : CDSHooksUtil.getCDSHooks(TESTING, cdsHooksEndpointURL)) {
             map.put(cdsHook.getId(), cdsHook);
@@ -376,65 +374,6 @@ public class RecommendationService extends BaseService {
 
         return e;
     }
-
-    private Observation buildHomeBloodPressureObservation(String patientId, HomeBloodPressureReading item) {
-        // adapted from https://www.programcreek.com/java-api-examples/?api=org.hl7.fhir.dstu3.model.Observation
-        String uuid = UUID.randomUUID().toString();
-
-        Observation o = new Observation();
-
-        o.setId("observation-bp-" + uuid);
-        o.setSubject(new Reference().setReference(patientId));
-
-// todo : we're now associating BP observations with Encounters.  setting Encounter reference here is commented out ...
-//        is there something in the downstream CQL that expects/requires/cares about this Observation *not* having
-//        an associated Encounter?
-
-//        o.setEncounter(new Reference().setReference(encounterId));
-
-        o.setStatus(Observation.ObservationStatus.FINAL);
-        o.getCode().addCoding()
-                .setCode(fcm.getBpCode())
-                .setSystem(fcm.getBpSystem());
-
-        if (StringUtils.isNotEmpty(fcm.getBpHomeSystem()) && StringUtils.isNotEmpty(fcm.getBpHomeCode())) {
-            o.getCode().addCoding()
-                    .setCode(fcm.getBpHomeCode())
-                    .setSystem(fcm.getBpHomeSystem())
-                    .setDisplay(fcm.getBpHomeDisplay());
-        }
-
-        // setting MeasurementSettingExt to indicate taken in a "home" setting
-        // see https://browser.ihtsdotools.org/?perspective=full&conceptId1=264362003&edition=MAIN/SNOMEDCT-US/2021-09-01&release=&languages=en
-        o.addExtension(new Extension()
-                .setUrl("http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt")
-                .setValue(new Coding()
-                        .setCode("264362003")
-                        .setSystem("http://snomed.info/sct")));
-
-        o.setEffective(new DateTimeType(item.getReadingDate()));
-
-        Observation.ObservationComponentComponent systolic = new Observation.ObservationComponentComponent();
-        systolic.getCode().addCoding().setCode(fcm.getBpSystolicCode()).setSystem(fcm.getBpSystem());
-        systolic.setValue(new Quantity());
-        systolic.getValueQuantity().setCode(fcm.getBpValueCode());
-        systolic.getValueQuantity().setSystem(fcm.getBpValueSystem());
-        systolic.getValueQuantity().setUnit(fcm.getBpValueUnit());
-        systolic.getValueQuantity().setValue(item.getSystolic());
-        o.getComponent().add(systolic);
-
-        Observation.ObservationComponentComponent diastolic = new Observation.ObservationComponentComponent();
-        diastolic.getCode().addCoding().setCode(fcm.getBpDiastolicCode()).setSystem(fcm.getBpSystem());
-        diastolic.setValue(new Quantity());
-        diastolic.getValueQuantity().setCode(fcm.getBpValueCode());
-        diastolic.getValueQuantity().setSystem(fcm.getBpValueSystem());
-        diastolic.getValueQuantity().setUnit(fcm.getBpValueUnit());
-        diastolic.getValueQuantity().setValue(item.getDiastolic());
-        o.getComponent().add(diastolic);
-
-        return o;
-    }
-
 
     /**
      * *** HACK ***

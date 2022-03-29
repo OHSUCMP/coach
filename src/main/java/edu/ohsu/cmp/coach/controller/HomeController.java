@@ -65,7 +65,7 @@ public class HomeController extends BaseController {
 
                 model.addAttribute("medicationsOfInterestName", medicationService.getMedicationsOfInterestName());
 
-                List<CDSHook> list = recommendationService.getCDSHooks();
+                List<CDSHook> list = recommendationService.getOrderedCDSHooks();
                 model.addAttribute("cdshooks", list);
 
             } catch (Exception e) {

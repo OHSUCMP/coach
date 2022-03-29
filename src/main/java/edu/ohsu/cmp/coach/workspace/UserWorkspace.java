@@ -52,16 +52,18 @@ public class UserWorkspace {
 
     private ExecutorService executorService;
 
-
-    public UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
-                         FHIRCredentialsWithClient fhirCredentialsWithClient, FhirConfigManager fcm,
-                         Long internalPatientId) {
+    protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
+                            FHIRCredentialsWithClient fhirCredentialsWithClient, FhirConfigManager fcm) {
         this.ctx = ctx;
         this.sessionId = sessionId;
         this.audience = audience;
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
         this.fcm = fcm;
-        this.internalPatientId = internalPatientId;
+
+        PatientService patientService = ctx.getBean(PatientService.class);
+        this.internalPatientId = patientService.getInternalPatientId(
+                fhirCredentialsWithClient.getCredentials().getPatientId()
+        );
 
         cache = Caffeine.newBuilder()
                 .expireAfterWrite(1, TimeUnit.DAYS)
@@ -86,30 +88,22 @@ public class UserWorkspace {
         return internalPatientId;
     }
 
-    public void populate(boolean runInNewThread) {
-        if (runInNewThread) {
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    doPopulate();
-                }
-            };
-            executorService.submit(runnable);
-        } else {
-            doPopulate();
-        }
-    }
-
-    private void doPopulate() {
-        logger.info("BEGIN populating workspace for session=" + sessionId);
-        getPatient();
-        getGoals();
-        getEncounters();
-        getBloodPressures();
-        getAdverseEvents();
-        getMedications();
-        getAllCards();
-        logger.info("DONE populating workspace for session=" + sessionId);
+    public void populate() {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                logger.info("BEGIN populating workspace for session=" + sessionId);
+                getPatient();
+                getGoals();
+                getEncounters();
+                getBloodPressures();
+                getAdverseEvents();
+                getMedications();
+                getAllCards();
+                logger.info("DONE populating workspace for session=" + sessionId);
+            }
+        };
+        executorService.submit(runnable);
     }
 
     public void runRecommendations() {
@@ -136,7 +130,21 @@ public class UserWorkspace {
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-    public Map<String, Encounter> getEncounterMap() {
+    public List<Encounter> getEncounters() {
+        return List.copyOf(getEncounterMap().values());
+    }
+
+    public Encounter getEncounter(Reference encounterReference) {
+        Map<String, Encounter> map = getEncounterMap();
+        for (String key : FhirUtil.buildKeys(encounterReference)) {
+            if (map.containsKey(key)) {
+                return map.get(key);
+            }
+        }
+        return null;
+    }
+
+    private Map<String, Encounter> getEncounterMap() {
         return (Map<String, Encounter>) cache.get(CACHE_ENCOUNTER, new Function<String, Map<String, Encounter>>() {
             @Override
             public Map<String, Encounter> apply(String s) {
@@ -150,20 +158,6 @@ public class UserWorkspace {
                 return map;
             }
         });
-    }
-
-    public List<Encounter> getEncounters() {
-        return List.copyOf(getEncounterMap().values());
-    }
-
-    public Encounter getEncounter(Reference encounterReference) {
-        Map<String, Encounter> map = getEncounterMap();
-        for (String key : FhirUtil.buildKeys(encounterReference)) {
-            if (map.containsKey(key)) {
-                return map.get(key);
-            }
-        }
-        return null;
     }
 
     public PatientModel getPatient() {
@@ -232,7 +226,7 @@ public class UserWorkspace {
         Map<String, List<Card>> map = new LinkedHashMap<>();
         RecommendationService svc = ctx.getBean(RecommendationService.class);
         try {
-            for (CDSHook hook : svc.getCDSHooks()) {
+            for (CDSHook hook : svc.getOrderedCDSHooks()) {
                 try {
                     map.put(hook.getId(), getCards(hook.getId()));
                 } catch (Exception e) {
