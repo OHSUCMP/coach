@@ -126,7 +126,7 @@ public class FHIRCredentialsWithClient {
     public Bundle search(String fhirQuery, Integer limit) {
         if (fhirQuery == null || fhirQuery.trim().equals("")) return null;
 
-        logger.info("search: " + fhirQuery);
+        logger.info("search: executing query: " + fhirQuery);
 
         Bundle bundle;
         try {
@@ -136,7 +136,7 @@ public class FHIRCredentialsWithClient {
                     .returnBundle(Bundle.class)
                     .execute();
 
-            logger.info("search: " + fhirQuery + " (size=" + bundle.getTotal() + ")");
+            logger.info("search: got " + bundle.getTotal() + " records for query: " + fhirQuery);
 
         } catch (InvalidRequestException ire) {
             logger.error("caught " + ire.getClass().getName() + " executing search: " + fhirQuery, ire);

@@ -148,6 +148,9 @@ public class UserWorkspace {
         return (Map<String, Encounter>) cache.get(CACHE_ENCOUNTER, new Function<String, Map<String, Encounter>>() {
             @Override
             public Map<String, Encounter> apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Encounters for session=" + sessionId);
+
                 EHRService svc = ctx.getBean(EHRService.class);
                 Map<String, Encounter> map = new LinkedHashMap<>();
                 for (Encounter encounter : svc.getEncounters(sessionId)) {
@@ -155,6 +158,10 @@ public class UserWorkspace {
                         map.put(key, encounter);
                     }
                 }
+
+                logger.info("DONE building Encounters for session=" + sessionId +
+                        " (size=" + map.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
                 return map;
             }
         });
@@ -164,8 +171,16 @@ public class UserWorkspace {
         return (PatientModel) cache.get(CACHE_PATIENT, new Function<String, PatientModel>() {
             @Override
             public PatientModel apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Patient for session=" + sessionId);
+
                 PatientService svc = ctx.getBean(PatientService.class);
-                return svc.buildPatient(sessionId);
+                PatientModel patient = svc.buildPatient(sessionId);
+
+                logger.info("DONE building Patient for session=" + sessionId +
+                        " (took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return patient;
             }
         });
     }
@@ -174,9 +189,18 @@ public class UserWorkspace {
         return (List<BloodPressureModel>) cache.get(CACHE_BP, new Function<String, List<BloodPressureModel>>() {
             @Override
             public List<BloodPressureModel> apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Blood Pressures for session=" + sessionId);
+
                 BloodPressureService svc = ctx.getBean(BloodPressureService.class);
                 try {
-                    return svc.buildBloodPressureList(sessionId);
+                    List<BloodPressureModel> list = svc.buildBloodPressureList(sessionId);
+
+                    logger.info("DONE building Blood Pressures for session=" + sessionId +
+                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                    return list;
+
                 } catch (DataException e) {
                     throw new RuntimeException(e);
                 }
@@ -188,9 +212,18 @@ public class UserWorkspace {
         return (List<AdverseEventModel>) cache.get(CACHE_ADVERSE_EVENT, new Function<String, List<AdverseEventModel>>() {
             @Override
             public List<AdverseEventModel> apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Adverse Events for session=" + sessionId);
+
                 AdverseEventService svc = ctx.getBean(AdverseEventService.class);
                 try {
-                    return svc.buildAdverseEvents(sessionId);
+                    List<AdverseEventModel> list = svc.buildAdverseEvents(sessionId);
+
+                    logger.info("DONE building Adverse Events for session=" + sessionId +
+                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                    return list;
+
                 } catch (DataException e) {
                     throw new RuntimeException(e);
                 }
@@ -202,8 +235,16 @@ public class UserWorkspace {
         return (List<GoalModel>) cache.get(CACHE_GOAL, new Function<String, List<GoalModel>>() {
             @Override
             public List<GoalModel> apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Goals for session=" + sessionId);
+
                 GoalService svc = ctx.getBean(GoalService.class);
-                return svc.buildCurrentGoals(sessionId);
+                List<GoalModel> list = svc.buildCurrentGoals(sessionId);
+
+                logger.info("DONE building Goals for session=" + sessionId +
+                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return list;
             }
         });
     }
@@ -212,9 +253,18 @@ public class UserWorkspace {
         return (List<MedicationModel>) cache.get(CACHE_MEDICATION, new Function<String, List<MedicationModel>>() {
             @Override
             public List<MedicationModel> apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Medications for session=" + sessionId);
+
                 MedicationService svc = ctx.getBean(MedicationService.class);
                 try {
-                    return svc.buildMedications(sessionId);
+                    List<MedicationModel> list = svc.buildMedications(sessionId);
+
+                    logger.info("DONE building Medications for session=" + sessionId +
+                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                    return list;
+
                 } catch (DataException e) {
                     throw new RuntimeException(e);
                 }
@@ -244,9 +294,18 @@ public class UserWorkspace {
         return (List<Card>) cardCache.get(recommendationId, new Function<String, List<Card>>() {
             @Override
             public List<Card> apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Cards for session=" + sessionId);
+
                 RecommendationService svc = ctx.getBean(RecommendationService.class);
                 try {
-                    return svc.getCards(sessionId, s);
+                    List<Card> list = svc.getCards(sessionId, s);
+
+                    logger.info("DONE building Cards for session=" + sessionId +
+                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                    return list;
+
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
