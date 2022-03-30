@@ -29,12 +29,9 @@
         <appender-ref ref="FILE" />
     </root>
 
-    <logger name="edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient" level="INFO" />
-    <logger name="edu.ohsu.cmp.coach.util.FhirUtil" level="INFO" />
-    <logger name="edu.ohsu.cmp.coach.service.RecommendationService" level="INFO" />
-    <logger name="edu.ohsu.cmp.coach.service.AdverseEventService" level="DEBUG" />
-    <logger name="edu.ohsu.cmp.coach.service.EHRService" level="DEBUG" />
-    <logger name="edu.ohsu.cmp.coach.model.PatientModel" level="DEBUG" />
     <logger name="edu.ohsu.cmp.coach.workspace.UserWorkspace" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.service.RecommendationService" level="INFO" />
+    <logger name="edu.ohsu.cmp.coach.service.EHRService" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.service.FHIRService" level="INFO" />
 
 </configuration>

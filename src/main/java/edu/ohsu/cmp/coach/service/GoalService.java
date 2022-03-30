@@ -181,4 +181,9 @@ public class GoalService extends BaseService {
         UserWorkspace workspace = workspaceService.get(sessionId);
         goalRepository.deleteBPGoalForPatient(workspace.getInternalPatientId());
     }
+
+    public GoalHistory createHistory(GoalHistory goalHistory) {
+        goalHistory.setCreatedDate(new Date());
+        return goalHistoryRepository.save(goalHistory);
+    }
 }

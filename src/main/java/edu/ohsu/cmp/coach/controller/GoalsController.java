@@ -7,7 +7,6 @@ import edu.ohsu.cmp.coach.entity.app.MyGoal;
 import edu.ohsu.cmp.coach.model.GoalHistoryModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.service.EHRService;
-import edu.ohsu.cmp.coach.service.GoalHistoryService;
 import edu.ohsu.cmp.coach.service.GoalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +36,6 @@ public class GoalsController extends BaseController {
 
     @Autowired
     private GoalService goalService;
-
-    @Autowired
-    private GoalHistoryService goalHistoryService;
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
@@ -126,7 +122,7 @@ public class GoalsController extends BaseController {
 
         MyGoal g = goalService.getLocalGoal(session.getId(), extGoalId);
         GoalHistory gh = new GoalHistory(AchievementStatus.valueOf(achievementStatusStr), g);
-        gh = goalHistoryService.create(gh);
+        gh = goalService.createHistory(gh);
 
         return new ResponseEntity<>(new GoalHistoryModel(gh), HttpStatus.OK);
     }

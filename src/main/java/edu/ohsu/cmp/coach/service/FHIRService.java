@@ -18,7 +18,7 @@ import java.util.Iterator;
 import java.util.function.Function;
 
 @Service
-public class FHIRService extends BaseService {
+public class FHIRService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${fhir.search.count}")

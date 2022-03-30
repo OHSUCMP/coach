@@ -92,6 +92,7 @@ public class UserWorkspace {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
+                long start = System.currentTimeMillis();
                 logger.info("BEGIN populating workspace for session=" + sessionId);
                 getPatient();
                 getGoals();
@@ -100,7 +101,8 @@ public class UserWorkspace {
                 getAdverseEvents();
                 getMedications();
                 getAllCards();
-                logger.info("DONE populating workspace for session=" + sessionId);
+                logger.info("DONE populating workspace for session=" + sessionId +
+                        " (took " + (System.currentTimeMillis() - start) + "ms)");
             }
         };
         executorService.submit(runnable);
