@@ -11,7 +11,6 @@ public class ValueSetService extends BaseService {
     private ValueSetRepository repository;
 
     public ValueSet getValueSet(String oid) {
-        ValueSet valueSet = repository.findOneByOid(oid);
-        return valueSet;
+        return repository.findOneByOid(oid);
     }
 }

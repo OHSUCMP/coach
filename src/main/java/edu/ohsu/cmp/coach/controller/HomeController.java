@@ -60,9 +60,6 @@ public class HomeController extends BaseController {
 
                 model.addAttribute("patient", workspace.getPatient());
 
-                GoalModel currentBPGoal = goalService.getCurrentBPGoal(session.getId());
-                model.addAttribute("currentBPGoal", currentBPGoal);
-
                 model.addAttribute("medicationsOfInterestName", medicationService.getMedicationsOfInterestName());
 
                 List<CDSHook> list = recommendationService.getOrderedCDSHooks();
@@ -85,6 +82,12 @@ public class HomeController extends BaseController {
     public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) {
         List<BloodPressureModel> list = bpService.getBloodPressureReadings(session.getId());
         return new ResponseEntity<>(list, HttpStatus.OK);
+    }
+
+    @PostMapping("current-bp-goal")
+    public ResponseEntity<GoalModel> getCurrentBPGoal(HttpSession session) {
+        GoalModel goal = goalService.getCurrentBPGoal(session.getId());
+        return new ResponseEntity<>(goal, HttpStatus.OK);
     }
 
     @PostMapping("recommendation")

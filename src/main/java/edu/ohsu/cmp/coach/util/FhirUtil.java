@@ -118,9 +118,11 @@ public class FhirUtil {
         Bundle bundle = new Bundle();
         bundle.setType(bundleType);
         for (Resource r : collection) {
-            bundle.getEntry().add(
-                    new Bundle.BundleEntryComponent().setFullUrl(r.getId()).setResource(r)
-            );
+            if (r != null) {
+                bundle.getEntry().add(
+                        new Bundle.BundleEntryComponent().setFullUrl(r.getId()).setResource(r)
+                );
+            }
         }
         return bundle;
     }

@@ -76,12 +76,18 @@ public class GoalModel implements FHIRCompatible, Comparable<GoalModel> {
         }
 
         this.targetDate = null; // EHR-based
-        this.createdDate = g.getStartDateType().getValue();
+        this.createdDate = g.hasStartDateType() ?
+                g.getStartDateType().getValue() :
+                null;
+
+        history = new TreeSet<>();
     }
 
     @Override
     public Bundle toBundle() {
-        return FhirUtil.bundleResources(sourceGoal);
+        return sourceGoal != null ?
+                FhirUtil.bundleResources(sourceGoal) :
+                null;
     }
 
     public boolean isEHRGoal() {
@@ -94,45 +100,63 @@ public class GoalModel implements FHIRCompatible, Comparable<GoalModel> {
 
     @Override
     public int compareTo(@NotNull GoalModel o) {
-        if (getIsInProgress() && ! o.getIsInProgress()) {
+        if (isInProgress() && ! o.isInProgress()) {
             return -1;
 
-        } else if ( ! getIsInProgress() && o.getIsInProgress()) {
+        } else if ( ! isInProgress() && o.isInProgress()) {
             return 1;
 
         } else {
-            return createdDate.compareTo(o.getCreatedDate());
+            Date d1 = getCreatedDate();
+            Date d2 = o.getCreatedDate();
+            if      (d1 == null && d2 == null)  return 0;
+            else if (d1 != null && d2 != null)  return d1.compareTo(d2);
+            else if (d1 != null)                return -1;
+            else                                return 1;
         }
     }
 
-    public boolean getIsInProgress() {
+    public boolean isInProgress() {
         return getAchievementStatus() == AchievementStatus.IN_PROGRESS;
     }
 
-    public boolean getIsAchieved() {
+    public boolean isAchieved() {
         return getAchievementStatus() == AchievementStatus.ACHIEVED;
     }
 
-    public boolean getIsNotAchieved() {
+    public boolean isNotAchieved() {
         return getAchievementStatus() == AchievementStatus.NOT_ACHIEVED;
     }
 
     public AchievementStatus getAchievementStatus() {
-        GoalHistoryModel mostRecent = history.last();
-        return mostRecent != null ?
-                mostRecent.getAchievementStatus() :
-                null;
+        if (history != null && history.size() > 0) {
+            GoalHistoryModel mostRecent = history.last();
+            return mostRecent != null ?
+                    mostRecent.getAchievementStatus() :
+                    null;
+
+        } else {
+            return null;
+        }
     }
 
     public String getAchievementStatusLabel() {
-        return getAchievementStatus().getLabel();
+        AchievementStatus status = getAchievementStatus();
+        return status != null ?
+                status.getLabel() :
+                null;
     }
 
     public Date getStatusDate() {
-        GoalHistoryModel mostRecent = history.last();
-        return mostRecent != null ?
-                mostRecent.getCreatedDate() :
-                null;
+        if (history != null && history.size() > 0) {
+            GoalHistoryModel mostRecent = history.last();
+            return mostRecent != null ?
+                    mostRecent.getCreatedDate() :
+                    null;
+
+        } else {
+            return null;
+        }
     }
 
     @JsonIgnore

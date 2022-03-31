@@ -19,6 +19,28 @@ async function loadBloodPressureObservations(_callback) {
     _callback(bpdata);
 }
 
+async function loadCurrentBPGoal(_callback) {
+    let response = await fetch("/current-bp-goal", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    });
+
+    let goal = await response.json();
+
+    _callback(goal);
+}
+
+function populateCurrentBPGoal() {
+    let goal = window.currentBPGoal;
+    let el = $('#currentBPGoal');
+    $(el).attr('data-systolic', goal.systolicTarget);
+    $(el).attr('data-diastolic', goal.diastolicTarget);
+    $(el).html('Your Current Blood Pressure Goal: <em><strong>Below ' + goal.systolicTarget + '/' +
+        goal.diastolicTarget + '</strong></em> (<a href="/goals">update</a>)');
+}
+
 async function loadMedications(_callback) {
     let response = await fetch("/medications-list", {
         method: "POST",
