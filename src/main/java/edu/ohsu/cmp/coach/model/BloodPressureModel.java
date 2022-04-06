@@ -5,6 +5,7 @@ import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.util.EncounterMatcher;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
@@ -88,10 +89,10 @@ public class BloodPressureModel implements FHIRCompatible {
         // todo : set id.  but to what?  first Observation's id?  what about the others?  how is id used?  do we need
         //        to retain the ids for the Encounter and other Observations?
 
-
-        if (FhirUtil.isAmbEncounter(fcm, enc))              source = Source.OFFICE;
-        else if (FhirUtil.isHomeHealthEncounter(fcm, enc))  source = Source.HOME;
-        else                                                source = Source.UNKNOWN;
+        EncounterMatcher matcher = new EncounterMatcher(fcm);
+        if (matcher.isAmbEncounter(enc))              source = Source.OFFICE;
+        else if (matcher.isHomeHealthEncounter(enc))  source = Source.HOME;
+        else                                          source = Source.UNKNOWN;
 
         for (Observation.ObservationComponentComponent occ : bpObservation.getComponent()) {
             ValueType valueType = ValueType.UNKNOWN;

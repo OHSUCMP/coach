@@ -15,6 +15,15 @@ public class FhirConfigManager {
     @Value("${encounter.class.hh.code}")        private String encounterClassHHCode;
     @Value("${encounter.class.hh.display}")     private String encounterClassHHDisplay;
 
+    @Value("${encounter.amb.class.in}")         private String encounterAmbClassIn;
+    @Value("${encounter.amb.class.not-in}")     private String encounterAmbClassNotIn;
+    @Value("${encounter.amb.type.in}")          private String encounterAmbTypeIn;
+    @Value("${encounter.amb.type.not-in}")      private String encounterAmbTypeNotIn;
+    @Value("${encounter.hh.class.in}")         private String encounterHHClassIn;
+    @Value("${encounter.hh.class.not-in}")     private String encounterHHClassNotIn;
+    @Value("${encounter.hh.type.in}")          private String encounterHHTypeIn;
+    @Value("${encounter.hh.type.not-in}")      private String encounterHHTypeNotIn;
+
     @Value("${bp.system}")          private String bpSystem;
     @Value("${bp.code}")            private String bpCode;
     @Value("${bp.display}")         private String bpDisplay;
@@ -66,6 +75,38 @@ public class FhirConfigManager {
 
     public String getEncounterClassHHDisplay() {
         return encounterClassHHDisplay;
+    }
+
+    public String getEncounterAmbClassIn() {
+        return encounterAmbClassIn;
+    }
+
+    public String getEncounterAmbClassNotIn() {
+        return encounterAmbClassNotIn;
+    }
+
+    public String getEncounterAmbTypeIn() {
+        return encounterAmbTypeIn;
+    }
+
+    public String getEncounterAmbTypeNotIn() {
+        return encounterAmbTypeNotIn;
+    }
+
+    public String getEncounterHHClassIn() {
+        return encounterHHClassIn;
+    }
+
+    public String getEncounterHHClassNotIn() {
+        return encounterHHClassNotIn;
+    }
+
+    public String getEncounterHHTypeIn() {
+        return encounterHHTypeIn;
+    }
+
+    public String getEncounterHHTypeNotIn() {
+        return encounterHHTypeNotIn;
     }
 
     public String getBpSystem() {
