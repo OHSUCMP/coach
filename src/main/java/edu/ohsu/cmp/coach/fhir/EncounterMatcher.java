@@ -94,6 +94,14 @@ public class EncounterMatcher {
                         .append(FhirUtil.toCodingString(e.getClass_()))
                         .append("')");
                 return false;
+            } else if (sb != null) {
+                if ( ! e.hasClass_() ) {
+                    sb.append("MATCH: (Encounter has no class) ");
+                } else {
+                    sb.append("MATCH: ")
+                            .append(toCodingDebugString(e.getClass_()))
+                            .append(" ");
+                }
             }
         }
 
@@ -102,7 +110,7 @@ public class EncounterMatcher {
             boolean match = e.hasType() && inType(sb, e.getType(), typeIn);
             if ( ! match ) {
                 if (sb != null) sb.append("*NO* (type=")
-                        .append(typesToString(e.getType()))
+                        .append(toCodeableConceptsDebugString(e.getType()))
                         .append(")");
                 return false;
             }
@@ -113,38 +121,22 @@ public class EncounterMatcher {
             boolean match = ! e.hasType() || ! inType(sb, e.getType(), typeNotIn);
             if ( ! match ) {
                 if (sb != null) sb.append("*NO* (type=")
-                        .append(typesToString(e.getType()))
+                        .append(toCodeableConceptsDebugString(e.getType()))
                         .append(")");
                 return false;
+            } else if (sb != null) {
+                if ( ! e.hasType() || e.getType().isEmpty() ) {
+                    sb.append("MATCH: (Encounter has no type) ");
+                } else {
+                    sb.append("MATCH: ")
+                            .append(toCodeableConceptsDebugString(e.getType()))
+                            .append(" ");
+                }
             }
         }
 
         if (sb != null) sb.append("*YES*");
         return true;
-    }
-
-    private String typesToString(List<CodeableConcept> types) {
-        if (types == null) return "null";
-        StringBuilder sb = new StringBuilder();
-        sb.append("<");
-        for (CodeableConcept cc : types) {
-            sb.append("[");
-            for (Coding type : cc.getCoding()) {
-                sb.append(toCodingDebugString(type)).append(",");
-            }
-            sb.append("]");
-        }
-        sb.append(">");
-        return sb.toString();
-    }
-
-    private String toCodingDebugString(Coding coding) {
-        if (coding == null) return "null";
-        List<String> parts = new ArrayList<>();
-        if (coding.hasSystem()) parts.add("system=" + coding.getSystem());
-        if (coding.hasCode()) parts.add("code=" + coding.getCode());
-        if (coding.hasDisplay()) parts.add("display=" + coding.getDisplay());
-        return "{" + StringUtils.join(parts, "|") + "}";
     }
 
     private boolean inClass(StringBuilder sb, Coding class_, List<String> list) {
@@ -190,5 +182,29 @@ public class EncounterMatcher {
             }
         }
         return false;
+    }
+
+    private String toCodeableConceptsDebugString(List<CodeableConcept> types) {
+        if (types == null) return "null";
+        StringBuilder sb = new StringBuilder();
+        sb.append("<");
+        for (CodeableConcept cc : types) {
+            List<String> list = new ArrayList<>();
+            for (Coding type : cc.getCoding()) {
+                list.add(toCodingDebugString(type));
+            }
+            sb.append("[").append(String.join(", ", list)).append("]");
+        }
+        sb.append(">");
+        return sb.toString();
+    }
+
+    private String toCodingDebugString(Coding coding) {
+        if (coding == null) return "null";
+        List<String> parts = new ArrayList<>();
+        if (coding.hasSystem()) parts.add("system=" + coding.getSystem());
+        if (coding.hasCode()) parts.add("code=" + coding.getCode());
+        if (coding.hasDisplay()) parts.add("display=" + coding.getDisplay());
+        return "{" + StringUtils.join(parts, "|") + "}";
     }
 }
