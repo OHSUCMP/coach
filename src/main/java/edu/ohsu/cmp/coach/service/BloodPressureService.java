@@ -74,6 +74,7 @@ public class BloodPressureService extends BaseService {
         List<BloodPressureModel> list = new ArrayList<>();
 
         for (Encounter encounter : workspaceService.get(sessionId).getEncounters()) {
+            logger.debug("processing Encounter: " + encounter.getId());
 
             // don't we always want to get supplemental pulse and protocol observations if they exist?
             // I think so ... ?
@@ -85,14 +86,19 @@ public class BloodPressureService extends BaseService {
 
             for (String key : buildKeys(encounter.getId(), encounter.getIdentifier())) {
                 if (encounterObservationsMap.containsKey(key)) {
+                    logger.debug("found encounterObservationMap key: " + key);
+
                     for (Observation o : encounterObservationsMap.get(key)) {
                         if (bpObservation == null && o.hasCode() && o.getCode().hasCoding(fcm.getBpSystem(), fcm.getBpCode())) {
+                            logger.debug("bpObservation = " + o.getId());
                             bpObservation = o;
 
                         } else if (doSupplemental && pulseObservation == null && o.getCode().hasCoding(fcm.getPulseSystem(), fcm.getPulseCode())) {
+                            logger.debug("pulseObservation = " + o.getId());
                             pulseObservation = o;
 
                         } else if (doSupplemental && protocolObservation == null && o.getCode().hasCoding(fcm.getProtocolSystem(), fcm.getProtocolCode())) {
+                            logger.debug("protocolObservation = " + o.getId());
                             protocolObservation = o;
                         }
                     }
