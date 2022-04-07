@@ -5,7 +5,7 @@ import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
-import edu.ohsu.cmp.coach.util.EncounterMatcher;
+import edu.ohsu.cmp.coach.fhir.EncounterMatcher;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;

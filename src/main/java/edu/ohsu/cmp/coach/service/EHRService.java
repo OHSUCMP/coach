@@ -3,7 +3,7 @@ package edu.ohsu.cmp.coach.service;
 import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
-import edu.ohsu.cmp.coach.util.EncounterMatcher;
+import edu.ohsu.cmp.coach.fhir.EncounterMatcher;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
@@ -63,7 +63,7 @@ public class EHRService extends BaseService {
                                 return false;
                             }
 
-                            EncounterMatcher matcher = new EncounterMatcher(fcm);
+                            EncounterMatcher matcher = new EncounterMatcher(fcm, true);
                             if (!matcher.isAmbEncounter(encounter) && !matcher.isHomeHealthEncounter(encounter)) {
                                 logger.debug("removing Encounter " + encounter.getId() + " - not AMB or HH");
                                 return false;
