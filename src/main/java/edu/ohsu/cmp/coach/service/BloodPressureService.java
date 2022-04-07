@@ -38,8 +38,21 @@ public class BloodPressureService extends BaseService {
     public List<BloodPressureModel> buildBloodPressureList(String sessionId) throws DataException {
         Map<String, List<Observation>> encounterObservationsMap = new HashMap<>();
 
+        Bundle bpObservations = ehrService.getObservations(sessionId, fcm.getBpSystem() + "|" + fcm.getBpCode(), fcm.getBpLimit());
+        Set<String> bpObservationIDs = null;
+        if (logger.isDebugEnabled()) {
+            bpObservationIDs = new HashSet<>();
+            if (bpObservations.hasEntry()) {
+                for (Bundle.BundleEntryComponent entry : bpObservations.getEntry()) {
+                    if (entry.hasResource() && entry.getResource() instanceof Observation) {
+                        bpObservationIDs.add(entry.getResource().getId());
+                    }
+                }
+            }
+        }
+
         CompositeBundle compositeBundle = new CompositeBundle();
-        compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getBpSystem() + "|" + fcm.getBpCode(), fcm.getBpLimit()));
+        compositeBundle.consume(bpObservations);
         compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getPulseSystem() + "|" + fcm.getPulseCode(), null));
         compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getProtocolSystem() + "|" + fcm.getProtocolCode(), null));
         Bundle observationBundle = compositeBundle.getBundle();
@@ -87,10 +100,20 @@ public class BloodPressureService extends BaseService {
             }
 
             if (bpObservation != null) {
+                if (bpObservationIDs != null) {
+                    bpObservationIDs.remove(bpObservation.getId());
+                }
+
                 list.add(new BloodPressureModel(
                         encounter, bpObservation, pulseObservation, protocolObservation, fcm)
                 );
             }
+        }
+
+        // if there are any BP observations that didn't get processed, we want to know about it
+        if (logger.isDebugEnabled() && bpObservationIDs != null && bpObservationIDs.size() > 0) {
+            logger.debug("could not process the following BP observations:");
+            logger.debug(String.join("\n", bpObservationIDs));
         }
 
         return list;
