@@ -133,6 +133,9 @@ public class FHIRService {
                     .execute();
 
             logger.info("search: got " + bundle.getTotal() + " records for query: " + fhirQuery);
+            if (logger.isDebugEnabled()) {
+                logger.debug("bundle = " + FhirUtil.toJson(bundle));
+            }
 
         } catch (InvalidRequestException ire) {
             logger.error("caught " + ire.getClass().getName() + " executing search: " + fhirQuery, ire);
@@ -146,11 +149,7 @@ public class FHIRService {
         boolean hitLimit = limit != null && bundle.hasEntry() && bundle.getEntry().size() >= limit;
 
         if (bundle.getLink(Bundle.LINK_NEXT) == null || hitLimit) {
-            bundle = FhirUtil.truncate(bundle, limit);
-            if (logger.isDebugEnabled()) {
-                logger.debug("bundle = " + FhirUtil.toJson(bundle));
-            }
-            return bundle;
+            return FhirUtil.truncate(bundle, limit);
 
         } else {
             CompositeBundle compositeBundle = new CompositeBundle();
@@ -161,6 +160,9 @@ public class FHIRService {
                 bundle = fcc.getClient().loadPage().next(bundle).execute();
 
                 logger.info("search (page " + page + "): " + fhirQuery + " (size=" + bundle.getTotal() + ")");
+                if (logger.isDebugEnabled()) {
+                    logger.debug("bundle = " + FhirUtil.toJson(bundle));
+                }
 
                 if (validityFunction != null) {
                     filterInvalidResources(bundle, validityFunction);
@@ -173,13 +175,9 @@ public class FHIRService {
                 page ++;
             }
 
-            bundle = limit != null ?
+            return limit != null ?
                     FhirUtil.truncate(compositeBundle.getBundle(), limit) :
                     compositeBundle.getBundle();
-            if (logger.isDebugEnabled()) {
-                logger.debug("bundle = " + FhirUtil.toJson(bundle));
-            }
-            return bundle;
         }
     }
 
