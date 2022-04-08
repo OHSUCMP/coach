@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.entity.app.Outcome;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.AdverseEvent;
 import org.hl7.fhir.r4.model.Bundle;
@@ -35,7 +36,9 @@ public class AdverseEventModel implements FHIRCompatible {
     }
 
     @Override
-    public Bundle toBundle() {
+    public Bundle toBundle(String patientId, FhirConfigManager fcm) {
+        // there is no scenario in which Adverse Events may be created that doesn't include a source FHIR resource
+        // as such, we can just bundle it and send it back.  easy
         return FhirUtil.bundleResources(sourceAdverseEvent);
     }
 

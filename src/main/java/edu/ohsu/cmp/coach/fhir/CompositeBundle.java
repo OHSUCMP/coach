@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.coach.fhir;
 
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
@@ -21,8 +22,7 @@ public class CompositeBundle {
                 }
 
             } else if (resource instanceof Resource) {
-                Resource r = (Resource) resource;
-                bundle.addEntry(new Bundle.BundleEntryComponent().setFullUrl(r.getId()).setResource(r));
+                FhirUtil.appendResourceToBundle(bundle, (Resource) resource);
 
             } else {
                 throw new CaseNotHandledException("couldn't handle " + resource.getClass().getName());

@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
+import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.FHIRCompatible;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -72,11 +73,13 @@ public class FhirUtil {
     }
 
 
-    public static Bundle toBundle(Collection<? extends FHIRCompatible> collection) {
-        return toBundle(null, collection);
+    public static Bundle toBundle(String patientId, FhirConfigManager fcm,
+                                  Collection<? extends FHIRCompatible> collection) {
+        return toBundle(patientId, fcm, null, collection);
     }
 
-    public static Bundle toBundle(Bundle.BundleType bundleType, Collection<? extends FHIRCompatible> collection) {
+    public static Bundle toBundle(String patientId, FhirConfigManager fcm, Bundle.BundleType bundleType,
+                                  Collection<? extends FHIRCompatible> collection) {
         if (collection == null) return null;
 
         Bundle bundle = new Bundle();
@@ -84,7 +87,7 @@ public class FhirUtil {
 
         for (FHIRCompatible item : collection) {
             bundle.getEntry().addAll(
-                    item.toBundle().getEntry()
+                    item.toBundle(patientId, fcm).getEntry()
             );
         }
 
@@ -109,13 +112,17 @@ public class FhirUtil {
         Bundle bundle = new Bundle();
         bundle.setType(bundleType);
         for (Resource r : collection) {
-            if (r != null) {
-                bundle.getEntry().add(
-                        new Bundle.BundleEntryComponent().setFullUrl(r.getId()).setResource(r)
-                );
-            }
+            appendResourceToBundle(bundle, r);
         }
         return bundle;
+    }
+
+    public static void appendResourceToBundle(Bundle bundle, Resource resource) {
+        String fullUrl = resource.getId().startsWith("http://") || resource.getId().startsWith("https://") ?
+                resource.getId() :
+                "http://hl7.org/fhir/" + resource.getClass().getSimpleName() + "/" + resource.getId();
+
+        bundle.getEntry().add(new Bundle.BundleEntryComponent().setFullUrl(fullUrl).setResource(resource));
     }
 
     public static String toIdentifierString(Identifier identifier) {

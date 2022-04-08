@@ -1,13 +1,11 @@
 package edu.ohsu.cmp.coach.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import edu.ohsu.cmp.coach.entity.app.AchievementStatus;
 import edu.ohsu.cmp.coach.entity.app.GoalHistory;
 import edu.ohsu.cmp.coach.entity.app.MyGoal;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.util.FhirUtil;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Goal;
+import org.hl7.fhir.r4.model.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
@@ -84,10 +82,52 @@ public class GoalModel implements FHIRCompatible, Comparable<GoalModel> {
     }
 
     @Override
-    public Bundle toBundle() {
-        return sourceGoal != null ?
-                FhirUtil.bundleResources(sourceGoal) :
-                null;
+    public Bundle toBundle(String patientId, FhirConfigManager fcm) {
+        Goal goal = sourceGoal != null ?
+                sourceGoal :
+                buildGoal(patientId, fcm);
+
+        return FhirUtil.bundleResources(goal);
+    }
+
+    private Goal buildGoal(String patientId, FhirConfigManager fcm) {
+
+        // this is only used when building local goals, for which sourceGoal == null
+
+        Goal g = new Goal();
+
+        g.setId(getExtGoalId());
+        g.setSubject(new Reference().setReference(patientId));
+        g.setLifecycleStatus(getLifecycleStatus().getFhirValue());
+        g.getAchievementStatus().addCoding().setCode(getAchievementStatus().getFhirValue())
+                .setSystem("http://terminology.hl7.org/CodeSystem/goal-achievement");
+        g.getCategoryFirstRep().addCoding().setCode(getReferenceCode()).setSystem(getReferenceSystem());
+        g.getDescription().setText(getGoalText());
+        g.setStatusDate(getStatusDate());
+        g.getTarget().add(new Goal.GoalTargetComponent()
+                .setDue(new DateType().setValue(getTargetDate())));
+
+        if (isBPGoal()) {
+            Goal.GoalTargetComponent systolic = new Goal.GoalTargetComponent();
+            systolic.getMeasure().addCoding().setCode(fcm.getBpSystolicCode()).setSystem(fcm.getBpSystem());
+            systolic.setDetail(new Quantity());
+            systolic.getDetailQuantity().setCode(fcm.getBpValueCode());
+            systolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
+            systolic.getDetailQuantity().setUnit(fcm.getBpValueUnit());
+            systolic.getDetailQuantity().setValue(getSystolicTarget());
+            g.getTarget().add(systolic);
+
+            Goal.GoalTargetComponent diastolic = new Goal.GoalTargetComponent();
+            diastolic.getMeasure().addCoding().setCode(fcm.getBpDiastolicCode()).setSystem(fcm.getBpSystem());
+            diastolic.setDetail(new Quantity());
+            diastolic.getDetailQuantity().setCode(fcm.getBpValueCode());
+            diastolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
+            diastolic.getDetailQuantity().setUnit(fcm.getBpValueUnit());
+            diastolic.getDetailQuantity().setValue(getDiastolicTarget());
+            g.getTarget().add(diastolic);
+        }
+
+        return g;
     }
 
     public boolean isEHRGoal() {
@@ -114,6 +154,13 @@ public class GoalModel implements FHIRCompatible, Comparable<GoalModel> {
             else if (d1 != null)                return -1;
             else                                return 1;
         }
+    }
+
+    public LifecycleStatus getLifecycleStatus() {
+        GoalHistoryModel mostRecent = getMostRecentHistory();
+        return mostRecent != null ?
+                mostRecent.getLifecycleStatus() :
+                null;
     }
 
     public boolean isInProgress() {
@@ -210,5 +257,11 @@ public class GoalModel implements FHIRCompatible, Comparable<GoalModel> {
 
     public Set<GoalHistoryModel> getHistory() {
         return history;
+    }
+
+    private GoalHistoryModel getMostRecentHistory() {
+        return history != null && history.size() > 0 ?
+                history.last() :
+                null;
     }
 }

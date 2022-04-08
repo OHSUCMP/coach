@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.entity.app;
+package edu.ohsu.cmp.coach.model;
 
 import java.util.HashMap;
 import java.util.Map;

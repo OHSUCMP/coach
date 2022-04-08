@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import edu.ohsu.cmp.coach.entity.app.AchievementStatus;
+import edu.ohsu.cmp.coach.model.AchievementStatus;
 import edu.ohsu.cmp.coach.entity.app.GoalHistory;
 import edu.ohsu.cmp.coach.entity.app.MyGoal;
 import edu.ohsu.cmp.coach.model.GoalModel;
@@ -29,6 +29,24 @@ public class GoalService extends BaseService {
     @Autowired
     private GoalHistoryRepository goalHistoryRepository;
 
+    public List<GoalModel> getGoals(String sessionId) {
+        List<GoalModel> list = new ArrayList<>();
+        list.addAll(workspaceService.get(sessionId).getGoals());
+        list.addAll(buildLocalGoals(sessionId));
+        return list;
+    }
+
+    private List<GoalModel> buildLocalGoals(String sessionId) {
+        List<GoalModel> list = new ArrayList<>();
+
+        List<MyGoal> goalList = getLocalGoalList(sessionId);
+        for (MyGoal item : goalList) {
+            list.add(new GoalModel(item));
+        }
+
+        return list;
+    }
+
     public List<GoalModel> buildCurrentGoals(String sessionId) {
         List<GoalModel> list = new ArrayList<>();
 
@@ -54,7 +72,7 @@ public class GoalService extends BaseService {
         return list;
     }
 
-    public List<MyGoal> getLocalGoalList(String sessionId) {
+    private List<MyGoal> getLocalGoalList(String sessionId) {
         UserWorkspace workspace = workspaceService.get(sessionId);
         return goalRepository.findAllByPatId(workspace.getInternalPatientId());
     }

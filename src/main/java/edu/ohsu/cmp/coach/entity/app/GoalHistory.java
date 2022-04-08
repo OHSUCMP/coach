@@ -1,6 +1,8 @@
 package edu.ohsu.cmp.coach.entity.app;
 
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
+import edu.ohsu.cmp.coach.model.AchievementStatus;
+import edu.ohsu.cmp.coach.model.LifecycleStatus;
 
 import javax.persistence.*;
 import java.util.Date;

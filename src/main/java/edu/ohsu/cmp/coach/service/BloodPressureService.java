@@ -90,18 +90,20 @@ public class BloodPressureService extends BaseService {
 
                     for (Observation o : encounterObservationsMap.get(key)) {
                         if (bpObservation == null && o.hasCode() && o.getCode().hasCoding(fcm.getBpSystem(), fcm.getBpCode())) {
-                            logger.debug("bpObservation = " + o.getId());
+                            logger.debug("bpObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                             bpObservation = o;
 
                         } else if (doSupplemental && pulseObservation == null && o.getCode().hasCoding(fcm.getPulseSystem(), fcm.getPulseCode())) {
-                            logger.debug("pulseObservation = " + o.getId());
+                            logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                             pulseObservation = o;
 
                         } else if (doSupplemental && protocolObservation == null && o.getCode().hasCoding(fcm.getProtocolSystem(), fcm.getProtocolCode())) {
-                            logger.debug("protocolObservation = " + o.getId());
+                            logger.debug("protocolObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                             protocolObservation = o;
                         }
                     }
+
+                    break;
                 }
             }
 
@@ -271,7 +273,6 @@ public class BloodPressureService extends BaseService {
     private List<BloodPressureModel> buildLocalBloodPressureReadings(String sessionId) {
         List<BloodPressureModel> list = new ArrayList<>();
 
-        // now incorporate Home Blood Pressure Readings that the user entered themself into the system
         List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
         for (HomeBloodPressureReading item : hbprList) {
             list.add(new BloodPressureModel(item, fcm));

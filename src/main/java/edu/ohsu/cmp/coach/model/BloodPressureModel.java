@@ -158,11 +158,6 @@ public class BloodPressureModel implements FHIRCompatible {
         }
     }
 
-    @Override
-    public Bundle toBundle() {
-        return FhirUtil.bundleResources(sourceBPObservation, sourceEncounter, sourcePulseObservation, sourceProtocolObservation);
-    }
-
     @JsonIgnore
     public Encounter getSourceEncounter() {
         return sourceEncounter;
@@ -219,6 +214,7 @@ public class BloodPressureModel implements FHIRCompatible {
         return followedProtocol;
     }
 
+    @Override
     public Bundle toBundle(String patientId, FhirConfigManager fcm) {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
@@ -244,15 +240,15 @@ public class BloodPressureModel implements FHIRCompatible {
             Observation bpObservation = buildHomeHealthBloodPressureObservation(patientIdRef, enc, fcm);
             bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(bpObservation));
 
-            Observation pulseObservation = pulse != null ?
-                    buildPulseObservation(patientIdRef, enc, fcm) :
-                    null;
-            bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(pulseObservation));
+            if (pulse != null) {
+                Observation pulseObservation = buildPulseObservation(patientIdRef, enc, fcm);
+                bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(pulseObservation));
+            }
 
-            Observation protocolObservation = followedProtocol != null ?
-                    buildProtocolObservation(patientIdRef, enc, fcm) :
-                    null;
-            bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(protocolObservation));
+            if (followedProtocol != null && followedProtocol) {
+                Observation protocolObservation = buildProtocolObservation(patientIdRef, enc, fcm);
+                bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(protocolObservation));
+            }
         }
 
         return bundle;

@@ -13,6 +13,7 @@ import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.AdverseEventModel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
+import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSCard;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHookResponse;
@@ -113,7 +114,7 @@ public class RecommendationService extends BaseService {
             List<AdverseEventModel> adverseEvents = workspace.getAdverseEvents();
             if (adverseEvents.size() > 0) {
                 for (AdverseEventModel adverseEvent : workspace.getAdverseEvents()) {
-                    compositeBundle.consume(adverseEvent.toBundle());
+                    compositeBundle.consume(adverseEvent.toBundle(p.getId(), fcm));
                 }
             } else {
                 compositeBundle.consume(buildFakeAdverseEventHACK(sessionId));
@@ -258,66 +259,19 @@ public class RecommendationService extends BaseService {
     }
 
     private Bundle buildGoalsBundle(String sessionId, String patientId) {
-        Bundle bundle = FhirUtil.toBundle(workspaceService.get(sessionId).getGoals());
-
-        List<MyGoal> myGoalList = goalService.getLocalGoalList(sessionId);
-        for (MyGoal g : myGoalList) {
-            Goal goal = buildGoal(patientId, g);
-            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Goal/" + goal.getId()).setResource(goal);
+        CompositeBundle bundle = new CompositeBundle();
+        for (GoalModel gm : goalService.getGoals(sessionId)) {
+            bundle.consume(gm.toBundle(patientId, fcm));
         }
-
-        return bundle;
-    }
-
-    private Goal buildGoal(String patientId, MyGoal myGoal) {
-        Goal g = new Goal();
-
-        g.setId(myGoal.getExtGoalId());
-        g.setSubject(new Reference().setReference(patientId));
-        g.setLifecycleStatus(myGoal.getLifecycleStatus().toGoalLifecycleStatus());
-        g.getAchievementStatus().addCoding().setCode(myGoal.getAchievementStatus().getFhirValue())
-                .setSystem("http://terminology.hl7.org/CodeSystem/goal-achievement");
-        g.getCategoryFirstRep().addCoding().setCode(myGoal.getReferenceCode()).setSystem(myGoal.getReferenceSystem());
-        g.getDescription().setText(myGoal.getGoalText());
-        g.setStatusDate(myGoal.getStatusDate());
-        g.getTarget().add(new Goal.GoalTargetComponent()
-                .setDue(new DateType().setValue(myGoal.getTargetDate())));
-
-        if (myGoal.isBloodPressureGoal()) {
-            Goal.GoalTargetComponent systolic = new Goal.GoalTargetComponent();
-            systolic.getMeasure().addCoding().setCode(fcm.getBpSystolicCode()).setSystem(fcm.getBpSystem());
-            systolic.setDetail(new Quantity());
-            systolic.getDetailQuantity().setCode(fcm.getBpValueCode());
-            systolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
-            systolic.getDetailQuantity().setUnit(fcm.getBpValueUnit());
-            systolic.getDetailQuantity().setValue(myGoal.getSystolicTarget());
-            g.getTarget().add(systolic);
-
-            Goal.GoalTargetComponent diastolic = new Goal.GoalTargetComponent();
-            diastolic.getMeasure().addCoding().setCode(fcm.getBpDiastolicCode()).setSystem(fcm.getBpSystem());
-            diastolic.setDetail(new Quantity());
-            diastolic.getDetailQuantity().setCode(fcm.getBpValueCode());
-            diastolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
-            diastolic.getDetailQuantity().setUnit(fcm.getBpValueUnit());
-            diastolic.getDetailQuantity().setValue(myGoal.getDiastolicTarget());
-            g.getTarget().add(diastolic);
-        }
-
-        return g;
+        return bundle.getBundle();
     }
 
     private Bundle buildBPBundle(String sessionId, String patientId) {
-        Bundle bundle = new Bundle();
-        bundle.setType(Bundle.BundleType.COLLECTION);
-
+        CompositeBundle bundle = new CompositeBundle();
         for (BloodPressureModel bpm : bpService.getBloodPressureReadings(sessionId)) {
-            Bundle bpReadingBundle = bpm.toBundle(patientId, fcm);
-            for (Bundle.BundleEntryComponent entry : bpReadingBundle.getEntry()) {
-                bundle.addEntry(entry);
-            }
+            bundle.consume(bpm.toBundle(patientId, fcm));
         }
-
-        return bundle;
+        return bundle.getBundle();
     }
 
     private Encounter buildEncounter(String uuid, String patientId, Date date) {
