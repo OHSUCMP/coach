@@ -103,11 +103,11 @@ public class UserWorkspace {
                 long start = System.currentTimeMillis();
                 logger.info("BEGIN populating workspace for session=" + sessionId);
                 getPatient();
+                getGoals();
                 getEncounters();
                 getProtocolObservations();
                 getBloodPressures();
                 getPulses();
-                getGoals();
                 getAdverseEvents();
                 getMedications();
                 getAllCards();

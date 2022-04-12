@@ -56,6 +56,7 @@ public class HomeController extends BaseController {
                 UserWorkspace workspace = workspaceService.get(session.getId());
 
                 model.addAttribute("patient", workspace.getPatient());
+                model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
 
                 model.addAttribute("medicationsOfInterestName", medicationService.getMedicationsOfInterestName());
 
@@ -87,11 +88,11 @@ public class HomeController extends BaseController {
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
-    @PostMapping("current-bp-goal")
-    public ResponseEntity<GoalModel> getCurrentBPGoal(HttpSession session) {
-        GoalModel goal = goalService.getCurrentBPGoal(session.getId());
-        return new ResponseEntity<>(goal, HttpStatus.OK);
-    }
+//    @PostMapping("current-bp-goal")
+//    public ResponseEntity<GoalModel> getCurrentBPGoal(HttpSession session) {
+//        GoalModel goal = goalService.getCurrentBPGoal(session.getId());
+//        return new ResponseEntity<>(goal, HttpStatus.OK);
+//    }
 
     @PostMapping("recommendation")
     public ResponseEntity<List<Card>> getRecommendation(HttpSession session,

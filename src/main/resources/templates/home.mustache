@@ -75,10 +75,7 @@
                     buildChart();
                 });
 
-                loadCurrentBPGoal(function(goal) {
-                    window.currentBPGoal = goal;
-                    populateCurrentBPGoal();
-                });
+                // populateCurrentBPGoal(getCurrentBPGoal());
 
                 loadMedications(function(meds) {
                     window.meds = meds;
@@ -234,8 +231,9 @@
                             </td>
                         </tr>
                     </table>
-                    <div id="currentBPGoal" data-systolic="" data-diastolic="">
-                        <!-- this gets populated by AJAX call -->
+                    <div id="currentBPGoal" data-systolic="{{bpGoal.systolicTarget}}" data-diastolic="{{bpGoal.diastolicTarget}}">
+                        Your Current Blood Pressure Goal: <em><strong>Below {{bpGoal.systolicTarget}} /
+                        {{bpGoal.diastolicTarget}}</strong></em> (<a href="/goals">update</a>)
                     </div>
                     <div id="currentMedications" data-name="{{medicationsOfInterestName}}">
                     </div>

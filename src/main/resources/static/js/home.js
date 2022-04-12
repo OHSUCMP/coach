@@ -19,27 +19,24 @@ async function loadBloodPressureObservations(_callback) {
     _callback(bpdata);
 }
 
-async function loadCurrentBPGoal(_callback) {
-    let response = await fetch("/current-bp-goal", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
-        }
-    });
+// async function loadCurrentBPGoal(_callback) {
+//     let response = await fetch("/current-bp-goal", {
+//         method: "POST",
+//         headers: {
+//             "Content-Type": "application/json; charset=utf-8"
+//         }
+//     });
+//
+//     let goal = await response.json();
+//
+//     _callback(goal);
+// }
 
-    let goal = await response.json();
-
-    _callback(goal);
-}
-
-function populateCurrentBPGoal() {
-    let goal = window.currentBPGoal;
-    let el = $('#currentBPGoal');
-    $(el).attr('data-systolic', goal.systolicTarget);
-    $(el).attr('data-diastolic', goal.diastolicTarget);
-    $(el).html('Your Current Blood Pressure Goal: <em><strong>Below ' + goal.systolicTarget + '/' +
-        goal.diastolicTarget + '</strong></em> (<a href="/goals">update</a>)');
-}
+// function populateCurrentBPGoal(goal) {
+//     let el = $('#currentBPGoal');
+//     $(el).html('Your Current Blood Pressure Goal: <em><strong>Below ' + goal.systolicTarget + '/' +
+//         goal.diastolicTarget + '</strong></em> (<a href="/goals">update</a>)');
+// }
 
 async function loadMedications(_callback) {
     let response = await fetch("/medications-list", {
@@ -165,7 +162,7 @@ function getCurrentBPGoal() {
     return {
         systolic: $(el).attr('data-systolic'),
         diastolic: $(el).attr('data-diastolic')
-    };
+    }
 }
 
 function buildChart() {
@@ -182,12 +179,13 @@ function buildChart() {
     $(elNoData).addClass('hidden');
     $(ctx).removeClass('hidden');
 
-    let goal = getCurrentBPGoal();
 
     $(ctx).removeClass('hidden');
     $('#chartKeyContainer, #chartTimelineContainer').removeClass('hidden');
 
     let pointStyleArr = buildPointStyleArray(window.bpchart.data);
+
+    let goal = getCurrentBPGoal();
 
     let config = {
         type: 'line',
