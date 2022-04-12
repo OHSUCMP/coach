@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-public class PatientService extends BaseService {
+public class PatientService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${security.salt}")

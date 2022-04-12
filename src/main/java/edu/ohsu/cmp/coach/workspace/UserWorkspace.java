@@ -12,6 +12,7 @@ import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Reference;
 import org.slf4j.Logger;
@@ -35,7 +36,9 @@ public class UserWorkspace {
 
     private static final String CACHE_PATIENT = "Patient";
     private static final String CACHE_ENCOUNTER = "Encounter";
+    private static final String CACHE_PROTOCOL = "Protocol";
     private static final String CACHE_BP = "BP";
+    private static final String CACHE_PULSE = "Pulse";
     private static final String CACHE_ADVERSE_EVENT = "AdverseEvent";
     private static final String CACHE_GOAL = "Goal";
     private static final String CACHE_MEDICATION = "Medication";
@@ -49,6 +52,7 @@ public class UserWorkspace {
 
     private Cache cache;
     private Cache cardCache;
+    private Cache<String, Bundle> bundleCache;
 
     private ExecutorService executorService;
 
@@ -66,11 +70,15 @@ public class UserWorkspace {
         );
 
         cache = Caffeine.newBuilder()
-                .expireAfterWrite(1, TimeUnit.DAYS)
+                .expireAfterWrite(6, TimeUnit.HOURS)
                 .build();
 
         cardCache = Caffeine.newBuilder()
-                .expireAfterWrite(1, TimeUnit.DAYS)
+                .expireAfterWrite(6, TimeUnit.HOURS)
+                .build();
+
+        bundleCache = Caffeine.newBuilder()
+                .expireAfterWrite(6, TimeUnit.HOURS)
                 .build();
 
         executorService = Executors.newFixedThreadPool(POOL_SIZE);
@@ -96,7 +104,9 @@ public class UserWorkspace {
                 logger.info("BEGIN populating workspace for session=" + sessionId);
                 getPatient();
                 getEncounters();
+                getProtocolObservations();
                 getBloodPressures();
+                getPulses();
                 getGoals();
                 getAdverseEvents();
                 getMedications();
@@ -187,6 +197,25 @@ public class UserWorkspace {
         });
     }
 
+    public Bundle getProtocolObservations() {
+        return bundleCache.get(CACHE_PROTOCOL, new Function<String, Bundle>() {
+            @Override
+            public Bundle apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Protocol Observations for session=" + sessionId);
+
+                EHRService svc = ctx.getBean(EHRService.class);
+                Bundle bundle = svc.getObservations(sessionId, fcm.getProtocolSystem() + "|" + fcm.getProtocolCode(), null);
+
+                int size = bundle.hasEntry() ? bundle.getEntry().size() : 0;
+                logger.info("DONE building Protocol Observations for session=" + sessionId +
+                        " (size=" + size + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return bundle;
+            }
+        });
+    }
+
     public List<BloodPressureModel> getBloodPressures() {
         return (List<BloodPressureModel>) cache.get(CACHE_BP, new Function<String, List<BloodPressureModel>>() {
             @Override
@@ -199,6 +228,29 @@ public class UserWorkspace {
                     List<BloodPressureModel> list = svc.buildBloodPressureList(sessionId);
 
                     logger.info("DONE building Blood Pressures for session=" + sessionId +
+                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                    return list;
+
+                } catch (DataException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+    }
+
+    public List<PulseModel> getPulses() {
+        return (List<PulseModel>) cache.get(CACHE_PULSE, new Function<String, List<PulseModel>>() {
+            @Override
+            public List<PulseModel> apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Pulses for session=" + sessionId);
+
+                PulseService svc = ctx.getBean(PulseService.class);
+                try {
+                    List<PulseModel> list = svc.buildPulseList(sessionId);
+
+                    logger.info("DONE building Pulses for session=" + sessionId +
                             " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
                     return list;

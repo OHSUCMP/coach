@@ -8,42 +8,36 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(schema = "coach", name = "home_bp_reading")
-public class HomeBloodPressureReading {
-
-//    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy h:mm a");
-
+@Table(schema = "coach", name = "home_pulse_reading")
+public class HomePulseReading {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private Long patId;
-    private Integer systolic;
-    private Integer diastolic;
+    private Integer pulse;
     private Date readingDate;
     private Boolean followedInstructions;
     private Date createdDate;
 
-    protected HomeBloodPressureReading() {
+    protected HomePulseReading() {
     }
 
-    public HomeBloodPressureReading(Integer systolic, Integer diastolic, Date readingDate, Boolean followedInstructions) {
-        this.systolic = systolic;
-        this.diastolic = diastolic;
+    public HomePulseReading(Integer pulse, Date readingDate, Boolean followedInstructions) {
+        this.pulse = pulse;
         this.readingDate = readingDate;
         this.followedInstructions = followedInstructions;
     }
 
     // used during create, do not set ID
-    public HomeBloodPressureReading(BloodPressureModel bpm) throws DataException {
-        if (bpm.getSource() != BloodPressureModel.Source.HOME) {
-            throw new DataException("cannot convert BloodPressureModel with source=" +
-                    bpm.getSource() + " to HomeBloodPressureReading");
+    public HomePulseReading(PulseModel pm) throws DataException {
+        if (pm.getSource() != PulseModel.Source.HOME) {
+            throw new DataException("cannot convert PulseModel with source=" +
+                    pm.getSource() + " to HomePulseReading");
         }
-        this.systolic = bpm.getSystolic().getValue().intValue();
-        this.diastolic = bpm.getDiastolic().getValue().intValue();
-        this.readingDate = bpm.getReadingDate();
-        this.followedInstructions = bpm.getFollowedProtocol();
+        this.pulse = pm.getPulse().getValue().intValue();
+        this.readingDate = pm.getReadingDate();
+        this.followedInstructions = pm.getFollowedProtocol();
     }
 
     public Long getId() {
@@ -62,20 +56,12 @@ public class HomeBloodPressureReading {
         this.patId = patId;
     }
 
-    public Integer getSystolic() {
-        return systolic;
+    public Integer getPulse() {
+        return pulse;
     }
 
-    public void setSystolic(Integer systolic1) {
-        this.systolic = systolic1;
-    }
-
-    public Integer getDiastolic() {
-        return diastolic;
-    }
-
-    public void setDiastolic(Integer diastolic1) {
-        this.diastolic = diastolic1;
+    public void setPulse(Integer pulse1) {
+        this.pulse = pulse1;
     }
 
     public Date getReadingDate() {

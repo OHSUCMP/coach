@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class MedicationService extends BaseService {
+public class MedicationService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

@@ -24,7 +24,7 @@ import java.util.function.Function;
  * that only "good" resources are included in results.  No other filtering takes place here.
  */
 @Service
-public class EHRService extends BaseService {
+public class EHRService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final int MAX_CODES_PER_QUERY = 32; // todo: auto-identify this, or at least put it in the config

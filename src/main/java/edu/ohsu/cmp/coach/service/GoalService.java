@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class GoalService extends BaseService {
+public class GoalService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

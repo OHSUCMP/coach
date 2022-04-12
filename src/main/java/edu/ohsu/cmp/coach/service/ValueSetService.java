@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ValueSetService extends BaseService {
+public class ValueSetService extends AbstractService {
     @Autowired
     private ValueSetRepository repository;
 

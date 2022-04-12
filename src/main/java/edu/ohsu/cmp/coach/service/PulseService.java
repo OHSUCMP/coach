@@ -1,13 +1,9 @@
 package edu.ohsu.cmp.coach.service;
 
+import edu.ohsu.cmp.coach.entity.app.HomePulseReading;
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.model.PulseModel;
-import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
-import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.exception.MethodNotImplementedException;
-import edu.ohsu.cmp.coach.model.BloodPressureModel;
-import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Observation;
@@ -15,27 +11,26 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.function.Function;
 
 @Service
-public class BloodPressureService extends AbstractVitalsService {
+public class PulseService extends AbstractVitalsService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private HomeBloodPressureReadingService hbprService;
+    private HomePulseReadingService hprService;
 
-    public List<BloodPressureModel> buildBloodPressureList(String sessionId) throws DataException {
+    public List<PulseModel> buildPulseList(String sessionId) throws DataException {
         CompositeBundle compositeBundle = new CompositeBundle();
-        compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getBpSystem() + "|" + fcm.getBpCode(), null));
+        compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getPulseSystem() + "|" + fcm.getPulseCode(), null));
         compositeBundle.consume(workspaceService.get(sessionId).getProtocolObservations());
         Bundle observationBundle = compositeBundle.getBundle();
 
-        List<BloodPressureModel> list = new ArrayList<>();
         Map<String, List<Observation>> encounterObservationsMap = buildEncounterObservationsMap(observationBundle);
+
+        List<PulseModel> list = new ArrayList<>();
 
         for (Encounter encounter : workspaceService.get(sessionId).getEncounters()) {
             logger.debug("processing Encounter: " + encounter.getId());
@@ -45,15 +40,15 @@ public class BloodPressureService extends AbstractVitalsService {
             if (encounterObservations != null) {
                 logger.debug("building Observations for Encounter " + encounter.getId());
 
-                List<Observation> bpObservationList = new ArrayList<>();    // potentially many per encounter
+                List<Observation> pulseObservationList = new ArrayList<>();    // potentially many per encounter
                 Observation protocolObservation = null;
 
                 Iterator<Observation> iter = encounterObservations.iterator();
                 while (iter.hasNext()) {
                     Observation o = iter.next();
-                    if (o.hasCode() && o.getCode().hasCoding(fcm.getBpSystem(), fcm.getBpCode())) {
-                        logger.debug("bpObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        bpObservationList.add(o);
+                    if (o.getCode().hasCoding(fcm.getPulseSystem(), fcm.getPulseCode())) {
+                        logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                        pulseObservationList.add(o);
                         iter.remove();
 
                     } else if (protocolObservation == null && o.getCode().hasCoding(fcm.getProtocolSystem(), fcm.getProtocolCode())) {
@@ -63,11 +58,11 @@ public class BloodPressureService extends AbstractVitalsService {
                     }
                 }
 
-                for (Observation bpObservation : bpObservationList) {
-                    list.add(new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm));
+                for (Observation pulseObservation : pulseObservationList) {
+                    list.add(new PulseModel(encounter, pulseObservation, protocolObservation, fcm));
                 }
 
-                bpObservationList.clear();
+                pulseObservationList.clear();
 
             } else {
                 logger.debug("no Observations found for Encounter " + encounter.getId());
@@ -88,22 +83,22 @@ public class BloodPressureService extends AbstractVitalsService {
         return list;
     }
 
-    public List<BloodPressureModel> getHomeBloodPressureReadings(String sessionId) {
-        List<BloodPressureModel> list = new ArrayList<>();
-        for (BloodPressureModel entry : getBloodPressureReadings(sessionId)) {
-            if (entry.getSource() == BloodPressureModel.Source.HOME) {
+    public List<PulseModel> getHomePulseReadings(String sessionId) {
+        List<PulseModel> list = new ArrayList<>();
+        for (PulseModel entry : getPulseReadings(sessionId)) {
+            if (entry.getSource() == PulseModel.Source.HOME) {
                 list.add(entry);
             }
         }
         return list;
     }
 
-    public List<BloodPressureModel> getBloodPressureReadings(String sessionId) {
-        List<BloodPressureModel> list = new ArrayList<>();
-        list.addAll(workspaceService.get(sessionId).getBloodPressures());
+    public List<PulseModel> getPulseReadings(String sessionId) {
+        List<PulseModel> list = new ArrayList<>();
+        list.addAll(workspaceService.get(sessionId).getPulses());
 
         if ( ! storeRemotely ) {
-            list.addAll(buildLocalBloodPressureReadings(sessionId));
+            list.addAll(buildLocalPulseReadings(sessionId));
         }
 
         Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1);
@@ -116,15 +111,15 @@ public class BloodPressureService extends AbstractVitalsService {
         return list;
     }
 
-    public BloodPressureModel create(String sessionId, BloodPressureModel bpm) {
+    public PulseModel create(String sessionId, PulseModel pm) {
         if (storeRemotely) {
-            Bundle responseBundle = writeRemote(sessionId, bpm);
+            Bundle responseBundle = writeRemote(sessionId, pm);
 
             // read each response resource, and append to the BP cache if created
             // also, create a fresh BloodPressureModel resource constructed from the actual resources
 
             Encounter encounter = null;
-            Observation bpObservation = null;
+            Observation pulseObservation = null;
             Observation protocolObservation = null;
 
             for (Bundle.BundleEntryComponent entry : responseBundle.getEntry()) {
@@ -141,11 +136,8 @@ public class BloodPressureService extends AbstractVitalsService {
                             } else if (r instanceof Observation) {
                                 Observation o = (Observation) r;
                                 if (o.hasCode()) {
-                                    if (o.getCode().hasCoding(fcm.getBpSystem(), fcm.getBpCode())) {
-                                        bpObservation = o;
-
-//                                    } else if (o.getCode().hasCoding(fcm.getPulseSystem(), fcm.getPulseCode())) {
-//                                        pulseObservation = o;
+                                    if (o.getCode().hasCoding(fcm.getPulseSystem(), fcm.getPulseCode())) {
+                                        pulseObservation = o;
 
                                     } else if (o.getCode().hasCoding(fcm.getProtocolSystem(), fcm.getProtocolCode())) {
                                         protocolObservation = o;
@@ -158,61 +150,41 @@ public class BloodPressureService extends AbstractVitalsService {
             }
 
             try {
-                BloodPressureModel bpm2 = new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm);
-                workspaceService.get(sessionId).getBloodPressures().add(bpm2);
-                return bpm2;
+                PulseModel pm2 = new PulseModel(encounter, pulseObservation, protocolObservation, fcm);
+                workspaceService.get(sessionId).getPulses().add(pm2);
+                return pm2;
 
             } catch (DataException de) {
                 logger.error("caught " + de.getClass().getName() +
-                        " attempting to construct BloodPressureModel from remote create response - " +
+                        " attempting to construct PulseModel from remote create response - " +
                         de.getMessage(), de);
             }
 
         } else {
             try {
-                HomeBloodPressureReading hbpr = new HomeBloodPressureReading(bpm);
-                HomeBloodPressureReading response = hbprService.create(sessionId, hbpr);
-                return new BloodPressureModel(response, fcm);
+                HomePulseReading hpr = new HomePulseReading(pm);
+                HomePulseReading response = hprService.create(sessionId, hpr);
+                return new PulseModel(response, fcm);
 
             } catch (DataException de) {
-                logger.error("caught " + de.getClass().getName() + " attempting to create BloodPressureModel " + bpm);
+                logger.error("caught " + de.getClass().getName() + " attempting to create BloodPressureModel " + pm);
             }
         }
 
         return null;
     }
 
-    public Boolean delete(String sessionId, String id) {
-        // delete home BP reading (do not allow deleting office BP readings!)
-
-        try {
-            if (storeRemotely) {
-                throw new MethodNotImplementedException("remote delete is not implemented");
-
-            } else {
-                Long longId = Long.parseLong(id);
-                hbprService.delete(sessionId, longId);
-            }
-
-            return true;
-
-        } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " attempting to delete resource with id=" + id +
-                    " for session " + sessionId, e);
-            return false;
-        }
-    }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // private methods
 //
 
-    private List<BloodPressureModel> buildLocalBloodPressureReadings(String sessionId) {
-        List<BloodPressureModel> list = new ArrayList<>();
+    private List<PulseModel> buildLocalPulseReadings(String sessionId) {
+        List<PulseModel> list = new ArrayList<>();
 
-        List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
-        for (HomeBloodPressureReading item : hbprList) {
-            list.add(new BloodPressureModel(item, fcm));
+        List<HomePulseReading> hbprList = hprService.getHomePulseReadings(sessionId);
+        for (HomePulseReading item : hbprList) {
+            list.add(new PulseModel(item, fcm));
         }
 
         return list;

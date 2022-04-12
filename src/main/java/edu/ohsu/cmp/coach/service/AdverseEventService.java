@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class AdverseEventService extends BaseService {
+public class AdverseEventService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final String URN_OID_PREFIX = "urn:oid:";

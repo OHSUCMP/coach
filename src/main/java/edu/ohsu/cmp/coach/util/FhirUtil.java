@@ -64,7 +64,10 @@ public class FhirUtil {
                             identifier.getUse() != Identifier.IdentifierUse.OFFICIAL) {
                         continue;
                     }
-                    list.add(FhirUtil.toIdentifierString(identifier));
+                    String identifierString = FhirUtil.toIdentifierString(identifier);
+                    if (StringUtils.isNotEmpty(identifierString)) {
+                        list.add(identifierString);
+                    }
                 }
             }
         }

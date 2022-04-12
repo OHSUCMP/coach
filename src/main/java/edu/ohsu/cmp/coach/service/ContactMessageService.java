@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ContactMessageService extends BaseService {
+public class ContactMessageService extends AbstractService {
 
     @Autowired
     private ContactMessageRepository repository;

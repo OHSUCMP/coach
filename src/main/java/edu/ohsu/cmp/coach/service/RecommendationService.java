@@ -14,6 +14,7 @@ import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.AdverseEventModel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
+import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSCard;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHookResponse;
@@ -23,7 +24,6 @@ import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;
-import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
@@ -38,7 +38,7 @@ import java.io.StringWriter;
 import java.util.*;
 
 @Service
-public class RecommendationService extends BaseService {
+public class RecommendationService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final boolean TESTING = false;   // true: use hard-coded 'canned' responses from CQF Ruler (fast, cheap)
@@ -53,6 +53,9 @@ public class RecommendationService extends BaseService {
 
     @Autowired
     private BloodPressureService bpService;
+
+    @Autowired
+    private PulseService pulseService;
 
     @Autowired
     private GoalService goalService;
@@ -105,6 +108,7 @@ public class RecommendationService extends BaseService {
                                                 // that CQF Ruler can't handle via prefetch
 
             compositeBundle.consume(buildBPBundle(sessionId, p.getId()));
+//            compositeBundle.consume(buildPulseBundle(sessionId, p.getId()));      // do we care about pulses in recommendations?
             compositeBundle.consume(buildCounselingBundle(sessionId, p.getId()));
             compositeBundle.consume(buildGoalsBundle(sessionId, p.getId()));
 
@@ -270,6 +274,14 @@ public class RecommendationService extends BaseService {
         CompositeBundle bundle = new CompositeBundle();
         for (BloodPressureModel bpm : bpService.getBloodPressureReadings(sessionId)) {
             bundle.consume(bpm.toBundle(patientId, fcm));
+        }
+        return bundle.getBundle();
+    }
+
+    private Bundle buildPulseBundle(String sessionId, String patientId) {
+        CompositeBundle bundle = new CompositeBundle();
+        for (PulseModel pm : pulseService.getPulseReadings(sessionId)) {
+            bundle.consume(pm.toBundle(patientId, fcm));
         }
         return bundle.getBundle();
     }

@@ -1,17 +1,11 @@
 package edu.ohsu.cmp.coach.controller;
 
+import edu.ohsu.cmp.coach.model.*;
+import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.entity.app.Outcome;
-import edu.ohsu.cmp.coach.model.AdverseEventModel;
-import edu.ohsu.cmp.coach.model.BloodPressureModel;
-import edu.ohsu.cmp.coach.model.GoalModel;
-import edu.ohsu.cmp.coach.model.MedicationModel;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
-import edu.ohsu.cmp.coach.service.BloodPressureService;
-import edu.ohsu.cmp.coach.service.GoalService;
-import edu.ohsu.cmp.coach.service.MedicationService;
-import edu.ohsu.cmp.coach.service.RecommendationService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +32,9 @@ public class HomeController extends BaseController {
 
     @Autowired
     private BloodPressureService bpService;
+
+    @Autowired
+    private PulseService pulseService;
 
     @Autowired
     private GoalService goalService;
@@ -81,6 +78,12 @@ public class HomeController extends BaseController {
     @PostMapping("blood-pressure-observations-list")
     public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) {
         List<BloodPressureModel> list = bpService.getBloodPressureReadings(session.getId());
+        return new ResponseEntity<>(list, HttpStatus.OK);
+    }
+
+    @PostMapping("pulse-observations-list")
+    public ResponseEntity<List<PulseModel>> getPulseObservations(HttpSession session) {
+        List<PulseModel> list = pulseService.getPulseReadings(session.getId());
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
