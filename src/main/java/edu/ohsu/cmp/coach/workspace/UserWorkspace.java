@@ -132,12 +132,14 @@ public class UserWorkspace {
     public void clearCaches() {
         cache.invalidateAll();
         cardCache.invalidateAll();
+        bundleCache.invalidateAll();
     }
 
     public void shutdown() {
         clearCaches();
         cache.cleanUp();
         cardCache.cleanUp();
+        bundleCache.cleanUp();
     }
 
 ///////////////////////////////////////////////////////////////////////////////////////
