@@ -58,7 +58,10 @@ public class EHRService extends AbstractService {
                     public Boolean apply(Resource resource) {
                         if (resource instanceof Encounter) {
                             Encounter encounter = (Encounter) resource;
-                            if (encounter.getStatus() != Encounter.EncounterStatus.FINISHED) {
+                            if (encounter.getStatus() != Encounter.EncounterStatus.FINISHED &&
+                                encounter.getStatus() != Encounter.EncounterStatus.ARRIVED &&
+                                encounter.getStatus() != Encounter.EncounterStatus.TRIAGED &&
+                                encounter.getStatus() != Encounter.EncounterStatus.INPROGRESS) {
                                 logger.debug("removing Encounter " + encounter.getId() + " - invalid status");
                                 return false;
                             }
