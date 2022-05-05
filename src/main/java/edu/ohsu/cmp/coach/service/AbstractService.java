@@ -19,8 +19,6 @@ public abstract class AbstractService implements Constants {
     @Autowired
     protected FhirConfigManager fcm;
 
-    @Autowired
-    protected EHRService ehrService;
 
     @Autowired
     protected FHIRService fhirService;

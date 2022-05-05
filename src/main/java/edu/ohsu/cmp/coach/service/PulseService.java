@@ -20,6 +20,9 @@ public class PulseService extends AbstractVitalsService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
+    private EHRService ehrService;
+
+    @Autowired
     private HomePulseReadingService hprService;
 
     public List<PulseModel> buildPulseList(String sessionId) throws DataException {

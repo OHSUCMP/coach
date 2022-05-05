@@ -26,6 +26,9 @@ public class BloodPressureService extends AbstractVitalsService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
+    private EHRService ehrService;
+
+    @Autowired
     private HomeBloodPressureReadingService hbprService;
 
     public List<BloodPressureModel> buildBloodPressureList(String sessionId) throws DataException {

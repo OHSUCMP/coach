@@ -1,12 +1,8 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.model.AbstractModel;
-import edu.ohsu.cmp.coach.model.AbstractVitalsModel;
-import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.FHIRCompatible;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import org.apache.poi.ss.formula.functions.T;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Observation;
@@ -15,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.function.Function;
 
 @Service
 public abstract class AbstractVitalsService extends AbstractService {
