@@ -1,14 +1,12 @@
-async function loadOtherGoals(_callback) {
-    let response = await fetch("/goals/other-goals", {
+function loadOtherGoals(_callback) {
+    $.ajax({
         method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
+        url: "/goals/other-goals"
+    }).done(function(goals, textStatus, jqXHR) {
+        if (jqXHR.status === 200) {
+            _callback(goals);
         }
     });
-
-    let goals = await response.json();
-
-    _callback(goals);
 }
 
 function populateOtherGoals() {
@@ -62,40 +60,41 @@ function populateOtherGoals() {
     $('#otherGoalsContainer').html(html);
 }
 
-async function updateStatus(el, status) {
+function updateStatus(el, status) {
     let goal = $(el).closest('tr.goal');
     let extGoalId = $(goal).attr('data-extGoalId');
 
-    let formData = new FormData();
-    formData.append("extGoalId", extGoalId);
-    formData.append("achievementStatus", status);
+    let data = {
+        extGoalId: extGoalId,
+        achievementStatus: status
+    };
 
-    let response = await fetch("/goals/update-status", {
+    $.ajax({
         method: "POST",
-        body: formData
+        url: "/goals/update-status",
+        data: data
+    }).done(function(data, textStatus, jqXHR) {
+        if (jqXHR.status === 200) {
+            loadOtherGoals(function(otherGoals) {
+                window.otherGoals = otherGoals;
+                populateOtherGoals();
+            });
+        }
     });
-
-    if (response.status === 200) {
-        await loadOtherGoals(function(otherGoals) {
-            window.otherGoals = otherGoals;
-            populateOtherGoals();
-        });
-    }
 }
 
-async function updateBPGoal(g, _callback) {
+function updateBPGoal(bpGoalData, _callback) {
     let formData = new FormData();
-    formData.append("systolicTarget", g.systolicTarget);
-    formData.append("diastolicTarget", g.diastolicTarget);
+    formData.append("systolicTarget", bpGoalData.systolicTarget);
+    formData.append("diastolicTarget", bpGoalData.diastolicTarget);
 
-    let response = await fetch("/goals/update-bp", {
+    $.ajax({
         method: "POST",
-        body: formData
+        url: "/goals/update-bp",
+        data: bpGoalData
+    }).done(function(bpGoal, textStatus, jqXHR) {
+        _callback(jqXHR.status, bpGoal);
     });
-
-    await response.text();
-
-    _callback(response.status, g);
 }
 
 function enableDisableUpdateBPGoalButton() {
@@ -128,15 +127,16 @@ $(document).on('click', '#updateBPGoal:not(.disabled)', function() {
     let systolic = $(container).find('input.systolic');
     let diastolic = $(container).find('input.diastolic');
 
-    let g = {};
-    g.systolicTarget = $(systolic).val();
-    g.diastolicTarget = $(diastolic).val();
+    let bpGoalData = {
+        systolicTarget: $(systolic).val(),
+        diastolicTarget: $(diastolic).val()
+    };
 
-    updateBPGoal(g, function (status, g) {
+    updateBPGoal(bpGoalData, function (status, bpGoal) {
         let note = $('#updateNote');
         if (status === 200) {
-            $(container).attr('data-systolic', g.systolicTarget);
-            $(container).attr('data-diastolic', g.diastolicTarget);
+            $(container).attr('data-systolic', bpGoal.systolicTarget);
+            $(container).attr('data-diastolic', bpGoal.diastolicTarget);
 
             $(note).text("Goal updated successfully.");
             $(note).removeClass("error");

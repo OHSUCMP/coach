@@ -48,9 +48,8 @@
 
             $(document).on('click', '#createButton', function() {
                 if (validateForm('#bpEntryContainer form', '#saveMessage')) {
-                    let data = buildVitalsData();
-
-                    createVitals(data, function(status, list) {
+                    let vitalsData = buildVitalsData();
+                    createVitals(vitalsData, function(status, list) {
                         let el = $('#saveMessage');
                         if (status === 200) {
                             $(list).each(function() {

@@ -1,54 +1,31 @@
-async function loadBloodPressureObservations(_callback) {
-    let response = await fetch("/blood-pressure-observations-list", {
+function loadBloodPressureObservations(_callback) {
+    $.ajax({
         method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
+        url: "/blood-pressure-observations-list"
+    }).done(function(bpdata, textStatus, jqXHR) {
+        if (jqXHR.status === 200) {
+            bpdata.forEach(function(item) {
+                item.readingDate = new Date(item.readingDate);
+            });
+
+            bpdata.sort(function (a, b) {
+                return a.readingDate - b.readingDate;
+            });
+
+            _callback(bpdata);
         }
     });
-
-    let bpdata = await response.json();
-
-    bpdata.forEach(function(item) {
-        item.readingDate = new Date(item.readingDate);
-    });
-
-    bpdata.sort(function (a, b) {
-        return a.readingDate - b.readingDate;
-    });
-
-    _callback(bpdata);
 }
 
-// async function loadCurrentBPGoal(_callback) {
-//     let response = await fetch("/current-bp-goal", {
-//         method: "POST",
-//         headers: {
-//             "Content-Type": "application/json; charset=utf-8"
-//         }
-//     });
-//
-//     let goal = await response.json();
-//
-//     _callback(goal);
-// }
-
-// function populateCurrentBPGoal(goal) {
-//     let el = $('#currentBPGoal');
-//     $(el).html('Your Current Blood Pressure Goal: <em><strong>Below ' + goal.systolicTarget + '/' +
-//         goal.diastolicTarget + '</strong></em> (<a href="/goals">update</a>)');
-// }
-
-async function loadMedications(_callback) {
-    let response = await fetch("/medications-list", {
+function loadMedications(_callback) {
+    $.ajax({
         method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
+        url: "/medications-list"
+    }).done(function(meds, textStatus, jqXHR) {
+        if (jqXHR.status === 200) {
+            _callback(meds);
         }
     });
-
-    let meds = await response.json();
-
-    _callback(meds);
 }
 
 function populateMedications() {
@@ -70,17 +47,15 @@ function populateMedications() {
     }
 }
 
-async function loadAdverseEvents(_callback) {
-    let response = await fetch("/adverse-events-list", {
+function loadAdverseEvents(_callback) {
+    $.ajax({
         method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
+        url: "/adverse-events-list"
+    }).done(function(adverseEvents, textStatus, jqXHR) {
+        if (jqXHR.status === 200) {
+            _callback(adverseEvents);
         }
     });
-
-    let adverseEvents = await response.json();
-
-    _callback(adverseEvents);
 }
 
 function populateAdverseEvents() {

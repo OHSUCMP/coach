@@ -14,7 +14,7 @@ function enableDatePicker(sel) {
     });
 }
 
-async function getRecommendations(_callback) {
+function getRecommendations(_callback) {
     $(".recommendation").each(function () {
         let recommendationId = $(this).attr('data-id');
         let cardsContainer = $(this).find('.cardsContainer');
@@ -26,15 +26,20 @@ async function getRecommendations(_callback) {
 }
 
 // get a recommendation from cache, but do not execute it
-async function getRecommendation(id, _callback) {
-    let formData = new FormData();
-    formData.append("id", id);
-    let response = await fetch("/recommendation", {
+function getRecommendation(id, _callback) {
+    let data = {
+        id: id
+    };
+
+    $.ajax({
         method: "POST",
-        body: formData
+        url: "/recommendation",
+        data: data
+    }).done(function(cards, textStatus, jqXHR) {
+        if (jqXHR.status === 200) {
+            _callback(cards);
+        }
     });
-    let cards = await response.json();
-    _callback(cards);
 }
 
 function renderCards(cards) {
@@ -405,20 +410,17 @@ function buildGoalData(button) {
     obj.goalText = getGoalText(goal);
     obj.systolicTarget = 0;
     obj.diastolicTarget = 0;
-    obj.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
+    let targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
+    obj.targetDateTS = $.datepicker.formatDate('@', targetDate);
     return obj;
 }
 
 function buildBPGoalData(button) {
     let goal = $(button).closest('.bpGoal');
     let obj = {};
-    // g.extGoalId = $(goal).attr('data-id');
-    // g.referenceSystem = $(goal).attr('data-reference-system');
-    // g.referenceCode = $(goal).attr('data-reference-code');
     let target = getGoalBPTarget(goal);
     obj.systolicTarget = target.systolic;
     obj.diastolicTarget = target.diastolic;
-    // g.targetDate = $(goal).find('.goalTargetDate').datepicker('getDate');
     return obj;
 }
 
@@ -495,87 +497,54 @@ function buildCounselingData(a) {
     return obj;
 }
 
-async function registerCounselingReceived(c, _callback) {
-    let formData = new FormData();
-    formData.append("extCounselingId", c.extCounselingId);
-    formData.append("referenceSystem", c.referenceSystem);
-    formData.append("referenceCode", c.referenceCode);
-    formData.append("counselingText", c.counselingText);
-
-    const response = await fetch("/counseling/create", {
+function registerCounselingReceived(counselingData, _callback) {
+    $.ajax({
         method: "POST",
-        body: formData
+        url: "/counseling/create",
+        data: counselingData
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status);
     });
-
-    await response.text();
-
-    _callback(response.status);
 }
 
-async function createGoal(g, _callback) {
-    let targetDateTS = $.datepicker.formatDate('@', g.targetDate);
-
-    let formData = new FormData();
-    formData.append("extGoalId", g.extGoalId);
-    formData.append("referenceSystem", g.referenceSystem);
-    formData.append("referenceCode", g.referenceCode);
-    formData.append("referenceDisplay", g.referenceDisplay);
-    formData.append("goalText", g.goalText);
-    formData.append("targetDateTS", targetDateTS);
-
-    let response = await fetch("/goals/create", {
+function createGoal(goalData, _callback) {
+    $.ajax({
         method: "POST",
-        body: formData
+        url: "/goals/create",
+        data: goalData
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status);
     });
-
-    await response.text();
-
-    _callback(response.status);
 }
 
-async function updateBPGoal(g, _callback) {
-    let formData = new FormData();
-    formData.append("systolicTarget", g.systolicTarget);
-    formData.append("diastolicTarget", g.diastolicTarget);
-
-    let response = await fetch("/goals/update-bp", {
+function updateBPGoal(bpGoalData, _callback) {
+    $.ajax({
         method: "POST",
-        body: formData
+        url: "/goals/update-bp",
+        data: bpGoalData
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status, bpGoalData);
     });
-
-    await response.text();
-
-    _callback(response.status, g);
 }
 
-async function updateGoal(g, _callback) {
-    let formData = new FormData();
-    formData.append("extGoalId", g.extGoalId);
-    formData.append("achievementStatus", g.achievementStatus);
-
-    let response = await fetch("/goals/set-status", {
+function updateGoal(goalUpdateData, _callback) {
+    $.ajax({
         method: "POST",
-        body: formData
+        url: "/goals/set-status",
+        data: goalUpdateData
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status);
     });
-
-    await response.text();
-
-    _callback(response.status);
 }
 
-async function registerAdverseEventAction(ae, _callback) {
-    let formData = new FormData();
-    formData.append("adverseEventId", ae.adverseEventId);
-    formData.append("actionTaken", ae.actionTaken);
-
-    let response = await fetch("/adverse-event/register-action", {
+function registerAdverseEventAction(adverseEventData, _callback) {
+    $.ajax({
         method: "POST",
-        body: formData
+        url: "/adverse-event/register-action",
+        data: adverseEventData
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status);
     });
-
-    await response.text();
-
-    _callback(response.status);
 }
 
 function buildAdverseEventData(button) {
@@ -604,10 +573,10 @@ $(document).ready(function() {
 });
 
 $(document).on('click', '.goal .commitToGoal', function() {
-    let g = buildGoalData(this);
     let container = $(this).closest('.goal');
 
-    createGoal(g, function(status) {
+    let goalData = buildGoalData(this);
+    createGoal(goalData, function(status) {
         if (status === 200) {
             hide(container);
         }
@@ -615,10 +584,10 @@ $(document).on('click', '.goal .commitToGoal', function() {
 });
 
 $(document).on('click', '.bpGoal .commitToGoal', function() {
-    let g = buildBPGoalData(this);
     let container = $(this).closest('.bpGoal');
 
-    updateBPGoal(g, function(status, g) {
+    let bpGoalData = buildBPGoalData(this);
+    updateBPGoal(bpGoalData, function(status, g) {
         if (status === 200) {
             let el = $('#currentBPGoal');
             $(el).attr('data-systolic', g.systolicTarget);
@@ -633,10 +602,10 @@ $(document).on('click', '.bpGoal .commitToGoal', function() {
 });
 
 $(document).on('click', '.goal .updateGoal', function() {
-    let g = buildGoalUpdateData(this);
     let container = $(this).closest('.goal');
 
-    updateGoal(g, function(status) {
+    let goalUpdateData = buildGoalUpdateData(this);
+    updateGoal(goalUpdateData, function(status) {
         if (status === 200) {
             hide(container);
         }
@@ -646,17 +615,17 @@ $(document).on('click', '.goal .updateGoal', function() {
 $(document).on('click', '.counseling .actions a', function(event) {
     event.preventDefault();
     let a = $(this);
-    let c = buildCounselingData(this);
-    registerCounselingReceived(c, function(status) {
+    let counselingData = buildCounselingData(this);
+    registerCounselingReceived(counselingData, function(status) {
         window.location.href = $(a).attr('href');
     });
 });
 
 $(document).on('click', '.adverseEvent .registerAdverseEventAction', function() {
-    let ae = buildAdverseEventData(this);
     let container = $(this).closest('.adverseEvent');
 
-    registerAdverseEventAction(ae, function(status) {
+    let adverseEventData = buildAdverseEventData(this);
+    registerAdverseEventAction(adverseEventData, function(status) {
         if (status === 200) {
             hide(container, function(el) {
                 let parent = $(el).closest('.adverseEventsContainer');

@@ -8,25 +8,28 @@
     <script type="text/javascript">
         const REDIRECT_URL = "/";
 
-        async function prepareSession(client) {
-            let formData = new FormData();
-            formData.append("serverUrl", client.state.serverUrl);
-            formData.append("bearerToken", client.state.tokenResponse.access_token);
-            formData.append("patientId", client.getPatientId());
-            formData.append("userId", client.getUserId());
-            formData.append("audience", "patient");
-            let response = await fetch("/prepare-session", {
+        function prepareSession(client) {
+            let data = {
+                serverUrl: client.state.serverUrl,
+                bearerToken: client.state.tokenResponse.access_token,
+                patientId: client.getPatientId(),
+                userId: client.getUserId(),
+                audience: "patient"
+            };
+
+            $.ajax({
                 method: "POST",
-                body: formData
+                url: "/prepare-session",
+                data: data
+            }).done(function(cards, textStatus, jqXHR) {
+                if (jqXHR.status === 200) {
+                    $('body').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
+                    window.location.href = REDIRECT_URL;
+
+                } else {
+                    $('body').html("Error - received response " + response.status + " status");
+                }
             });
-
-            if (response.status === 200) {
-                $('body').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
-                window.location.href = REDIRECT_URL;
-
-            } else {
-                $('body').html("Error - received response " + response.status + " status");
-            }
         }
 
         // see the following for FHIR API documentation:
