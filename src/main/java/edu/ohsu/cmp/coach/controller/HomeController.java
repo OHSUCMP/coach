@@ -50,20 +50,14 @@ public class HomeController extends BaseController {
     public String view(HttpSession session, Model model) {
         boolean sessionEstablished = workspaceService.exists(session.getId());
 
-        // get user agent to attempt to identify IE as the browser
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        String userAgent = request.getHeader("user-agent");
-        logger.debug("UserAgent for session " + session.getId() + ": " + userAgent);
-
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
 
         if (sessionEstablished) {
             logger.info("requesting data for session " + session.getId());
+            UserWorkspace workspace = workspaceService.get(session.getId());
 
             try {
-                UserWorkspace workspace = workspaceService.get(session.getId());
-
                 model.addAttribute("patient", workspace.getPatient());
                 model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
 
@@ -76,7 +70,9 @@ public class HomeController extends BaseController {
                 logger.error("caught " + e.getClass().getName() + " building home page", e);
             }
 
-            return "home";
+            return workspace.isIE() ?
+                    "home-ie" :
+                    "home";
 
         } else {
             Boolean cacheCredentials = StringUtils.equals(env.getProperty("security.browser.cache-credentials"), "true");

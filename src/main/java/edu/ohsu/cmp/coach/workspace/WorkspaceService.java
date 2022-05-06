@@ -33,8 +33,8 @@ public class WorkspaceService {
         return map.containsKey(sessionId);
     }
 
-    public void init(String sessionId, Audience audience, FHIRCredentialsWithClient fcc) {
-        map.put(sessionId, new UserWorkspace(ctx, sessionId, audience, fcc, fcm));
+    public void init(String sessionId, Audience audience, FHIRCredentialsWithClient fcc, Boolean isIE) {
+        map.put(sessionId, new UserWorkspace(ctx, sessionId, audience, fcc, fcm, isIE));
     }
 
     public UserWorkspace get(String sessionId) throws SessionMissingException {

@@ -62,7 +62,7 @@ public class SessionController extends BaseController {
         Audience audience = Audience.fromTag(audienceStr);
 
         String sessionId = session.getId();
-        workspaceService.init(sessionId, audience, credentialsWithClient);
+        workspaceService.init(sessionId, audience, credentialsWithClient, isIE);
         workspaceService.get(sessionId).populate();
 
         return ResponseEntity.ok("session configured successfully");
