@@ -309,9 +309,11 @@ function buildGoalsHTML(suggestions) {
 
 function toLabel(string) {
     let words = string.replaceAll("_", " ").toLowerCase().split(" ");
-    let label = words.map(word => {
+
+    let label = words.map(function(word) {
         return word[0].toUpperCase() + word.substring(1);
     }).join(" ");
+
     return label;
 }
 

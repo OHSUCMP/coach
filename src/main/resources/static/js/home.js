@@ -197,7 +197,11 @@ function toTrendLineData(data, type) {
         if (lastDate !== null) {
             let diff = item.readingDate.getTime() - lastDate.getTime();
             diffArr.push(diff);
-            let avgDiff = Math.round(diffArr.reduce((a, b) => a + b, 0) / diffArr.length);
+
+            // IE doesn't like => operator
+            let avgDiff = Math.round(diffArr.reduce(function(a, b) {
+                return a + b;
+            }, 0) / diffArr.length);
 
             if (diff > threshold || (diffArr.length > 1 && diff > avgDiff * groupingFactor)) {
                 let lastDates = tempArr.map(o => o.timestamp.getTime());
