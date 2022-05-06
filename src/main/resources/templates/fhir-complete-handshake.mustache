@@ -8,13 +8,19 @@
     <script type="text/javascript">
         const REDIRECT_URL = "/";
 
+        function isInternetExplorer() {
+            let isIE = /*@cc_on!@*/false || !!document.documentMode;
+            return isIE || navigator.userAgent.indexOf("MSIE") > 0;
+        }
+
         function prepareSession(client) {
             let data = {
                 serverUrl: client.state.serverUrl,
                 bearerToken: client.state.tokenResponse.access_token,
                 patientId: client.getPatientId(),
                 userId: client.getUserId(),
-                audience: "patient"
+                audience: "patient",
+                isIE: isInternetExplorer()
             };
 
             $.ajax({

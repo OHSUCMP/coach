@@ -46,7 +46,10 @@ public class SessionController extends BaseController {
                                             @RequestParam("bearerToken") String bearerToken,
                                             @RequestParam("patientId") String patientId,
                                             @RequestParam("userId") String userId,
-                                            @RequestParam("audience") String audienceStr) {
+                                            @RequestParam("audience") String audienceStr,
+                                            @RequestParam("isIE") Boolean isIE) {
+
+        logger.info("isIE? " + isIE);
 
         FHIRCredentials credentials = new FHIRCredentials(serverUrl, bearerToken, patientId, userId);
         IGenericClient client = FhirUtil.buildClient(
