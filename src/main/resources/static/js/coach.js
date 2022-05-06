@@ -1,4 +1,9 @@
 function loadScript(src, callback) {
+    // NOTE: this function uses a callback function to perform subsequent tasks that require the
+    //       specified script to be loaded.  this is because loading a script is an asynchronous
+    //       task; the call to load returns before loading is complete.  thus, race conditions
+    //       are likely to occur.  placing dependent logic in callbacks negates this issue.
+
     // pulled from https://aaronsmith.online/easily-load-an-external-script-using-javascript/
     let script = document.createElement('script')
     script.type = 'text/javascript'
