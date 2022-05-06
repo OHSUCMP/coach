@@ -3,10 +3,10 @@
     {{#head}}
         <!-- chartjs - see: https://www.chartjs.org/docs/latest/getting-started/installation.html -->
         <!-- chartjs-plugin-annotation - see: https://github.com/chartjs/chartjs-plugin-annotation -->
-        <script type="text/javascript" src="/node_modules/regression/dist/regression.js"></script>
-        <script type="text/javascript" src="/node_modules/chart.js/dist/Chart.js"></script>
-        <script type="text/javascript" src="/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js"></script>
-        <script type="text/javascript" src="/node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js"></script>
+<!--        <script type="text/javascript" src="/node_modules/regression/dist/regression.js"></script>-->
+<!--        <script type="text/javascript" src="/node_modules/chart.js/dist/Chart.js"></script>-->
+<!--        <script type="text/javascript" src="/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js"></script>-->
+<!--        <script type="text/javascript" src="/node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js"></script>-->
 
         <!-- https://www.npmjs.com/package/inputmask -->
         <script type="text/javascript" src="/node_modules/inputmask/dist/jquery.inputmask.js"></script>
@@ -19,6 +19,17 @@
         <script type="text/javascript" src="/js/recommendations.js"></script>
 
         <script type="text/javascript">
+            function loadChart() {
+                loadBloodPressureObservations(function(bpdata) {
+                    window.bpdata = bpdata;
+                    window.bpchart = {};
+                    window.bpchart.data = window.bpdata;
+
+                    populateSummaryDiv();
+                    buildChart();
+                });
+            }
+
             $(document).on('click', '#chartTimelineContainer > .button:not(.selected)', function() {
                 window.bpchart = {};
 
@@ -66,16 +77,28 @@
 
                 enableHover('#chartTimelineContainer .button');
 
-                loadBloodPressureObservations(function(bpdata) {
-                    window.bpdata = bpdata;
-                    window.bpchart = {};
-                    window.bpchart.data = window.bpdata;
+                if (isInternetExplorer()) {
+                    loadScript("/js/chart.js-2.9.3/Chart.js", function() {
+                        loadScript("/js/bpchart-ie.js", function() {
+                            console.log("done loading IE chart scripts");
+                            loadChart();
+                        });
+                    });
 
-                    populateSummaryDiv();
-                    buildChart();
-                });
-
-                // populateCurrentBPGoal(getCurrentBPGoal());
+                } else {
+                    loadScript("/node_modules/regression/dist/regression.js", function() {
+                        loadScript("/node_modules/chart.js/dist/Chart.js", function() {
+                            loadScript("/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js", function() {
+                                loadScript("/node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js", function() {
+                                    loadScript("/js/bpchart.js", function() {
+                                        console.log("done loading non-IE chart scripts");
+                                        loadChart();
+                                    })
+                                })
+                            })
+                        })
+                    });
+                }
 
                 loadMedications(function(meds) {
                     window.meds = meds;

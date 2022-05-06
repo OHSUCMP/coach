@@ -48,7 +48,6 @@ public class UserWorkspace {
     private final Audience audience;
     private final FHIRCredentialsWithClient fhirCredentialsWithClient;
     private final FhirConfigManager fcm;
-    private final Boolean isIE;
     private final Long internalPatientId;
 
     private Cache cache;
@@ -58,14 +57,12 @@ public class UserWorkspace {
     private ExecutorService executorService;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
-                            FHIRCredentialsWithClient fhirCredentialsWithClient, FhirConfigManager fcm,
-                            Boolean isIE) {
+                            FHIRCredentialsWithClient fhirCredentialsWithClient, FhirConfigManager fcm) {
         this.ctx = ctx;
         this.sessionId = sessionId;
         this.audience = audience;
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
         this.fcm = fcm;
-        this.isIE = isIE;
 
         PatientService patientService = ctx.getBean(PatientService.class);
         this.internalPatientId = patientService.getInternalPatientId(
@@ -89,10 +86,6 @@ public class UserWorkspace {
 
     public Audience getAudience() {
         return audience;
-    }
-
-    public Boolean isIE() {
-        return isIE;
     }
 
     public FHIRCredentialsWithClient getFhirCredentialsWithClient() {

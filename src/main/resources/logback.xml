@@ -29,7 +29,6 @@
         <appender-ref ref="FILE" />
     </root>
 
-    <logger name="edu.ohsu.cmp.coach.controller.HomeController" level="DEBUG" />
     <logger name="edu.ohsu.cmp.coach.workspace.UserWorkspace" level="DEBUG" />
     <logger name="edu.ohsu.cmp.coach.service.RecommendationService" level="INFO" />
     <logger name="edu.ohsu.cmp.coach.service.EHRService" level="DEBUG" />

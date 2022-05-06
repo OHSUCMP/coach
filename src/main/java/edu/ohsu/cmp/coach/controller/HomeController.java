@@ -70,9 +70,7 @@ public class HomeController extends BaseController {
                 logger.error("caught " + e.getClass().getName() + " building home page", e);
             }
 
-            return workspace.isIE() ?
-                    "home-ie" :
-                    "home";
+            return "home";
 
         } else {
             Boolean cacheCredentials = StringUtils.equals(env.getProperty("security.browser.cache-credentials"), "true");
