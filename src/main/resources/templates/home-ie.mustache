@@ -1,0 +1,262 @@
+{{#layout}}
+    {{#title}}{{applicationName}} - Home{{/title}}
+    {{#head}}
+        <!-- chartjs - see: https://www.chartjs.org/docs/latest/getting-started/installation.html -->
+        <!-- chartjs-plugin-annotation - see: https://github.com/chartjs/chartjs-plugin-annotation -->
+        <script type="text/javascript" src="/node_modules/regression/dist/regression.js"></script>
+        <script type="text/javascript" src="/node_modules/chart.js/dist/Chart.js"></script>
+        <script type="text/javascript" src="/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js"></script>
+        <script type="text/javascript" src="/node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js"></script>
+
+        <!-- https://www.npmjs.com/package/inputmask -->
+        <script type="text/javascript" src="/node_modules/inputmask/dist/jquery.inputmask.js"></script>
+        <script type="text/javascript" src="/node_modules/inputmask/dist/bindings/inputmask.binding.js"></script>
+
+        <link rel="stylesheet" href="/css/home.css"/>
+        <script type="text/javascript" src="/js/home.js"></script>
+
+        <link rel="stylesheet" href="/css/recommendations.css"/>
+        <script type="text/javascript" src="/js/recommendations.js"></script>
+
+        <script type="text/javascript">
+            $(document).on('click', '#chartTimelineContainer > .button:not(.selected)', function() {
+                window.bpchart = {};
+
+                let type = $(this).attr('data-window');
+                if (type === 'all') {
+                    window.bpchart.data = window.bpdata;
+
+                } else {
+                    let startDate = new Date();
+                    let endDate = new Date();
+
+                    if (type === '2m') {
+                        startDate.setMonth(startDate.getMonth() - 2);
+                        startDate.setHours(0, 0, 0);
+                        endDate.setHours(23, 59, 59);
+
+                    } else if (type === '1y') {
+                        startDate.setFullYear(startDate.getFullYear() - 1);
+                        startDate.setHours(0, 0, 0);
+                        endDate.setHours(23, 59, 59);
+                    }
+
+                    window.bpchart.data = truncateData(window.bpdata, startDate);
+                    window.bpchart.startDate = startDate;
+                    window.bpchart.endDate = endDate;
+                }
+
+                populateSummaryDiv();
+                updateChart();
+
+                $('#chartTimelineContainer').find('.button').each(function() {
+                    if ($(this).attr('data-window') === type) {
+                        $(this).addClass('selected');
+                    } else {
+                        $(this).removeClass('selected');
+                    }
+                });
+            });
+
+            $(document).ready(function () {
+                let sessionEstablished = $('#sessionEstablished').text();
+                if (sessionEstablished !== 'true') {
+                    return;
+                }
+
+                enableHover('#chartTimelineContainer .button');
+
+                loadBloodPressureObservations(function(bpdata) {
+                    window.bpdata = bpdata;
+                    window.bpchart = {};
+                    window.bpchart.data = window.bpdata;
+
+                    populateSummaryDiv();
+                    buildChart();
+                });
+
+                // populateCurrentBPGoal(getCurrentBPGoal());
+
+                loadMedications(function(meds) {
+                    window.meds = meds;
+                    populateMedications();
+                });
+
+                loadAdverseEvents(function(adverseEvents) {
+                    window.adverseEvents = adverseEvents;
+                    populateAdverseEvents();
+                });
+
+                getRecommendations(function(container, cards) {
+                    if (cards) {
+                        let html = renderCards(cards);
+                        if (html === '') {
+                            $(container).closest('.recommendation').addClass('hidden');
+
+                        } else {
+                            $(container).html(html);
+                            $(container).find('.bpGoal input.systolic').inputmask({
+                                regex: "1?[0-9]{2}"
+                            });
+                            $(container).find('.bpGoal input.diastolic').inputmask({
+                                regex: "1?[0-9]{2}"
+                            });
+                            // $(container).find('input.madlibResponse[data-type="number"]').inputmask({
+                            //     regex: "[1-9][0-9]{0,}"
+                            // });
+                            // $(container).find('input.madlibResponse[data-type="text"]').inputmask({
+                            //     regex: "[A-Za-z' ]{1,}"
+                            // });
+                        }
+                    }
+                });
+            });
+        </script>
+    {{/head}}
+    {{#menuItems}}
+        <li class="anchor selected" data-href="/">Home</li>
+        <li class="anchor" data-href="/goals">My Goals</li>
+        <li class="anchor" data-href="/vitals">Home BP Readings</li>
+        <li class="anchor" data-href="/medications">My Medications</li>
+    {{/menuItems}}
+    {{#content}}
+        <div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
+        <table class="content">
+            <tr>
+                <td id="patientInfo">
+                    <table style="margin-left: 50px">
+                        <tr>
+                            <td rowspan="2">
+                                <span class="circle" style="background-color: #b3fff0">&nbsp;</span>
+                            </td>
+                            <td colspan="2">
+                                <span style="font-size: x-large">{{patient.name}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>{{patient.age}} years</td>
+                            <td>{{patient.gender}}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <table class="content">
+            <tr>
+                <td class="heading">
+                    High Blood Pressure Control
+                </td>
+            </tr>
+            <tr>
+                <td id="highBPControlContainer">
+                    <table class="expand">
+                        <tr>
+                            <td style="width:200px; vertical-align: top">
+                                <span style="font-weight: bold; white-space: nowrap">Your blood pressure:</span>
+                                <br/>
+                                <div id="avgBPContainer">
+                                    <table style="text-align:center">
+                                        <tr>
+                                            <td colspan="3">
+                                                <span id="bpLabel"></span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td rowspan="3">
+                                                <div id="bpIcon"></div>
+                                            </td>
+                                            <td id="avgSystolic">X</td>
+                                            <td style="vertical-align: bottom; font-size: small">systolic</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="width:50px"><hr/></td>
+                                            <td>&nbsp;</td>
+                                        </tr>
+                                        <tr>
+                                            <td id="avgDiastolic">Y</td>
+                                            <td style="vertical-align: top; font-size: small">diastolic</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="3">
+                                                <span id="bpGoalMetLabel"></span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                            <td style="width:500px">
+                                <div id="chartContainer">
+                                    <div id="loadingChart">Loading Chart ...</div>
+                                    <div id="legend">
+                                        <span class="heading">Key</span>
+                                        <div id="chartKeyContainer" class="hidden">
+                                            <div class="chartKeyItem">
+                                                <span id="chartKeyHomeBP"></span>
+                                                <label for="chartKeyHomeBP">Home BP</label>
+                                            </div>
+                                            <div class="chartKeyItem">
+                                                <span id="chartKeyOfficeBP"></span>
+                                                <label for="chartKeyOfficeBP">Office BP</label>
+                                            </div>
+                                            <div class="chartKeyItem">
+                                                <span id="chartKeySystolic"></span>
+                                                <label for="chartKeySystolic">Systolic BP</label>
+                                            </div>
+<!--                                            <div class="chartKeyItem">-->
+<!--                                                <span id="chartKeySystolicGoal"></span>-->
+<!--                                                <label for="chartKeySystolicGoal">Systolic Goal</label>-->
+<!--                                            </div>-->
+                                            <div class="chartKeyItem">
+                                                <span id="chartKeyDiastolic"></span>
+                                                <label for="chartKeyDiastolic">Diastolic BP</label>
+                                            </div>
+<!--                                            <div class="chartKeyItem">-->
+<!--                                                <span id="chartKeyDiastolicGoal"></span>-->
+<!--                                                <label for="chartKeyDiastolicGoal">Diastolic Goal</label>-->
+<!--                                            </div>-->
+                                        </div>
+                                    </div>
+                                    <div id="chartTimelineContainer" class="hidden">
+                                        <span class="heading">Timeline</span>
+                                        <span class="button" data-window="2m">2 months</span>
+                                        <span class="button" data-window="1y">1 year</span>
+                                        <span class="button selected" data-window="all">All</span>
+                                    </div>
+                                    <div id="noChartData" class="hidden">
+                                        <div>No Data</div>
+                                    </div>
+                                    <canvas id="chart" class="hidden" width="700" height=250"></canvas>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div id="currentBPGoal" data-systolic="{{bpGoal.systolicTarget}}" data-diastolic="{{bpGoal.diastolicTarget}}">
+                        Your Current Blood Pressure Goal: <em><strong>Below {{bpGoal.systolicTarget}} /
+                        {{bpGoal.diastolicTarget}}</strong></em> (<a href="/goals">update</a>)
+                    </div>
+                    <div id="currentMedications" data-name="{{medicationsOfInterestName}}">
+                    </div>
+                    <div id="adverseEvents"></div>
+                </td>
+            </tr>
+            <tr>
+                <td class="heading">
+                    Recommendations
+                </td>
+            </tr>
+            <tr>
+                <td id="recommendationsContainer">
+                    {{#cdshooks}}
+                        <div class="recommendation" data-id="{{id}}">
+                            <div class="heading">{{title}}</div>
+                            <div class="cardsContainer">
+                                Loading...
+                            </div>
+                        </div>
+                    {{/cdshooks}}
+                </td>
+            </tr>
+        </table>
+    {{/content}}
+{{/layout}}

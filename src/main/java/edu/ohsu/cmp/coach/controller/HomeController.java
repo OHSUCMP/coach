@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -18,7 +19,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +49,11 @@ public class HomeController extends BaseController {
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model) {
         boolean sessionEstablished = workspaceService.exists(session.getId());
+
+        // get user agent to attempt to identify IE as the browser
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        String userAgent = request.getHeader("user-agent");
+        logger.debug("UserAgent for session " + session.getId() + ": " + userAgent);
 
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
