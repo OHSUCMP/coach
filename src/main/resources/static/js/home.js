@@ -198,16 +198,23 @@ function toTrendLineData(data, type) {
             let diff = item.readingDate.getTime() - lastDate.getTime();
             diffArr.push(diff);
 
-            // IE doesn't like => operator
             let avgDiff = Math.round(diffArr.reduce(function(a, b) {
                 return a + b;
             }, 0) / diffArr.length);
 
             if (diff > threshold || (diffArr.length > 1 && diff > avgDiff * groupingFactor)) {
-                let lastDates = tempArr.map(o => o.timestamp.getTime());
-                let lastDateAvg = Math.round(lastDates.reduce((a, b) => a + b, 0) / lastDates.length);
-                let lastVals = tempArr.map(o => o.val);
-                let lastValsAvg = Math.round(lastVals.reduce((a, b) => a + b, 0) / lastVals.length);
+                let lastDates = tempArr.map(function(o) {
+                    return o.timestamp.getTime();
+                });
+                let lastDateAvg = Math.round(lastDates.reduce(function(a, b) {
+                    return a + b;
+                }, 0) / lastDates.length);
+                let lastVals = tempArr.map(function(o) {
+                    return o.val;
+                });
+                let lastValsAvg = Math.round(lastVals.reduce(function(a, b) {
+                    return a + b;
+                }, 0) / lastVals.length);
                 arr.push({
                     x: new Date(lastDateAvg),
                     y: lastValsAvg
@@ -225,10 +232,18 @@ function toTrendLineData(data, type) {
     });
 
     if (tempArr.length > 0) {   // process final records
-        let lastDates = tempArr.map(o => o.timestamp.getTime());
-        let lastDateAvg = Math.round(lastDates.reduce((a, b) => a + b, 0) / lastDates.length);
-        let lastVals = tempArr.map(o => o.val);
-        let lastValsAvg = Math.round(lastVals.reduce((a, b) => a + b, 0) / lastVals.length);
+        let lastDates = tempArr.map(function(o) {
+            return o.timestamp.getTime();
+        });
+        let lastDateAvg = Math.round(lastDates.reduce(function(a, b) {
+            return a + b;
+        }, 0) / lastDates.length);
+        let lastVals = tempArr.map(function(o) {
+            return o.val;
+        });
+        let lastValsAvg = Math.round(lastVals.reduce(function(a, b) {
+            return a + b;
+        }, 0) / lastVals.length);
         arr.push({
             x: new Date(lastDateAvg),
             y: lastValsAvg
