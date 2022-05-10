@@ -280,7 +280,12 @@ function buildGoalsHTML(suggestions) {
                 html += "<div><label for='achievementStatus" + id + "'>Achievement Status:</label> <select id='achievementStatus" + id + "' class='achievementStatus'>";
 
                 let a_arr = ['IN_PROGRESS', 'ACHIEVED', 'NOT_ACHIEVED'];
-                let a_status = s.goal.achievementStatus;
+
+                // let a_status = s.goal.achievementStatus;
+                let a_status = s.goal ?
+                    s.goal.achievementStatus :
+                    'UNKNOWN';
+
                 a_arr.forEach(function(value) {
                     html += "<option value='" + value + "'";
                     if (value === a_status) {
@@ -293,7 +298,7 @@ function buildGoalsHTML(suggestions) {
 
                 html += "</td><td>";
 
-                html += "<div class='updateGoal'>Record Progress</div></td>";
+                html += "<div class='updateGoal'><span>Record Progress</span></div></td>";
                 html += "</td>";
                 html += "</tr><tr>";
 
@@ -309,7 +314,7 @@ function buildGoalsHTML(suggestions) {
 
 function toLabel(string) {
     // let words = string.replaceAll("_", " ").toLowerCase().split(" ");
-    let words = string.replace(/_/g, ' ');
+    let words = string.replace(/_/g, ' ').split(" ");
 
     let label = words.map(function(word) {
         return word[0].toUpperCase() + word.substring(1);
