@@ -308,7 +308,8 @@ function buildGoalsHTML(suggestions) {
 }
 
 function toLabel(string) {
-    let words = string.replaceAll("_", " ").toLowerCase().split(" ");
+    // let words = string.replaceAll("_", " ").toLowerCase().split(" ");
+    let words = string.replace(/_/g, ' ');
 
     let label = words.map(function(word) {
         return word[0].toUpperCase() + word.substring(1);
