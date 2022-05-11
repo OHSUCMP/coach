@@ -96,9 +96,18 @@ function toDateTimeString(o) {
 
 function pad(o, padChar, fillToLen) {
     let s = o.toString();
-    return s.length >= fillToLen ?
-        s :
-        padChar.repeat(fillToLen - s.length) + s;
+    if (s.length >= fillToLen) {
+        return s;
+    } else {
+        let paddedPart = '';
+        for (let i = 0; i < fillToLen - s.length; i ++) {
+            paddedPart = paddedPart + padChar;
+        }
+        return paddedPart + s;
+    }
+    // return s.length >= fillToLen ?
+    //     s :
+    //     padChar.repeat(fillToLen - s.length) + s;
 }
 
 $(document).ready(function() {
