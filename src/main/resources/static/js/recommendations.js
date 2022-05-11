@@ -535,7 +535,7 @@ function updateBPGoal(bpGoalData, _callback) {
 function updateGoal(goalUpdateData, _callback) {
     $.ajax({
         method: "POST",
-        url: "/goals/set-status",
+        url: "/goals/update-status",
         data: goalUpdateData
     }).done(function(data, textStatus, jqXHR) {
         _callback(jqXHR.status);
@@ -567,7 +567,9 @@ function buildAdverseEventData(button) {
 
 function hide(el, _complete) {
     $(el).addClass('hidden');
-    _complete(el);
+    if (_complete !== undefined) {
+        _complete(el);
+    }
 //    $(el).fadeOut(400, _complete(el));
 }
 
