@@ -293,12 +293,9 @@ function buildGoalsHTML(suggestions) {
                     }
                     html += ">" + toLabel(value) + "</option>";
                 });
-
                 html += "</select></div>";
-
-                html += "</td><td>";
-
-                html += "<div class='updateGoal'><span>Record Progress</span></div></td>";
+                html += "</td>";
+                html += "<td class='shrink'><div class='updateGoal'><span>Record Progress</span></div></td>";
                 html += "</td>";
                 html += "</tr><tr>";
 
