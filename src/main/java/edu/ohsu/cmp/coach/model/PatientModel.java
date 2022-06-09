@@ -38,10 +38,10 @@ public class PatientModel {
                 }
             }
         }
-        if      (officialName != null)  this.name = officialName;
-        else if (usualName != null)     this.name = usualName;
+        if      (usualName != null)     this.name = usualName;
+        else if (officialName != null)  this.name = officialName;
         else {
-            logger.warn("no OFFICIAL or USUAL name for patient " + p.getId() + " - using default");
+            logger.warn("no USUAL or OFFICIAL name for patient " + p.getId() + " - using default");
             this.name = defaultName;
         }
 
