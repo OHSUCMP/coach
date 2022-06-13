@@ -58,7 +58,7 @@ function renderCards(cards) {
             html += "<table style='width:100%'><tr><td class='shrink'>";
             html += "<img src='/images/" + card.indicator + "-icon.png' class='icon' alt='" + card.indicator + "' />";
             // html += "<div class='circle'><span>XX</span></div>"
-            html += "</td><td>"; // class='expand'>";
+            html += "</td><td class='expand'>";
             html += "<div class='content'>";
             html += "<span class='summary heading'>" + card.summary + "</span>";
 
@@ -305,7 +305,7 @@ function buildGoalsHTML(suggestions) {
         });
     }
     return html !== "" ?
-        "<div class='goalsContainer'>" + html + "</div>" :
+        "<div class='goalsContainer shrink'>" + html + "</div>" :
         "";
 }
 
