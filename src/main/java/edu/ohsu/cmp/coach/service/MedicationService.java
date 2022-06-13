@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -52,12 +53,7 @@ public class MedicationService extends AbstractService {
         return list;
     }
 
-    public String getMedicationsOfInterestName() {
-        ValueSet valueSet = valueSetService.getValueSet(fcm.getMedicationValueSetOid());
-        return valueSet.getDisplayName();
-    }
-
-    public List<MedicationModel> getMedicationsOfInterest(String sessionId) {
+    public List<MedicationModel> getAntihypertensiveMedications(String sessionId) {
         return getMedications(sessionId, true);
     }
 
@@ -65,28 +61,43 @@ public class MedicationService extends AbstractService {
         return getMedications(sessionId, false);
     }
 
-    private List<MedicationModel> getMedications(String sessionId, boolean includeOfInterest) {
+    private List<MedicationModel> getMedications(String sessionId, boolean includeAntihypertensive) {
         return filterByValueSet(workspaceService.get(sessionId).getMedications(),
-                fcm.getMedicationValueSetOid(),
-                includeOfInterest);
+                getAntihypertensiveMedicationValueSetOIDsList(),
+                includeAntihypertensive);
     }
 
-    private List<MedicationModel> filterByValueSet(List<MedicationModel> list, String valueSetOid, boolean includeOnMatch) {
+    private List<MedicationModel> filterByValueSet(List<MedicationModel> list, String valueSetOID, boolean includeOnMatch) {
+        return filterByValueSet(list, Arrays.asList(valueSetOID), includeOnMatch);
+    }
+
+    private List<MedicationModel> filterByValueSet(List<MedicationModel> list, List<String> valueSetOIDList, boolean includeOnMatch) {
         if (list == null) return null;
 
         List<MedicationModel> filtered = new ArrayList<>();
 
-        ValueSet valueSet = valueSetService.getValueSet(valueSetOid);
-        for (Concept c : valueSet.getConcepts()) {
+        List<Concept> concepts = new ArrayList<>();
+        for (String oid : valueSetOIDList) {
+            ValueSet valueSet = valueSetService.getValueSet(oid);
+            concepts.addAll(valueSet.getConcepts());
+        }
+
+        for (Concept c : concepts) {
             String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
             for (MedicationModel item : list) {
                 boolean matches = item.matches(codeSystem, c.getCode());
                 if ((includeOnMatch && matches) || (!includeOnMatch && !matches)) {
                     filtered.add(item);
+                    break;
                 }
             }
         }
 
         return filtered;
+    }
+
+    private List<String> getAntihypertensiveMedicationValueSetOIDsList() {
+        String csv = env.getProperty("antihypertensive.medication.valueset.oid.csv");
+        return Arrays.asList(csv.split("\\s*,\\s*"));
     }
 }

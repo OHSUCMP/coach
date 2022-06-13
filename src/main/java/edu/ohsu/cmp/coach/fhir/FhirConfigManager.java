@@ -5,6 +5,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Component
 @PropertySource("${fhirconfig.file}")
 public class FhirConfigManager {
@@ -54,8 +57,6 @@ public class FhirConfigManager {
     @Value("${protocol.answer.display}")    private String protocolAnswerDisplay;
     @Value("${protocol.answer.yes}")        private String protocolAnswerYes;
     @Value("${protocol.answer.no}")         private String protocolAnswerNo;
-
-    @Value("${medication.valueset.oid}")    private String medicationValueSetOid;
 
     public String getEncounterClassSystem() {
         return encounterClassSystem;
@@ -221,9 +222,5 @@ public class FhirConfigManager {
 
     public String getProtocolAnswerNo() {
         return protocolAnswerNo;
-    }
-
-    public String getMedicationValueSetOid() {
-        return medicationValueSetOid;
     }
 }

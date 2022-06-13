@@ -78,11 +78,13 @@
                 enableHover('#chartTimelineContainer .button');
 
                 if (isInternetExplorer()) {
-                    loadScript("/js/chart.js-2.9.3/Chart.js", function() {
-                        loadScript("/js/bpchart-ie.js", function() {
-                            console.log("done loading IE chart scripts");
-                            loadChart();
-                        });
+                    loadScript("/js/ie/chart.js-2.9.3/Chart.js", function() {
+                        loadScript("/js/ie/chartjs-adapter-moment-0.1.2/chartjs-adapter-moment.js", function() {
+                            loadScript("/js/ie/bpchart.js", function() {
+                                console.log("done loading IE chart scripts");
+                                loadChart();
+                            });
+                        })
                     });
 
                 } else {
@@ -249,7 +251,7 @@
                                     <div id="noChartData" class="hidden">
                                         <div>No Data</div>
                                     </div>
-                                    <canvas id="chart" class="hidden" width="700" height=250"></canvas>
+                                    <canvas id="chart" class="hidden" width="700" height="250"></canvas>
                                 </div>
                             </td>
                         </tr>
@@ -258,7 +260,7 @@
                         Your Current Blood Pressure Goal: <em><strong>Below {{bpGoal.systolicTarget}} /
                         {{bpGoal.diastolicTarget}}</strong></em> (<a href="/goals">update</a>)
                     </div>
-                    <div id="currentMedications" data-name="{{medicationsOfInterestName}}">
+                    <div id="currentMedications">
                     </div>
                     <div id="adverseEvents"></div>
                 </td>

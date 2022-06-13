@@ -120,6 +120,11 @@ public class GoalsController extends BaseController {
                                                          @RequestParam("extGoalId") String extGoalId,
                                                          @RequestParam("achievementStatus") String achievementStatusStr) {
 
+        // todo : this may need to be adjusted to handle a case where there is no persisted Goal
+        //        for the specified extGoalId (there see the "BehaviorGoal Exists" patient in Logica)
+        //        note that the Logica test patient above may trigger an unrealistic scenario, in
+        //        which case this is probably a non-issue, but this should be considered
+
         MyGoal g = goalService.getLocalGoal(session.getId(), extGoalId);
         GoalHistory gh = new GoalHistory(AchievementStatus.valueOf(achievementStatusStr), g);
         gh = goalService.createHistory(gh);

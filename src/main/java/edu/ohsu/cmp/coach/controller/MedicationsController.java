@@ -34,14 +34,13 @@ public class MedicationsController extends BaseController {
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
 
-        List<MedicationModel> medicationsOfInterest = filterDuplicates(medicationService.getMedicationsOfInterest(session.getId()));
-        medicationsOfInterest.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));
+        List<MedicationModel> antihypertensiveMedications = filterDuplicates(medicationService.getAntihypertensiveMedications(session.getId()));
+        antihypertensiveMedications.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));
 
         List<MedicationModel> otherMedications = filterDuplicates(medicationService.getOtherMedications(session.getId()));
         otherMedications.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));
 
-        model.addAttribute("medicationsOfInterestName", medicationService.getMedicationsOfInterestName());
-        model.addAttribute("medicationsOfInterest", medicationsOfInterest);
+        model.addAttribute("antihypertensiveMedications", antihypertensiveMedications);
         model.addAttribute("otherMedications", otherMedications);
 
         return "medications";

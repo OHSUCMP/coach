@@ -40,8 +40,7 @@ function populateMedications() {
         });
 
         let el = $('#currentMedications');
-        let name = $(el).attr('data-name');
-        let html = 'Your Active ' + name + ': ' + arr.join(', ');
+        let html = 'Your Active Antihypertensive Medications: ' + arr.join(', ');
 
         $(el).html(html);
     }
