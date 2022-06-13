@@ -79,7 +79,9 @@ public class MedicationService extends AbstractService {
         List<Concept> concepts = new ArrayList<>();
         for (String oid : valueSetOIDList) {
             ValueSet valueSet = valueSetService.getValueSet(oid);
-            concepts.addAll(valueSet.getConcepts());
+            if (valueSet != null && valueSet.getConcepts() != null) {
+                concepts.addAll(valueSet.getConcepts());
+            }
         }
 
         for (Concept c : concepts) {
