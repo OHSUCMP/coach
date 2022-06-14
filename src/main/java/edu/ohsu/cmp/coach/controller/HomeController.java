@@ -21,7 +21,9 @@ import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class HomeController extends BaseController {
@@ -113,7 +115,7 @@ public class HomeController extends BaseController {
     @PostMapping("medications-list")
     public ResponseEntity<List<MedicationModel>> getMedications(HttpSession session) {
         try {
-            List<MedicationModel> list = medicationService.getAntihypertensiveMedications(session.getId());
+            List<MedicationModel> list = filterDuplicates(medicationService.getAntihypertensiveMedications(session.getId()));
 
             return new ResponseEntity<>(new ArrayList<>(list), HttpStatus.OK);
 
@@ -140,5 +142,28 @@ public class HomeController extends BaseController {
             logger.error("caught " + ise.getClass().getName() + " getting adverse events - " + ise.getMessage(), ise);
             throw ise;
         }
+    }
+
+    private List<MedicationModel> filterDuplicates(List<MedicationModel> modelList) {
+        Map<String, MedicationModel> map = new LinkedHashMap<String, MedicationModel>();
+
+        for (MedicationModel m : modelList) {
+            String key = m.getDescription();
+
+            if (map.containsKey(key)) {
+                Long tsNew = m.getEffectiveTimestamp();
+                if (tsNew != null) {    // if the new one has no timestamp, keep the existing one
+                    Long tsMapped = map.get(key).getEffectiveTimestamp();
+                    if (tsMapped == null || tsNew > tsMapped) {
+                        map.put(key, m);
+                    }
+                }
+
+            } else {
+                map.put(key, m);
+            }
+        }
+
+        return new ArrayList<>(map.values());
     }
 }
