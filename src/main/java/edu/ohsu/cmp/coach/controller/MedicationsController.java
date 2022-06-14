@@ -34,44 +34,15 @@ public class MedicationsController extends BaseController {
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
 
-        List<MedicationModel> antihypertensiveMedications = filterDuplicates(medicationService.getAntihypertensiveMedications(session.getId()));
+        List<MedicationModel> antihypertensiveMedications = medicationService.getAntihypertensiveMedications(session.getId());
         antihypertensiveMedications.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));
 
-        List<MedicationModel> otherMedications = filterDuplicates(medicationService.getOtherMedications(session.getId()));
+        List<MedicationModel> otherMedications = medicationService.getOtherMedications(session.getId());
         otherMedications.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));
 
         model.addAttribute("antihypertensiveMedications", antihypertensiveMedications);
         model.addAttribute("otherMedications", otherMedications);
 
         return "medications";
-    }
-
-    private List<MedicationModel> filterDuplicates(List<MedicationModel> modelList) {
-        Map<String, MedicationModel> map = new LinkedHashMap<String, MedicationModel>();
-
-        final String delim = "|";
-        for (MedicationModel m : modelList) {
-            String key = m.getDescription() + delim
-                    + m.getReason() + delim
-                    + m.getDose() + delim
-                    + m.getPrescribingClinician() + delim
-                    + m.getIssues() + delim
-                    + m.getPriority();
-
-            if (map.containsKey(key)) {
-                Long tsNew = m.getEffectiveTimestamp();
-                if (tsNew != null) {    // if the new one has no timestamp, keep the existing one
-                    Long tsMapped = map.get(key).getEffectiveTimestamp();
-                    if (tsMapped == null || tsNew > tsMapped) {
-                        map.put(key, m);
-                    }
-                }
-
-            } else {
-                map.put(key, m);
-            }
-        }
-
-        return new ArrayList<>(map.values());
     }
 }

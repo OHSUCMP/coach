@@ -13,9 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class MedicationService extends AbstractService {
@@ -62,9 +60,11 @@ public class MedicationService extends AbstractService {
     }
 
     private List<MedicationModel> getMedications(String sessionId, boolean includeAntihypertensive) {
-        return filterByValueSet(workspaceService.get(sessionId).getMedications(),
+        List<MedicationModel> list = filterByValueSet(workspaceService.get(sessionId).getMedications(),
                 getAntihypertensiveMedicationValueSetOIDsList(),
                 includeAntihypertensive);
+
+        return filterDuplicates(list);
     }
 
     private List<MedicationModel> filterByValueSet(List<MedicationModel> list, String valueSetOID, boolean includeOnMatch) {
@@ -101,5 +101,34 @@ public class MedicationService extends AbstractService {
     private List<String> getAntihypertensiveMedicationValueSetOIDsList() {
         String csv = env.getProperty("antihypertensive.medication.valueset.oid.csv");
         return Arrays.asList(csv.split("\\s*,\\s*"));
+    }
+
+    private List<MedicationModel> filterDuplicates(List<MedicationModel> modelList) {
+        Map<String, MedicationModel> map = new LinkedHashMap<String, MedicationModel>();
+
+        final String delim = "|";
+        for (MedicationModel m : modelList) {
+            String key = m.getDescription() + delim
+                    + m.getReason() + delim
+                    + m.getDose() + delim
+                    + m.getPrescribingClinician() + delim
+                    + m.getIssues() + delim
+                    + m.getPriority();
+
+            if (map.containsKey(key)) {
+                Long tsNew = m.getEffectiveTimestamp();
+                if (tsNew != null) {    // if the new one has no timestamp, keep the existing one
+                    Long tsMapped = map.get(key).getEffectiveTimestamp();
+                    if (tsMapped == null || tsNew > tsMapped) {
+                        map.put(key, m);
+                    }
+                }
+
+            } else {
+                map.put(key, m);
+            }
+        }
+
+        return new ArrayList<>(map.values());
     }
 }
