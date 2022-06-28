@@ -4,6 +4,7 @@ import edu.ohsu.cmp.coach.entity.vsac.Concept;
 import edu.ohsu.cmp.coach.entity.vsac.ValueSet;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.MedicationModel;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.MedicationRequest;
 import org.hl7.fhir.r4.model.MedicationStatement;
@@ -43,7 +44,15 @@ public class MedicationService extends AbstractService {
             for (Bundle.BundleEntryComponent entry : medicationRequestsBundle.getEntry()) {
                 if (entry.hasResource() && entry.getResource() instanceof MedicationRequest) {
                     MedicationRequest medicationRequest = (MedicationRequest) entry.getResource();
-                    list.add(new MedicationModel(medicationRequest, medicationRequestsBundle));
+                    try {
+                        list.add(new MedicationModel(medicationRequest, medicationRequestsBundle));
+
+                    } catch (Exception e) {
+                        logger.error("caught " + e.getClass().getName() + " - " + e.getMessage() + " - " +
+                                " attempting to build MedicationModel for MedicationRequest:\n" +
+                                FhirUtil.toJson(medicationRequest));
+                        logger.warn("MedicationRequest " + medicationRequest.getId() + " not added to Medications list!");
+                    }
                 }
             }
         }

@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
 
 public class MedicationModel {
@@ -95,18 +96,24 @@ public class MedicationModel {
             throw new DataException("MedicationRequest appears to be missing both MedicationCodeableConcept and MedicationReference: " + mr.getId());
         }
 
-        Coding c = cc.getCodingFirstRep();
-        system = c.getSystem();
-        code = c.getCode();
+        description = null;
 
-        if (c.hasDisplay()) {
-            description = c.getDisplay();
+        if (cc.hasCoding()) {
+            Coding c = cc.getCodingFirstRep();
+            system = c.getSystem();
+            code = c.getCode();
+            if (c.hasDisplay()) {
+                description = c.getDisplay();
+            }
+        }
 
-        } else if (cc.hasText()) {
-            description = cc.getText();
+        if (description == null) {
+            if (cc.hasText()) {
+                description = cc.getText();
 
-        } else {
-            throw new DataException("no description available for MedicationRequest " + mr.getId());
+            } else {
+                throw new DataException("no description available for MedicationRequest " + mr.getId());
+            }
         }
 
         if (mr.getAuthoredOn() != null) {
@@ -140,12 +147,12 @@ public class MedicationModel {
     }
 
     public boolean matches(String system, String code) {
-        if (this.system.equals(system) && this.code.equals(code)) {
+        if (StringUtils.equals(this.system, system) && StringUtils.equals(this.code, code)) {
             return true;
 
         } else if (sourceMedicationStatement != null) {
             for (Coding c : sourceMedicationStatement.getMedicationCodeableConcept().getCoding()) {
-                if (c.getSystem().equals(system) && c.getCode().equals(code)) {
+                if (StringUtils.equals(c.getSystem(), system) && StringUtils.equals(c.getCode(), code)) {
                     return true;
                 }
             }
@@ -153,14 +160,14 @@ public class MedicationModel {
         } else if (sourceMedicationRequest != null) {
             if (sourceMedicationRequest.hasMedicationCodeableConcept()) {
                 for (Coding c : sourceMedicationRequest.getMedicationCodeableConcept().getCoding()) {
-                    if (c.getSystem().equals(system) && c.getCode().equals(code)) {
+                    if (StringUtils.equals(c.getSystem(), system) && StringUtils.equals(c.getCode(), code)) {
                         return true;
                     }
                 }
 
             } else if (sourceMedicationRequest.hasMedicationReference() && sourceMedicationRequestMedication != null) {
                 for (Coding c : sourceMedicationRequestMedication.getCode().getCoding()) {
-                    if (c.getSystem().equals(system) && c.getCode().equals(code)) {
+                    if (StringUtils.equals(c.getSystem(), system) && StringUtils.equals(c.getCode(), code)) {
                         return true;
                     }
                 }
