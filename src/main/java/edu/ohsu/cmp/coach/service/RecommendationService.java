@@ -160,6 +160,7 @@ public class RecommendationService extends AbstractService {
             logger.debug("got response code=" + code + ", body=" + body);
 
             if (code < 200 || code > 299) {
+                logger.error("CQF-RULER ERROR: " + body);
                 Card card = showDevErrors ?
                         new Card(body) :
                         new Card(GENERIC_ERROR_MESSAGE);
