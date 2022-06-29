@@ -34,6 +34,7 @@ function getRecommendation(id, _callback) {
     $.ajax({
         method: "POST",
         url: "/recommendation",
+        timeout: 3600000,
         data: data
     }).done(function(cards, textStatus, jqXHR) {
         if (jqXHR.status === 200) {
