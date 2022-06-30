@@ -56,7 +56,7 @@
                             <th>Priority</th>
                         </tr>
                         {{#antihypertensiveMedications}}
-                            <tr class='medication' data-system="{{system}}" data-code="{{code}}">
+                            <tr class='medication' data-system="{{#system}}{{system}}{{/system}}" data-code="{{#code}}{{code}}{{/code}}">
                                 <td>{{description}}</td>
                                 <td>{{#reason}}{{reason}}{{/reason}}</td>
                                 <td>{{#dose}}{{dose}}{{/dose}}</td>
