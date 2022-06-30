@@ -69,6 +69,7 @@ public class MedicationService extends AbstractService {
     }
 
     private List<MedicationModel> getMedications(String sessionId, boolean includeAntihypertensive) {
+        logger.debug("getting Medications for session " + sessionId + ", includeAntihypertensive=" + includeAntihypertensive);
         return filterByValueSet(workspaceService.get(sessionId).getMedications(),
                 getAntihypertensiveMedicationValueSetOIDsList(),
                 includeAntihypertensive);
@@ -83,24 +84,51 @@ public class MedicationService extends AbstractService {
 
         List<MedicationModel> filtered = new ArrayList<>();
 
+        logger.debug("in filterByValueSet(includeOnMatch=" + includeOnMatch + ") - list.size() = " + list.size());
+
         List<Concept> concepts = new ArrayList<>();
         for (String oid : valueSetOIDList) {
             ValueSet valueSet = valueSetService.getValueSet(oid);
             if (valueSet != null && valueSet.getConcepts() != null) {
                 concepts.addAll(valueSet.getConcepts());
+            } else {
+                logger.warn("ValueSet with OID=" + oid + " does not exist and / or has no concepts!");
             }
         }
 
-        for (Concept c : concepts) {
-            String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
-            for (MedicationModel item : list) {
-                boolean matches = item.matches(codeSystem, c.getCode());
-                if ((includeOnMatch && matches) || (!includeOnMatch && !matches)) {
-                    filtered.add(item);
+        logger.debug("filtering Medications -");
+        for (MedicationModel item : list) {
+            logger.debug(" - processing " + item.getDescription() + " (id=" + item.getSourceId() + ") -");
+
+            boolean matches = false;
+            for (Concept c : concepts) {
+                String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
+                if (item.matches(codeSystem, c.getCode())) {
+                    logger.debug("   - matches codeSystem=" + codeSystem + ", code=" + c.getCode() + "!");
+                    matches = true;
                     break;
                 }
             }
+
+            if ((includeOnMatch && matches) || (!includeOnMatch && !matches)) {
+                logger.debug("   - adding to filtered list");
+                filtered.add(item);
+            }
         }
+        logger.debug("done filtering Medications.  filtered.size() = " + filtered.size());
+
+//        for (Concept c : concepts) {
+//            String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
+//            for (MedicationModel item : list) {
+//                boolean matches = item.matches(codeSystem, c.getCode());
+//                if ((includeOnMatch && matches) || (!includeOnMatch && !matches)) {
+//                    logger.debug("adding item(id=" + item.getSourceId() + ", description=" + item.getDescription() +
+//                            ") to filtered list - codeSystem=" + codeSystem + ", code=" + c.getCode());
+//                    filtered.add(item);
+//                    break;
+//                }
+//            }
+//        }
 
         return filtered;
     }

@@ -177,6 +177,16 @@ public class MedicationModel {
         return false;
     }
 
+    public String getSourceId() {
+        if (sourceMedicationStatement != null && sourceMedicationStatement.hasId()) {
+            return sourceMedicationStatement.getId();
+
+        } else if (sourceMedicationRequest != null && sourceMedicationRequest.hasId()) {
+            return sourceMedicationRequest.getId();
+        }
+
+        return null;
+    }
     @JsonIgnore
     public MedicationStatement getSourceMedicationStatement() {
         return sourceMedicationStatement;

@@ -49,6 +49,8 @@ public class MedicationsController extends BaseController {
     private List<MedicationModel> filterDuplicates(List<MedicationModel> modelList) {
         Map<String, MedicationModel> map = new LinkedHashMap<String, MedicationModel>();
 
+        logger.debug("filtering duplicate medications - original size=" + modelList.size());
+
         final String delim = "|";
         for (MedicationModel m : modelList) {
             String key = m.getDescription() + delim
@@ -58,19 +60,28 @@ public class MedicationsController extends BaseController {
                     + m.getIssues() + delim
                     + m.getPriority();
 
+            logger.debug("processing MedicationModel " + m.getDescription() + " (key=" + key + ")");
+
             if (map.containsKey(key)) {
                 Long tsNew = m.getEffectiveTimestamp();
+
+                logger.debug(" - found " + key + " in map - tsNew=" + tsNew);
+
                 if (tsNew != null) {    // if the new one has no timestamp, keep the existing one
                     Long tsMapped = map.get(key).getEffectiveTimestamp();
                     if (tsMapped == null || tsNew > tsMapped) {
+                        logger.debug(" - tsNew > tsMapped (" + tsMapped + ") - replacing -");
                         map.put(key, m);
                     }
                 }
 
             } else {
+                logger.debug(" - did not find " + key + " in map.  adding -");
                 map.put(key, m);
             }
         }
+
+        logger.debug("done filtering duplicate medications.  new size=" + map.values().size());
 
         return new ArrayList<>(map.values());
     }
