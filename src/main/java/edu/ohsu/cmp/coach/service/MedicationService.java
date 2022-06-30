@@ -117,19 +117,6 @@ public class MedicationService extends AbstractService {
         }
         logger.debug("done filtering Medications.  filtered.size() = " + filtered.size());
 
-//        for (Concept c : concepts) {
-//            String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
-//            for (MedicationModel item : list) {
-//                boolean matches = item.matches(codeSystem, c.getCode());
-//                if ((includeOnMatch && matches) || (!includeOnMatch && !matches)) {
-//                    logger.debug("adding item(id=" + item.getSourceId() + ", description=" + item.getDescription() +
-//                            ") to filtered list - codeSystem=" + codeSystem + ", code=" + c.getCode());
-//                    filtered.add(item);
-//                    break;
-//                }
-//            }
-//        }
-
         return filtered;
     }
 
