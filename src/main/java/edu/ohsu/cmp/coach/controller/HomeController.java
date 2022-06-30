@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 @Controller
 public class HomeController extends BaseController {
@@ -93,23 +94,45 @@ public class HomeController extends BaseController {
 //        return new ResponseEntity<>(goal, HttpStatus.OK);
 //    }
 
+//    @PostMapping("recommendation")
+//    public ResponseEntity<List<Card>> getRecommendation(HttpSession session,
+//                                                        @RequestParam("id") String hookId) {
+//
+//        try {
+//            UserWorkspace workspace = workspaceService.get(session.getId());
+//
+//            List<Card> cards = workspace.getCards(hookId);
+//            logger.info("got cards for hookId=" + hookId + "!");
+//
+//            return new ResponseEntity<>(cards, HttpStatus.OK);
+//
+//        } catch (RuntimeException re) {
+//            logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
+//                    re.getMessage(), re);
+//            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
+
     @PostMapping("recommendation")
-    public ResponseEntity<List<Card>> getRecommendation(HttpSession session,
-                                                        @RequestParam("id") String hookId) {
+    public Callable<ResponseEntity<List<Card>>> getRecommendation(HttpSession session,
+                                                                  @RequestParam("id") String hookId) {
+        return new Callable<>() {
+            public ResponseEntity<List<Card>> call() throws Exception {
+                try {
+                    UserWorkspace workspace = workspaceService.get(session.getId());
 
-        try {
-            UserWorkspace workspace = workspaceService.get(session.getId());
+                    List<Card> cards = workspace.getCards(hookId);
+                    logger.info("got cards for hookId=" + hookId + "!");
 
-            List<Card> cards = workspace.getCards(hookId);
-            logger.info("got cards for hookId=" + hookId + "!");
+                    return new ResponseEntity<>(cards, HttpStatus.OK);
 
-            return new ResponseEntity<>(cards, HttpStatus.OK);
-
-        } catch (RuntimeException re) {
-            logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
-                    re.getMessage(), re);
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+                } catch (RuntimeException re) {
+                    logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
+                            re.getMessage(), re);
+                    return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+            }
+        };
     }
 
     @PostMapping("medications-list")
