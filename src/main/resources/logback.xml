@@ -34,5 +34,7 @@
     <logger name="edu.ohsu.cmp.coach.service.EHRService" level="DEBUG" />
     <logger name="edu.ohsu.cmp.coach.service.FHIRService" level="INFO" />
     <logger name="edu.ohsu.cmp.coach.fhir.EncounterMatcher" level="DEBUG" />
-
+    <logger name="edu.ohsu.cmp.coach.controller.MedicationController" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.service.MedicationService" level="DEBUG" />
+    
 </configuration>
