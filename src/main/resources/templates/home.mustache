@@ -79,12 +79,10 @@
 
                 if (isInternetExplorer()) {
                     loadScript("/js/ie/chart.js-2.9.3/Chart.js", function() {
-                        loadScript("/js/ie/chartjs-adapter-moment-0.1.2/chartjs-adapter-moment.js", function() {
-                            loadScript("/js/ie/bpchart.js", function() {
-                                console.log("done loading IE chart scripts");
-                                loadChart();
-                            });
-                        })
+                        loadScript("/js/ie/bpchart.js", function() {
+                            console.log("done loading IE chart scripts");
+                            loadChart();
+                        });
                     });
 
                 } else {
