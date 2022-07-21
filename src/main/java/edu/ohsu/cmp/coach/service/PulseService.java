@@ -27,7 +27,7 @@ public class PulseService extends AbstractVitalsService {
 
     public List<PulseModel> buildPulseList(String sessionId) throws DataException {
         CompositeBundle compositeBundle = new CompositeBundle();
-        compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getPulseSystem() + "|" + fcm.getPulseCode(), null));
+        compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getPulseSystem() + "|" + fcm.getPulseCode(), fcm.getPulseLookbackPeriod(),null));
         compositeBundle.consume(workspaceService.get(sessionId).getProtocolObservations());
         Bundle observationBundle = compositeBundle.getBundle();
 

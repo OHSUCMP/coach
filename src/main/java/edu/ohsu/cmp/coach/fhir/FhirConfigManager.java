@@ -26,6 +26,7 @@ public class FhirConfigManager {
     @Value("${encounter.hh.class.not-in}")     private String encounterHHClassNotIn;
     @Value("${encounter.hh.type.in}")          private String encounterHHTypeIn;
     @Value("${encounter.hh.type.not-in}")      private String encounterHHTypeNotIn;
+    @Value("${encounter.lookbackPeriod}")      private String encounterLookbackPeriod;
 
     @Value("${bp.system}")          private String bpSystem;
     @Value("${bp.code}")            private String bpCode;
@@ -41,6 +42,7 @@ public class FhirConfigManager {
     @Value("${bp.value.system}")    private String bpValueSystem;
     @Value("${bp.value.unit}")      private String bpValueUnit;
     @Value("${bp.limit}")           private String bpLimit;
+    @Value("${bp.lookbackPeriod}")  private String bpLookbackPeriod;
 
     @Value("${pulse.code}")         private String pulseCode;
     @Value("${pulse.system}")       private String pulseSystem;
@@ -48,6 +50,7 @@ public class FhirConfigManager {
     @Value("${pulse.value.code}")   private String pulseValueCode;
     @Value("${pulse.value.system}") private String pulseValueSystem;
     @Value("${pulse.value.unit}")   private String pulseValueUnit;
+    @Value("${pulse.lookbackPeriod}")       private String pulseLookbackPeriod;
 
     @Value("${protocol.code}")              private String protocolCode;
     @Value("${protocol.system}")            private String protocolSystem;
@@ -57,6 +60,23 @@ public class FhirConfigManager {
     @Value("${protocol.answer.display}")    private String protocolAnswerDisplay;
     @Value("${protocol.answer.yes}")        private String protocolAnswerYes;
     @Value("${protocol.answer.no}")         private String protocolAnswerNo;
+    @Value("${protocol.lookbackPeriod}")    private String protocolLookbackPeriod;
+
+    @Value("${bmi.code}")                   private String bmiCode;
+    @Value("${bmi.system}")                 private String bmiSystem;
+    @Value("${bmi.lookbackPeriod}")         private String bmiLookbackPeriod;
+
+    @Value("${smoking.code}")               private String smokingCode;
+    @Value("${smoking.system}")             private String smokingSystem;
+    @Value("${smoking.lookbackPeriod}")     private String smokingLookbackPeriod;
+
+    @Value("${drinks.code}")                private String drinksCode;
+    @Value("${drinks.system}")              private String drinksSystem;
+    @Value("${drinks.lookbackPeriod}")      private String drinksLookbackPeriod;
+
+    @Value("${procedure.counseling.system}")    private String procedureCounselingSystem;
+    @Value("${procedure.counseling.code}")      private String procedureCounselingCode;
+
 
     public String getEncounterClassSystem() {
         return encounterClassSystem;
@@ -108,6 +128,10 @@ public class FhirConfigManager {
 
     public String getEncounterHHTypeNotIn() {
         return encounterHHTypeNotIn;
+    }
+
+    public String getEncounterLookbackPeriod() {
+        return encounterLookbackPeriod;
     }
 
     public String getBpSystem() {
@@ -168,6 +192,10 @@ public class FhirConfigManager {
                 Integer.parseInt(bpLimit);
     }
 
+    public String getBpLookbackPeriod() {
+        return bpLookbackPeriod;
+    }
+
     public String getPulseCode() {
         return pulseCode;
     }
@@ -190,6 +218,10 @@ public class FhirConfigManager {
 
     public String getPulseValueUnit() {
         return pulseValueUnit;
+    }
+
+    public String getPulseLookbackPeriod() {
+        return pulseLookbackPeriod;
     }
 
     public String getProtocolCode() {
@@ -222,5 +254,53 @@ public class FhirConfigManager {
 
     public String getProtocolAnswerNo() {
         return protocolAnswerNo;
+    }
+
+    public String getProtocolLookbackPeriod() {
+        return protocolLookbackPeriod;
+    }
+
+    public String getBmiCode() {
+        return bmiCode;
+    }
+
+    public String getBmiSystem() {
+        return bmiSystem;
+    }
+
+    public String getBmiLookbackPeriod() {
+        return bmiLookbackPeriod;
+    }
+
+    public String getSmokingCode() {
+        return smokingCode;
+    }
+
+    public String getSmokingSystem() {
+        return smokingSystem;
+    }
+
+    public String getSmokingLookbackPeriod() {
+        return smokingLookbackPeriod;
+    }
+
+    public String getDrinksCode() {
+        return drinksCode;
+    }
+
+    public String getDrinksSystem() {
+        return drinksSystem;
+    }
+
+    public String getDrinksLookbackPeriod() {
+        return drinksLookbackPeriod;
+    }
+
+    public String getProcedureCounselingSystem() {
+        return procedureCounselingSystem;
+    }
+
+    public String getProcedureCounselingCode() {
+        return procedureCounselingCode;
     }
 }

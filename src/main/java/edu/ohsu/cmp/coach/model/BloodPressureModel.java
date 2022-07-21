@@ -59,7 +59,7 @@ public class BloodPressureModel extends AbstractVitalsModel implements FHIRCompa
                               Observation protocolObservation,
                               FhirConfigManager fcm) throws DataException {
 
-        super(enc, protocolObservation, bpObservation, fcm);
+        super(enc, bpObservation, protocolObservation, fcm);
 
         this.sourceBPObservation = bpObservation;
 

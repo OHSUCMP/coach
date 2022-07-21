@@ -25,9 +25,9 @@ public class FhirQueryManager {
     private static final Pattern PATTERN_RELATIVE_DATE_PART = Pattern.compile("([0-9]+)([mMdDyY])");
     private static final DateFormat FHIR_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
-    @Value("${Patient.Lookup}")                     private String patientLookup;
+    @Value("${Patient.Lookup}")     private String patientLookup;
 
-    @Value("${Encounter.Query}")            private String encounterQuery;
+    @Value("${Encounter.Query}")    private String encounterQuery;
     @Value("${Observation.Category.Query}") private String observationCategoryQuery;
     @Value("${Observation.Code.Query}")     private String observationCodeQuery;
     @Value("${Condition.Query}")            private String conditionQuery;
@@ -35,46 +35,56 @@ public class FhirQueryManager {
     @Value("${MedicationStatement.Query}")  private String medicationStatementQuery;
     @Value("${MedicationRequest.Query}")    private String medicationRequestQuery;
 
+    @Value("${Procedure.Query}")    private String procedureQuery;
+
     public String getPatientLookup(String id) {
         return buildQuery(patientLookup, params()
                 .add(TOKEN_ID, id)
         );
     }
 
-    public boolean hasEncounterQuery() {
-        return StringUtils.isNotEmpty(encounterQuery);
+    public String getEncounterQuery(String patientId) {
+        return getEncounterQuery(patientId, null);
     }
 
-    public String getEncounterQuery(String patientId) {
-        return buildQuery(encounterQuery, params()
+    public String getEncounterQuery(String patientId, String lookbackPeriod) {
+        String query = lookbackPeriod != null ?
+                addLookbackPeriodParam(encounterQuery, lookbackPeriod) :
+                encounterQuery;
+
+        return buildQuery(query, params()
                 .add(TOKEN_SUBJECT, patientId)
         );
     }
 
-    public boolean hasObservationCategoryQuery() {
-        return StringUtils.isNotEmpty(observationCategoryQuery);
+    public String getObservationCategoryQuery(String patientId, String category) {
+        return getObservationCategoryQuery(patientId, category, null);
     }
 
-    public String getObservationCategoryQuery(String patientId, String category) {
-        return buildQuery(observationCategoryQuery, params()
+    public String getObservationCategoryQuery(String patientId, String category, String lookbackPeriod) {
+        String query = lookbackPeriod != null ?
+                addLookbackPeriodParam(observationCategoryQuery, lookbackPeriod) :
+                observationCategoryQuery;
+
+        return buildQuery(query, params()
                 .add(TOKEN_SUBJECT, patientId)
                 .add(TOKEN_CATEGORY, category)
         );
     }
 
-    public boolean hasObservationCodeQuery() {
-        return StringUtils.isNotEmpty(observationCodeQuery);
+    public String getObservationCodeQuery(String patientId, String code) {
+        return getObservationCodeQuery(patientId, code, null);
     }
 
-    public String getObservationCodeQuery(String patientId, String code) {
-        return buildQuery(observationCodeQuery, params()
+    public String getObservationCodeQuery(String patientId, String code, String lookbackPeriod) {
+        String query = StringUtils.isNotBlank(lookbackPeriod) ?
+                addLookbackPeriodParam(observationCodeQuery, lookbackPeriod) :
+                observationCodeQuery;
+
+        return buildQuery(query, params()
                 .add(TOKEN_SUBJECT, patientId)
                 .add(TOKEN_CODE, code)
         );
-    }
-
-    public boolean hasConditionQuery() {
-        return StringUtils.isNotEmpty(conditionQuery);
     }
 
     public String getConditionQuery(String patientId, String category) {
@@ -84,18 +94,10 @@ public class FhirQueryManager {
         );
     }
 
-    public boolean hasGoalQuery() {
-        return StringUtils.isNotEmpty(goalQuery);
-    }
-
     public String getGoalQuery(String patientId) {
         return buildQuery(goalQuery, params()
                 .add(TOKEN_SUBJECT, patientId)
         );
-    }
-
-    public boolean hasMedicationStatementQuery() {
-        return StringUtils.isNotEmpty(medicationStatementQuery);
     }
 
     public String getMedicationStatementQuery(String patientId) {
@@ -104,12 +106,14 @@ public class FhirQueryManager {
         );
     }
 
-    public boolean hasMedicationRequestQuery() {
-        return StringUtils.isNotEmpty(medicationRequestQuery);
-    }
-
     public String getMedicationRequestQuery(String patientId) {
         return buildQuery(medicationRequestQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
+    public String getProcedureQuery(String patientId) {
+        return buildQuery(procedureQuery, params()
                 .add(TOKEN_SUBJECT, patientId)
         );
     }
@@ -187,5 +191,9 @@ public class FhirQueryManager {
             return s2.substring(1, s2.length() - 1);
         }
         return "";
+    }
+
+    private String addLookbackPeriodParam(String query, String lookbackPeriod) {
+        return query + "&date=ge{now-" + lookbackPeriod + "}&_sort=-date";
     }
 }

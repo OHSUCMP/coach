@@ -42,7 +42,7 @@ public class PulseModel extends AbstractVitalsModel implements FHIRCompatible {
                       Observation protocolObservation,
                       FhirConfigManager fcm) throws DataException {
 
-        super(enc, protocolObservation, pulseObservation, fcm);
+        super(enc, pulseObservation, protocolObservation, fcm);
 
         this.sourcePulseObservation = pulseObservation;
         this.pulse = new QuantityModel(pulseObservation.getValueQuantity());

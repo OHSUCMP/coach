@@ -33,7 +33,7 @@ public class BloodPressureService extends AbstractVitalsService {
 
     public List<BloodPressureModel> buildBloodPressureList(String sessionId) throws DataException {
         CompositeBundle compositeBundle = new CompositeBundle();
-        compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getBpSystem() + "|" + fcm.getBpCode(), null));
+        compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getBpSystem() + "|" + fcm.getBpCode(),  fcm.getBpLookbackPeriod(),null));
         compositeBundle.consume(workspaceService.get(sessionId).getProtocolObservations());
         Bundle observationBundle = compositeBundle.getBundle();
 

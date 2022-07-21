@@ -151,7 +151,7 @@ public class AdverseEventService extends AbstractService {
     }
 
     private Bundle buildAdverseEventConditions(String sessionId) {
-        Bundle conditions = ehrService.getEncounterDiagnosisConditions(sessionId);
+        Bundle conditions = workspaceService.get(sessionId).getEncounterDiagnosisConditions();
 
         Map<String, List<MyAdverseEvent>> codesWeCareAbout = new HashMap<>();
         for (MyAdverseEvent mae : getAll()) {

@@ -104,12 +104,11 @@ public class RecommendationService extends AbstractService {
 
             CompositeBundle compositeBundle = new CompositeBundle();
 
-//            compositeBundle.consume(p);       // don't send the patient resource, which contains nested extensions
-                                                // that CQF Ruler can't handle via prefetch
+            compositeBundle.consume(p);
 
             compositeBundle.consume(buildBPBundle(sessionId, p.getId()));
 //            compositeBundle.consume(buildPulseBundle(sessionId, p.getId()));      // do we care about pulses in recommendations?
-            compositeBundle.consume(buildCounselingBundle(sessionId, p.getId()));
+            compositeBundle.consume(buildLocalCounselingBundle(sessionId, p.getId()));
             compositeBundle.consume(buildGoalsBundle(sessionId, p.getId()));
 
             // HACK: if the patient has no Adverse Events, we must construct a fake one to send to
@@ -123,6 +122,9 @@ public class RecommendationService extends AbstractService {
             } else {
                 compositeBundle.consume(buildFakeAdverseEventHACK(sessionId));
             }
+
+            compositeBundle.consume(workspace.getEncounterDiagnosisConditions());
+            compositeBundle.consume(workspace.getSupplementalResources());
 
             HookRequest request = new HookRequest(fcc.getCredentials(), compositeBundle.getBundle());
 
@@ -225,7 +227,7 @@ public class RecommendationService extends AbstractService {
         return cards;
     }
 
-    private Bundle buildCounselingBundle(String sessionId, String patientId) {
+    private Bundle buildLocalCounselingBundle(String sessionId, String patientId) {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
@@ -236,14 +238,14 @@ public class RecommendationService extends AbstractService {
             Encounter e = buildEncounter(uuid, patientId, c.getCreatedDate());
             bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
 
-            Procedure p = buildCounselingProcedure(patientId, e.getId(), c);
+            Procedure p = buildLocalCounselingProcedure(patientId, e.getId(), c);
             bundle.addEntry().setFullUrl("http://hl7.org/fhir/Procedure/" + p.getId()).setResource(p);
         }
 
         return bundle;
     }
 
-    private Procedure buildCounselingProcedure(String patientId, String encounterId, Counseling c) {
+    private Procedure buildLocalCounselingProcedure(String patientId, String encounterId, Counseling c) {
         Procedure p = new Procedure();
 
         p.setId(c.getExtCounselingId());
@@ -253,8 +255,8 @@ public class RecommendationService extends AbstractService {
 
         // set counseling category.  see https://www.hl7.org/fhir/valueset-procedure-category.html
         p.getCategory().addCoding()
-                .setCode("409063005")
-                .setSystem("http://snomed.info/sct");
+                .setCode(fcm.getProcedureCounselingCode())
+                .setSystem(fcm.getProcedureCounselingSystem());
 
         p.getCode().addCoding().setCode(c.getReferenceCode()).setSystem(c.getReferenceSystem());
 

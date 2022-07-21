@@ -52,7 +52,7 @@ public class EHRService extends AbstractService {
     public List<Encounter> getEncounters(String sessionId) {
         logger.info("getting Encounters for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        Bundle bundle = fhirService.search(fcc, fhirQueryManager.getEncounterQuery(fcc.getCredentials().getPatientId()),
+        Bundle bundle = fhirService.search(fcc, fhirQueryManager.getEncounterQuery(fcc.getCredentials().getPatientId(), fcm.getEncounterLookbackPeriod()),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {
@@ -90,10 +90,10 @@ public class EHRService extends AbstractService {
         return list;
     }
 
-    public Bundle getObservations(String sessionId, String code, Integer limit) {
+    public Bundle getObservations(String sessionId, String code, String lookbackPeriod, Integer limit) {
         logger.info("getting " + code + " Observations for session=" + sessionId);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        return fhirService.search(fcc, fhirQueryManager.getObservationCodeQuery(fcc.getCredentials().getPatientId(), code),
+        return fhirService.search(fcc, fhirQueryManager.getObservationCodeQuery(fcc.getCredentials().getPatientId(), code, lookbackPeriod),
                 new Function<Resource, Boolean>() {
             @Override
             public Boolean apply(Resource resource) {
@@ -119,6 +119,10 @@ public class EHRService extends AbstractService {
 
     public Bundle getEncounterDiagnosisConditions(String sessionId) {
         return getConditions(sessionId, "encounter-diagnosis");
+    }
+
+    public Bundle getProblemListConditions(String sessionId) {
+        return getConditions(sessionId, "problem-list-item");
     }
 
     public Bundle getConditions(String sessionId, String category) {
@@ -266,5 +270,35 @@ public class EHRService extends AbstractService {
         }
 
         return bundle;
+    }
+
+    public Bundle getCounselingProcedures(String sessionId) {
+        logger.info("getting Counseling Procedures for session=" + sessionId);
+        FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
+        return fhirService.search(fcc, fhirQueryManager.getProcedureQuery(fcc.getCredentials().getPatientId()),
+                new Function<Resource, Boolean>() {
+                    @Override
+                    public Boolean apply(Resource resource) {
+                        if (resource instanceof Procedure) {
+                            Procedure p = (Procedure) resource;
+                            if (p.getStatus() != Procedure.ProcedureStatus.COMPLETED) {
+                                logger.debug("removing Procedure " + p.getId() + " - invalid status");
+                                return false;
+                            }
+
+                            if ( ! p.hasCategory() ) {
+                                logger.debug("removing Procedure " + p.getId() + " - no category");
+                                return false;
+
+                            } else if ( ! p.getCategory().hasCoding(fcm.getProcedureCounselingSystem(), fcm.getProcedureCounselingCode())) {
+                                logger.debug("removing Procedure " + p.getId() + " - invalid category");
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    }
+                }
+        );
     }
 }
