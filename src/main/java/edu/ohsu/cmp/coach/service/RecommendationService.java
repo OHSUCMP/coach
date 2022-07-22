@@ -26,6 +26,7 @@ import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,14 +103,15 @@ public class RecommendationService extends AbstractService {
         try {
             Patient p = workspace.getPatient().getSourcePatient();
 
-            CompositeBundle compositeBundle = new CompositeBundle();
+            List<IBaseResource> prefetch = new ArrayList<>();
+//            CompositeBundle compositeBundle = new CompositeBundle();
 
-            compositeBundle.consume(p);
+            prefetch.add(p);
 
-            compositeBundle.consume(buildBPBundle(sessionId, p.getId()));
+            prefetch.add(buildBPBundle(sessionId, p.getId()));
 //            compositeBundle.consume(buildPulseBundle(sessionId, p.getId()));      // do we care about pulses in recommendations?
-            compositeBundle.consume(buildLocalCounselingBundle(sessionId, p.getId()));
-            compositeBundle.consume(buildGoalsBundle(sessionId, p.getId()));
+            prefetch.add(buildLocalCounselingBundle(sessionId, p.getId()));
+            prefetch.add(buildGoalsBundle(sessionId, p.getId()));
 
             // HACK: if the patient has no Adverse Events, we must construct a fake one to send to
             //       CQF-Ruler to prevent it from querying the FHIR server for them and consequently
@@ -117,16 +119,16 @@ public class RecommendationService extends AbstractService {
             List<AdverseEventModel> adverseEvents = workspace.getAdverseEvents();
             if (adverseEvents.size() > 0) {
                 for (AdverseEventModel adverseEvent : workspace.getAdverseEvents()) {
-                    compositeBundle.consume(adverseEvent.toBundle(p.getId(), fcm));
+                    prefetch.add(adverseEvent.toBundle(p.getId(), fcm));
                 }
             } else {
-                compositeBundle.consume(buildFakeAdverseEventHACK(sessionId));
+                prefetch.add(buildFakeAdverseEventHACK(sessionId));
             }
 
-            compositeBundle.consume(workspace.getEncounterDiagnosisConditions());
-            compositeBundle.consume(workspace.getSupplementalResources());
+            prefetch.add(workspace.getEncounterDiagnosisConditions());
+            prefetch.add(workspace.getSupplementalResources());
 
-            HookRequest request = new HookRequest(fcc.getCredentials(), compositeBundle.getBundle());
+            HookRequest request = new HookRequest(fcc.getCredentials(), prefetch);
 
             MustacheFactory mf = new DefaultMustacheFactory();
             Mustache mustache = mf.compile("cqfruler/hookRequest.mustache");

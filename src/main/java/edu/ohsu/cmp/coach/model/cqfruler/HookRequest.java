@@ -4,7 +4,10 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.r4.model.Bundle;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 public class HookRequest {
@@ -20,14 +23,14 @@ public class HookRequest {
         this(credentials, null);
     }
 
-    public HookRequest(FHIRCredentials credentials, IBaseResource ... prefetchArr) {
+    public HookRequest(FHIRCredentials credentials, List<IBaseResource> prefetchList) {
         this.hookInstanceUUID = UUID.randomUUID().toString();
         this.fhirServerURL = credentials.getServerURL();
         this.bearerToken = credentials.getBearerToken();
         this.userId = credentials.getUserId();
         this.patientId = credentials.getPatientId();
 
-        if (prefetchArr != null && prefetchArr.length > 0) {
+        if (prefetchList != null && prefetchList.size() > 0) {
             // need to build prefetch as a serialized string here, as we're creating multiple items
             // with additional attributes, and mustache templates just aren't complex enough to build
             // this out.  womp womp
@@ -35,20 +38,26 @@ public class HookRequest {
             IParser jsonParser = ctx.newJsonParser().setPrettyPrint(false);
 
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < prefetchArr.length; i ++) {
-                sb.append("\"item").append(i+1).append("\":{");
+            int itemNo = 1;
+            for (int i = 0; i < prefetchList.size(); i ++) {
+                IBaseResource item = prefetchList.get(i);
+                if (item instanceof Bundle) {
+                    Bundle bundle = (Bundle) item;
+                    if ( ! bundle.hasEntry() || bundle.getEntry().isEmpty() ) {
+                        continue;
+                    }
+                }
 
+                String json = jsonParser.encodeResourceToString(item);
+
+                sb.append("\"item").append(itemNo).append("\":{");
                 sb.append("\"response\":{\"status\":\"200 OK\"},");
-
-                IBaseResource item = prefetchArr[i];
-                String s = jsonParser.encodeResourceToString(item);
-                sb.append("\"resource\":").append(s);
-
-                sb.append("}"); // close item
-
-                if (i < prefetchArr.length - 1) {
+                sb.append("\"resource\":").append(json).append("}");
+                if (i < prefetchList.size() - 1) {
                     sb.append(",\n");
                 }
+
+                itemNo ++;
             }
             this.prefetch = sb.toString();
         }
