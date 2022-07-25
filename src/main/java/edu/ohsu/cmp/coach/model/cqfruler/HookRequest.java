@@ -3,10 +3,11 @@ package edu.ohsu.cmp.coach.model.cqfruler;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,10 +38,10 @@ public class HookRequest {
             FhirContext ctx = FhirContext.forR4();
             IParser jsonParser = ctx.newJsonParser().setPrettyPrint(false);
 
-            StringBuilder sb = new StringBuilder();
+            List<String> list = new ArrayList<>();
+
             int itemNo = 1;
-            for (int i = 0; i < prefetchList.size(); i ++) {
-                IBaseResource item = prefetchList.get(i);
+            for (IBaseResource item : prefetchList) {
                 if (item instanceof Bundle) {
                     Bundle bundle = (Bundle) item;
                     if ( ! bundle.hasEntry() || bundle.getEntry().isEmpty() ) {
@@ -50,16 +51,15 @@ public class HookRequest {
 
                 String json = jsonParser.encodeResourceToString(item);
 
+                StringBuilder sb = new StringBuilder();
                 sb.append("\"item").append(itemNo).append("\":{");
                 sb.append("\"response\":{\"status\":\"200 OK\"},");
                 sb.append("\"resource\":").append(json).append("}");
-                if (i < prefetchList.size() - 1) {
-                    sb.append(",\n");
-                }
+                list.add(sb.toString());
 
                 itemNo ++;
             }
-            this.prefetch = sb.toString();
+            this.prefetch = StringUtils.join(list, ",\n");
         }
     }
 
