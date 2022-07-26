@@ -6,12 +6,19 @@ import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class HookRequest {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     private String hookInstanceUUID;
     private String fhirServerURL;
     private String bearerToken;
@@ -19,6 +26,8 @@ public class HookRequest {
     private String patientId;
     private String prefetch;
 //    private Map<String, IBaseResource> prefetch;
+
+    private boolean prefetchModified = false;
 
     public HookRequest(FHIRCredentials credentials) {
         this(credentials, null);
@@ -39,7 +48,6 @@ public class HookRequest {
             IParser jsonParser = ctx.newJsonParser().setPrettyPrint(false);
 
             List<String> list = new ArrayList<>();
-
             int itemNo = 1;
             for (IBaseResource item : prefetchList) {
                 if (item instanceof Bundle) {
@@ -49,16 +57,18 @@ public class HookRequest {
                     }
                 }
 
-                String json = jsonParser.encodeResourceToString(item);
+                SanitizeResponse sr = sanitize(jsonParser.encodeResourceToString(item), StandardCharsets.US_ASCII);
+                this.prefetchModified = sr.isModified();
 
-                StringBuilder sb = new StringBuilder();
-                sb.append("\"item").append(itemNo).append("\":{");
-                sb.append("\"response\":{\"status\":\"200 OK\"},");
-                sb.append("\"resource\":").append(json).append("}");
-                list.add(sb.toString());
+                String s = "\"item" + itemNo + "\":{" +
+                        "\"response\":{\"status\":\"200 OK\"}," +
+                        "\"resource\":" + sr.getJsonSanitized() + "}";
+
+                list.add(s);
 
                 itemNo ++;
             }
+
             this.prefetch = StringUtils.join(list, ",\n");
         }
     }
@@ -85,5 +95,46 @@ public class HookRequest {
 
     public String getPrefetch() {
         return prefetch;
+    }
+
+    public boolean isPrefetchModified() {
+        return prefetchModified;
+    }
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+// private methods
+//
+
+    private SanitizeResponse sanitize(String json, Charset charset) {
+        ByteBuffer buffer = charset.encode(json);
+        String jsonSanitized = charset.decode(buffer).toString();
+
+        boolean modified = ! StringUtils.equals(json, jsonSanitized);
+        if (modified) {
+            logger.warn("JSON contains non-" + charset.name() + " characters.  Offending characters have been replaced with sentinels.");
+            logger.debug("JSON = " + json);
+            logger.debug("JSON-" + charset.name() + " = " + jsonSanitized);
+        }
+
+        return new SanitizeResponse(jsonSanitized, modified);
+    }
+
+    private static final class SanitizeResponse {
+        private String jsonSanitized;
+        private boolean modified;
+
+        public SanitizeResponse(String jsonSanitized, boolean modified) {
+            this.jsonSanitized = jsonSanitized;
+            this.modified = modified;
+        }
+
+        public String getJsonSanitized() {
+            return jsonSanitized;
+        }
+
+        public boolean isModified() {
+            return modified;
+        }
     }
 }

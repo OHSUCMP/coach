@@ -99,6 +99,7 @@ public class RecommendationService extends AbstractService {
         Audience audience = workspace.getAudience();
 
         List<Card> cards = new ArrayList<>();
+        boolean prefetchModified = false;
 
         try {
             Patient p = workspace.getPatient().getSourcePatient();
@@ -128,12 +129,13 @@ public class RecommendationService extends AbstractService {
             prefetch.add(workspace.getEncounterDiagnosisConditions());
             prefetch.add(workspace.getSupplementalResources());
 
-            HookRequest request = new HookRequest(fcc.getCredentials(), prefetch);
+            HookRequest hookRequest = new HookRequest(fcc.getCredentials(), prefetch);
+            prefetchModified = hookRequest.isPrefetchModified();
 
             MustacheFactory mf = new DefaultMustacheFactory();
             Mustache mustache = mf.compile("cqfruler/hookRequest.mustache");
             StringWriter writer = new StringWriter();
-            mustache.execute(writer, request).flush();
+            mustache.execute(writer, hookRequest).flush();
 
             logger.debug("hookRequest = " + writer.toString());
 
@@ -166,8 +168,8 @@ public class RecommendationService extends AbstractService {
             if (code < 200 || code > 299) {
                 logger.error("CQF-RULER ERROR: " + body);
                 Card card = showDevErrors ?
-                        new Card(body) :
-                        new Card(GENERIC_ERROR_MESSAGE);
+                        new Card(body, prefetchModified) :
+                        new Card(GENERIC_ERROR_MESSAGE, prefetchModified);
                 cards.add(card);
 
             } else {
@@ -179,7 +181,7 @@ public class RecommendationService extends AbstractService {
                     List<String> filterGoalIds = goalService.getExtGoalIdList(sessionId);
 
                     for (CDSCard cdsCard : response.getCards()) {
-                        Card card = new Card(cdsCard);
+                        Card card = new Card(cdsCard, prefetchModified);
 
                         if (card.getSuggestions() != null) {
                             Iterator<Suggestion> iter = card.getSuggestions().iterator();
@@ -217,8 +219,8 @@ public class RecommendationService extends AbstractService {
 
             } else {
                 Card card = showDevErrors ?
-                        new Card(msg) :
-                        new Card(GENERIC_ERROR_MESSAGE);
+                        new Card(msg, prefetchModified) :
+                        new Card(GENERIC_ERROR_MESSAGE, prefetchModified);
                 cards.add(card);
             }
 

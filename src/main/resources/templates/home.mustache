@@ -12,11 +12,11 @@
         <script type="text/javascript" src="/node_modules/inputmask/dist/jquery.inputmask.js"></script>
         <script type="text/javascript" src="/node_modules/inputmask/dist/bindings/inputmask.binding.js"></script>
 
-        <link rel="stylesheet" href="/css/home.css"/>
+        <link rel="stylesheet" href="/css/home.css?v=1"/>
         <script type="text/javascript" src="/js/home.js"></script>
 
         <link rel="stylesheet" href="/css/recommendations.css?v=1"/>
-        <script type="text/javascript" src="/js/recommendations.js"></script>
+        <script type="text/javascript" src="/js/recommendations.js?v=1"></script>
 
         <script type="text/javascript">
             function loadChart() {
@@ -266,6 +266,13 @@
             <tr>
                 <td class="heading">
                     Recommendations
+                </td>
+            </tr>
+            <tr id="prefetchModifiedInfo" class="hidden">
+                <td>
+                    <strong>Note:</strong> Source patient data contained one or more problematic characters that needed to be converted
+                    before being sent to the recommendation engine.  Instances of these characters have been replaced
+                    with the question mark character ("<strong>?</strong>")
                 </td>
             </tr>
             <tr>

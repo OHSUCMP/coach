@@ -175,3 +175,11 @@ div.chartKeyItem {
 div.medication {
     max-width: 200px;
 }
+
+#prefetchModifiedInfo {
+    display: block;
+    background-color: #ffffcc;
+    padding: 5px;
+    font-size: small;
+    font-style: italic;
+}

@@ -362,7 +362,8 @@ public class UserWorkspace {
 
                 EHRService svc = ctx.getBean(EHRService.class);
                 CompositeBundle compositeBundle = new CompositeBundle();
-//                compositeBundle.consume(svc.getProblemListConditions(sessionId));
+
+                compositeBundle.consume(svc.getProblemListConditions(sessionId));
 
                 compositeBundle.consume(svc.getObservations(sessionId, fcm.getBmiSystem() + "|" + fcm.getBmiCode(), fcm.getBmiLookbackPeriod(),null));
                 compositeBundle.consume(svc.getObservations(sessionId, fcm.getSmokingSystem() + "|" + fcm.getSmokingCode(), fcm.getSmokingLookbackPeriod(),null));

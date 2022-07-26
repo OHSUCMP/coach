@@ -52,6 +52,10 @@ function renderCards(cards) {
     cards.forEach(function (card) {
         html += "<div class='card " + card.indicator + "'>";
 
+        if (card.prefetchModified) {
+            $('#prefetchModifiedInfo.hidden').removeClass('hidden');
+        }
+
         if (card.errorMessage !== null) {
             html += "<div class='error'>" + card.errorMessage + "</div>";
 
