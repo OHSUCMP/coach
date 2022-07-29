@@ -11,10 +11,7 @@ import edu.ohsu.cmp.coach.entity.app.MyGoal;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
-import edu.ohsu.cmp.coach.model.AdverseEventModel;
-import edu.ohsu.cmp.coach.model.BloodPressureModel;
-import edu.ohsu.cmp.coach.model.GoalModel;
-import edu.ohsu.cmp.coach.model.PulseModel;
+import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSCard;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHookResponse;
@@ -137,6 +134,17 @@ public class RecommendationService extends AbstractService {
 
 //            prefetch.add(workspace.getEncounterDiagnosisConditions());
             compositeBundle.consume(workspace.getEncounterDiagnosisConditions());
+
+            for (MedicationModel m : workspace.getMedications()) {
+                if (m.hasSourceMedicationStatement()) {
+                    compositeBundle.consume(m.getSourceMedicationStatement());
+                } else if (m.hasSourceMedicationRequest()) {
+                    compositeBundle.consume(m.getSourceMedicationRequest());
+                    if (m.hasSourceMedicationRequestMedication()) {
+                        compositeBundle.consume(m.getSourceMedicationRequestMedication());
+                    }
+                }
+            }
 
 //            prefetch.add(workspace.getSupplementalResources());
             compositeBundle.consume(workspace.getSupplementalResources());

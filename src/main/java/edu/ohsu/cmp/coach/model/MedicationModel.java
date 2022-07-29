@@ -188,13 +188,28 @@ public class MedicationModel {
         return null;
     }
     @JsonIgnore
+    public boolean hasSourceMedicationStatement() {
+        return sourceMedicationStatement != null;
+    }
+
+    @JsonIgnore
     public MedicationStatement getSourceMedicationStatement() {
         return sourceMedicationStatement;
     }
 
     @JsonIgnore
+    public boolean hasSourceMedicationRequest() {
+        return sourceMedicationRequest != null;
+    }
+
+    @JsonIgnore
     public MedicationRequest getSourceMedicationRequest() {
         return sourceMedicationRequest;
+    }
+
+    @JsonIgnore
+    public boolean hasSourceMedicationRequestMedication() {
+        return sourceMedicationRequestMedication != null;
     }
 
     @JsonIgnore
