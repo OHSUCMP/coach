@@ -104,21 +104,22 @@ public class RecommendationService extends AbstractService {
         try {
             Patient p = workspace.getPatient().getSourcePatient();
 
-//            List<IBaseResource> prefetch = new ArrayList<>();
-            CompositeBundle compositeBundle = new CompositeBundle();
+            List<IBaseResource> prefetch = new ArrayList<>();
+//            CompositeBundle compositeBundle = new CompositeBundle();
 
-//            prefetch.add(p);
-            compositeBundle.consume(p);
+            prefetch.add(p);
+//            compositeBundle.consume(p);
 
-//            prefetch.add(buildBPBundle(sessionId, p.getId()));
-            compositeBundle.consume(buildBPBundle(sessionId, p.getId()));
+            prefetch.add(buildBPBundle(sessionId, p.getId()));
+//            compositeBundle.consume(buildBPBundle(sessionId, p.getId()));
 
 //            compositeBundle.consume(buildPulseBundle(sessionId, p.getId()));      // do we care about pulses in recommendations?
-//            prefetch.add(buildLocalCounselingBundle(sessionId, p.getId()));
-            compositeBundle.consume(buildLocalCounselingBundle(sessionId, p.getId()));
 
-//            prefetch.add(buildGoalsBundle(sessionId, p.getId()));
-            compositeBundle.consume(buildGoalsBundle(sessionId, p.getId()));
+            prefetch.add(buildLocalCounselingBundle(sessionId, p.getId()));
+//            compositeBundle.consume(buildLocalCounselingBundle(sessionId, p.getId()));
+
+            prefetch.add(buildGoalsBundle(sessionId, p.getId()));
+//            compositeBundle.consume(buildGoalsBundle(sessionId, p.getId()));
 
             // HACK: if the patient has no Adverse Events, we must construct a fake one to send to
             //       CQF-Ruler to prevent it from querying the FHIR server for them and consequently
@@ -126,21 +127,23 @@ public class RecommendationService extends AbstractService {
             List<AdverseEventModel> adverseEvents = workspace.getAdverseEvents();
             if (adverseEvents.size() > 0) {
                 for (AdverseEventModel adverseEvent : workspace.getAdverseEvents()) {
-//                    prefetch.add(adverseEvent.toBundle(p.getId(), fcm));
-                    compositeBundle.consume(adverseEvent.toBundle(p.getId(), fcm));
+                    prefetch.add(adverseEvent.toBundle(p.getId(), fcm));
+//                    compositeBundle.consume(adverseEvent.toBundle(p.getId(), fcm));
                 }
             } else {
-//                prefetch.add(buildFakeAdverseEventHACK(sessionId));
-                compositeBundle.consume(buildFakeAdverseEventHACK(sessionId));
+                prefetch.add(buildFakeAdverseEventHACK(sessionId));
+//                compositeBundle.consume(buildFakeAdverseEventHACK(sessionId));
             }
 
-//            prefetch.add(workspace.getEncounterDiagnosisConditions());
-            compositeBundle.consume(workspace.getEncounterDiagnosisConditions());
+            prefetch.add(workspace.getEncounterDiagnosisConditions());
+//            compositeBundle.consume(workspace.getEncounterDiagnosisConditions());
 
-//            prefetch.add(workspace.getSupplementalResources());
-            compositeBundle.consume(workspace.getSupplementalResources());
+            prefetch.add(workspace.getSupplementalResources());
+//            compositeBundle.consume(workspace.getSupplementalResources());
 
-            HookRequest hookRequest = new HookRequest(fcc.getCredentials(), compositeBundle.getBundle());
+            HookRequest hookRequest = new HookRequest(fcc.getCredentials(), prefetch);
+//            HookRequest hookRequest = new HookRequest(fcc.getCredentials(), compositeBundle.getBundle());
+
             prefetchModified = hookRequest.isPrefetchModified();
 
             MustacheFactory mf = new DefaultMustacheFactory();
