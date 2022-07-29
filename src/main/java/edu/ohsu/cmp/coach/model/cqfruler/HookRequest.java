@@ -12,9 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class HookRequest {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -30,7 +28,11 @@ public class HookRequest {
     private boolean prefetchModified = false;
 
     public HookRequest(FHIRCredentials credentials) {
-        this(credentials, null);
+        this(credentials, (List<IBaseResource>) null);
+    }
+
+    public HookRequest(FHIRCredentials credentials, IBaseResource resource) {
+        this(credentials, Collections.singletonList(resource));
     }
 
     public HookRequest(FHIRCredentials credentials, List<IBaseResource> prefetchList) {
