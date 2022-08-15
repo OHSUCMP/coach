@@ -2,7 +2,7 @@ package edu.ohsu.cmp.coach.entity.app;
 
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
-import edu.ohsu.cmp.coach.model.PulseModel;
+import edu.ohsu.cmp.coach.model.ObservationSource;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -22,28 +22,42 @@ public class HomeBloodPressureReading {
     private Integer diastolic;
     private Date readingDate;
     private Boolean followedInstructions;
+    private String source;
     private Date createdDate;
 
     protected HomeBloodPressureReading() {
     }
 
-    public HomeBloodPressureReading(Integer systolic, Integer diastolic, Date readingDate, Boolean followedInstructions) {
+    public HomeBloodPressureReading(Integer systolic, Integer diastolic, Date readingDate, Boolean followedInstructions, ObservationSource source) {
         this.systolic = systolic;
         this.diastolic = diastolic;
         this.readingDate = readingDate;
         this.followedInstructions = followedInstructions;
+        this.source = source.name();
     }
 
     // used during create, do not set ID
     public HomeBloodPressureReading(BloodPressureModel bpm) throws DataException {
-        if (bpm.getSource() != BloodPressureModel.Source.HOME) {
+        if (bpm.getSource() != ObservationSource.HOME && bpm.getSource() != ObservationSource.HOME_BLUETOOTH) {
             throw new DataException("cannot convert BloodPressureModel with source=" +
                     bpm.getSource() + " to HomeBloodPressureReading");
         }
-        this.systolic = bpm.getSystolic().getValue().intValue();
-        this.diastolic = bpm.getDiastolic().getValue().intValue();
+
+        if (bpm.getSystolic() == null && bpm.getDiastolic() == null) {
+            throw new DataException("systolic and diastolic cannot both be null");
+        }
+
+        if (bpm.getSystolic() != null) {
+            this.systolic = bpm.getSystolic().getValue().intValue();
+        }
+
+        if (bpm.getDiastolic() != null) {
+            this.diastolic = bpm.getDiastolic().getValue().intValue();
+        }
+
         this.readingDate = bpm.getReadingDate();
         this.followedInstructions = bpm.getFollowedProtocol();
+        this.source = bpm.getSource().name();
     }
 
     public Long getId() {
@@ -92,6 +106,14 @@ public class HomeBloodPressureReading {
 
     public void setFollowedInstructions(Boolean followedInstructions) {
         this.followedInstructions = followedInstructions;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 
     public Date getCreatedDate() {

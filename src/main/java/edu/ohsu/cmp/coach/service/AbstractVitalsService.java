@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.service;
 
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.FHIRCompatible;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -16,8 +17,9 @@ import java.util.*;
 public abstract class AbstractVitalsService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    protected static final String NO_ENCOUNTERS_KEY = null; // intentionally instantiated with null value
 
-    protected Bundle writeRemote(String sessionId, FHIRCompatible fhirCompatible) {
+    protected Bundle writeRemote(String sessionId, FHIRCompatible fhirCompatible) throws DataException {
         UserWorkspace workspace = workspaceService.get(sessionId);
 
         String patientId = workspace.getPatient().getSourcePatient().getId();
@@ -47,25 +49,35 @@ public abstract class AbstractVitalsService extends AbstractService {
             for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
                 if (entry.hasResource() && entry.getResource() instanceof Observation) {
                     Observation observation = (Observation) entry.getResource();
-                    List<String> keys = buildKeys(observation.getEncounter());
+                    if (observation.hasEncounter()) {
+                        List<String> keys = buildKeys(observation.getEncounter());
 
-                    // we want to associate THE SAME list with each key, NOT separate instances of identical lists
+                        // we want to associate THE SAME list with each key, NOT separate instances of identical lists
 
-                    List<Observation> list = null;
-                    for (String key : keys) {
-                        if (map.containsKey(key)) {
-                            list = map.get(key);
-                            break;
-                        }
-                    }
-                    if (list == null) {
-                        list = new ArrayList<>();
+                        List<Observation> list = null;
                         for (String key : keys) {
-                            map.put(key, list);
+                            if (map.containsKey(key)) {
+                                list = map.get(key);
+                                break;
+                            }
                         }
-                    }
+                        if (list == null) {
+                            list = new ArrayList<>();
+                            for (String key : keys) {
+                                map.put(key, list);
+                            }
+                        }
 
-                    map.get(keys.get(0)).add(observation);
+                        map.get(keys.get(0)).add(observation);
+
+                    } else {
+                        List<Observation> list = map.get(NO_ENCOUNTERS_KEY);
+                        if (list == null) {
+                            list = new ArrayList<>();
+                            map.put(NO_ENCOUNTERS_KEY, list);
+                        }
+                        list.add(observation);
+                    }
                 }
             }
         }
@@ -75,7 +87,7 @@ public abstract class AbstractVitalsService extends AbstractService {
     protected List<Observation> getObservationsFromMap(Encounter encounter, Map<String, List<Observation>> map) {
         List<Observation> list = null;
         for (String key : buildKeys(encounter.getId(), encounter.getIdentifier())) {
-            if (map.containsKey(key)) {
+            if (map.containsKey(key)) {     // the same exact list may be represented multiple times for different keys.  we only care about the first
                 if (list == null) {
                     list = map.remove(key);
                 } else {

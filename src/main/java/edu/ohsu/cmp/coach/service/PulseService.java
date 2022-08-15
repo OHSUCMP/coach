@@ -3,7 +3,9 @@ package edu.ohsu.cmp.coach.service;
 import edu.ohsu.cmp.coach.entity.app.HomePulseReading;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
+import edu.ohsu.cmp.coach.model.ObservationSource;
 import edu.ohsu.cmp.coach.model.PulseModel;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Observation;
@@ -27,7 +29,7 @@ public class PulseService extends AbstractVitalsService {
 
     public List<PulseModel> buildPulseList(String sessionId) throws DataException {
         CompositeBundle compositeBundle = new CompositeBundle();
-        compositeBundle.consume(ehrService.getObservations(sessionId, fcm.getPulseSystem() + "|" + fcm.getPulseCode(), fcm.getPulseLookbackPeriod(),null));
+        compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getPulseCoding()), fcm.getPulseLookbackPeriod(),null));
         compositeBundle.consume(workspaceService.get(sessionId).getProtocolObservations());
         Bundle observationBundle = compositeBundle.getBundle();
 
@@ -49,12 +51,12 @@ public class PulseService extends AbstractVitalsService {
                 Iterator<Observation> iter = encounterObservations.iterator();
                 while (iter.hasNext()) {
                     Observation o = iter.next();
-                    if (o.getCode().hasCoding(fcm.getPulseSystem(), fcm.getPulseCode())) {
+                    if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCoding())) {
                         logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                         pulseObservationList.add(o);
                         iter.remove();
 
-                    } else if (protocolObservation == null && o.getCode().hasCoding(fcm.getProtocolSystem(), fcm.getProtocolCode())) {
+                    } else if (protocolObservation == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
                         logger.debug("protocolObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                         protocolObservation = o;
                         iter.remove();
@@ -72,7 +74,7 @@ public class PulseService extends AbstractVitalsService {
             }
         }
 
-        // if there are any BP observations that didn't get processed, we want to know about it
+        // if there are any pulse observations that didn't get processed, we want to know about it
         if (logger.isDebugEnabled()) {
             for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
                 if (entry.getValue() != null) {
@@ -89,7 +91,7 @@ public class PulseService extends AbstractVitalsService {
     public List<PulseModel> getHomePulseReadings(String sessionId) {
         List<PulseModel> list = new ArrayList<>();
         for (PulseModel entry : getPulseReadings(sessionId)) {
-            if (entry.getSource() == PulseModel.Source.HOME) {
+            if (entry.getSource() == ObservationSource.HOME) {
                 list.add(entry);
             }
         }
@@ -114,7 +116,7 @@ public class PulseService extends AbstractVitalsService {
         return list;
     }
 
-    public PulseModel create(String sessionId, PulseModel pm) {
+    public PulseModel create(String sessionId, PulseModel pm) throws DataException {
         if (storeRemotely) {
             Bundle responseBundle = writeRemote(sessionId, pm);
 
@@ -139,10 +141,10 @@ public class PulseService extends AbstractVitalsService {
                             } else if (r instanceof Observation) {
                                 Observation o = (Observation) r;
                                 if (o.hasCode()) {
-                                    if (o.getCode().hasCoding(fcm.getPulseSystem(), fcm.getPulseCode())) {
+                                    if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCoding())) {
                                         pulseObservation = o;
 
-                                    } else if (o.getCode().hasCoding(fcm.getProtocolSystem(), fcm.getProtocolCode())) {
+                                    } else if (FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
                                         protocolObservation = o;
                                     }
                                 }

@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.entity.app;
 
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.model.BloodPressureModel;
+import edu.ohsu.cmp.coach.model.ObservationSource;
 import edu.ohsu.cmp.coach.model.PulseModel;
 
 import javax.persistence.*;
@@ -31,7 +31,7 @@ public class HomePulseReading {
 
     // used during create, do not set ID
     public HomePulseReading(PulseModel pm) throws DataException {
-        if (pm.getSource() != PulseModel.Source.HOME) {
+        if (pm.getSource() != ObservationSource.HOME) {
             throw new DataException("cannot convert PulseModel with source=" +
                     pm.getSource() + " to HomePulseReading");
         }

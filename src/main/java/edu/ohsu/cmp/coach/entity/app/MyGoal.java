@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.entity.app;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.LifecycleStatus;
+import org.hl7.fhir.r4.model.Coding;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -41,11 +42,11 @@ public class MyGoal {
         this.targetDate = targetDate;
     }
 
-    public MyGoal(String referenceSystem, String referenceCode, String referenceDisplay, Integer systolicTarget, Integer diastolicTarget) {
+    public MyGoal(Coding referenceCoding, Integer systolicTarget, Integer diastolicTarget) {
         this.extGoalId = GoalModel.BP_GOAL_ID;
-        this.referenceSystem = referenceSystem;
-        this.referenceCode = referenceCode;
-        this.referenceDisplay = referenceDisplay;
+        this.referenceSystem = referenceCoding.getSystem();
+        this.referenceCode = referenceCoding.getCode();
+        this.referenceDisplay = referenceCoding.getDisplay();
         this.goalText = "Target BP: " + systolicTarget + "/" + diastolicTarget;
         this.systolicTarget = systolicTarget;
         this.diastolicTarget = diastolicTarget;

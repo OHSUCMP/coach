@@ -84,13 +84,22 @@ function populateSummaryDiv() {
     let hasData = Array.isArray(data) && data.length > 0;
 
     if (hasData) {
+        let systolicCount = 0;
+        let diastolicCount = 0;
+
         data.forEach(function (o) {
-            totalSystolic += o.systolic.value;
-            totalDiastolic += o.diastolic.value;
+            if (o.systolic) {
+                totalSystolic += o.systolic.value;
+                systolicCount += 1;
+            }
+            if (o.diastolic) {
+                totalDiastolic += o.diastolic.value;
+                diastolicCount += 1;
+            }
         });
 
-        avgSystolic = Math.round(totalSystolic / data.length);
-        avgDiastolic = Math.round(totalDiastolic / data.length);
+        avgSystolic = Math.round(totalSystolic / systolicCount);
+        avgDiastolic = Math.round(totalDiastolic / diastolicCount);
     }
     $('#avgSystolic').html(avgSystolic);
     $('#avgDiastolic').html(avgDiastolic);
@@ -143,7 +152,7 @@ function buildPointStyleArray(data) {
     // see https://www.chartjs.org/docs/latest/configuration/elements.html for options
     let arr = [];
     data.forEach(function(item) {
-        if (item.source === 'HOME') {
+        if (item.source === 'HOME' || item.source === 'HOME_BLUETOOTH') {
             arr.push('circle');
         } else if (item.source === 'OFFICE') {
             arr.push('rect');
@@ -167,11 +176,19 @@ function truncateData(data, startDate) {
 function toScatterData(data, type) {
     let arr = [];
     data.forEach(function (item) {
-        let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
-        arr.push({
-            x: new Date(item.readingDate),
-            y: val
-        });
+        let val = null;
+        if (type === 'systolic' && item.systolic) {
+            val = item.systolic.value;
+        } else if (type === 'diastolic' && item.diastolic) {
+            val = item.diastolic.value;
+        }
+
+        if (val !== null) {
+            arr.push({
+                x: new Date(item.readingDate),
+                y: val
+            });
+        }
     });
     return arr;
 }
@@ -191,43 +208,50 @@ function toTrendLineData(data, type) {
     let diffArr = [];
 
     data.forEach(function (item) {
-        let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
-
-        if (lastDate !== null) {
-            let diff = item.readingDate.getTime() - lastDate.getTime();
-            diffArr.push(diff);
-
-            let avgDiff = Math.round(diffArr.reduce(function(a, b) {
-                return a + b;
-            }, 0) / diffArr.length);
-
-            if (diff > threshold || (diffArr.length > 1 && diff > avgDiff * groupingFactor)) {
-                let lastDates = tempArr.map(function(o) {
-                    return o.timestamp.getTime();
-                });
-                let lastDateAvg = Math.round(lastDates.reduce(function(a, b) {
-                    return a + b;
-                }, 0) / lastDates.length);
-                let lastVals = tempArr.map(function(o) {
-                    return o.val;
-                });
-                let lastValsAvg = Math.round(lastVals.reduce(function(a, b) {
-                    return a + b;
-                }, 0) / lastVals.length);
-                arr.push({
-                    x: new Date(lastDateAvg),
-                    y: lastValsAvg
-                });
-                diffArr = [];
-                tempArr = [];
-            }
+        let val = null;
+        if (type === 'systolic' && item.systolic) {
+            val = item.systolic.value;
+        } else if (type === 'diastolic' && item.diastolic) {
+            val = item.diastolic.value;
         }
 
-        tempArr.push({
-            timestamp: item.readingDate,
-            val: val
-        });
-        lastDate = item.readingDate;
+        if (val !== null) {
+            if (lastDate !== null) {
+                let diff = item.readingDate.getTime() - lastDate.getTime();
+                diffArr.push(diff);
+
+                let avgDiff = Math.round(diffArr.reduce(function (a, b) {
+                    return a + b;
+                }, 0) / diffArr.length);
+
+                if (diff > threshold || (diffArr.length > 1 && diff > avgDiff * groupingFactor)) {
+                    let lastDates = tempArr.map(function (o) {
+                        return o.timestamp.getTime();
+                    });
+                    let lastDateAvg = Math.round(lastDates.reduce(function (a, b) {
+                        return a + b;
+                    }, 0) / lastDates.length);
+                    let lastVals = tempArr.map(function (o) {
+                        return o.val;
+                    });
+                    let lastValsAvg = Math.round(lastVals.reduce(function (a, b) {
+                        return a + b;
+                    }, 0) / lastVals.length);
+                    arr.push({
+                        x: new Date(lastDateAvg),
+                        y: lastValsAvg
+                    });
+                    diffArr = [];
+                    tempArr = [];
+                }
+            }
+
+            tempArr.push({
+                timestamp: item.readingDate,
+                val: val
+            });
+            lastDate = item.readingDate;
+        }
     });
 
     if (tempArr.length > 0) {   // process final records

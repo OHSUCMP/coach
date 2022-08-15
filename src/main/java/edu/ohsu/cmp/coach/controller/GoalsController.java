@@ -107,8 +107,7 @@ public class GoalsController extends BaseController {
             goal = goalService.update(goal);
 
         } else {
-            goal = goalService.create(session.getId(), new MyGoal(
-                    fcm.getBpSystem(), fcm.getBpCode(), "Blood Pressure",
+            goal = goalService.create(session.getId(), new MyGoal(fcm.getBpCoding(),
                     systolicTarget, diastolicTarget));
         }
 

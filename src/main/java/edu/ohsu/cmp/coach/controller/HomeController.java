@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -77,7 +78,7 @@ public class HomeController extends BaseController {
     }
 
     @PostMapping("blood-pressure-observations-list")
-    public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) {
+    public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) throws DataException {
         List<BloodPressureModel> list = bpService.getBloodPressureReadings(session.getId());
         return new ResponseEntity<>(list, HttpStatus.OK);
     }

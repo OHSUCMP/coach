@@ -114,10 +114,7 @@ public class GoalService extends AbstractService {
             return bpGoal;
 
         } else {
-            return new GoalModel(create(sessionId, new MyGoal(
-                    fcm.getBpSystem(),
-                    fcm.getBpCode(),
-                    "Blood Pressure",
+            return new GoalModel(create(sessionId, new MyGoal(fcm.getBpCoding(),
                     GoalModel.BP_GOAL_DEFAULT_SYSTOLIC,
                     GoalModel.BP_GOAL_DEFAULT_DIASTOLIC
             )));

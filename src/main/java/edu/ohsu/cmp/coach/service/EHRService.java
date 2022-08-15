@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -90,8 +91,17 @@ public class EHRService extends AbstractService {
         return list;
     }
 
-    public Bundle getObservations(String sessionId, String code, String lookbackPeriod, Integer limit) {
-        logger.info("getting " + code + " Observations for session=" + sessionId);
+    /**
+     * @param sessionId
+     * @param code a comma-separated list of one or more strings of the form "system|code"
+     *             e.g. "http://loinc.org|55284-4"
+     *             e.g. "http://loinc.org|55284|4,http://loinc.org|72076-3
+     * @param lookbackPeriod
+     * @param limit specifies a maximum number of search results to return.  May be null
+     * @return
+     */
+    public Bundle getObservations(String sessionId, String code, String lookbackPeriod, @Nullable Integer limit) {
+        logger.info("getting Observations for session=" + sessionId + " having code(s): " + code);
         FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
         return fhirService.search(fcc, fhirQueryManager.getObservationCodeQuery(fcc.getCredentials().getPatientId(), code, lookbackPeriod),
                 new Function<Resource, Boolean>() {
@@ -106,10 +116,11 @@ public class EHRService extends AbstractService {
                         return false;
                     }
 
-                    if (!observation.hasEncounter()) {
-                        logger.debug("removing Observation " + observation.getId() + " - no Encounter referenced");
-                        return false;
-                    }
+// storer 2022-08-15 - can now handle observations that don't have associated encounters, as janky as that might be
+//                    if (!observation.hasEncounter()) {
+//                        logger.debug("removing Observation " + observation.getId() + " - no Encounter referenced");
+//                        return false;
+//                    }
                 }
 
                 return true;
@@ -290,7 +301,7 @@ public class EHRService extends AbstractService {
                                 logger.debug("removing Procedure " + p.getId() + " - no category");
                                 return false;
 
-                            } else if ( ! p.getCategory().hasCoding(fcm.getProcedureCounselingSystem(), fcm.getProcedureCounselingCode())) {
+                            } else if ( ! FhirUtil.hasCoding(p.getCategory(), fcm.getProcedureCounselingCoding()) ) {
                                 logger.debug("removing Procedure " + p.getId() + " - invalid category");
                                 return false;
                             }

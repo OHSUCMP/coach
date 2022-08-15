@@ -1,11 +1,11 @@
 package edu.ohsu.cmp.coach.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.entity.app.HomePulseReading;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import edu.ohsu.cmp.coach.util.ObservationUtil;
 import org.hl7.fhir.r4.model.*;
 
 import java.util.Date;
@@ -20,7 +20,7 @@ public class PulseModel extends AbstractVitalsModel implements FHIRCompatible {
 //
 
     // create
-    public PulseModel(Source source, Integer pulse,
+    public PulseModel(ObservationSource source, Integer pulse,
                       Date readingDate, Boolean followedProtocol,
                       FhirConfigManager fcm) {
 
@@ -31,7 +31,7 @@ public class PulseModel extends AbstractVitalsModel implements FHIRCompatible {
 
     // read local
     public PulseModel(HomePulseReading reading, FhirConfigManager fcm) {
-        super(Source.HOME, reading.getFollowedInstructions(), reading.getReadingDate());
+        super(ObservationSource.HOME, reading.getFollowedInstructions(), reading.getReadingDate());
 
         pulse = new QuantityModel(reading.getPulse(), fcm.getPulseValueUnit());
         readingDate = reading.getReadingDate(); //.getTime();
@@ -39,10 +39,9 @@ public class PulseModel extends AbstractVitalsModel implements FHIRCompatible {
 
     // read remote
     public PulseModel(Encounter enc, Observation pulseObservation,
-                      Observation protocolObservation,
-                      FhirConfigManager fcm) throws DataException {
+                      Observation protocolObservation, FhirConfigManager fcm) throws DataException {
 
-        super(enc, pulseObservation, protocolObservation, fcm);
+        super(ObservationUtil.getSourceByEncounter(enc, fcm), pulseObservation, protocolObservation, fcm);
 
         this.sourcePulseObservation = pulseObservation;
         this.pulse = new QuantityModel(pulseObservation.getValueQuantity());
@@ -72,8 +71,7 @@ public class PulseModel extends AbstractVitalsModel implements FHIRCompatible {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
-        if (sourceEncounter != null && sourcePulseObservation != null) {
-            bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(sourceEncounter));
+        if (sourcePulseObservation != null) {
             bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(sourcePulseObservation));
             if (sourceProtocolObservation != null) {
                 bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(sourceProtocolObservation));
@@ -115,12 +113,9 @@ public class PulseModel extends AbstractVitalsModel implements FHIRCompatible {
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
-        o.getCode().addCoding()
-                .setCode(fcm.getPulseCode())        // 8867-4
-                .setSystem(fcm.getPulseSystem())    // http://loinc.org
-                .setDisplay(fcm.getPulseDisplay());
+        o.getCode().addCoding(fcm.getPulseCoding());
 
-        addHomeSettingExtension(o);
+        FhirUtil.addHomeSettingExtension(o);
 
         o.setEffective(new DateTimeType(readingDate));
 

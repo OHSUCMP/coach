@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.FHIRCompatible;
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +19,11 @@ import java.util.regex.Pattern;
 
 public class FhirUtil {
     private static final Logger logger = LoggerFactory.getLogger(FhirUtil.class);
+
+    private static final String EXTENSION_HOME_SETTING_URL = "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt";
+    private static final String EXTENSION_HOME_SETTING_CODE = "264362003";
+    private static final String EXTENSION_HOME_SETTING_SYSTEM = "http://snomed.info/sct";
+    private static final String EXTENSION_HOME_SETTING_DISPLAY = "Home (environment)";
 
     public static IGenericClient buildClient(String serverUrl, String bearerToken, int timeout) {
         FhirContext ctx = FhirContext.forR4();
@@ -77,12 +83,12 @@ public class FhirUtil {
 
 
     public static Bundle toBundle(String patientId, FhirConfigManager fcm,
-                                  Collection<? extends FHIRCompatible> collection) {
+                                  Collection<? extends FHIRCompatible> collection) throws DataException {
         return toBundle(patientId, fcm, null, collection);
     }
 
     public static Bundle toBundle(String patientId, FhirConfigManager fcm, Bundle.BundleType bundleType,
-                                  Collection<? extends FHIRCompatible> collection) {
+                                  Collection<? extends FHIRCompatible> collection) throws DataException {
         if (collection == null) return null;
 
         Bundle bundle = new Bundle();
@@ -332,5 +338,84 @@ public class FhirUtil {
         IParser parser = ctx.newJsonParser();
         parser.setPrettyPrint(true);
         return parser.encodeResourceToString(r);
+    }
+
+    public static String toCodeParamString(List<Coding> codings) {
+        if (codings == null) return null;
+
+        List<String> list = new ArrayList<>();
+        for (Coding c : codings) {
+            String s = toCodeParamString(c);
+            if (StringUtils.isNotEmpty(s)) {
+                list.add(s);
+            }
+        }
+
+        return StringUtils.join(list, ",");
+    }
+
+    public static String toCodeParamString(Coding c) {
+        if (c == null) return null;
+
+        List<String> parts = new ArrayList<>();
+        if (c.hasSystem()) parts.add(c.getSystem());
+        if (c.hasCode()) parts.add(c.getCode());
+
+        return StringUtils.join(parts, "|");
+    }
+
+    public static boolean hasCoding(CodeableConcept cc, List<Coding> list) {
+        if (cc == null) return false;
+        if (list == null || list.isEmpty()) return false;
+
+        for (Coding c : list) {
+            if (hasCoding(cc, c)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean hasCoding(CodeableConcept cc, Coding c) {
+        if (cc == null || c == null) return false;
+        return cc.hasCoding(c.getSystem(), c.getCode());
+    }
+
+    public static boolean matches(Coding c1, Coding c2) {
+        if (c1 == null || c2 == null) return false;
+        if (c1 == c2) return true;
+        if ( ! c1.hasSystem() && ! c1.hasCode() ) return false;
+        if ( ! c2.hasSystem() && ! c2.hasCode() ) return false;
+
+        boolean systemMatch = (! c1.hasSystem() && ! c2.hasSystem()) ||
+                (c1.hasSystem() && c2.hasSystem() && c1.getSystem().equals(c2.getSystem()));
+        boolean codeMatch = (! c1.hasCode() && ! c2.hasCode()) ||
+                (c1.hasCode() && c2.hasCode() && c1.getCode().equals(c2.getCode()));
+
+        return systemMatch && codeMatch;
+    }
+
+    public static boolean hasHomeSettingExtension(DomainResource domainResource) {
+        if (domainResource != null && domainResource.hasExtension(EXTENSION_HOME_SETTING_URL)) {
+            Extension extension = domainResource.getExtensionByUrl(EXTENSION_HOME_SETTING_URL);
+            if (extension.hasValue() && extension.getValue() instanceof Coding) {
+                Coding coding = (Coding) extension.getValue();
+                return coding.is(EXTENSION_HOME_SETTING_SYSTEM, EXTENSION_HOME_SETTING_CODE);
+            }
+        }
+        return false;
+    }
+
+    public static void addHomeSettingExtension(DomainResource domainResource) {
+        // setting MeasurementSettingExt to indicate taken in a "home" setting
+        // see https://browser.ihtsdotools.org/?perspective=full&conceptId1=264362003&edition=MAIN/SNOMEDCT-US/2021-09-01&release=&languages=en
+
+        domainResource.addExtension(new Extension()
+                .setUrl(EXTENSION_HOME_SETTING_URL)
+                .setValue(new Coding()
+                        .setCode(EXTENSION_HOME_SETTING_CODE)
+                        .setSystem(EXTENSION_HOME_SETTING_SYSTEM)
+                        .setDisplay(EXTENSION_HOME_SETTING_DISPLAY)));
     }
 }

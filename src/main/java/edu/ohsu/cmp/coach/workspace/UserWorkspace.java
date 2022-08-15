@@ -14,6 +14,7 @@ import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Reference;
 import org.slf4j.Logger;
@@ -21,10 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -213,7 +211,7 @@ public class UserWorkspace {
                 logger.info("BEGIN build Protocol Observations for session=" + sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
-                Bundle bundle = svc.getObservations(sessionId, fcm.getProtocolSystem() + "|" + fcm.getProtocolCode(), fcm.getProtocolLookbackPeriod(),null);
+                Bundle bundle = svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getProtocolCoding()), fcm.getProtocolLookbackPeriod(),null);
 
                 int size = bundle.hasEntry() ? bundle.getEntry().size() : 0;
                 logger.info("DONE building Protocol Observations for session=" + sessionId +
@@ -365,9 +363,11 @@ public class UserWorkspace {
 
                 compositeBundle.consume(svc.getProblemListConditions(sessionId));
 
-                compositeBundle.consume(svc.getObservations(sessionId, fcm.getBmiSystem() + "|" + fcm.getBmiCode(), fcm.getBmiLookbackPeriod(),null));
-                compositeBundle.consume(svc.getObservations(sessionId, fcm.getSmokingSystem() + "|" + fcm.getSmokingCode(), fcm.getSmokingLookbackPeriod(),null));
-                compositeBundle.consume(svc.getObservations(sessionId, fcm.getDrinksSystem() + "|" + fcm.getDrinksCode(), fcm.getDrinksLookbackPeriod(),null));
+                List<Coding> codings = new ArrayList<>();
+                codings.add(fcm.getBmiCoding());
+                codings.add(fcm.getSmokingCoding());
+                codings.add(fcm.getDrinksCoding());
+                compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(codings), fcm.getBmiLookbackPeriod(),null));
 
                 compositeBundle.consume(svc.getCounselingProcedures(sessionId));
 

@@ -11,9 +11,6 @@ function buildChart() {
 
     $(elNoData).addClass('hidden');
     $(ctx).removeClass('hidden');
-
-
-    $(ctx).removeClass('hidden');
     $('#chartKeyContainer, #chartTimelineContainer').removeClass('hidden');
 
     let pointStyleArr = buildPointStyleArray(window.bpchart.data);

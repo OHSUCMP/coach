@@ -8,6 +8,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.coach.entity.app.Counseling;
 import edu.ohsu.cmp.coach.entity.app.MyGoal;
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
@@ -23,7 +24,6 @@ import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -280,9 +280,7 @@ public class RecommendationService extends AbstractService {
         p.setStatus(Procedure.ProcedureStatus.COMPLETED);
 
         // set counseling category.  see https://www.hl7.org/fhir/valueset-procedure-category.html
-        p.getCategory().addCoding()
-                .setCode(fcm.getProcedureCounselingCode())
-                .setSystem(fcm.getProcedureCounselingSystem());
+        p.getCategory().addCoding(fcm.getProcedureCounselingCoding());
 
         p.getCode().addCoding().setCode(c.getReferenceCode()).setSystem(c.getReferenceSystem());
 
@@ -299,7 +297,7 @@ public class RecommendationService extends AbstractService {
         return bundle.getBundle();
     }
 
-    private Bundle buildBPBundle(String sessionId, String patientId) {
+    private Bundle buildBPBundle(String sessionId, String patientId) throws DataException {
         CompositeBundle bundle = new CompositeBundle();
         for (BloodPressureModel bpm : bpService.getBloodPressureReadings(sessionId)) {
             bundle.consume(bpm.toBundle(patientId, fcm));
