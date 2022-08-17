@@ -186,6 +186,13 @@ public class FHIRService {
             logger.debug("transacting Bundle: " + FhirUtil.toJson(bundle));
         }
 
+        if (fcc.getCredentials().getJwt() != null) {
+            // todo: obtain access token
+            // todo: use access token
+            // see: https://apporchard.epic.com/Article?docId=oauth2&section=BackendOAuth2Guide
+            // see: https://jwt.io/
+        }
+
         Bundle response = fcc.getClient().transaction().withBundle(bundle)
                 .withAdditionalHeader("Prefer", "return=representation")
                 .execute();

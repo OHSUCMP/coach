@@ -5,12 +5,14 @@ public class FHIRCredentials {
     private String bearerToken;
     private String patientId;
     private String userId;
+    private String jwt;
 
-    public FHIRCredentials(String serverURL, String bearerToken, String patientId, String userId) {
+    public FHIRCredentials(String serverURL, String bearerToken, String patientId, String userId, String jwt) {
         this.serverURL = serverURL;
         this.bearerToken = bearerToken;
         this.patientId = patientId;
         this.userId = userId;
+        this.jwt = jwt;
     }
 
     public String getServerURL() {
@@ -27,5 +29,9 @@ public class FHIRCredentials {
 
     public String getUserId() {
         return userId;
+    }
+
+    public String getJwt() {
+        return jwt;
     }
 }

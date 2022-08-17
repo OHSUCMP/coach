@@ -1,10 +1,12 @@
 package edu.ohsu.cmp.coach.controller;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import edu.ohsu.cmp.coach.util.JWTUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,13 +48,17 @@ public class SessionController extends BaseController {
                                             @RequestParam("bearerToken") String bearerToken,
                                             @RequestParam("patientId") String patientId,
                                             @RequestParam("userId") String userId,
-                                            @RequestParam("audience") String audienceStr) {
+                                            @RequestParam("audience") String audienceStr) throws ConfigurationException {
 
-        FHIRCredentials credentials = new FHIRCredentials(serverUrl, bearerToken, patientId, userId);
+        String jwt = JWTUtil.createToken(serverUrl,
+                env.getProperty("fhir.security.jwt.x509-certificate-file"),
+                env.getProperty("fhir.security.jwt.pkcs8-private-key-file"));
+
+        FHIRCredentials credentials = new FHIRCredentials(serverUrl, bearerToken, patientId, userId, jwt);
         IGenericClient client = FhirUtil.buildClient(
                 credentials.getServerURL(),
                 credentials.getBearerToken(),
-                Integer.parseInt(env.getProperty("socket.timeout-seconds"))
+                Integer.parseInt(env.getProperty("socket.timeout-seconds", "300"))
         );
         FHIRCredentialsWithClient credentialsWithClient = new FHIRCredentialsWithClient(credentials, client);
 
