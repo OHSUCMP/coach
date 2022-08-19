@@ -120,7 +120,9 @@ public class JWTService {
         String responseBody = httpResponse.getResponseBody();
 
         if (code < 200 || code > 299) {
-            logger.error("received non-successful response to request for a JWT access token for serverUrl=" + serverUrl + " - " + responseBody);
+            logger.error("received non-successful response to request for a JWT access token for serverUrl=" + serverUrl + " with code " + code);
+            logger.debug("requestBody=" + requestBody);
+            logger.debug("responseBody=" + responseBody);
             throw new MyHttpException(code, responseBody);
 
         } else {
