@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -124,7 +125,7 @@ public class BloodPressureService extends AbstractVitalsService {
         return list;
     }
 
-    public BloodPressureModel create(String sessionId, BloodPressureModel bpm) throws DataException, ConfigurationException {
+    public BloodPressureModel create(String sessionId, BloodPressureModel bpm) throws DataException, ConfigurationException, IOException {
         if (storeRemotely) {
             Bundle responseBundle = writeRemote(sessionId, bpm);
 

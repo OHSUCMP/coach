@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -117,7 +118,7 @@ public class PulseService extends AbstractVitalsService {
         return list;
     }
 
-    public PulseModel create(String sessionId, PulseModel pm) throws DataException, ConfigurationException {
+    public PulseModel create(String sessionId, PulseModel pm) throws DataException, ConfigurationException, IOException {
         if (storeRemotely) {
             Bundle responseBundle = writeRemote(sessionId, pm);
 

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -62,7 +63,7 @@ public class VitalsController extends BaseController {
                                                             @RequestParam(required = false) Integer diastolic2,
                                                             @RequestParam(required = false) Integer pulse2,
                                                             @RequestParam Long readingDateTS,
-                                                            @RequestParam Boolean followedInstructions) throws DataException, ConfigurationException {
+                                                            @RequestParam Boolean followedInstructions) throws DataException, ConfigurationException, IOException {
 
         // get the cache just to make sure it's defined and the user is properly authenticated
         workspaceService.get(session.getId());

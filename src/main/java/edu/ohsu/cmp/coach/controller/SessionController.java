@@ -5,11 +5,12 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
+import edu.ohsu.cmp.coach.service.JWTService;
 import edu.ohsu.cmp.coach.util.FhirUtil;
-import edu.ohsu.cmp.coach.util.JWTUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,6 +23,9 @@ import javax.servlet.http.HttpSession;
 @Controller
 public class SessionController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    private JWTService jwtService;
 
     @GetMapping("launch-ehr")
     public String launchEHR(Model model) {
@@ -44,15 +48,19 @@ public class SessionController extends BaseController {
 
     @PostMapping("prepare-session")
     public ResponseEntity<?> prepareSession(HttpSession session,
+                                            @RequestParam("clientId") String clientId,
                                             @RequestParam("serverUrl") String serverUrl,
                                             @RequestParam("bearerToken") String bearerToken,
                                             @RequestParam("patientId") String patientId,
                                             @RequestParam("userId") String userId,
                                             @RequestParam("audience") String audienceStr) throws ConfigurationException {
 
-        String jwt = JWTUtil.createToken(serverUrl,
-                env.getProperty("fhir.security.jwt.x509-certificate-file"),
-                env.getProperty("fhir.security.jwt.pkcs8-private-key-file"));
+        String jwt = jwtService.createToken(clientId, serverUrl);
+        if (jwtService.isTokenValid(jwt, clientId)) {
+            logger.info("jwt is valid!");
+        } else {
+            logger.info("jwt is not valid!");
+        }
 
         FHIRCredentials credentials = new FHIRCredentials(serverUrl, bearerToken, patientId, userId, jwt);
         IGenericClient client = FhirUtil.buildClient(

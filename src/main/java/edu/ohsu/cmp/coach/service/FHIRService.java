@@ -1,8 +1,10 @@
 package edu.ohsu.cmp.coach.service;
 
+import ca.uhn.fhir.rest.gclient.ITransactionTyped;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
@@ -11,9 +13,11 @@ import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.function.Function;
 
@@ -23,6 +27,9 @@ public class FHIRService {
 
     @Value("${fhir.search.count}")
     private int searchCount;
+
+    @Autowired
+    private JWTService jwtService;
 
     public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, Class<T> aClass, Reference reference) {
         logger.info("read by reference: " + reference + " (" + aClass.getName() + ")");
@@ -181,21 +188,22 @@ public class FHIRService {
         }
     }
 
-    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle) {
+    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle) throws IOException {
         if (logger.isDebugEnabled()) {
             logger.debug("transacting Bundle: " + FhirUtil.toJson(bundle));
         }
 
-        if (fcc.getCredentials().getJwt() != null) {
-            // todo: obtain access token
-            // todo: use access token
+        ITransactionTyped<Bundle> itt = fcc.getClient().transaction().withBundle(bundle)
+                .withAdditionalHeader("Prefer", "return=representation");
+
+        if (fcc.getCredentials().hasJwt()) {
             // see: https://apporchard.epic.com/Article?docId=oauth2&section=BackendOAuth2Guide
             // see: https://jwt.io/
+            AccessToken accessToken = jwtService.getAccessToken(fcc.getCredentials().getServerURL(), fcc.getCredentials().getJwt());
+            itt = itt.withAdditionalHeader("Authorization", "Bearer " + accessToken.getAccessToken());
         }
 
-        Bundle response = fcc.getClient().transaction().withBundle(bundle)
-                .withAdditionalHeader("Prefer", "return=representation")
-                .execute();
+        Bundle response = itt.execute();
 
         if (logger.isDebugEnabled()) {
             logger.debug("transaction response: " + FhirUtil.toJson(response));

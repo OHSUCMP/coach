@@ -1,19 +1,21 @@
 package edu.ohsu.cmp.coach.exception;
 
-public class HttpException extends Exception {
+import java.io.IOException;
+
+public class MyHttpException extends IOException {
     private int httpResponseCode;
 
-    public HttpException(int httpResponseCode) {
+    public MyHttpException(int httpResponseCode) {
         super();
         this.httpResponseCode = httpResponseCode;
     }
 
-    public HttpException(int httpResponseCode, String message) {
+    public MyHttpException(int httpResponseCode, String message) {
         super(message);
         this.httpResponseCode = httpResponseCode;
     }
 
-    public HttpException(int httpResponseCode, String message, Throwable cause) {
+    public MyHttpException(int httpResponseCode, String message, Throwable cause) {
         super(message, cause);
         this.httpResponseCode = httpResponseCode;
     }

@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -20,7 +21,7 @@ public abstract class AbstractVitalsService extends AbstractService {
 
     protected static final String NO_ENCOUNTERS_KEY = null; // intentionally instantiated with null value
 
-    protected Bundle writeRemote(String sessionId, FHIRCompatible fhirCompatible) throws DataException, ConfigurationException {
+    protected Bundle writeRemote(String sessionId, FHIRCompatible fhirCompatible) throws DataException, IOException {
         UserWorkspace workspace = workspaceService.get(sessionId);
 
         String patientId = workspace.getPatient().getSourcePatient().getId();

@@ -10,12 +10,15 @@
 
         function prepareSession(client) {
             let data = {
+                clientId: client.state.clientId,
                 serverUrl: client.state.serverUrl,
                 bearerToken: client.state.tokenResponse.access_token,
                 patientId: client.getPatientId(),
                 userId: client.getUserId(),
                 audience: "patient"
             };
+
+            // alert("useful development breakpoint");
 
             $.ajax({
                 method: "POST",
