@@ -194,6 +194,6 @@ public class FhirQueryManager {
     }
 
     private String addLookbackPeriodParam(String query, String lookbackPeriod) {
-        return query + "&date=ge{now-" + lookbackPeriod + "}&_sort=-date";
+        return query + "&date=ge{now-" + lookbackPeriod + "}";
     }
 }

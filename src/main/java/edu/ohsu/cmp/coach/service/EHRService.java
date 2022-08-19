@@ -125,7 +125,7 @@ public class EHRService extends AbstractService {
 
                 return true;
             }
-        }, limit);
+        });
     }
 
     public Bundle getEncounterDiagnosisConditions(String sessionId) {

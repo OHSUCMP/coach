@@ -119,14 +119,10 @@ public class FHIRService {
 
     // search function to facilitate getting large datasets involving multi-paginated queries
     public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery) {
-        return search(fcc, fhirQuery, null, null);
+        return search(fcc, fhirQuery, null);
     }
 
     public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery, Function<Resource, Boolean> validityFunction) {
-        return search(fcc, fhirQuery, validityFunction, null);
-    }
-
-    public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery, Function<Resource, Boolean> validityFunction, Integer limit) {
         if (fhirQuery == null || fhirQuery.trim().equals("")) return null;
 
         logger.info("search: executing query: " + fhirQuery);
@@ -153,17 +149,15 @@ public class FHIRService {
             filterInvalidResources(bundle, validityFunction);
         }
 
-        boolean hitLimit = limit != null && bundle.hasEntry() && bundle.getEntry().size() >= limit;
-
-        if (bundle.getLink(Bundle.LINK_NEXT) == null || hitLimit) {
-            return FhirUtil.truncate(bundle, limit);
+        if (bundle.getLink(Bundle.LINK_NEXT) == null) {
+            return bundle;
 
         } else {
             CompositeBundle compositeBundle = new CompositeBundle();
             compositeBundle.consume(bundle);
 
             int page = 2;
-            while (bundle.getLink(Bundle.LINK_NEXT) != null && ! hitLimit) {
+            while (bundle.getLink(Bundle.LINK_NEXT) != null) {
                 bundle = fcc.getClient().loadPage().next(bundle).execute();
 
                 logger.info("search (page " + page + "): " + fhirQuery + " (size=" + bundle.getTotal() + ")");
@@ -177,14 +171,10 @@ public class FHIRService {
 
                 compositeBundle.consume(bundle);
 
-                hitLimit = limit != null && compositeBundle.size() >= limit;
-
                 page ++;
             }
 
-            return limit != null ?
-                    FhirUtil.truncate(compositeBundle.getBundle(), limit) :
-                    compositeBundle.getBundle();
+            return compositeBundle.getBundle();
         }
     }
 
