@@ -1,16 +1,16 @@
 package edu.ohsu.cmp.coach.service;
 
+import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.gclient.ITransactionTyped;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
+import edu.ohsu.cmp.coach.http.HttpRequest;
+import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Identifier;
-import org.hl7.fhir.r4.model.Reference;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -189,6 +189,10 @@ public class FHIRService {
         if (fcc.getCredentials().hasJwt()) {
             // see: https://apporchard.epic.com/Article?docId=oauth2&section=BackendOAuth2Guide
             // see: https://jwt.io/
+
+            CapabilityStatement metadata = getMetadata(fcc);
+            logger.info("got metadata: " + FhirUtil.toJson(metadata));
+
             AccessToken accessToken = jwtService.getAccessToken(fcc.getCredentials().getServerURL(), fcc.getCredentials().getJwt());
             itt = itt.withAdditionalHeader("Authorization", "Bearer " + accessToken.getAccessToken());
         }
@@ -200,6 +204,19 @@ public class FHIRService {
         }
 
         return response;
+    }
+
+    public CapabilityStatement getMetadata(FHIRCredentialsWithClient fcc) {
+        String url = fcc.getCredentials().getServerURL() + "/metadata";
+        try {
+            HttpResponse response = new HttpRequest().get(url);
+            IParser parser = fcc.getClient().getFhirContext().newJsonParser();
+            return parser.parseResource(CapabilityStatement.class, response.getResponseBody());
+
+        } catch (Exception e) {
+            logger.error("caught " + e.getClass().getName() + " getting metadata from " + url + " - " + e.getMessage(), e);
+            return null;
+        }
     }
 
 

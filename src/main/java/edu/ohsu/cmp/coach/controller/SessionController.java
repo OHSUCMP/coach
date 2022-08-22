@@ -56,12 +56,6 @@ public class SessionController extends BaseController {
                                             @RequestParam("audience") String audienceStr) throws ConfigurationException {
 
         String jwt = jwtService.createToken(clientId, serverUrl);
-        if (jwtService.isTokenValid(jwt, clientId)) {
-            logger.info("jwt is valid!");
-        } else {
-            logger.info("jwt is not valid!");
-        }
-
         FHIRCredentials credentials = new FHIRCredentials(serverUrl, bearerToken, patientId, userId, jwt);
         IGenericClient client = FhirUtil.buildClient(
                 credentials.getServerURL(),
