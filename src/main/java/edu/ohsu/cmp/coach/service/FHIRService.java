@@ -1,11 +1,9 @@
 package edu.ohsu.cmp.coach.service;
 
-import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.gclient.ITransactionTyped;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
-import edu.ohsu.cmp.coach.http.HttpRequest;
-import edu.ohsu.cmp.coach.http.HttpResponse;
+import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
@@ -30,6 +28,9 @@ public class FHIRService {
 
     @Autowired
     private JWTService jwtService;
+
+    @Autowired
+    private FhirQueryManager queryManager;
 
     public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, Class<T> aClass, Reference reference) {
         logger.info("read by reference: " + reference + " (" + aClass.getName() + ")");
@@ -207,14 +208,13 @@ public class FHIRService {
     }
 
     public CapabilityStatement getMetadata(FHIRCredentialsWithClient fcc) {
-        String url = fcc.getCredentials().getServerURL() + "/metadata";
         try {
-            HttpResponse response = new HttpRequest().get(url);
-            IParser parser = fcc.getClient().getFhirContext().newJsonParser();
-            return parser.parseResource(CapabilityStatement.class, response.getResponseBody());
+            return fcc.getClient().capabilities()
+                    .ofType(CapabilityStatement.class)
+                    .execute();
 
         } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " getting metadata from " + url + " - " + e.getMessage(), e);
+            logger.error("caught " + e.getClass().getName() + " getting metadata - " + e.getMessage(), e);
             return null;
         }
     }
