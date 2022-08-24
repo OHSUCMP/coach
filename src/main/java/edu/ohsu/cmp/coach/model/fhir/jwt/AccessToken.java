@@ -1,9 +1,17 @@
 package edu.ohsu.cmp.coach.model.fhir.jwt;
 
+import com.google.gson.annotations.SerializedName;
+
 public class AccessToken {
+    @SerializedName("access_token")
     private String accessToken;
+
+    @SerializedName("token_type")
     private String tokenType;
+
+    @SerializedName("expires_in")
     private Integer expiresIn;
+
     private String scope;
 
     @Override
