@@ -2,8 +2,8 @@ package edu.ohsu.cmp.coach.service;
 
 import ca.uhn.fhir.rest.gclient.ITransactionTyped;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
-import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
@@ -28,9 +28,6 @@ public class FHIRService {
 
     @Autowired
     private JWTService jwtService;
-
-    @Autowired
-    private FhirQueryManager queryManager;
 
     public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, Class<T> aClass, Reference reference) {
         logger.info("read by reference: " + reference + " (" + aClass.getName() + ")");
@@ -179,7 +176,7 @@ public class FHIRService {
         }
     }
 
-    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle) throws IOException {
+    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle) throws IOException, DataException {
         if (logger.isDebugEnabled()) {
             logger.debug("transacting Bundle: " + FhirUtil.toJson(bundle));
         }
@@ -193,8 +190,9 @@ public class FHIRService {
 
             CapabilityStatement metadata = getMetadata(fcc);
             logger.info("got metadata: " + FhirUtil.toJson(metadata));
+            String tokenAuthURL = FhirUtil.getTokenAuthenticationURL(metadata);
 
-            AccessToken accessToken = jwtService.getAccessToken(fcc.getCredentials().getServerURL(), fcc.getCredentials().getJwt());
+            AccessToken accessToken = jwtService.getAccessToken(tokenAuthURL, fcc.getCredentials().getJwt());
             itt = itt.withAdditionalHeader("Authorization", "Bearer " + accessToken.getAccessToken());
         }
 

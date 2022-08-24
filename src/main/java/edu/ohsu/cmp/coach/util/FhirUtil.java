@@ -25,6 +25,9 @@ public class FhirUtil {
     private static final String EXTENSION_HOME_SETTING_SYSTEM = "http://snomed.info/sct";
     private static final String EXTENSION_HOME_SETTING_DISPLAY = "Home (environment)";
 
+    private static final String EXTENSION_OAUTH_URIS_URL = "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris";
+    private static final String EXTENSION_TOKEN_URL = "token";
+
     public static IGenericClient buildClient(String serverUrl, String bearerToken, int timeout) {
         FhirContext ctx = FhirContext.forR4();
         ctx.getRestfulClientFactory().setSocketTimeout(timeout * 1000);
@@ -417,5 +420,29 @@ public class FhirUtil {
                         .setCode(EXTENSION_HOME_SETTING_CODE)
                         .setSystem(EXTENSION_HOME_SETTING_SYSTEM)
                         .setDisplay(EXTENSION_HOME_SETTING_DISPLAY)));
+    }
+
+    public static String getTokenAuthenticationURL(CapabilityStatement metadata) throws DataException {
+        if (metadata == null) return null;
+        if ( ! metadata.hasRest() ) throw new DataException("metadata is missing rest");
+
+        String tokenAuthUrl = null;
+        for (CapabilityStatement.CapabilityStatementRestComponent comp : metadata.getRest()) {
+            if (comp.hasSecurity()) {
+                if (comp.getSecurity().hasExtension(EXTENSION_OAUTH_URIS_URL)) {
+                    Extension oauthUrisExt = comp.getSecurity().getExtensionByUrl(EXTENSION_OAUTH_URIS_URL);
+                    if (oauthUrisExt.hasExtension(EXTENSION_TOKEN_URL)) {
+                        Extension tokenAuthExt = oauthUrisExt.getExtensionByUrl(EXTENSION_TOKEN_URL);
+                        if (tokenAuthExt.hasValue()) {
+                            tokenAuthUrl = tokenAuthExt.getValue().primitiveValue();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (tokenAuthUrl == null) throw new DataException("could not find token auth URL in metadata");
+        return tokenAuthUrl;
     }
 }

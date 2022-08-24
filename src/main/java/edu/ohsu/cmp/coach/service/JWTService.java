@@ -98,12 +98,12 @@ public class JWTService {
     /**
      * generate an Epic access token per specifications documented at
      * https://apporchard.epic.com/Article?docId=oauth2&section=Backend-Oauth2_Getting-Access-Token
-     * @param serverUrl
+     * @param tokenAuthUrl
      * @param jwt
      * @return
      */
-    public AccessToken getAccessToken(String serverUrl, String jwt) throws IOException {
-        logger.debug("requesting JWT access token for serverUrl=" + serverUrl + ", jwt=" + jwt);
+    public AccessToken getAccessToken(String tokenAuthUrl, String jwt) throws IOException {
+        logger.debug("requesting JWT access token from tokenAuthUrl=" + tokenAuthUrl + ", jwt=" + jwt);
 
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
@@ -114,13 +114,13 @@ public class JWTService {
         params.add(new BasicNameValuePair("client_assertion", jwt));
         String requestBody = URLEncodedUtils.format(params, StandardCharsets.UTF_8);
 
-        HttpResponse httpResponse = new HttpRequest().post(serverUrl, null, requestHeaders, requestBody);
+        HttpResponse httpResponse = new HttpRequest().post(tokenAuthUrl, null, requestHeaders, requestBody);
 
         int code = httpResponse.getResponseCode();
         String responseBody = httpResponse.getResponseBody();
 
         if (code < 200 || code > 299) {
-            logger.error("received non-successful response to request for a JWT access token for serverUrl=" + serverUrl + " with code " + code);
+            logger.error("received non-successful response to request for a JWT access token for tokenAuthUrl=" + tokenAuthUrl + " with code " + code);
             logger.debug("requestBody=" + requestBody);
             logger.debug("responseBody=" + responseBody);
             throw new MyHttpException(code, responseBody);
