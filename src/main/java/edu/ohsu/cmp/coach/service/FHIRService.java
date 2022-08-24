@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.service;
 
 import ca.uhn.fhir.rest.gclient.ITransactionTyped;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
@@ -176,7 +177,7 @@ public class FHIRService {
         }
     }
 
-    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle) throws IOException, DataException {
+    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle) throws IOException, DataException, ConfigurationException {
         if (logger.isDebugEnabled()) {
             logger.debug("transacting Bundle: " + FhirUtil.toJson(bundle));
         }
@@ -184,15 +185,13 @@ public class FHIRService {
         ITransactionTyped<Bundle> itt = fcc.getClient().transaction().withBundle(bundle)
                 .withAdditionalHeader("Prefer", "return=representation");
 
-        if (fcc.getCredentials().hasJwt()) {
+        if (jwtService.isJWTEnabled()) {
             // see: https://apporchard.epic.com/Article?docId=oauth2&section=BackendOAuth2Guide
             // see: https://jwt.io/
 
-            CapabilityStatement metadata = getMetadata(fcc);
-            logger.info("got metadata: " + FhirUtil.toJson(metadata));
-            String tokenAuthURL = FhirUtil.getTokenAuthenticationURL(metadata);
-
-            AccessToken accessToken = jwtService.getAccessToken(tokenAuthURL, fcc.getCredentials().getJwt());
+            String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
+            String jwt = jwtService.createToken(fcc.getCredentials().getClientId(), tokenAuthUrl);
+            AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
             itt = itt.withAdditionalHeader("Authorization", "Bearer " + accessToken.getAccessToken());
         }
 
@@ -205,17 +204,6 @@ public class FHIRService {
         return response;
     }
 
-    public CapabilityStatement getMetadata(FHIRCredentialsWithClient fcc) {
-        try {
-            return fcc.getClient().capabilities()
-                    .ofType(CapabilityStatement.class)
-                    .execute();
-
-        } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " getting metadata - " + e.getMessage(), e);
-            return null;
-        }
-    }
 
 
 //////////////////////////////////////////////////////////////////////////////////////

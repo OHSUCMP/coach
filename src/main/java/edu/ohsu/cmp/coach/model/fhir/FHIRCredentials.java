@@ -1,20 +1,22 @@
 package edu.ohsu.cmp.coach.model.fhir;
 
-import org.apache.commons.lang3.StringUtils;
-
 public class FHIRCredentials {
+    private String clientId;
     private String serverURL;
     private String bearerToken;
     private String patientId;
     private String userId;
-    private String jwt;
 
-    public FHIRCredentials(String serverURL, String bearerToken, String patientId, String userId, String jwt) {
+    public FHIRCredentials(String clientId, String serverURL, String bearerToken, String patientId, String userId) {
+        this.clientId = clientId;
         this.serverURL = serverURL;
         this.bearerToken = bearerToken;
         this.patientId = patientId;
         this.userId = userId;
-        this.jwt = StringUtils.isNotBlank(jwt) ? jwt : null;
+    }
+
+    public String getClientId() {
+        return clientId;
     }
 
     public String getServerURL() {
@@ -31,13 +33,5 @@ public class FHIRCredentials {
 
     public String getUserId() {
         return userId;
-    }
-
-    public boolean hasJwt() {
-        return jwt != null;
-    }
-
-    public String getJwt() {
-        return jwt;
     }
 }

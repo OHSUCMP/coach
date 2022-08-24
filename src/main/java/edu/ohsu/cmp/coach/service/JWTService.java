@@ -41,58 +41,61 @@ public class JWTService {
     @Value("${fhir.security.jwt.pkcs8-private-key-file:}")
     private String pkcs8PrivateKeyFilename;
 
-    public String createToken(String clientId, String serverUrl) throws ConfigurationException {
-        if (StringUtils.isNotBlank(x509CertificateFilename) && StringUtils.isNotBlank(pkcs8PrivateKeyFilename)) {
-            // iss: clientId
-            // sub: clientId (same as iss)
-            // aud: serverUrl
-            // jti: uuid, max 151 chars
-            // exp: 5 minutes in the future, expressed as an integer 5 minutes in the future
+    public boolean isJWTEnabled() {
+        return StringUtils.isNotBlank(x509CertificateFilename) &&
+                StringUtils.isNotBlank(pkcs8PrivateKeyFilename);
+    }
 
-            File x509CertificateFile = new File(x509CertificateFilename);
-            File pkcs8PrivateKeyFile = new File(pkcs8PrivateKeyFilename);
+    public String createToken(String clientId, String tokenAuthUrl) throws ConfigurationException {
+        if ( ! isJWTEnabled() ) return null;
 
-            try {
-                RSAPublicKey publicKey = (RSAPublicKey) CryptoUtil.readPublicKeyFromCertificate(x509CertificateFile);
-                RSAPrivateKey privateKey = (RSAPrivateKey) CryptoUtil.readPrivateKey(pkcs8PrivateKeyFile);
-                Algorithm algorithm = Algorithm.RSA384(publicKey, privateKey);
+        // iss: clientId
+        // sub: clientId (same as iss)
+        // aud: tokenAuthUrl
+        // jti: uuid, max 151 chars
+        // exp: 5 minutes in the future, expressed as an integer 5 minutes in the future
 
-                return JWT.create()
-                        .withIssuer(clientId)
-                        .withSubject(clientId)
-                        .withAudience(serverUrl)
-                        .withJWTId(UUID.randomUUID().toString())
-                        .withExpiresAt(buildExpiresAt())
-                        .sign(algorithm);
+        File x509CertificateFile = new File(x509CertificateFilename);
+        File pkcs8PrivateKeyFile = new File(pkcs8PrivateKeyFilename);
 
-            } catch (Exception e) {
-                throw new ConfigurationException("could not instantiate object with iss=" + serverUrl + ", x509CertificateFile=" + x509CertificateFile + ", pkcs8PrivateKeyFile=" + pkcs8PrivateKeyFile, e);
-            }
+        try {
+            RSAPublicKey publicKey = (RSAPublicKey) CryptoUtil.readPublicKeyFromCertificate(x509CertificateFile);
+            RSAPrivateKey privateKey = (RSAPrivateKey) CryptoUtil.readPrivateKey(pkcs8PrivateKeyFile);
+            Algorithm algorithm = Algorithm.RSA384(publicKey, privateKey);
+
+            return JWT.create()
+                    .withIssuer(clientId)
+                    .withSubject(clientId)
+                    .withAudience(tokenAuthUrl)
+                    .withJWTId(UUID.randomUUID().toString())
+                    .withExpiresAt(buildExpiresAt())
+                    .sign(algorithm);
+
+        } catch (Exception e) {
+            throw new ConfigurationException("could not instantiate object with iss=" + tokenAuthUrl + ", x509CertificateFile=" + x509CertificateFile + ", pkcs8PrivateKeyFile=" + pkcs8PrivateKeyFile, e);
         }
-        return null;
     }
 
     public boolean isTokenValid(String token, String iss) {
-        if (StringUtils.isNotBlank(x509CertificateFilename) && StringUtils.isNotBlank(pkcs8PrivateKeyFilename)) {
-            File x509CertificateFile = new File(x509CertificateFilename);
-            File pkcs8PrivateKeyFile = new File(pkcs8PrivateKeyFilename);
+        if ( ! isJWTEnabled() ) return false;
 
-            try {
-                RSAPublicKey publicKey = (RSAPublicKey) CryptoUtil.readPublicKeyFromCertificate(x509CertificateFile);
-                RSAPrivateKey privateKey = (RSAPrivateKey) CryptoUtil.readPrivateKey(pkcs8PrivateKeyFile);
-                Algorithm algorithm = Algorithm.RSA384(publicKey, privateKey);
-                JWTVerifier verifier = JWT.require(algorithm)
-                        .withIssuer(iss)
-                        .build();
-                verifier.verify(token);
-                return true;
+        File x509CertificateFile = new File(x509CertificateFilename);
+        File pkcs8PrivateKeyFile = new File(pkcs8PrivateKeyFilename);
 
-            } catch (Exception e) {
-                logger.warn("caught " + e.getClass().getName() + " validating JWT - " + e.getMessage(), e);
-                return false;
-            }
+        try {
+            RSAPublicKey publicKey = (RSAPublicKey) CryptoUtil.readPublicKeyFromCertificate(x509CertificateFile);
+            RSAPrivateKey privateKey = (RSAPrivateKey) CryptoUtil.readPrivateKey(pkcs8PrivateKeyFile);
+            Algorithm algorithm = Algorithm.RSA384(publicKey, privateKey);
+            JWTVerifier verifier = JWT.require(algorithm)
+                    .withIssuer(iss)
+                    .build();
+            verifier.verify(token);
+            return true;
+
+        } catch (Exception e) {
+            logger.warn("caught " + e.getClass().getName() + " validating JWT - " + e.getMessage(), e);
+            return false;
         }
-        return false;
     }
 
     /**
@@ -103,6 +106,8 @@ public class JWTService {
      * @return
      */
     public AccessToken getAccessToken(String tokenAuthUrl, String jwt) throws IOException {
+        if ( ! isJWTEnabled() ) return null;
+
         logger.debug("requesting JWT access token from tokenAuthUrl=" + tokenAuthUrl + ", jwt=" + jwt);
 
         Map<String, String> requestHeaders = new LinkedHashMap<>();
@@ -132,6 +137,11 @@ public class JWTService {
             return accessToken;
         }
     }
+
+
+////////////////////////////////////////////////////////////////////////////
+// private methods
+//
 
     private Instant buildExpiresAt() {
         return LocalDateTime.now()

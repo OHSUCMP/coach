@@ -21,7 +21,7 @@ public abstract class AbstractVitalsService extends AbstractService {
 
     protected static final String NO_ENCOUNTERS_KEY = null; // intentionally instantiated with null value
 
-    protected Bundle writeRemote(String sessionId, FHIRCompatible fhirCompatible) throws DataException, IOException {
+    protected Bundle writeRemote(String sessionId, FHIRCompatible fhirCompatible) throws DataException, IOException, ConfigurationException {
         UserWorkspace workspace = workspaceService.get(sessionId);
 
         String patientId = workspace.getPatient().getSourcePatient().getId();
