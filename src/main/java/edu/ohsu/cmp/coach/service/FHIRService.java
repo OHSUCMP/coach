@@ -190,7 +190,7 @@ public class FHIRService {
             // see: https://jwt.io/
 
             String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
-            String jwt = jwtService.createToken(fcc.getCredentials().getClientId(), tokenAuthUrl);
+            String jwt = jwtService.createToken(tokenAuthUrl);
             AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
             itt = itt.withAdditionalHeader("Authorization", "Bearer " + accessToken.getAccessToken());
         }

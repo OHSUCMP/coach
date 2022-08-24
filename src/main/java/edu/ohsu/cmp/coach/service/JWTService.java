@@ -35,6 +35,9 @@ import java.util.*;
 public class JWTService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Value("${fhir.security.jwt.client-id}")
+    private String clientId;
+
     @Value("${fhir.security.jwt.x509-certificate-file:}")
     private String x509CertificateFilename;
 
@@ -42,11 +45,12 @@ public class JWTService {
     private String pkcs8PrivateKeyFilename;
 
     public boolean isJWTEnabled() {
-        return StringUtils.isNotBlank(x509CertificateFilename) &&
+        return StringUtils.isNotBlank(clientId) &&
+                StringUtils.isNotBlank(x509CertificateFilename) &&
                 StringUtils.isNotBlank(pkcs8PrivateKeyFilename);
     }
 
-    public String createToken(String clientId, String tokenAuthUrl) throws ConfigurationException {
+    public String createToken(String tokenAuthUrl) throws ConfigurationException {
         if ( ! isJWTEnabled() ) return null;
 
         // iss: clientId
