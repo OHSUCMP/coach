@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
+import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
@@ -125,7 +126,7 @@ public class BloodPressureService extends AbstractVitalsService {
         return list;
     }
 
-    public BloodPressureModel create(String sessionId, BloodPressureModel bpm) throws DataException, ConfigurationException, IOException {
+    public BloodPressureModel create(String sessionId, BloodPressureModel bpm) throws DataException, ConfigurationException, IOException, ScopeException {
         if (storeRemotely) {
             Bundle responseBundle = writeRemote(sessionId, bpm);
 

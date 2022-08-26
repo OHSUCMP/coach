@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.service;
 import edu.ohsu.cmp.coach.entity.app.HomePulseReading;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.model.ObservationSource;
 import edu.ohsu.cmp.coach.model.PulseModel;
@@ -118,7 +119,7 @@ public class PulseService extends AbstractVitalsService {
         return list;
     }
 
-    public PulseModel create(String sessionId, PulseModel pm) throws DataException, ConfigurationException, IOException {
+    public PulseModel create(String sessionId, PulseModel pm) throws DataException, ConfigurationException, IOException, ScopeException {
         if (storeRemotely) {
             Bundle responseBundle = writeRemote(sessionId, pm);
 

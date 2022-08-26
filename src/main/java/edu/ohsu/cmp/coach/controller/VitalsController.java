@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.model.AbstractVitalsModel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.ObservationSource;
@@ -63,7 +64,7 @@ public class VitalsController extends BaseController {
                                                             @RequestParam(required = false) Integer diastolic2,
                                                             @RequestParam(required = false) Integer pulse2,
                                                             @RequestParam Long readingDateTS,
-                                                            @RequestParam Boolean followedInstructions) throws DataException, ConfigurationException, IOException {
+                                                            @RequestParam Boolean followedInstructions) throws DataException, ConfigurationException, IOException, ScopeException {
 
         // get the cache just to make sure it's defined and the user is properly authenticated
         workspaceService.get(session.getId());

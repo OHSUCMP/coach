@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.model.FHIRCompatible;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -21,7 +22,7 @@ public abstract class AbstractVitalsService extends AbstractService {
 
     protected static final String NO_ENCOUNTERS_KEY = null; // intentionally instantiated with null value
 
-    protected Bundle writeRemote(String sessionId, FHIRCompatible fhirCompatible) throws DataException, IOException, ConfigurationException {
+    protected Bundle writeRemote(String sessionId, FHIRCompatible fhirCompatible) throws DataException, IOException, ConfigurationException, ScopeException {
         UserWorkspace workspace = workspaceService.get(sessionId);
 
         String patientId = workspace.getPatient().getSourcePatient().getId();
@@ -42,7 +43,7 @@ public abstract class AbstractVitalsService extends AbstractService {
         // write BP reading to the FHIR server
 
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-        return fhirService.transact(fcc, bundle);
+        return fhirService.transact(fcc, bundle, true);
     }
 
     protected Map<String, List<Observation>> buildEncounterObservationsMap(Bundle bundle) {

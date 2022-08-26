@@ -4,6 +4,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
@@ -180,12 +181,27 @@ public class FHIRService {
         }
     }
 
-    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle) throws IOException, DataException, ConfigurationException {
+    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle, boolean stripIfNotInScope) throws IOException, DataException, ConfigurationException, ScopeException {
         IGenericClient client;
         if (jwtService.isJWTEnabled()) {
             String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
             String jwt = jwtService.createToken(tokenAuthUrl);
             AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
+
+            Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
+            while (iter.hasNext()) {
+                Bundle.BundleEntryComponent item = iter.next();
+                Resource resource = item.getResource();
+                if ( ! accessToken.providesWriteAccess(resource.getClass()) ) {
+                    if (stripIfNotInScope) {
+                        logger.warn("stripping " + resource.getClass().getName() + " with id=" + resource.getId() + " from transaction - write permission not in scope");
+                        iter.remove();
+                    } else {
+                        throw new ScopeException("scope does not permit writing " + resource.getClass().getName());
+                    }
+                }
+            }
+
             client = FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
                     accessToken.getAccessToken(),
                     socketTimeout);
@@ -196,21 +212,6 @@ public class FHIRService {
         if (logger.isDebugEnabled()) {
             logger.debug("transacting Bundle: " + FhirUtil.toJson(bundle));
         }
-
-//        ITransactionTyped<Bundle> itt = client.transaction().withBundle(bundle)
-//                .withAdditionalHeader("Prefer", "return=representation");
-//
-////        if (jwtService.isJWTEnabled()) {
-////            // see: https://apporchard.epic.com/Article?docId=oauth2&section=BackendOAuth2Guide
-////            // see: https://jwt.io/
-////
-////            String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
-////            String jwt = jwtService.createToken(tokenAuthUrl);
-////            AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
-////            itt = itt.withAdditionalHeader("Authorization", "Bearer " + accessToken.getAccessToken());
-////        }
-//
-//        Bundle response = itt.execute();
 
         Bundle response = client.transaction().withBundle(bundle)
                 .withAdditionalHeader("Prefer", "return=representation")
