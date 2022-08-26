@@ -24,8 +24,8 @@ import java.util.function.Function;
 public class FHIRService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("${socket.timeout-seconds:300}")
-    private Integer socketTimeoutSeconds;
+    @Value("${socket.timeout:300000}")
+    private Integer socketTimeout;
 
     @Value("${fhir.search.count}")
     private int searchCount;
@@ -188,7 +188,7 @@ public class FHIRService {
             AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
             client = FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
                     accessToken.getAccessToken(),
-                    socketTimeoutSeconds);
+                    socketTimeout);
         } else {
             client = fcc.getClient();
         }

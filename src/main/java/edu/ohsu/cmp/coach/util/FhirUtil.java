@@ -28,9 +28,9 @@ public class FhirUtil {
     private static final String EXTENSION_OAUTH_URIS_URL = "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris";
     private static final String EXTENSION_TOKEN_URL = "token";
 
-    public static IGenericClient buildClient(String serverUrl, String bearerToken, int timeout) {
+    public static IGenericClient buildClient(String serverUrl, String bearerToken, int socketTimeout) {
         FhirContext ctx = FhirContext.forR4();
-        ctx.getRestfulClientFactory().setSocketTimeout(timeout * 1000);
+        ctx.getRestfulClientFactory().setSocketTimeout(socketTimeout);
         IGenericClient client = ctx.newRestfulGenericClient(serverUrl);
 
         BearerTokenAuthInterceptor authInterceptor = new BearerTokenAuthInterceptor(bearerToken);

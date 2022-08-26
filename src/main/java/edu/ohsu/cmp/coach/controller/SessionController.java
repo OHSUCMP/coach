@@ -22,8 +22,8 @@ import javax.servlet.http.HttpSession;
 public class SessionController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("${socket.timeout-seconds:300}")
-    private Integer socketTimeoutSeconds;
+    @Value("${socket.timeout:300000}")
+    private Integer socketTimeout;
 
     @GetMapping("launch-ehr")
     public String launchEHR(Model model) {
@@ -57,7 +57,7 @@ public class SessionController extends BaseController {
         IGenericClient client = FhirUtil.buildClient(
                 credentials.getServerURL(),
                 credentials.getBearerToken(),
-                socketTimeoutSeconds
+                socketTimeout
         );
         FHIRCredentialsWithClient fcc = new FHIRCredentialsWithClient(credentials, client);
 
