@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.service;
 
-import ca.uhn.fhir.rest.gclient.ITransactionTyped;
+import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
@@ -23,6 +23,9 @@ import java.util.function.Function;
 @Service
 public class FHIRService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Value("${socket.timeout-seconds:300}")
+    private Integer socketTimeoutSeconds;
 
     @Value("${fhir.search.count}")
     private int searchCount;
@@ -178,24 +181,40 @@ public class FHIRService {
     }
 
     public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle) throws IOException, DataException, ConfigurationException {
+        IGenericClient client;
+        if (jwtService.isJWTEnabled()) {
+            String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
+            String jwt = jwtService.createToken(tokenAuthUrl);
+            AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
+            client = FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
+                    accessToken.getAccessToken(),
+                    socketTimeoutSeconds);
+        } else {
+            client = fcc.getClient();
+        }
+
         if (logger.isDebugEnabled()) {
             logger.debug("transacting Bundle: " + FhirUtil.toJson(bundle));
         }
 
-        ITransactionTyped<Bundle> itt = fcc.getClient().transaction().withBundle(bundle)
-                .withAdditionalHeader("Prefer", "return=representation");
+//        ITransactionTyped<Bundle> itt = client.transaction().withBundle(bundle)
+//                .withAdditionalHeader("Prefer", "return=representation");
+//
+////        if (jwtService.isJWTEnabled()) {
+////            // see: https://apporchard.epic.com/Article?docId=oauth2&section=BackendOAuth2Guide
+////            // see: https://jwt.io/
+////
+////            String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
+////            String jwt = jwtService.createToken(tokenAuthUrl);
+////            AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
+////            itt = itt.withAdditionalHeader("Authorization", "Bearer " + accessToken.getAccessToken());
+////        }
+//
+//        Bundle response = itt.execute();
 
-        if (jwtService.isJWTEnabled()) {
-            // see: https://apporchard.epic.com/Article?docId=oauth2&section=BackendOAuth2Guide
-            // see: https://jwt.io/
-
-            String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
-            String jwt = jwtService.createToken(tokenAuthUrl);
-            AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
-            itt = itt.withAdditionalHeader("Authorization", "Bearer " + accessToken.getAccessToken());
-        }
-
-        Bundle response = itt.execute();
+        Bundle response = client.transaction().withBundle(bundle)
+                .withAdditionalHeader("Prefer", "return=representation")
+                .execute();
 
         if (logger.isDebugEnabled()) {
             logger.debug("transaction response: " + FhirUtil.toJson(response));
