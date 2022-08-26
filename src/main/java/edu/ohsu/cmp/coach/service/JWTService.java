@@ -135,9 +135,6 @@ public class JWTService {
             throw new MyHttpException(code, responseBody);
 
         } else {
-            logger.debug("received successful response to request for JWT access token");
-            logger.debug("requestBody=" + requestBody);
-            logger.debug("responseBody=" + responseBody);
             Gson gson = new GsonBuilder().create();
             AccessToken accessToken = gson.fromJson(responseBody, new TypeToken<AccessToken>() {}.getType());
             logger.info("received access token " + accessToken);
