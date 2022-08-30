@@ -29,6 +29,9 @@ public class FhirUtil {
     private static final String EXTENSION_TOKEN_URL = "token";
 
     public static IGenericClient buildClient(String serverUrl, String bearerToken, int socketTimeout) {
+        logger.debug("building FHIR R4 client for serverUrl=" + serverUrl + ", bearerToken=" + bearerToken +
+                ", socketTimeout=" + socketTimeout);
+
         FhirContext ctx = FhirContext.forR4();
         ctx.getRestfulClientFactory().setSocketTimeout(socketTimeout);
         IGenericClient client = ctx.newRestfulGenericClient(serverUrl);
