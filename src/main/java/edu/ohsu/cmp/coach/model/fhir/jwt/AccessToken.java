@@ -62,7 +62,7 @@ public class AccessToken {
     }
 
     public boolean providesWriteAccess(Class<? extends Resource> clazz) {
-        String key = "system/" + clazz.getName() + ".write";
+        String key = "system/" + clazz.getSimpleName() + ".write";
         if (logger.isDebugEnabled()) {
             logger.debug("checking scope.contains(" + key + ")? " + scope.contains(key));
         }
