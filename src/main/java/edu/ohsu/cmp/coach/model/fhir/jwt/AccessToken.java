@@ -2,12 +2,8 @@ package edu.ohsu.cmp.coach.model.fhir.jwt;
 
 import com.google.gson.annotations.SerializedName;
 import org.hl7.fhir.r4.model.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class AccessToken {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
     @SerializedName("access_token")
     private String accessToken;
 
@@ -62,10 +58,6 @@ public class AccessToken {
     }
 
     public boolean providesWriteAccess(Class<? extends Resource> clazz) {
-        String key = "system/" + clazz.getSimpleName() + ".write";
-        if (logger.isDebugEnabled()) {
-            logger.debug("checking scope.contains(" + key + ")? " + scope.contains(key));
-        }
-        return scope != null && scope.contains(key);
+        return scope != null && scope.contains("system/" + clazz.getSimpleName() + ".write");
     }
 }
