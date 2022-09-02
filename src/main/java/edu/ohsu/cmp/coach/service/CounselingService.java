@@ -40,4 +40,9 @@ public class CounselingService extends AbstractService {
     public CounselingPage getPage(String key) {
         return pageRepository.findOneByPageKey(key);
     }
+
+    public void deleteAll(String sessionId) {
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        repository.deleteAllByPatId(workspace.getInternalPatientId());
+    }
 }

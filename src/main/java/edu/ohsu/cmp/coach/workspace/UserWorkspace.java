@@ -452,4 +452,18 @@ public class UserWorkspace {
         }
         return rval;
     }
+
+    public void clearSupplementalData() {
+        HomeBloodPressureReadingService hbprService = ctx.getBean(HomeBloodPressureReadingService.class);
+        hbprService.deleteAll(sessionId);
+
+        HomePulseReadingService hprService = ctx.getBean(HomePulseReadingService.class);
+        hprService.deleteAll(sessionId);
+
+        GoalService gService = ctx.getBean(GoalService.class);
+        gService.deleteAll(sessionId);
+
+        CounselingService cService = ctx.getBean(CounselingService.class);
+        cService.deleteAll(sessionId);
+    }
 }

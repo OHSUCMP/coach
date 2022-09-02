@@ -31,4 +31,9 @@ public class HomeBloodPressureReadingService extends AbstractService {
         UserWorkspace workspace = workspaceService.get(sessionId);
         repository.deleteByIdForPatient(id, workspace.getInternalPatientId());
     }
+
+    public void deleteAll(String sessionId) {
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        repository.deleteAllByPatId(workspace.getInternalPatientId());
+    }
 }

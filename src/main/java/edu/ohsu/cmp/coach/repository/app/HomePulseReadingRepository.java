@@ -19,4 +19,10 @@ public interface HomePulseReadingRepository extends JpaRepository<HomePulseReadi
     @Transactional
     @Query("delete from HomePulseReading where id=:id and patId=:patId")
     void deleteByIdForPatient(@Param("id") Long id, @Param("patId") Long patId);
+
+
+    @Modifying
+    @Transactional
+    @Query("delete from HomePulseReading where patId=:patId")
+    void deleteAllByPatId(@Param("patId") Long patId);
 }

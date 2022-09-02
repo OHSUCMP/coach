@@ -1,3 +1,11 @@
+function doClearSupplementalData(_callback) {
+    $.ajax({
+        method: "POST",
+        url: "/clear-supplemental-data"
+    }).done(function(msg, textStatus, jqXHR) {
+        _callback(msg);
+    });
+}
 function loadBloodPressureObservations(_callback) {
     $.ajax({
         method: "POST",

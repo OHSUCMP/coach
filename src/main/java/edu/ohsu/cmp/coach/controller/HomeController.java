@@ -61,6 +61,9 @@ public class HomeController extends BaseController {
                 model.addAttribute("patient", workspace.getPatient());
                 model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
 
+                Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
+                model.addAttribute("showClearSupplementalData", showClearSupplementalData);
+
                 List<CDSHook> list = recommendationService.getOrderedCDSHooks();
                 model.addAttribute("cdshooks", list);
 
@@ -71,7 +74,7 @@ public class HomeController extends BaseController {
             return "home";
 
         } else {
-            Boolean cacheCredentials = StringUtils.equals(env.getProperty("security.browser.cache-credentials"), "true");
+            Boolean cacheCredentials = StringUtils.equalsIgnoreCase(env.getProperty("security.browser.cache-credentials"), "true");
             model.addAttribute("cacheCredentials", cacheCredentials);
             return "fhir-complete-handshake";
         }

@@ -225,3 +225,10 @@ update home_bp_reading set source = 'HOME' where source is null;
 alter table home_bp_reading change source source varchar(30) not null;
 alter table home_bp_reading change systolic systolic int;
 alter table home_bp_reading change diastolic diastolic int;
+
+-- add foreign key constraints stemming from the main patient table, useful for clearing data - added 2022-09-01
+
+alter table home_bp_reading add foreign key (patId) references patient (id) on delete cascade;
+alter table home_pulse_reading add foreign key (patId) references patient (id) on delete cascade;
+alter table goal add foreign key (patId) references patient (id) on delete cascade;
+alter table counseling add foreign key (patId) references patient (id) on delete cascade;

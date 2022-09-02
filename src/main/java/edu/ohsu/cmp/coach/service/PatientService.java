@@ -42,6 +42,11 @@ public class PatientService extends AbstractService {
         return p.getId();
     }
 
+
+///////////////////////////////////////////////////////////////////////
+// private methods
+//
+
     private String buildPatIdHash(String patientId) {
         return DigestUtils.sha256Hex(patientId + salt);
     }

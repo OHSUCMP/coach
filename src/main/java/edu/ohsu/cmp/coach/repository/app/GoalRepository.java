@@ -27,4 +27,9 @@ public interface GoalRepository extends JpaRepository<MyGoal, Long> {
     @Transactional
     @Query("delete from MyGoal where systolicTarget is not null and diastolicTarget is not null and patId=:patId")
     void deleteBPGoalForPatient(@Param("patId") Long patId);
+
+    @Modifying
+    @Transactional
+    @Query("delete from MyGoal where patId=:patId")
+    void deleteAllByPatId(@Param("patId") Long patId);
 }

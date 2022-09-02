@@ -90,4 +90,12 @@ public class SessionController extends BaseController {
         workspace.populate();
         return ResponseEntity.ok("refreshing");
     }
+
+    @PostMapping("clear-supplemental-data")
+    public ResponseEntity<?> clearSupplementalData(HttpSession session) {
+        logger.info("clearing supplemental data for session=" + session.getId());
+        UserWorkspace workspace = workspaceService.get(session.getId());
+        workspace.clearSupplementalData();
+        return ResponseEntity.ok("supplemental data cleared");
+    }
 }

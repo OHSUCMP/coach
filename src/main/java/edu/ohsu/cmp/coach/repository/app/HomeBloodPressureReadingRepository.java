@@ -18,4 +18,9 @@ public interface HomeBloodPressureReadingRepository extends JpaRepository<HomeBl
     @Transactional
     @Query("delete from HomeBloodPressureReading where id=:id and patId=:patId")
     void deleteByIdForPatient(@Param("id") Long id, @Param("patId") Long patId);
+
+    @Modifying
+    @Transactional
+    @Query("delete from HomeBloodPressureReading where patId=:patId")
+    void deleteAllByPatId(@Param("patId") Long patId);
 }

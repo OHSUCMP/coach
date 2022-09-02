@@ -24,10 +24,10 @@ public class GoalService extends AbstractService {
     private EHRService ehrService;
 
     @Autowired
-    private GoalRepository goalRepository;
+    private GoalRepository repository;
 
     @Autowired
-    private GoalHistoryRepository goalHistoryRepository;
+    private GoalHistoryRepository historyRepository;
 
     public List<GoalModel> getGoals(String sessionId) {
         List<GoalModel> list = new ArrayList<>();
@@ -74,12 +74,12 @@ public class GoalService extends AbstractService {
 
     private List<MyGoal> getLocalGoalList(String sessionId) {
         UserWorkspace workspace = workspaceService.get(sessionId);
-        return goalRepository.findAllByPatId(workspace.getInternalPatientId());
+        return repository.findAllByPatId(workspace.getInternalPatientId());
     }
 
     public MyGoal getLocalGoal(String sessionId, String extGoalId) {
         UserWorkspace workspace = workspaceService.get(sessionId);
-        return goalRepository.findOneByPatIdAndExtGoalId(workspace.getInternalPatientId(), extGoalId);
+        return repository.findOneByPatIdAndExtGoalId(workspace.getInternalPatientId(), extGoalId);
     }
 
     /**
@@ -122,7 +122,7 @@ public class GoalService extends AbstractService {
     }
 
     public MyGoal getCurrentLocalBPGoal(String sessionId) {
-        return goalRepository.findCurrentBPGoal(
+        return repository.findCurrentBPGoal(
                 workspaceService.get(sessionId).getInternalPatientId()
         );
     }
@@ -173,9 +173,9 @@ public class GoalService extends AbstractService {
         goal.setPatId(workspace.getInternalPatientId());
         goal.setCreatedDate(new Date());
 
-        MyGoal g = goalRepository.save(goal);
+        MyGoal g = repository.save(goal);
 
-        GoalHistory gh = goalHistoryRepository.save(new GoalHistory(AchievementStatus.IN_PROGRESS, g));
+        GoalHistory gh = historyRepository.save(new GoalHistory(AchievementStatus.IN_PROGRESS, g));
         Set<GoalHistory> set = new HashSet<>();
         set.add(gh);
         g.setHistory(set);
@@ -184,21 +184,26 @@ public class GoalService extends AbstractService {
     }
 
     public MyGoal update(MyGoal goal) {
-        return goalRepository.save(goal);
+        return repository.save(goal);
     }
 
     public void deleteByGoalId(String sessionId, String extGoalId) {
         UserWorkspace workspace = workspaceService.get(sessionId);
-        goalRepository.deleteByGoalIdForPatient(extGoalId, workspace.getInternalPatientId());
+        repository.deleteByGoalIdForPatient(extGoalId, workspace.getInternalPatientId());
     }
 
     public void deleteBPGoalIfExists(String sessionId) {
         UserWorkspace workspace = workspaceService.get(sessionId);
-        goalRepository.deleteBPGoalForPatient(workspace.getInternalPatientId());
+        repository.deleteBPGoalForPatient(workspace.getInternalPatientId());
     }
 
     public GoalHistory createHistory(GoalHistory goalHistory) {
         goalHistory.setCreatedDate(new Date());
-        return goalHistoryRepository.save(goalHistory);
+        return historyRepository.save(goalHistory);
+    }
+
+    public void deleteAll(String sessionId) {
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        repository.deleteAllByPatId(workspace.getInternalPatientId());
     }
 }
