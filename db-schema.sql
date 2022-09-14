@@ -232,3 +232,43 @@ alter table home_bp_reading add foreign key (patId) references patient (id) on d
 alter table home_pulse_reading add foreign key (patId) references patient (id) on delete cascade;
 alter table goal add foreign key (patId) references patient (id) on delete cascade;
 alter table counseling add foreign key (patId) references patient (id) on delete cascade;
+
+-- the following added 2022-09-14 for vsac-integration
+
+create table if not exists vsac_valueSet (
+    id int not null auto_increment primary key,
+    oid varchar(255) not null,
+    displayName varchar(255) not null,
+    version varchar(255) not null,
+    source varchar(255),
+    purpose text,
+    type varchar(50),
+    binding varchar(50),
+    status varchar(50),
+    revisionDate date,
+    created datetime not null default current_timestamp,
+    updated datetime not null default current_timestamp on update current_timestamp,
+    constraint c1 unique (oid, version)
+);
+
+create table if not exists vsac_concept (
+    id int not null auto_increment primary key,
+    code varchar(255) not null,
+    codeSystem varchar(255) not null,
+    codeSystemName varchar(255) not null,
+    codeSystemVersion varchar(255) not null,
+    displayName varchar(255) not null,
+    created datetime not null default current_timestamp,
+    updated datetime not null default current_timestamp on update current_timestamp,
+    constraint c1 unique (code, codeSystem, codeSystemVersion)
+);
+
+create table if not exists vsac_valueSetConcept (
+    valueSetId int not null,
+    conceptId int not null,
+    constraint pk1 primary key (valueSetId, conceptId),
+    constraint fk1 foreign key (valueSetId) references vsac_valueSet (id)
+       on delete cascade,
+    constraint fk2 foreign key (conceptId) references vsac_concept (id)
+       on delete cascade
+);
