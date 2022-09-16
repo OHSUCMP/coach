@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.repository.vsac;
+package edu.ohsu.cmp.coach.repository;
 
 import edu.ohsu.cmp.coach.entity.ValueSet;
 import org.springframework.data.jpa.repository.JpaRepository;

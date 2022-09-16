@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.repository.app;
+package edu.ohsu.cmp.coach.repository;
 
 import edu.ohsu.cmp.coach.entity.GoalHistory;
 import org.springframework.data.jpa.repository.JpaRepository;

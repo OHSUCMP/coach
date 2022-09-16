@@ -1,10 +1,10 @@
-package edu.ohsu.cmp.coach.entity.app;
+package edu.ohsu.cmp.coach.entity;
 
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(schema = "coach")
+@Table
 public class Counseling {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

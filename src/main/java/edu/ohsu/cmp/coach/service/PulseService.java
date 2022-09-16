@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.entity.app.HomePulseReading;
+import edu.ohsu.cmp.coach.entity.HomePulseReading;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;

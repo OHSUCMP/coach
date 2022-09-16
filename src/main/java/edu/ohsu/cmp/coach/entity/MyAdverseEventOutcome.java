@@ -1,10 +1,10 @@
-package edu.ohsu.cmp.coach.entity.app;
+package edu.ohsu.cmp.coach.entity;
 
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(schema = "coach", name = "adverse_event_outcome")
+@Table(name = "adverse_event_outcome")
 public class MyAdverseEventOutcome {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

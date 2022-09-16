@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.entity.app;
+package edu.ohsu.cmp.coach.entity;
 
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
@@ -8,7 +8,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(schema = "coach", name = "goal_history")
+@Table(name = "goal_history")
 public class GoalHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.vsac.xml;
+package edu.ohsu.cmp.coach.model.xml;
 
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;

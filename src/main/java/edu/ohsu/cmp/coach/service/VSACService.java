@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.vsac;
+package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.entity.Concept;
 import edu.ohsu.cmp.coach.entity.ValueSet;
@@ -6,8 +6,8 @@ import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.MyHttpException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
-import edu.ohsu.cmp.coach.vsac.xml.SimpleXMLDOM;
-import edu.ohsu.cmp.coach.vsac.xml.SimpleXMLElement;
+import edu.ohsu.cmp.coach.model.xml.SimpleXMLDOM;
+import edu.ohsu.cmp.coach.model.xml.SimpleXMLElement;
 import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

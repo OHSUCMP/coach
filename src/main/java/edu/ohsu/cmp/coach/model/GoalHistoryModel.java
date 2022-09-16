@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.model;
 
-import edu.ohsu.cmp.coach.entity.app.GoalHistory;
+import edu.ohsu.cmp.coach.entity.GoalHistory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;

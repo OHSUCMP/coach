@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.entity.vsac.Concept;
-import edu.ohsu.cmp.coach.entity.vsac.ValueSet;
+import edu.ohsu.cmp.coach.entity.Concept;
+import edu.ohsu.cmp.coach.entity.ValueSet;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.MedicationModel;
 import edu.ohsu.cmp.coach.util.FhirUtil;

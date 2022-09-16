@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.repository.app;
+package edu.ohsu.cmp.coach.repository;
 
 import edu.ohsu.cmp.coach.entity.Counseling;
 import org.springframework.data.jpa.repository.JpaRepository;

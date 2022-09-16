@@ -5,7 +5,7 @@ import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
-import edu.ohsu.cmp.coach.entity.app.Outcome;
+import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

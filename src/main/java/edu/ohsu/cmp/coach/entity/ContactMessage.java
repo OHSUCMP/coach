@@ -1,9 +1,9 @@
-package edu.ohsu.cmp.coach.entity.app;
+package edu.ohsu.cmp.coach.entity;
 
 import javax.persistence.*;
 
 @Entity
-@Table(schema = "coach", name = "contact_message")
+@Table(name = "contact_message")
 public class ContactMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

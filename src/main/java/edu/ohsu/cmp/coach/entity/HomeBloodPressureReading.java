@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.entity.app;
+package edu.ohsu.cmp.coach.entity;
 
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
@@ -8,7 +8,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(schema = "coach", name = "home_bp_reading")
+@Table(name = "home_bp_reading")
 public class HomeBloodPressureReading {
 
 //    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy h:mm a");

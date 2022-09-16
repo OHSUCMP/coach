@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.entity.app;
+package edu.ohsu.cmp.coach.entity;
 
 import org.hl7.fhir.r4.model.codesystems.AdverseEventOutcome;
 

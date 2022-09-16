@@ -2,8 +2,8 @@ package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
-import edu.ohsu.cmp.coach.entity.app.GoalHistory;
-import edu.ohsu.cmp.coach.entity.app.MyGoal;
+import edu.ohsu.cmp.coach.entity.GoalHistory;
+import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.model.GoalHistoryModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.service.EHRService;

@@ -235,7 +235,8 @@ alter table counseling add foreign key (patId) references patient (id) on delete
 
 -- the following added 2022-09-14 for vsac-integration
 
-create table if not exists vsac_valueSet (
+drop table if exists vsac_valueset;
+create table vsac_valueset (
     id int not null auto_increment primary key,
     oid varchar(255) not null,
     displayName varchar(255) not null,
@@ -251,7 +252,8 @@ create table if not exists vsac_valueSet (
     constraint c1 unique (oid, version)
 );
 
-create table if not exists vsac_concept (
+drop table if exists vsac_concept;
+create table vsac_concept (
     id int not null auto_increment primary key,
     code varchar(255) not null,
     codeSystem varchar(255) not null,
@@ -263,11 +265,15 @@ create table if not exists vsac_concept (
     constraint c1 unique (code, codeSystem, codeSystemVersion)
 );
 
-create table if not exists vsac_valueSetConcept (
+-- alter table vsac_valueset_concept drop constraint fk1;
+-- alter table vsac_valueset_concept drop constraint fk2;
+
+drop table if exists vsac_valueset_concept;
+create table vsac_valueset_concept (
     valueSetId int not null,
     conceptId int not null,
     constraint pk1 primary key (valueSetId, conceptId),
-    constraint fk1 foreign key (valueSetId) references vsac_valueSet (id)
+    constraint fk1 foreign key (valueSetId) references vsac_valueset (id)
        on delete cascade,
     constraint fk2 foreign key (conceptId) references vsac_concept (id)
        on delete cascade

@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import edu.ohsu.cmp.coach.entity.app.Outcome;
+import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.util.FhirUtil;

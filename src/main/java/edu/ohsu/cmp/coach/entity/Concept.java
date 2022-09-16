@@ -1,11 +1,15 @@
-package edu.ohsu.cmp.coach.entity.app;
+package edu.ohsu.cmp.coach.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.util.Date;
 import java.util.Set;
 
 @Entity
-@Table(schema = "coach", name = "vsac_concept")
+@Table(name = "vsac_concept")
 public class Concept {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,12 +20,33 @@ public class Concept {
     private String codeSystemName;
     private String codeSystemVersion;
     private String displayName;
+    @CreationTimestamp
     private Date created;
+    @UpdateTimestamp
     private Date updated;
 
     // see: https://attacomsian.com/blog/spring-data-jpa-many-to-many-mapping
     @ManyToMany(mappedBy = "concepts", fetch = FetchType.LAZY)
     private Set<ValueSet> valueSets;
+
+    public Concept() {
+    }
+
+    public Concept(String code, String codeSystem, String codeSystemName, String codeSystemVersion, String displayName) {
+        this.code = code;
+        this.codeSystem = codeSystem;
+        this.codeSystemName = codeSystemName;
+        this.codeSystemVersion = codeSystemVersion;
+        this.displayName = displayName;
+    }
+
+    public void update(Concept c) {
+        setCode(c.getCode());
+        setCodeSystem(c.getCodeSystem());
+        setCodeSystemName(c.getCodeSystemName());
+        setCodeSystemVersion(c.getCodeSystemVersion());
+        setDisplayName(c.getDisplayName());
+    }
 
     @Override
     public String toString() {
@@ -36,6 +61,11 @@ public class Concept {
                 ", updated=" + updated +
 //                ", valueSets=" + valueSets +
                 '}';
+    }
+
+    @JsonIgnore
+    public String getKey() {
+        return code + "|" + codeSystem + "|" + codeSystemVersion;
     }
 
     public Long getId() {

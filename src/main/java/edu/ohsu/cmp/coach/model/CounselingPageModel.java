@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.model;
 
-import edu.ohsu.cmp.coach.entity.app.CounselingPage;
+import edu.ohsu.cmp.coach.entity.CounselingPage;
 
 public class CounselingPageModel {
     private String key;

@@ -1,13 +1,13 @@
-package edu.ohsu.cmp.coach.entity.app;
+package edu.ohsu.cmp.coach.entity;
 
-import edu.ohsu.cmp.coach.entity.app.Concept;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
 
 @Entity
-@Table(schema = "vsac", name = "vsac_valueSet")
+@Table(name = "vsac_valueset")
 public class ValueSet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,12 +22,14 @@ public class ValueSet {
     private String binding;
     private String status;
     private Date revisionDate;
+    @CreationTimestamp
     private Date created;
+    @UpdateTimestamp
     private Date updated;
 
     // see: https://attacomsian.com/blog/spring-data-jpa-many-to-many-mapping
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
-    @JoinTable(name = "valuesetconcept",
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "vsac_valueset_concept",
             joinColumns = {
                     @JoinColumn(name = "valueSetId", referencedColumnName = "id",
                             nullable = false, updatable = false)},
@@ -35,6 +37,34 @@ public class ValueSet {
                     @JoinColumn(name = "conceptId", referencedColumnName = "id",
                             nullable = false, updatable = false)})
     private Set<Concept> concepts;
+
+    public ValueSet() {
+    }
+
+    public ValueSet(String oid, String displayName, String version, String source, String purpose, String type,
+                    String binding, String status, Date revisionDate) {
+        this.oid = oid;
+        this.displayName = displayName;
+        this.version = version;
+        this.source = source;
+        this.purpose = purpose;
+        this.type = type;
+        this.binding = binding;
+        this.status = status;
+        this.revisionDate = revisionDate;
+    }
+
+    public void update(ValueSet vs) {
+        setDisplayName(vs.getDisplayName());
+        setVersion(vs.getVersion());
+        setSource(vs.getSource());
+        setPurpose(vs.getPurpose());
+        setType(vs.getType());
+        setBinding(vs.getBinding());
+        setStatus(vs.getStatus());
+        setRevisionDate(vs.getRevisionDate());
+        setConcepts(vs.getConcepts());
+    }
 
     @Override
     public String toString() {
@@ -156,6 +186,28 @@ public class ValueSet {
     }
 
     public void setConcepts(Set<Concept> concepts) {
-        this.concepts = concepts;
+        if (this.concepts == null || this.concepts.isEmpty()) {
+            this.concepts = concepts;
+
+        } else {
+            // we need to do a little work to update concepts that persist; to delete those no longer present; and to
+            // add those that are new.
+
+            Map<String, Concept> updatedMap = new LinkedHashMap<>();
+            for (Concept c : concepts) {
+                updatedMap.put(c.getKey(), c);
+            }
+
+            Iterator<Concept> iter = this.concepts.iterator();
+            while (iter.hasNext()) {
+                Concept current = iter.next();
+                if (updatedMap.containsKey(current.getKey())) {
+                    current.update(updatedMap.remove(current.getKey()));
+                } else {
+                    iter.remove();
+                }
+            }
+            this.concepts.addAll(updatedMap.values());
+        }
     }
 }

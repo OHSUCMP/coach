@@ -4,7 +4,7 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.util.FhirUtil;
-import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
+import edu.ohsu.cmp.coach.entity.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.MethodNotImplementedException;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;

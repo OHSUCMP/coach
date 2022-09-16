@@ -1,8 +1,8 @@
 package edu.ohsu.cmp.coach.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import edu.ohsu.cmp.coach.entity.app.GoalHistory;
-import edu.ohsu.cmp.coach.entity.app.MyGoal;
+import edu.ohsu.cmp.coach.entity.GoalHistory;
+import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.*;

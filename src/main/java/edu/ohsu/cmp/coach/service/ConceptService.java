@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.entity.vsac.Concept;
-import edu.ohsu.cmp.coach.repository.vsac.ConceptRepository;
+import edu.ohsu.cmp.coach.entity.Concept;
+import edu.ohsu.cmp.coach.repository.ConceptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

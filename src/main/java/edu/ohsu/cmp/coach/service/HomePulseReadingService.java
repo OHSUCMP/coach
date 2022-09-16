@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.entity.app.HomePulseReading;
-import edu.ohsu.cmp.coach.repository.app.HomePulseReadingRepository;
+import edu.ohsu.cmp.coach.entity.HomePulseReading;
+import edu.ohsu.cmp.coach.repository.HomePulseReadingRepository;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

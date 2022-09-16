@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.entity.app;
+package edu.ohsu.cmp.coach.entity;
 
 import edu.ohsu.cmp.coach.model.AchievementStatus;
 import edu.ohsu.cmp.coach.model.GoalModel;
@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.Set;
 
 @Entity
-@Table(schema = "coach", name = "goal")
+@Table(name = "goal")
 public class MyGoal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

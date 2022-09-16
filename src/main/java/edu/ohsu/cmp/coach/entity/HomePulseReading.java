@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.entity.app;
+package edu.ohsu.cmp.coach.entity;
 
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.ObservationSource;
@@ -8,7 +8,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(schema = "coach", name = "home_pulse_reading")
+@Table(name = "home_pulse_reading")
 public class HomePulseReading {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

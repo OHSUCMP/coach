@@ -2,11 +2,11 @@ package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
-import edu.ohsu.cmp.coach.entity.app.GoalHistory;
-import edu.ohsu.cmp.coach.entity.app.MyGoal;
+import edu.ohsu.cmp.coach.entity.GoalHistory;
+import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.model.GoalModel;
-import edu.ohsu.cmp.coach.repository.app.GoalHistoryRepository;
-import edu.ohsu.cmp.coach.repository.app.GoalRepository;
+import edu.ohsu.cmp.coach.repository.GoalHistoryRepository;
+import edu.ohsu.cmp.coach.repository.GoalRepository;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Goal;
 import org.slf4j.Logger;
