@@ -33,7 +33,7 @@ public class MedicationService extends AbstractService {
         for (String oid : getAntihypertensiveMedicationValueSetOIDsList()) {
             valueSetService.refresh(oid);
         }
-        logger.info("done refreshing defined ValueSets.");
+        logger.info("done refreshing anti-hypertensive medication ValueSets.");
     }
 
     public List<MedicationModel> buildMedications(String sessionId) throws DataException {
