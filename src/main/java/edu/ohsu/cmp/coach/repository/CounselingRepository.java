@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.repository.app;
 
-import edu.ohsu.cmp.coach.entity.app.Counseling;
+import edu.ohsu.cmp.coach.entity.Counseling;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

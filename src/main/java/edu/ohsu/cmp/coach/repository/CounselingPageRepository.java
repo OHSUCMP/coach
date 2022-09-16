@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.repository.app;
 
-import edu.ohsu.cmp.coach.entity.app.CounselingPage;
+import edu.ohsu.cmp.coach.entity.CounselingPage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 

@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.repository.vsac;
 
-import edu.ohsu.cmp.coach.entity.vsac.ValueSet;
+import edu.ohsu.cmp.coach.entity.ValueSet;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 

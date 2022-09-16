@@ -1,11 +1,11 @@
-package edu.ohsu.cmp.coach.entity.vsac;
+package edu.ohsu.cmp.coach.entity.app;
 
 import javax.persistence.*;
 import java.util.Date;
 import java.util.Set;
 
 @Entity
-@Table(schema = "vsac")
+@Table(schema = "coach", name = "vsac_concept")
 public class Concept {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
