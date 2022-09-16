@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,33 +22,11 @@ public class ValueSetService extends AbstractService {
     @Autowired
     private ValueSetRepository repository;
 
-    @Value("${vsac.value-set.oid-list.csv}")
-    private String oidListCSV;
-    private List<String> oidList = null;
-
     public ValueSet getValueSet(String oid) {
         return repository.findOneByOid(oid);
     }
 
-    public void refreshDefinedValueSets() {
-        for (String oid : getOidList()) {
-            refresh(oid);
-        }
-    }
-
-    public List<String> getOidList() {
-        if (oidList == null) {
-            oidList = Arrays.asList(oidListCSV.trim().split("\\s*,\\s*"));
-        }
-        return oidList;
-    }
-
-
-//////////////////////////////////////////////////////////////////////
-// private stuff
-//
-
-    private void refresh(String oid) {
+    public void refresh(String oid) {
         try {
             ValueSet valueSet = getValueSet(oid);
             if (valueSet != null) {
