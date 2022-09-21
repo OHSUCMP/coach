@@ -202,7 +202,7 @@ function toScatterData(data, type) {
 }
 
 function toTrendLineData(data, type) {
-    let chunks = 20;
+    let chunks = 100;
     let groupingFactor = 10;
     let dateRange = getDateRange(data);
     let minTime = dateRange.min.getTime();
@@ -212,7 +212,6 @@ function toTrendLineData(data, type) {
     let arr = [];
     let tempArr = [];
     let lastDate = null;
-    // let distanceFromLastDate = null;
     let diffArr = [];
 
     data.forEach(function (item) {
@@ -232,7 +231,14 @@ function toTrendLineData(data, type) {
                     return a + b;
                 }, 0) / diffArr.length);
 
-                if (diff > threshold || (diffArr.length > 1 && diff > avgDiff * groupingFactor)) {
+                // zone check ensures that trendline data points are created at least once per zone
+                // if the zone contains any data points
+                let zone = Math.round((item.readingDate.getTime() - minTime) / threshold);
+                let lastZone = lastDate !== null ?
+                    Math.round((lastDate.getTime() - minTime) / threshold) :
+                    null;
+
+                if (diff > threshold || (diffArr.length > 1 && diff > avgDiff * groupingFactor) || zone !== lastZone) {
                     let lastDates = tempArr.map(function (o) {
                         return o.timestamp.getTime();
                     });
