@@ -211,7 +211,7 @@ function toLOESSData(data, type) {
 }
 
 function getLOESSBandwidth() {
-    return parseFloat($('#LOESSBandwidth').html());
+    return $('#LOESSBandwidth').html();
 }
 
 function getDateRange(data) {
