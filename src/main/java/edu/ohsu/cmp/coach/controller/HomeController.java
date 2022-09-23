@@ -51,12 +51,16 @@ public class HomeController extends BaseController {
     private Number loessBandwidth;
 
     @GetMapping(value = {"", "/"})
-    public String view(HttpSession session, Model model) {
+    public String view(HttpSession session, Model model,
+                       @RequestParam(name = "bandwidth", required = false) Number bandwidthOverride) {
         boolean sessionEstablished = workspaceService.exists(session.getId());
 
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
-        model.addAttribute("loessBandwidth", loessBandwidth);
+
+        Number b = bandwidthOverride != null ? bandwidthOverride : loessBandwidth;
+        model.addAttribute("loessBandwidth", b);
+
         if (sessionEstablished) {
             logger.info("requesting data for session " + session.getId());
             UserWorkspace workspace = workspaceService.get(session.getId());
