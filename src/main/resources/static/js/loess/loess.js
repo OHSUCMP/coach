@@ -122,20 +122,6 @@ function points(data, x, y, sort) {
     return [X, Y, ux, uy];
 }
 
-// function visitPoints(data, x, y, cb) {
-//     let iterations = 0;
-//
-//     for (let i = 0, n = data.length; i < n; i++) {
-//         const d = data[i],
-//             dx = +x(d, i, data),
-//             dy = +y(d, i, data);
-//
-//         if (dx != null && isFinite(dx) && dy != null && isFinite(dy)) {
-//             cb(dx, dy, iterations++);
-//         }
-//     }
-// }
-
 // Weighting kernel for local regression
 function tricube(x) {
     return (x = 1 - x * x * x) * x * x;
