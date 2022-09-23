@@ -46,7 +46,7 @@ function buildChart() {
                 borderColor: 'rgba(0, 127, 109, 1)',
                 borderWidth: 2,
                 // tension: 0.1,
-                data: toIETrendLineData(window.bpchart.data, 'systolic')
+                data: toIELOESSData(window.bpchart.data, 'systolic')
             }, {
                 type: 'scatter',
                 label: 'Diastolic',
@@ -68,7 +68,7 @@ function buildChart() {
                 borderColor: 'rgba(153, 97, 36, 1)',
                 borderWidth: 1,
                 // tension: 0.1,
-                data: toIETrendLineData(window.bpchart.data, 'diastolic')
+                data: toIELOESSData(window.bpchart.data, 'diastolic')
             } ]
         },
         options: {
@@ -121,8 +121,8 @@ function toIEScatterData(data, type) {
     });
 }
 
-function toIETrendLineData(data, type) {
-    return toTrendLineData(data, type).map(function(item) {
+function toIELOESSData(data, type) {
+    return toLOESSData(data, type).map(function(item) {
         return {
             x: item.x,
             y: item.y
