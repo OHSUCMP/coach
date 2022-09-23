@@ -203,7 +203,9 @@ function toScatterData(data, type) {
 
 function toLOESSData(data, type) {
     let map = data.map(function(item) {
-        return [item.readingDate, item[type].value];
+        return item[type] != null ? [item.readingDate, item[type].value] : null;
+    }).filter(function(item) {
+        return item != null;
     });
     return loess(map, getLOESSBandwidth());
 }

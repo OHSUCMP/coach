@@ -150,11 +150,23 @@ function buildChart() {
     };
 
     if (window.bpchart.startDate !== undefined) {
-        config.options.scales.x.suggestedMin = window.bpchart.startDate;
+        let startDate = null;
+        window.bpchart.data.forEach(function(item) {
+            if (item.readingDate >= window.bpchart.startDate && (startDate === null || startDate < item.readingDate)) {
+                startDate = item.readingDate;
+            }
+        });
+        config.options.scales.x.suggestedMin = startDate;
     }
 
     if (window.bpchart.endDate !== undefined) {
-        config.options.scales.x.suggestedMax = window.bpchart.endDate;
+        let endDate = null;
+        window.bpchart.data.forEach(function(item) {
+            if (item.readingDate < window.bpchart.endDate && (endDate === null || endDate > item.readingDate)) {
+                endDate = item.readingDate;
+            }
+        });
+        config.options.scales.x.suggestedMax = endDate;
     }
 
     return new Chart(ctx, config);
