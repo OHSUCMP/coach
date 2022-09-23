@@ -1,6 +1,8 @@
 // Adapted from d3-regression by Matthew Storer
 // (consolidated logic and removed module wrappings for basic use in plain-vanilla JS environment)
+// License: http://github.com/OHSUCMP/coach/TODO:ADD ACTUAL PATH HERE AFTER INITIAL COMMIT
 // Source: https://github.com/OHSUCMP/coach/TODO:ADD ACTUAL PATH HERE AFTER INITIAL COMMIT
+// Original Source: https://github.com/HarryStevens/d3-regression/blob/766f24bba6ec50a39398aa19df3930f6746793c1/src/loess.js
 // Adapted from science.js by Jason Davies
 // License: https://github.com/jasondavies/science.js/blob/master/LICENSE
 // Source: https://github.com/jasondavies/science.js/blob/master/src/stats/loess.js

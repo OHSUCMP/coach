@@ -201,6 +201,13 @@ function toScatterData(data, type) {
     return arr;
 }
 
+function toLOESSData(data, type) {
+    let map = data.map(function(item) {
+        return [item.readingDate, item[type].value];
+    });
+    return loess(map, 0.15);
+}
+
 function toTrendLineData(data, type) {
     let chunks = 100;
     let groupingFactor = 10;
