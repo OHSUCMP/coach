@@ -223,8 +223,8 @@ function toLOESSData2(data, type) {
         yval.push(item[1]);
     });
 
-    let loess_data = loess_smooth(xval, yval, getLOESSBandwidth());
-
+    let loess = science.stats.loess().bandwidth(getLOESSBandwidth());
+    let loess_data = loess(xval, yval);
     let loess_points = loess_data.map(function(yval, index) {
         return [xval[index], yval];
     });
