@@ -210,6 +210,29 @@ function toLOESSData(data, type) {
     return loess(map, getLOESSBandwidth());
 }
 
+function toLOESSData2(data, type) {
+    let map = data.map(function(item) {
+        return item[type] != null ? [item.readingDate, item[type].value] : null;
+    }).filter(function(item) {
+        return item != null;
+    });
+
+    let xval = [], yval = [];
+    map.forEach(function(item) {
+        xval.push(item[0]);
+        yval.push(item[1]);
+    });
+
+    let loess_data = loess_smooth(xval, yval, getLOESSBandwidth());
+
+    let loess_points = loess_data.map(function(yval, index) {
+        return [xval[index], yval];
+    });
+
+    return loess_points;
+
+}
+
 function getLOESSBandwidth() {
     return $('#LOESSBandwidth').html();
 }
