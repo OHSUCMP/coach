@@ -103,10 +103,17 @@ var bandwidth = .3,
                     sumXY += yk * xkw;
                 }
 
-                let meanX = sumX / sumWeights,
-                    meanY = sumY / sumWeights,
-                    meanXY = sumXY / sumWeights,
+                let meanX = 0,
+                    meanY = 0,
+                    meanXY = 0,
+                    meanXSquared = 0;
+
+                if (sumWeights !== 0) {
+                    meanX = sumX / sumWeights;
+                    meanY = sumY / sumWeights;
+                    meanXY = sumXY / sumWeights;
                     meanXSquared = sumXSquared / sumWeights;
+                }
 
                 let beta = (Math.sqrt(Math.abs(meanXSquared - meanX * meanX)) < accuracy)
                     ? 0 : ((meanXY - meanX * meanY) / (meanXSquared - meanX * meanX));
