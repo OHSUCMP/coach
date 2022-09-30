@@ -8,6 +8,7 @@ services:
       - mysql
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql/coach
+      - VSAC_API_KEY
   mysql:
     image: mysql:5.7
     volumes:
