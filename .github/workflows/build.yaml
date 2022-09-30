@@ -35,7 +35,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-
+    env:
+      IMAGE_NAME: octri/coach
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -53,12 +54,9 @@ jobs:
           name: coach.jar
           path: target/coach.jar
 
-      - name: Read Docker Image Identifiers
-        run: echo ::set-env name=IMAGE_REPOSITORY::$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
-
       - name: Build Docker image
         uses: docker/build-push-action@v3
         with:
           push: true
           context: .
-          tags: gchr.io/${{ env.IMAGE_REPOSITORY }}:latest
+          tags: gchr.io/${{ env.IMAGE_NAME }}:latest
