@@ -207,7 +207,12 @@ function toLOESSData(data, type) {
     }).filter(function(item) {
         return item != null;
     });
-    return loess(map, getLOESSBandwidth());
+
+    let regressionGenerator = d3.regressionLoess()
+        .x(d => d[0])
+        .y(d => d[1])
+        .bandwidth(getLOESSBandwidth());
+    return regressionGenerator(map);
 }
 
 function toLOESSData2(data, type) {

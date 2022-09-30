@@ -40,7 +40,7 @@ function buildChart() {
                 borderColor: 'rgba(0, 127, 109, 1)',
                 borderWidth: 2,
                 tension: 0.1,
-                data: toLOESSData2(window.bpchart.data, 'systolic')
+                data: toLOESSData(window.bpchart.data, 'systolic')
             }, /* {
                 type: 'line',
                 label: 'Systolic Regression',
@@ -69,7 +69,7 @@ function buildChart() {
                 borderColor: 'rgba(153, 97, 36, 1)',
                 borderWidth: 1,
                 tension: 0.1,
-                data: toLOESSData2(window.bpchart.data, 'diastolic')
+                data: toLOESSData(window.bpchart.data, 'diastolic')
             } /*, {
                 type: 'line',
                 label: 'Diastolic Regression',
