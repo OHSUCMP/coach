@@ -1,0 +1,13 @@
+# Base configuration
+# Keys without a value are passed into the config via a .env file in the same
+# directory as the `docker-compose` command was run from
+version: "2"
+services:
+  app:
+    image: coach
+    environment:
+      - SERVER_SERVLET_CONTEXTPATH
+      - SPRING_DATASOURCE_URL
+      - SPRING_DATASOURCE_USERNAME
+      - SPRING_DATASOURCE_PASSWORD
+      - TZ=America/Los_Angeles
