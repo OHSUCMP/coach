@@ -2,13 +2,15 @@ package edu.ohsu.cmp.coach.http;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -78,7 +80,19 @@ public class HttpRequest {
     private HttpResponse execute(HttpUriRequest request) throws IOException {
         StringBuilder sb = new StringBuilder();
 
-        CloseableHttpClient httpclient = HttpClients.createDefault();
+// storer 2022-09-16 - modifying creation of httpclient to resolve the following experienced errors:
+// 2022-09-16 14:30:05.427 [scheduling-1] WARN  o.a.h.c.p.ResponseProcessCookies [ResponseProcessCookies.java:130] Invalid
+//      cookie header: "Set-Cookie: <cookie>; Expires=Fri, 23 Sep 2022 21:30:05 GMT; Path=/". Invalid 'expires' attribute:
+//      Fri, 23 Sep 2022 21:30:05 GMT
+// see: https://www.lenar.io/invalid-cookie-header-invalid-expires-attribute/
+//        CloseableHttpClient httpclient = HttpClients.createDefault();
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setCookieSpec(CookieSpecs.STANDARD)
+                .build();
+        CloseableHttpClient httpclient = HttpClientBuilder.create()
+                .setDefaultRequestConfig(requestConfig)
+                .build();
+
         CloseableHttpResponse response = httpclient.execute(request);
 
         int code = response.getStatusLine().getStatusCode();

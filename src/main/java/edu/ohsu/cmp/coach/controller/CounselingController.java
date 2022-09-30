@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.entity.app.Counseling;
+import edu.ohsu.cmp.coach.entity.Counseling;
 import edu.ohsu.cmp.coach.model.CounselingPageModel;
 import edu.ohsu.cmp.coach.service.CounselingService;
 import edu.ohsu.cmp.coach.service.EHRService;

@@ -1,13 +1,22 @@
 package edu.ohsu.cmp.coach.fhir;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.r4.model.Coding;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @PropertySource("${fhirconfig.file}")
 public class FhirConfigManager {
+
+    @Autowired
+    private Environment env;
 
     @Value("${encounter.class.system}")         private String encounterClassSystem;
     @Value("${encounter.class.amb.code}")       private String encounterClassAMBCode;
@@ -23,39 +32,38 @@ public class FhirConfigManager {
     @Value("${encounter.hh.class.not-in}")     private String encounterHHClassNotIn;
     @Value("${encounter.hh.type.in}")          private String encounterHHTypeIn;
     @Value("${encounter.hh.type.not-in}")      private String encounterHHTypeNotIn;
+    @Value("${encounter.lookbackPeriod}")      private String encounterLookbackPeriod;
 
-    @Value("${bp.system}")          private String bpSystem;
-    @Value("${bp.code}")            private String bpCode;
-    @Value("${bp.display}")         private String bpDisplay;
-    @Value("${bp.systolic.code}")       private String bpSystolicCode;
-    @Value("${bp.systolic.display}")    private String bpSystolicDisplay;
-    @Value("${bp.diastolic.code}")      private String bpDiastolicCode;
-    @Value("${bp.diastolic.display}")   private String bpDiastolicDisplay;
-    @Value("${bp.home.system:}")    private String bpHomeSystem;    // optional - that's what the ":" is in the token
-    @Value("${bp.home.code:}")      private String bpHomeCode;      // optional - that's what the ":" is in the token
-    @Value("${bp.home.display:}")   private String bpHomeDisplay;   // optional - that's what the ":" is in the token
+    private Coding bpCoding = null;
+    private Coding bpSystolicCoding = null;
+    private Coding bpDiastolicCoding = null;
+    private List<Coding> bpOfficeCodings = null;
+    private List<Coding> bpHomeCodings = null;
+    private Coding bpHomeBluetoothSystolicCoding = null;
+    private Coding bpHomeBluetoothDiastolicCoding = null;
     @Value("${bp.value.code}")      private String bpValueCode;
     @Value("${bp.value.system}")    private String bpValueSystem;
     @Value("${bp.value.unit}")      private String bpValueUnit;
     @Value("${bp.limit}")           private String bpLimit;
-
-    @Value("${pulse.code}")         private String pulseCode;
-    @Value("${pulse.system}")       private String pulseSystem;
-    @Value("${pulse.display}")      private String pulseDisplay;
+    @Value("${bp.lookbackPeriod}")  private String bpLookbackPeriod;
+    private Coding pulseCoding = null;
     @Value("${pulse.value.code}")   private String pulseValueCode;
     @Value("${pulse.value.system}") private String pulseValueSystem;
     @Value("${pulse.value.unit}")   private String pulseValueUnit;
-
-    @Value("${protocol.code}")              private String protocolCode;
-    @Value("${protocol.system}")            private String protocolSystem;
-    @Value("${protocol.display}")           private String protocolDisplay;
-    @Value("${protocol.answer.code}")       private String protocolAnswerCode;
-    @Value("${protocol.answer.system}")     private String protocolAnswerSystem;
-    @Value("${protocol.answer.display}")    private String protocolAnswerDisplay;
+    @Value("${pulse.lookbackPeriod}")       private String pulseLookbackPeriod;
+    private Coding protocolCoding = null;
+    private Coding protocolAnswerCoding = null;
     @Value("${protocol.answer.yes}")        private String protocolAnswerYes;
     @Value("${protocol.answer.no}")         private String protocolAnswerNo;
+    @Value("${protocol.lookbackPeriod}")    private String protocolLookbackPeriod;
+    private Coding bmiCoding = null;
+    @Value("${bmi.lookbackPeriod}")         private String bmiLookbackPeriod;
+    private Coding smokingCoding = null;
+    @Value("${smoking.lookbackPeriod}")     private String smokingLookbackPeriod;
+    private Coding drinksCoding = null;
+    @Value("${drinks.lookbackPeriod}")      private String drinksLookbackPeriod;
+    private Coding procedureCounselingCoding = null;
 
-    @Value("${medication.valueset.oid}")    private String medicationValueSetOid;
 
     public String getEncounterClassSystem() {
         return encounterClassSystem;
@@ -109,44 +117,61 @@ public class FhirConfigManager {
         return encounterHHTypeNotIn;
     }
 
-    public String getBpSystem() {
-        return bpSystem;
+    public String getEncounterLookbackPeriod() {
+        return encounterLookbackPeriod;
     }
 
-    public String getBpCode() {
-        return bpCode;
+    public Coding getBpCoding() {
+        if (bpCoding == null) {
+            bpCoding = buildCoding(env.getProperty("bp.coding"));
+        }
+        return bpCoding;
     }
 
-    public String getBpDisplay() {
-        return bpDisplay;
+    public Coding getBpSystolicCoding() {
+        if (bpSystolicCoding == null) {
+            bpSystolicCoding = buildCoding(env.getProperty("bp.systolic.coding"));
+        }
+        return bpSystolicCoding;
     }
 
-    public String getBpSystolicCode() {
-        return bpSystolicCode;
+    public Coding getBpDiastolicCoding() {
+        if (bpDiastolicCoding == null) {
+            bpDiastolicCoding = buildCoding(env.getProperty("bp.diastolic.coding"));
+        }
+        return bpDiastolicCoding;
     }
 
-    public String getBpSystolicDisplay() {
-        return bpSystolicDisplay;
+    public List<Coding> getBpOfficeCodings() {
+        if (bpOfficeCodings == null) {
+            bpOfficeCodings = buildCodings(env.getProperty("bp.office.codings"));
+        }
+        return bpOfficeCodings;
     }
 
-    public String getBpDiastolicCode() {
-        return bpDiastolicCode;
+    public boolean hasBpHomeCodings() {
+        return StringUtils.isNotEmpty(env.getProperty("bp.home.codings"));
     }
 
-    public String getBpDiastolicDisplay() {
-        return bpDiastolicDisplay;
+    public List<Coding> getBpHomeCodings() {
+        if (bpHomeCodings == null) {
+            bpHomeCodings = buildCodings(env.getProperty("bp.home.codings"));
+        }
+        return bpHomeCodings;
     }
 
-    public String getBpHomeSystem() {
-        return bpHomeSystem;
+    public Coding getBpHomeBluetoothSystolicCoding() {
+        if (bpHomeBluetoothSystolicCoding == null) {
+            bpHomeBluetoothSystolicCoding = buildCoding(env.getProperty("bp.home.bluetooth.systolic.coding"));
+        }
+        return bpHomeBluetoothSystolicCoding;
     }
 
-    public String getBpHomeCode() {
-        return bpHomeCode;
-    }
-
-    public String getBpHomeDisplay() {
-        return bpHomeDisplay;
+    public Coding getBpHomeBluetoothDiastolicCoding() {
+        if (bpHomeBluetoothDiastolicCoding == null) {
+            bpHomeBluetoothDiastolicCoding = buildCoding(env.getProperty("bp.home.bluetooth.diastolic.coding"));
+        }
+        return bpHomeBluetoothDiastolicCoding;
     }
 
     public String getBpValueCode() {
@@ -167,16 +192,27 @@ public class FhirConfigManager {
                 Integer.parseInt(bpLimit);
     }
 
-    public String getPulseCode() {
-        return pulseCode;
+    public List<Coding> getAllBpCodings() {
+        List<Coding> list = new ArrayList<>();
+        list.add(getBpCoding());
+        list.add(getBpSystolicCoding());
+        list.add(getBpDiastolicCoding());
+        list.addAll(getBpOfficeCodings());
+        list.addAll(getBpHomeCodings());
+        list.add(getBpHomeBluetoothSystolicCoding());
+        list.add(getBpHomeBluetoothDiastolicCoding());
+        return list;
     }
 
-    public String getPulseSystem() {
-        return pulseSystem;
+    public String getBpLookbackPeriod() {
+        return bpLookbackPeriod;
     }
 
-    public String getPulseDisplay() {
-        return pulseDisplay;
+    public Coding getPulseCoding() {
+        if (pulseCoding == null) {
+            pulseCoding = buildCoding(env.getProperty("pulse.coding"));
+        }
+        return pulseCoding;
     }
 
     public String getPulseValueCode() {
@@ -191,28 +227,22 @@ public class FhirConfigManager {
         return pulseValueUnit;
     }
 
-    public String getProtocolCode() {
-        return protocolCode;
+    public String getPulseLookbackPeriod() {
+        return pulseLookbackPeriod;
     }
 
-    public String getProtocolSystem() {
-        return protocolSystem;
+    public Coding getProtocolCoding() {
+        if (protocolCoding == null) {
+            protocolCoding = buildCoding(env.getProperty("protocol.coding"));
+        }
+        return protocolCoding;
     }
 
-    public String getProtocolDisplay() {
-        return protocolDisplay;
-    }
-
-    public String getProtocolAnswerCode() {
-        return protocolAnswerCode;
-    }
-
-    public String getProtocolAnswerSystem() {
-        return protocolAnswerSystem;
-    }
-
-    public String getProtocolAnswerDisplay() {
-        return protocolAnswerDisplay;
+    public Coding getProtocolAnswerCoding() {
+        if (protocolAnswerCoding == null) {
+            protocolAnswerCoding = buildCoding(env.getProperty("protocol.answer.coding"));
+        }
+        return protocolAnswerCoding;
     }
 
     public String getProtocolAnswerYes() {
@@ -223,7 +253,76 @@ public class FhirConfigManager {
         return protocolAnswerNo;
     }
 
-    public String getMedicationValueSetOid() {
-        return medicationValueSetOid;
+    public String getProtocolLookbackPeriod() {
+        return protocolLookbackPeriod;
+    }
+
+    public Coding getBmiCoding() {
+        if (bmiCoding == null) {
+            bmiCoding = buildCoding(env.getProperty("bmi.coding"));
+        }
+        return bmiCoding;
+    }
+
+    public String getBmiLookbackPeriod() {
+        return bmiLookbackPeriod;
+    }
+
+    public Coding getSmokingCoding() {
+        if (smokingCoding == null) {
+            smokingCoding = buildCoding(env.getProperty("smoking.coding"));
+        }
+        return smokingCoding;
+    }
+
+    public String getSmokingLookbackPeriod() {
+        return smokingLookbackPeriod;
+    }
+
+    public Coding getDrinksCoding() {
+        if (drinksCoding == null) {
+            drinksCoding = buildCoding(env.getProperty("drinks.coding"));
+        }
+        return drinksCoding;
+    }
+
+    public String getDrinksLookbackPeriod() {
+        return drinksLookbackPeriod;
+    }
+
+    public Coding getProcedureCounselingCoding() {
+        if (procedureCounselingCoding == null) {
+            procedureCounselingCoding = buildCoding(env.getProperty("procedure.counseling.coding"));
+        }
+        return procedureCounselingCoding;
+    }
+
+
+///////////////////////////////////////////////////////////////////
+// private methods
+//
+
+    private List<Coding> buildCodings(String s) {
+        List<Coding> list = new ArrayList<>();
+        if (s != null) {
+            for (String s2 : s.split("\\s*(?<!\\\\),\\s*")) { // this will match "," so long it's not escaped ("\,")
+                Coding c = buildCoding(s2);
+                if (c != null) list.add(c);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * build a FHIR Coding from a String
+     * @param s a string of the form "system|code" or "system|code|display"
+     * @return a populated FHIR Coding resource
+     */
+    private Coding buildCoding(String s) {
+        if (s == null) return null;
+        String[] parts = s.split("\\|");
+        Coding c = new Coding().setSystem(parts[0]).setCode(parts[1]);
+        if (parts.length > 2) c.setDisplay(parts[2]);
+        return c;
     }
 }

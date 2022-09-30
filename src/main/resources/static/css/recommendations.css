@@ -100,7 +100,8 @@
 
 .card.critical > .error {
     max-height: 100px;
-    overflow-y: scroll;
+    max-width: 850px;
+    overflow: scroll;
     border: 1px solid red;
     padding: 10px;
 }

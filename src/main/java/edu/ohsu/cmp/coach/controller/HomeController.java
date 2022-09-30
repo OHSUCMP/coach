@@ -1,10 +1,11 @@
 package edu.ohsu.cmp.coach.controller;
 
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
-import edu.ohsu.cmp.coach.entity.app.Outcome;
+import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -21,7 +22,10 @@ import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 @Controller
 public class HomeController extends BaseController {
@@ -51,14 +55,14 @@ public class HomeController extends BaseController {
 
         if (sessionEstablished) {
             logger.info("requesting data for session " + session.getId());
+            UserWorkspace workspace = workspaceService.get(session.getId());
 
             try {
-                UserWorkspace workspace = workspaceService.get(session.getId());
-
                 model.addAttribute("patient", workspace.getPatient());
                 model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
 
-                model.addAttribute("medicationsOfInterestName", medicationService.getMedicationsOfInterestName());
+                Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
+                model.addAttribute("showClearSupplementalData", showClearSupplementalData);
 
                 List<CDSHook> list = recommendationService.getOrderedCDSHooks();
                 model.addAttribute("cdshooks", list);
@@ -70,14 +74,14 @@ public class HomeController extends BaseController {
             return "home";
 
         } else {
-            Boolean cacheCredentials = StringUtils.equals(env.getProperty("security.browser.cache-credentials"), "true");
+            Boolean cacheCredentials = StringUtils.equalsIgnoreCase(env.getProperty("security.browser.cache-credentials"), "true");
             model.addAttribute("cacheCredentials", cacheCredentials);
             return "fhir-complete-handshake";
         }
     }
 
     @PostMapping("blood-pressure-observations-list")
-    public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) {
+    public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) throws DataException {
         List<BloodPressureModel> list = bpService.getBloodPressureReadings(session.getId());
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
@@ -94,29 +98,51 @@ public class HomeController extends BaseController {
 //        return new ResponseEntity<>(goal, HttpStatus.OK);
 //    }
 
+//    @PostMapping("recommendation")
+//    public ResponseEntity<List<Card>> getRecommendation(HttpSession session,
+//                                                        @RequestParam("id") String hookId) {
+//
+//        try {
+//            UserWorkspace workspace = workspaceService.get(session.getId());
+//
+//            List<Card> cards = workspace.getCards(hookId);
+//            logger.info("got cards for hookId=" + hookId + "!");
+//
+//            return new ResponseEntity<>(cards, HttpStatus.OK);
+//
+//        } catch (RuntimeException re) {
+//            logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
+//                    re.getMessage(), re);
+//            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
+
     @PostMapping("recommendation")
-    public ResponseEntity<List<Card>> getRecommendation(HttpSession session,
-                                                        @RequestParam("id") String hookId) {
+    public Callable<ResponseEntity<List<Card>>> getRecommendation(HttpSession session,
+                                                                  @RequestParam("id") String hookId) {
+        return new Callable<>() {
+            public ResponseEntity<List<Card>> call() throws Exception {
+                try {
+                    UserWorkspace workspace = workspaceService.get(session.getId());
 
-        try {
-            UserWorkspace workspace = workspaceService.get(session.getId());
+                    List<Card> cards = workspace.getCards(hookId);
+                    logger.info("got cards for hookId=" + hookId + "!");
 
-            List<Card> cards = workspace.getCards(hookId);
-            logger.info("got cards for hookId=" + hookId + "!");
+                    return new ResponseEntity<>(cards, HttpStatus.OK);
 
-            return new ResponseEntity<>(cards, HttpStatus.OK);
-
-        } catch (RuntimeException re) {
-            logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
-                    re.getMessage(), re);
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+                } catch (RuntimeException re) {
+                    logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
+                            re.getMessage(), re);
+                    return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+            }
+        };
     }
 
     @PostMapping("medications-list")
     public ResponseEntity<List<MedicationModel>> getMedications(HttpSession session) {
         try {
-            List<MedicationModel> list = medicationService.getMedicationsOfInterest(session.getId());
+            List<MedicationModel> list = filterDuplicates(medicationService.getAntihypertensiveMedications(session.getId()));
 
             return new ResponseEntity<>(new ArrayList<>(list), HttpStatus.OK);
 
@@ -143,5 +169,28 @@ public class HomeController extends BaseController {
             logger.error("caught " + ise.getClass().getName() + " getting adverse events - " + ise.getMessage(), ise);
             throw ise;
         }
+    }
+
+    private List<MedicationModel> filterDuplicates(List<MedicationModel> modelList) {
+        Map<String, MedicationModel> map = new LinkedHashMap<String, MedicationModel>();
+
+        for (MedicationModel m : modelList) {
+            String key = m.getDescription();
+
+            if (map.containsKey(key)) {
+                Long tsNew = m.getEffectiveTimestamp();
+                if (tsNew != null) {    // if the new one has no timestamp, keep the existing one
+                    Long tsMapped = map.get(key).getEffectiveTimestamp();
+                    if (tsMapped == null || tsNew > tsMapped) {
+                        map.put(key, m);
+                    }
+                }
+
+            } else {
+                map.put(key, m);
+            }
+        }
+
+        return new ArrayList<>(map.values());
     }
 }

@@ -2,11 +2,11 @@ package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
-import edu.ohsu.cmp.coach.entity.app.GoalHistory;
-import edu.ohsu.cmp.coach.entity.app.MyGoal;
+import edu.ohsu.cmp.coach.entity.GoalHistory;
+import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.model.GoalModel;
-import edu.ohsu.cmp.coach.repository.app.GoalHistoryRepository;
-import edu.ohsu.cmp.coach.repository.app.GoalRepository;
+import edu.ohsu.cmp.coach.repository.GoalHistoryRepository;
+import edu.ohsu.cmp.coach.repository.GoalRepository;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Goal;
 import org.slf4j.Logger;
@@ -24,10 +24,10 @@ public class GoalService extends AbstractService {
     private EHRService ehrService;
 
     @Autowired
-    private GoalRepository goalRepository;
+    private GoalRepository repository;
 
     @Autowired
-    private GoalHistoryRepository goalHistoryRepository;
+    private GoalHistoryRepository historyRepository;
 
     public List<GoalModel> getGoals(String sessionId) {
         List<GoalModel> list = new ArrayList<>();
@@ -74,12 +74,12 @@ public class GoalService extends AbstractService {
 
     private List<MyGoal> getLocalGoalList(String sessionId) {
         UserWorkspace workspace = workspaceService.get(sessionId);
-        return goalRepository.findAllByPatId(workspace.getInternalPatientId());
+        return repository.findAllByPatId(workspace.getInternalPatientId());
     }
 
     public MyGoal getLocalGoal(String sessionId, String extGoalId) {
         UserWorkspace workspace = workspaceService.get(sessionId);
-        return goalRepository.findOneByPatIdAndExtGoalId(workspace.getInternalPatientId(), extGoalId);
+        return repository.findOneByPatIdAndExtGoalId(workspace.getInternalPatientId(), extGoalId);
     }
 
     /**
@@ -114,10 +114,7 @@ public class GoalService extends AbstractService {
             return bpGoal;
 
         } else {
-            return new GoalModel(create(sessionId, new MyGoal(
-                    fcm.getBpSystem(),
-                    fcm.getBpCode(),
-                    "Blood Pressure",
+            return new GoalModel(create(sessionId, new MyGoal(fcm.getBpCoding(),
                     GoalModel.BP_GOAL_DEFAULT_SYSTOLIC,
                     GoalModel.BP_GOAL_DEFAULT_DIASTOLIC
             )));
@@ -125,7 +122,7 @@ public class GoalService extends AbstractService {
     }
 
     public MyGoal getCurrentLocalBPGoal(String sessionId) {
-        return goalRepository.findCurrentBPGoal(
+        return repository.findCurrentBPGoal(
                 workspaceService.get(sessionId).getInternalPatientId()
         );
     }
@@ -176,9 +173,9 @@ public class GoalService extends AbstractService {
         goal.setPatId(workspace.getInternalPatientId());
         goal.setCreatedDate(new Date());
 
-        MyGoal g = goalRepository.save(goal);
+        MyGoal g = repository.save(goal);
 
-        GoalHistory gh = goalHistoryRepository.save(new GoalHistory(AchievementStatus.IN_PROGRESS, g));
+        GoalHistory gh = historyRepository.save(new GoalHistory(AchievementStatus.IN_PROGRESS, g));
         Set<GoalHistory> set = new HashSet<>();
         set.add(gh);
         g.setHistory(set);
@@ -187,21 +184,26 @@ public class GoalService extends AbstractService {
     }
 
     public MyGoal update(MyGoal goal) {
-        return goalRepository.save(goal);
+        return repository.save(goal);
     }
 
     public void deleteByGoalId(String sessionId, String extGoalId) {
         UserWorkspace workspace = workspaceService.get(sessionId);
-        goalRepository.deleteByGoalIdForPatient(extGoalId, workspace.getInternalPatientId());
+        repository.deleteByGoalIdForPatient(extGoalId, workspace.getInternalPatientId());
     }
 
     public void deleteBPGoalIfExists(String sessionId) {
         UserWorkspace workspace = workspaceService.get(sessionId);
-        goalRepository.deleteBPGoalForPatient(workspace.getInternalPatientId());
+        repository.deleteBPGoalForPatient(workspace.getInternalPatientId());
     }
 
     public GoalHistory createHistory(GoalHistory goalHistory) {
         goalHistory.setCreatedDate(new Date());
-        return goalHistoryRepository.save(goalHistory);
+        return historyRepository.save(goalHistory);
+    }
+
+    public void deleteAll(String sessionId) {
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        repository.deleteAllByPatId(workspace.getInternalPatientId());
     }
 }

@@ -135,15 +135,25 @@
             <artifactId>caffeine</artifactId>
             <version>3.0.6</version>
         </dependency>
+
+        <!-- https://github.com/auth0/java-jwt -->
+        <!-- see: https://jwt.io/ -->
+        <!-- see: https://hl7.org/fhir/uv/bulkdata/authorization/index.html -->
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>4.0.0</version>
+        </dependency>
     </dependencies>
 
-<!--    <build>-->
-<!--        <plugins>-->
-<!--            <plugin>-->
-<!--                <groupId>org.springframework.boot</groupId>-->
-<!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
-<!--            </plugin>-->
-<!--        </plugins>-->
-<!--    </build>-->
+   <build>
+       <finalName>${project.artifactId}</finalName>
+       <plugins>
+           <plugin>
+               <groupId>org.springframework.boot</groupId>
+               <artifactId>spring-boot-maven-plugin</artifactId>
+           </plugin>
+       </plugins>
+   </build>
 
 </project>

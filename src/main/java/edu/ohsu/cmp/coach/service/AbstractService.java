@@ -8,6 +8,7 @@ import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Reference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,9 +20,11 @@ public abstract class AbstractService implements Constants {
     @Autowired
     protected FhirConfigManager fcm;
 
-
     @Autowired
     protected FHIRService fhirService;
+
+    @Autowired
+    protected Environment env;
 
     @Value("${fhir.observation.bp-write}")
     protected Boolean storeRemotely;

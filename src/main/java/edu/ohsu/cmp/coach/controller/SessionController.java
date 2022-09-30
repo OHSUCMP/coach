@@ -8,6 +8,7 @@ import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,6 +21,9 @@ import javax.servlet.http.HttpSession;
 @Controller
 public class SessionController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Value("${socket.timeout:300000}")
+    private Integer socketTimeout;
 
     @GetMapping("launch-ehr")
     public String launchEHR(Model model) {
@@ -42,24 +46,25 @@ public class SessionController extends BaseController {
 
     @PostMapping("prepare-session")
     public ResponseEntity<?> prepareSession(HttpSession session,
+                                            @RequestParam("clientId") String clientId,
                                             @RequestParam("serverUrl") String serverUrl,
                                             @RequestParam("bearerToken") String bearerToken,
                                             @RequestParam("patientId") String patientId,
                                             @RequestParam("userId") String userId,
                                             @RequestParam("audience") String audienceStr) {
 
-        FHIRCredentials credentials = new FHIRCredentials(serverUrl, bearerToken, patientId, userId);
+        FHIRCredentials credentials = new FHIRCredentials(clientId, serverUrl, bearerToken, patientId, userId);
         IGenericClient client = FhirUtil.buildClient(
                 credentials.getServerURL(),
                 credentials.getBearerToken(),
-                Integer.parseInt(env.getProperty("socket.timeout-seconds"))
+                socketTimeout
         );
-        FHIRCredentialsWithClient credentialsWithClient = new FHIRCredentialsWithClient(credentials, client);
+        FHIRCredentialsWithClient fcc = new FHIRCredentialsWithClient(credentials, client);
 
         Audience audience = Audience.fromTag(audienceStr);
 
         String sessionId = session.getId();
-        workspaceService.init(sessionId, audience, credentialsWithClient);
+        workspaceService.init(sessionId, audience, fcc);
         workspaceService.get(sessionId).populate();
 
         return ResponseEntity.ok("session configured successfully");
@@ -84,5 +89,13 @@ public class SessionController extends BaseController {
         workspace.clearCaches();
         workspace.populate();
         return ResponseEntity.ok("refreshing");
+    }
+
+    @PostMapping("clear-supplemental-data")
+    public ResponseEntity<?> clearSupplementalData(HttpSession session) {
+        logger.info("clearing supplemental data for session=" + session.getId());
+        UserWorkspace workspace = workspaceService.get(session.getId());
+        workspace.clearSupplementalData();
+        return ResponseEntity.ok("supplemental data cleared");
     }
 }

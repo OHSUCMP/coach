@@ -3,10 +3,12 @@ package edu.ohsu.cmp.coach.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.fhir.EncounterMatcher;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.*;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -20,39 +22,34 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy h:mm a");
 
-    public enum Source {
-        OFFICE,
-        HOME,
-        UNKNOWN
-    }
 
-    protected Encounter sourceEncounter;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     protected Observation sourceProtocolObservation;
 
-    protected Source source;
+    protected ObservationSource source = null;
     protected Boolean followedProtocol;
     protected Date readingDate;
 
-    public AbstractVitalsModel(Source source, Boolean followedProtocol, Date readingDate) {
+    public AbstractVitalsModel(ObservationSource source, Boolean followedProtocol, Date readingDate) {
         this.source = source;
         this.followedProtocol = followedProtocol;
         this.readingDate = readingDate;
     }
 
-    public AbstractVitalsModel(Encounter enc, Observation protocolObservation,
-                               Observation readingDateObservation, FhirConfigManager fcm) throws DataException {
-        this.sourceEncounter = enc;
+    public AbstractVitalsModel(ObservationSource source, Observation observation,
+                               Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+        this.source = source;
         this.sourceProtocolObservation = protocolObservation;
 
-        EncounterMatcher matcher = new EncounterMatcher(fcm);
-        if (matcher.isAmbEncounter(enc))              source = Source.OFFICE;
-        else if (matcher.isHomeHealthEncounter(enc))  source = Source.HOME;
-        else                                          source = Source.UNKNOWN;
+        if (source == ObservationSource.HOME && ! FhirUtil.hasHomeSettingExtension(observation)) {
+            logger.warn("Observation " + observation.getId() + " has HOME Encounter but is missing the Home Setting Extension");
+        }
 
         if (protocolObservation != null &&
-                protocolObservation.getCode().hasCoding(fcm.getProtocolSystem(), fcm.getProtocolCode()) &&
+                FhirUtil.hasCoding(protocolObservation.getCode(), fcm.getProtocolCoding()) &&
                 protocolObservation.hasValueCodeableConcept() &&
-                protocolObservation.getValueCodeableConcept().hasCoding(fcm.getProtocolAnswerSystem(), fcm.getProtocolAnswerCode()) &&
+                FhirUtil.hasCoding(protocolObservation.getValueCodeableConcept(), fcm.getProtocolAnswerCoding()) &&
                 protocolObservation.getValueCodeableConcept().hasText()) {
 
             String answerValue = protocolObservation.getValueCodeableConcept().getText();
@@ -68,14 +65,14 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
             }
         }
 
-        if (readingDateObservation.getEffectiveDateTimeType() != null) {
-            this.readingDate = readingDateObservation.getEffectiveDateTimeType().getValue(); //.getTime();
+        if (observation.getEffectiveDateTimeType() != null) {
+            this.readingDate = observation.getEffectiveDateTimeType().getValue(); //.getTime();
 
-        } else if (readingDateObservation.getEffectiveInstantType() != null) {
-            this.readingDate = readingDateObservation.getEffectiveInstantType().getValue(); //.getTime();
+        } else if (observation.getEffectiveInstantType() != null) {
+            this.readingDate = observation.getEffectiveInstantType().getValue(); //.getTime();
 
-        } else if (readingDateObservation.getEffectivePeriod() != null) {
-            this.readingDate = readingDateObservation.getEffectivePeriod().getEnd(); //.getTime();
+        } else if (observation.getEffectivePeriod() != null) {
+            this.readingDate = observation.getEffectivePeriod().getEnd(); //.getTime();
 
         } else {
             throw new DataException("missing timestamp");
@@ -88,16 +85,11 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
     }
 
     @JsonIgnore
-    public Encounter getSourceEncounter() {
-        return sourceEncounter;
-    }
-
-    @JsonIgnore
     public Observation getSourceProtocolObservation() {
         return sourceProtocolObservation;
     }
 
-    public Source getSource() {
+    public ObservationSource getSource() {
         return source;
     }
 
@@ -160,12 +152,9 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
         o.setEncounter(new Reference().setReference(URN_UUID + enc.getId()));
 
         o.setStatus(Observation.ObservationStatus.FINAL);
-        o.getCode().addCoding()
-                .setCode(fcm.getProtocolCode())
-                .setSystem(fcm.getProtocolSystem())
-                .setDisplay(fcm.getProtocolDisplay());
+        o.getCode().addCoding(fcm.getProtocolCoding());
 
-        addHomeSettingExtension(o);
+        FhirUtil.addHomeSettingExtension(o);
 
         o.setEffective(new DateTimeType(readingDate));
 
@@ -176,27 +165,12 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
         o.setValue(new CodeableConcept());
         o.getValueCodeableConcept()
                 .setText(answerValue)
-                .addCoding()
-                .setCode(fcm.getProtocolAnswerCode())
-                .setSystem(fcm.getProtocolAnswerSystem())
-                .setDisplay(fcm.getProtocolAnswerDisplay());
+                .addCoding(fcm.getProtocolAnswerCoding());
 
         return o;
-    }
-
-    protected void addHomeSettingExtension(DomainResource domainResource) {
-        // setting MeasurementSettingExt to indicate taken in a "home" setting
-        // see https://browser.ihtsdotools.org/?perspective=full&conceptId1=264362003&edition=MAIN/SNOMEDCT-US/2021-09-01&release=&languages=en
-
-        domainResource.addExtension(new Extension()
-                .setUrl("http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt")
-                .setValue(new Coding()
-                        .setCode("264362003")
-                        .setSystem("http://snomed.info/sct")));
     }
 
     protected String genTemporaryId() {
         return UUID.randomUUID().toString();
     }
-
 }

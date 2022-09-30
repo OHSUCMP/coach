@@ -1,8 +1,8 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.entity.app.MyPatient;
+import edu.ohsu.cmp.coach.entity.MyPatient;
 import edu.ohsu.cmp.coach.model.PatientModel;
-import edu.ohsu.cmp.coach.repository.app.PatientRepository;
+import edu.ohsu.cmp.coach.repository.PatientRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +41,11 @@ public class PatientService extends AbstractService {
 
         return p.getId();
     }
+
+
+///////////////////////////////////////////////////////////////////////
+// private methods
+//
 
     private String buildPatIdHash(String patientId) {
         return DigestUtils.sha256Hex(patientId + salt);

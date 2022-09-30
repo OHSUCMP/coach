@@ -1,19 +1,23 @@
 package edu.ohsu.cmp.coach.service;
 
+import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
+import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Identifier;
-import org.hl7.fhir.r4.model.Reference;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.function.Function;
 
@@ -21,8 +25,14 @@ import java.util.function.Function;
 public class FHIRService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Value("${socket.timeout:300000}")
+    private Integer socketTimeout;
+
     @Value("${fhir.search.count}")
     private int searchCount;
+
+    @Autowired
+    private JWTService jwtService;
 
     public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, Class<T> aClass, Reference reference) {
         logger.info("read by reference: " + reference + " (" + aClass.getName() + ")");
@@ -112,14 +122,10 @@ public class FHIRService {
 
     // search function to facilitate getting large datasets involving multi-paginated queries
     public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery) {
-        return search(fcc, fhirQuery, null, null);
+        return search(fcc, fhirQuery, null);
     }
 
     public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery, Function<Resource, Boolean> validityFunction) {
-        return search(fcc, fhirQuery, validityFunction, null);
-    }
-
-    public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery, Function<Resource, Boolean> validityFunction, Integer limit) {
         if (fhirQuery == null || fhirQuery.trim().equals("")) return null;
 
         logger.info("search: executing query: " + fhirQuery);
@@ -146,17 +152,15 @@ public class FHIRService {
             filterInvalidResources(bundle, validityFunction);
         }
 
-        boolean hitLimit = limit != null && bundle.hasEntry() && bundle.getEntry().size() >= limit;
-
-        if (bundle.getLink(Bundle.LINK_NEXT) == null || hitLimit) {
-            return FhirUtil.truncate(bundle, limit);
+        if (bundle.getLink(Bundle.LINK_NEXT) == null) {
+            return bundle;
 
         } else {
             CompositeBundle compositeBundle = new CompositeBundle();
             compositeBundle.consume(bundle);
 
             int page = 2;
-            while (bundle.getLink(Bundle.LINK_NEXT) != null && ! hitLimit) {
+            while (bundle.getLink(Bundle.LINK_NEXT) != null) {
                 bundle = fcc.getClient().loadPage().next(bundle).execute();
 
                 logger.info("search (page " + page + "): " + fhirQuery + " (size=" + bundle.getTotal() + ")");
@@ -170,23 +174,46 @@ public class FHIRService {
 
                 compositeBundle.consume(bundle);
 
-                hitLimit = limit != null && compositeBundle.size() >= limit;
-
                 page ++;
             }
 
-            return limit != null ?
-                    FhirUtil.truncate(compositeBundle.getBundle(), limit) :
-                    compositeBundle.getBundle();
+            return compositeBundle.getBundle();
         }
     }
 
-    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle) {
+    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle, boolean stripIfNotInScope) throws IOException, DataException, ConfigurationException, ScopeException {
+        IGenericClient client;
+        if (jwtService.isJWTEnabled()) {
+            String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
+            String jwt = jwtService.createToken(tokenAuthUrl);
+            AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
+
+            Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
+            while (iter.hasNext()) {
+                Bundle.BundleEntryComponent item = iter.next();
+                Resource resource = item.getResource();
+                if ( ! accessToken.providesWriteAccess(resource.getClass()) ) {
+                    if (stripIfNotInScope) {
+                        logger.warn("stripping " + resource.getClass().getName() + " with id=" + resource.getId() + " from transaction - write permission not in scope");
+                        iter.remove();
+                    } else {
+                        throw new ScopeException("scope does not permit writing " + resource.getClass().getName());
+                    }
+                }
+            }
+
+            client = FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
+                    accessToken.getAccessToken(),
+                    socketTimeout);
+        } else {
+            client = fcc.getClient();
+        }
+
         if (logger.isDebugEnabled()) {
             logger.debug("transacting Bundle: " + FhirUtil.toJson(bundle));
         }
 
-        Bundle response = fcc.getClient().transaction().withBundle(bundle)
+        Bundle response = client.transaction().withBundle(bundle)
                 .withAdditionalHeader("Prefer", "return=representation")
                 .execute();
 
@@ -196,6 +223,7 @@ public class FHIRService {
 
         return response;
     }
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////
