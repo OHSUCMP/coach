@@ -1,0 +1,64 @@
+---
+name: build
+on: [push, workflow_dispatch]
+jobs:
+  build-java-source:
+    name: build jar file
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Java build environmant
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn package -DskipTests
+
+      - name: Upload jar file
+        uses: actions/upload-artifact@v3
+        with:
+          name: coach.jar
+          path: target/coach.jar
+
+  build-image:
+    name: build Docker image
+    needs: build-java-source
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Log into container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download jar file
+        uses: actions/download-artifact@v3
+        with:
+          name: coach.jar
+          path: target/coach.jar
+
+      - name: Read Docker Image Identifiers
+        run: echo ::set-env name=IMAGE_REPOSITORY::$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          context: .
+          tags: gchr.io/${{ env.IMAGE_REPOSITORY }}:latest
