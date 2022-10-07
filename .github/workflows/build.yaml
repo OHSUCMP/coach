@@ -72,7 +72,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: coach.jar
-          path: target/coach.jar
+          path: target
 
       - name: Build Docker image
         uses: docker/build-push-action@v3
