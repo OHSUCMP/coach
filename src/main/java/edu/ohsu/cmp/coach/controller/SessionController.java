@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.coach.controller;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
@@ -51,7 +52,7 @@ public class SessionController extends BaseController {
                                             @RequestParam("bearerToken") String bearerToken,
                                             @RequestParam("patientId") String patientId,
                                             @RequestParam("userId") String userId,
-                                            @RequestParam("audience") String audienceStr) {
+                                            @RequestParam("audience") String audienceStr) throws ConfigurationException {
 
         FHIRCredentials credentials = new FHIRCredentials(clientId, serverUrl, bearerToken, patientId, userId);
         IGenericClient client = FhirUtil.buildClient(

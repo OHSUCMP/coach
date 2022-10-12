@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
@@ -51,12 +52,12 @@ public class UserWorkspace {
     private final FHIRCredentialsWithClient fhirCredentialsWithClient;
     private final FhirConfigManager fcm;
     private final Long internalPatientId;
+    private VendorTransformer vendorTransformer = null;
 
-    private Cache cache;
-    private Cache cardCache;
-    private Cache<String, Bundle> bundleCache;
-
-    private ExecutorService executorService;
+    private final Cache cache;
+    private final Cache cardCache;
+    private final Cache<String, Bundle> bundleCache;
+    private final ExecutorService executorService;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
                             FHIRCredentialsWithClient fhirCredentialsWithClient, FhirConfigManager fcm) {
@@ -92,6 +93,10 @@ public class UserWorkspace {
 
     public FHIRCredentialsWithClient getFhirCredentialsWithClient() {
         return fhirCredentialsWithClient;
+    }
+
+    public FhirConfigManager getFhirConfigManager() {
+        return fcm;
     }
 
     public Long getInternalPatientId() {
@@ -318,12 +323,17 @@ public class UserWorkspace {
                 logger.info("BEGIN build Goals for session=" + sessionId);
 
                 GoalService svc = ctx.getBean(GoalService.class);
-                List<GoalModel> list = svc.buildCurrentGoals(sessionId);
+                try {
+                    List<GoalModel> list = svc.buildCurrentGoals(sessionId);
 
-                logger.info("DONE building Goals for session=" + sessionId +
-                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                    logger.info("DONE building Goals for session=" + sessionId +
+                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
-                return list;
+                    return list;
+
+                } catch (DataException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
     }
@@ -465,5 +475,13 @@ public class UserWorkspace {
 
         CounselingService cService = ctx.getBean(CounselingService.class);
         cService.deleteAll(sessionId);
+    }
+
+    public VendorTransformer getVendorTransformer() {
+        return vendorTransformer;
+    }
+
+    public void setVendorTransformer(VendorTransformer vendorTransformer) {
+        this.vendorTransformer = vendorTransformer;
     }
 }

@@ -88,26 +88,26 @@ public class FhirUtil {
     }
 
 
-    public static Bundle toBundle(String patientId, FhirConfigManager fcm,
-                                  Collection<? extends FHIRCompatible> collection) throws DataException {
-        return toBundle(patientId, fcm, null, collection);
-    }
-
-    public static Bundle toBundle(String patientId, FhirConfigManager fcm, Bundle.BundleType bundleType,
-                                  Collection<? extends FHIRCompatible> collection) throws DataException {
-        if (collection == null) return null;
-
-        Bundle bundle = new Bundle();
-        bundle.setType(bundleType);
-
-        for (FHIRCompatible item : collection) {
-            bundle.getEntry().addAll(
-                    item.toBundle(patientId, fcm).getEntry()
-            );
-        }
-
-        return bundle;
-    }
+//    public static Bundle toBundle(String patientId, FhirConfigManager fcm,
+//                                  Collection<? extends FHIRCompatible> collection) throws DataException {
+//        return toBundle(patientId, fcm, null, collection);
+//    }
+//
+//    public static Bundle toBundle(String patientId, FhirConfigManager fcm, Bundle.BundleType bundleType,
+//                                  Collection<? extends FHIRCompatible> collection) throws DataException {
+//        if (collection == null) return null;
+//
+//        Bundle bundle = new Bundle();
+//        bundle.setType(bundleType);
+//
+//        for (FHIRCompatible item : collection) {
+//            bundle.getEntry().addAll(
+//                    item.toBundle(patientId, fcm).getEntry()
+//            );
+//        }
+//
+//        return bundle;
+//    }
 
     public static Bundle bundleResources(Resource ... resources) {
         return bundleResources(Bundle.BundleType.COLLECTION, Arrays.asList(resources));
@@ -171,6 +171,17 @@ public class FhirUtil {
 
         } else {
             return s;
+        }
+    }
+
+    public static String toRelativeReference(DomainResource resource) throws DataException {
+        if (resource == null) return null;
+
+        if (resource.hasId()) {
+            return resource.getClass().getSimpleName() + "/" + resource.getId();
+
+        } else {
+            throw new DataException("resource (" + resource.getClass().getSimpleName() + ") is missing id element");
         }
     }
 

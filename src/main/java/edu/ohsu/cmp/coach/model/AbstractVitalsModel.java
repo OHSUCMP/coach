@@ -12,16 +12,15 @@ import org.slf4j.LoggerFactory;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.UUID;
 
 public abstract class AbstractVitalsModel extends AbstractModel implements Comparable<AbstractVitalsModel> {
-    public static final String OBSERVATION_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category";
-    public static final String OBSERVATION_CATEGORY_CODE = "vital-signs";
+//    public static final String OBSERVATION_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category";
+//    public static final String OBSERVATION_CATEGORY_CODE = "vital-signs";
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy h:mm a");
 
+//    protected static final String PROTOCOL_NOTE_TAG = "COACH_PROTOCOL::";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -63,6 +62,25 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
             } else {
                 throw new CaseNotHandledException("couldn't handle case where protocol answer='" + answerValue + "'");
             }
+
+//        } else if (observation.hasNote()) {
+//            // in Epic, the protocol may be stored as a separate Observation, but it could also exist as
+//            // a specially-crafted annotation in the "note" element, if COACH was responsible for writing
+//            // it (Epic doesn't have a flowsheet row to store protocol info so this is a hack to get
+//            // around that limitation).
+//
+//            for (Annotation annotation : observation.getNote()) {
+//                if (annotation.hasText()) {
+//                    if (annotation.getText().equals(PROTOCOL_NOTE_TAG + fcm.getProtocolAnswerYes())) {
+//                        this.followedProtocol = true;
+//                        break;
+//
+//                    } else if (annotation.getText().equals(PROTOCOL_NOTE_TAG + fcm.getProtocolAnswerNo())) {
+//                        this.followedProtocol = false;
+//                        break;
+//                    }
+//                }
+//            }
         }
 
         if (observation.getEffectiveDateTimeType() != null) {
@@ -97,6 +115,10 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
         return followedProtocol;
     }
 
+    public void setFollowedProtocol(Boolean followedProtocol) {
+        this.followedProtocol = followedProtocol;
+    }
+
     public Date getReadingDate() {
         return readingDate;
     }
@@ -116,61 +138,61 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
 //////////////////////////////////////////////////////////////////////////////
 // private methods
 //
-    protected Encounter buildNewHomeHealthEncounter(FhirConfigManager fcm, String patientId) {
-        Encounter e = new Encounter();
+//    protected Encounter buildNewHomeHealthEncounter(FhirConfigManager fcm, String patientId) {
+//        Encounter e = new Encounter();
+//
+//        e.setId(genTemporaryId());
+//
+//        e.setStatus(Encounter.EncounterStatus.FINISHED);
+//
+//        e.getClass_().setSystem(fcm.getEncounterClassSystem())
+//                .setCode(fcm.getEncounterClassHHCode())
+//                .setDisplay(fcm.getEncounterClassHHDisplay());
+//
+//        e.setSubject(new Reference().setReference(patientId));
+//
+//        Calendar start = Calendar.getInstance();
+//        start.setTime(readingDate);
+//        start.add(Calendar.MINUTE, -1);
+//
+//        Calendar end = Calendar.getInstance();
+//        end.setTime(readingDate);
+//        end.add(Calendar.MINUTE, 1);
+//
+//        e.getPeriod().setStart(start.getTime()).setEnd(end.getTime());
+//
+//        return e;
+//    }
 
-        e.setId(genTemporaryId());
+//    protected Observation buildProtocolObservation(String patientId, FhirConfigManager fcm) {
+//        Observation o = new Observation();
+//
+//        o.setId(genTemporaryId());
+//
+//        o.setSubject(new Reference().setReference(patientId));
+//
+////        o.setEncounter(new Reference().setReference(URN_UUID + enc.getId()));
+//
+//        o.setStatus(Observation.ObservationStatus.FINAL);
+//        o.getCode().addCoding(fcm.getProtocolCoding());
+//
+//        FhirUtil.addHomeSettingExtension(o);
+//
+//        o.setEffective(new DateTimeType(readingDate));
+//
+//        String answerValue = followedProtocol ?
+//                fcm.getProtocolAnswerYes() :
+//                fcm.getProtocolAnswerNo();
+//
+//        o.setValue(new CodeableConcept());
+//        o.getValueCodeableConcept()
+//                .setText(answerValue)
+//                .addCoding(fcm.getProtocolAnswerCoding());
+//
+//        return o;
+//    }
 
-        e.setStatus(Encounter.EncounterStatus.FINISHED);
-
-        e.getClass_().setSystem(fcm.getEncounterClassSystem())
-                .setCode(fcm.getEncounterClassHHCode())
-                .setDisplay(fcm.getEncounterClassHHDisplay());
-
-        e.setSubject(new Reference().setReference(patientId));
-
-        Calendar start = Calendar.getInstance();
-        start.setTime(readingDate);
-        start.add(Calendar.MINUTE, -1);
-
-        Calendar end = Calendar.getInstance();
-        end.setTime(readingDate);
-        end.add(Calendar.MINUTE, 1);
-
-        e.getPeriod().setStart(start.getTime()).setEnd(end.getTime());
-
-        return e;
-    }
-
-    protected Observation buildProtocolObservation(String patientId, Encounter enc, FhirConfigManager fcm) {
-        Observation o = new Observation();
-
-        o.setId(genTemporaryId());
-
-        o.setSubject(new Reference().setReference(patientId));
-
-        o.setEncounter(new Reference().setReference(URN_UUID + enc.getId()));
-
-        o.setStatus(Observation.ObservationStatus.FINAL);
-        o.getCode().addCoding(fcm.getProtocolCoding());
-
-        FhirUtil.addHomeSettingExtension(o);
-
-        o.setEffective(new DateTimeType(readingDate));
-
-        String answerValue = followedProtocol ?
-                fcm.getProtocolAnswerYes() :
-                fcm.getProtocolAnswerNo();
-
-        o.setValue(new CodeableConcept());
-        o.getValueCodeableConcept()
-                .setText(answerValue)
-                .addCoding(fcm.getProtocolAnswerCoding());
-
-        return o;
-    }
-
-    protected String genTemporaryId() {
-        return UUID.randomUUID().toString();
-    }
+//    protected String genTemporaryId() {
+//        return UUID.randomUUID().toString();
+//    }
 }

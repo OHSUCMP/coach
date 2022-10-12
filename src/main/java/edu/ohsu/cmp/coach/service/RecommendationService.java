@@ -10,6 +10,7 @@ import edu.ohsu.cmp.coach.entity.Counseling;
 import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
+import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.*;
@@ -108,7 +109,7 @@ public class RecommendationService extends AbstractService {
             compositeBundle.consume(p);
 
 //            prefetch.add(buildBPBundle(sessionId, p.getId()));
-            compositeBundle.consume(buildBPBundle(sessionId, p.getId()));
+            compositeBundle.consume(buildBPBundle(sessionId));
 
 //            compositeBundle.consume(buildPulseBundle(sessionId, p.getId()));      // do we care about pulses in recommendations?
 
@@ -116,7 +117,7 @@ public class RecommendationService extends AbstractService {
             compositeBundle.consume(buildLocalCounselingBundle(sessionId, p.getId()));
 
 //            prefetch.add(buildGoalsBundle(sessionId, p.getId()));
-            compositeBundle.consume(buildGoalsBundle(sessionId, p.getId()));
+            compositeBundle.consume(buildGoalsBundle(sessionId));
 
             // HACK: if the patient has no Adverse Events, we must construct a fake one to send to
             //       CQF-Ruler to prevent it from querying the FHIR server for them and consequently
@@ -289,26 +290,30 @@ public class RecommendationService extends AbstractService {
         return p;
     }
 
-    private Bundle buildGoalsBundle(String sessionId, String patientId) {
+    private Bundle buildGoalsBundle(String sessionId) throws DataException {
         CompositeBundle bundle = new CompositeBundle();
+        VendorTransformer transformer = workspaceService.get(sessionId).getVendorTransformer();
         for (GoalModel gm : goalService.getGoals(sessionId)) {
-            bundle.consume(gm.toBundle(patientId, fcm));
+            transformer.transformOutgoingGoal(gm);
+            bundle.consume(transformer.transformOutgoingGoal(gm));
         }
         return bundle.getBundle();
     }
 
-    private Bundle buildBPBundle(String sessionId, String patientId) throws DataException {
+    private Bundle buildBPBundle(String sessionId) throws DataException {
         CompositeBundle bundle = new CompositeBundle();
+        VendorTransformer transformer = workspaceService.get(sessionId).getVendorTransformer();
         for (BloodPressureModel bpm : bpService.getBloodPressureReadings(sessionId)) {
-            bundle.consume(bpm.toBundle(patientId, fcm));
+            bundle.consume(transformer.transformOutgoingBloodPressureReading(bpm));
         }
         return bundle.getBundle();
     }
 
-    private Bundle buildPulseBundle(String sessionId, String patientId) {
+    private Bundle buildPulseBundle(String sessionId) throws DataException {
         CompositeBundle bundle = new CompositeBundle();
+        VendorTransformer transformer = workspaceService.get(sessionId).getVendorTransformer();
         for (PulseModel pm : pulseService.getPulseReadings(sessionId)) {
-            bundle.consume(pm.toBundle(patientId, fcm));
+            bundle.consume(transformer.transformOutgoingPulseReading(pm));
         }
         return bundle.getBundle();
     }
