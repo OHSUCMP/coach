@@ -2,7 +2,6 @@ package edu.ohsu.cmp.coach.fhir.transform;
 
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
-import edu.ohsu.cmp.coach.model.AdverseEventModel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.PulseModel;
