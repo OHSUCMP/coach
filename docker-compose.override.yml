@@ -12,7 +12,7 @@ services:
       - CQFRULER_CDSHOOKS_ENDPOINT_URL=http://cqfruler:8080/cds-services
       - VSAC_API_KEY
   mysql:
-    image: mysql:5.7
+    image: mysql:8
     volumes:
       - ./docker_data/mysql:/var/lib/mysql
       - ./db-schema.sql:/docker-entrypoint-initdb.d/db-schema.sql
