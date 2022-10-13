@@ -26,3 +26,7 @@ services:
     image: alphora/cqf-ruler:0.5.0
     ports:
       - "8080:8080"
+    volumes:
+      - ./docker_data/cqfruler:/data
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:hsqldb:file:/data/h2
