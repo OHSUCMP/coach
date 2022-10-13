@@ -26,7 +26,7 @@ Using the docker-compose file provided, you can run the MySQL database as a cont
 
 ```docker-compose up mysql```
 
-The schema will be created using the file [db-schema.sql](db-schema.sql) the first time the conainer runs. It will persist on restart.
+The schema will be created using the file [db-schema.sql](db-schema.sql) the first time the container runs. It will persist on restart.
 
 ## Running CQF Ruler as a container
 
