@@ -1,54 +1,39 @@
-async function loadBloodPressureObservations(_callback) {
-    let response = await fetch("/blood-pressure-observations-list", {
+function doClearSupplementalData(_callback) {
+    $.ajax({
         method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
+        url: "/clear-supplemental-data"
+    }).done(function(msg, textStatus, jqXHR) {
+        _callback(msg);
+    });
+}
+function loadBloodPressureObservations(_callback) {
+    $.ajax({
+        method: "POST",
+        url: "/blood-pressure-observations-list"
+    }).done(function(bpdata, textStatus, jqXHR) {
+        if (jqXHR.status === 200) {
+            bpdata.forEach(function(item) {
+                item.readingDate = new Date(item.readingDate);
+            });
+
+            bpdata.sort(function (a, b) {
+                return a.readingDate - b.readingDate;
+            });
+
+            _callback(bpdata);
         }
     });
-
-    let bpdata = await response.json();
-
-    bpdata.forEach(function(item) {
-        item.readingDate = new Date(item.readingDate);
-    });
-
-    bpdata.sort(function (a, b) {
-        return a.readingDate - b.readingDate;
-    });
-
-    _callback(bpdata);
 }
 
-// async function loadCurrentBPGoal(_callback) {
-//     let response = await fetch("/current-bp-goal", {
-//         method: "POST",
-//         headers: {
-//             "Content-Type": "application/json; charset=utf-8"
-//         }
-//     });
-//
-//     let goal = await response.json();
-//
-//     _callback(goal);
-// }
-
-// function populateCurrentBPGoal(goal) {
-//     let el = $('#currentBPGoal');
-//     $(el).html('Your Current Blood Pressure Goal: <em><strong>Below ' + goal.systolicTarget + '/' +
-//         goal.diastolicTarget + '</strong></em> (<a href="/goals">update</a>)');
-// }
-
-async function loadMedications(_callback) {
-    let response = await fetch("/medications-list", {
+function loadMedications(_callback) {
+    $.ajax({
         method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
+        url: "/medications-list"
+    }).done(function(meds, textStatus, jqXHR) {
+        if (jqXHR.status === 200) {
+            _callback(meds);
         }
     });
-
-    let meds = await response.json();
-
-    _callback(meds);
 }
 
 function populateMedications() {
@@ -63,24 +48,21 @@ function populateMedications() {
         });
 
         let el = $('#currentMedications');
-        let name = $(el).attr('data-name');
-        let html = 'Your Active ' + name + ': ' + arr.join(', ');
+        let html = 'Your Active Antihypertensive Medications: ' + arr.join(', ');
 
         $(el).html(html);
     }
 }
 
-async function loadAdverseEvents(_callback) {
-    let response = await fetch("/adverse-events-list", {
+function loadAdverseEvents(_callback) {
+    $.ajax({
         method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
+        url: "/adverse-events-list"
+    }).done(function(adverseEvents, textStatus, jqXHR) {
+        if (jqXHR.status === 200) {
+            _callback(adverseEvents);
         }
     });
-
-    let adverseEvents = await response.json();
-
-    _callback(adverseEvents);
 }
 
 function populateAdverseEvents() {
@@ -110,13 +92,22 @@ function populateSummaryDiv() {
     let hasData = Array.isArray(data) && data.length > 0;
 
     if (hasData) {
+        let systolicCount = 0;
+        let diastolicCount = 0;
+
         data.forEach(function (o) {
-            totalSystolic += o.systolic.value;
-            totalDiastolic += o.diastolic.value;
+            if (o.systolic) {
+                totalSystolic += o.systolic.value;
+                systolicCount += 1;
+            }
+            if (o.diastolic) {
+                totalDiastolic += o.diastolic.value;
+                diastolicCount += 1;
+            }
         });
 
-        avgSystolic = Math.round(totalSystolic / data.length);
-        avgDiastolic = Math.round(totalDiastolic / data.length);
+        avgSystolic = Math.round(totalSystolic / systolicCount);
+        avgDiastolic = Math.round(totalDiastolic / diastolicCount);
     }
     $('#avgSystolic').html(avgSystolic);
     $('#avgDiastolic').html(avgDiastolic);
@@ -165,176 +156,11 @@ function getCurrentBPGoal() {
     }
 }
 
-function buildChart() {
-    $('#loadingChart').addClass('hidden');
-    let elNoData = $('#noChartData');
-    let ctx = $('#chart');
-
-    if (window.bpchart.data.length === 0) {
-        $(elNoData).removeClass('hidden');
-        $(ctx).addClass('hidden');
-        return;
-    }
-
-    $(elNoData).addClass('hidden');
-    $(ctx).removeClass('hidden');
-
-
-    $(ctx).removeClass('hidden');
-    $('#chartKeyContainer, #chartTimelineContainer').removeClass('hidden');
-
-    let pointStyleArr = buildPointStyleArray(window.bpchart.data);
-
-    let goal = getCurrentBPGoal();
-
-    let config = {
-        type: 'line',
-        data: {
-            datasets: [{
-                type: 'scatter',
-                label: 'Systolic',
-                pointRadius: 3,
-                pointStyle: pointStyleArr,
-                fill: false,
-                borderColor: 'rgba(126, 194, 185, 0.6)',
-                borderWidth: 2,
-                pointBorderColor: 'rgba(126, 194, 185, 1)',
-                pointBackgroundColor: 'rgba(126, 194, 185, 0.6)',
-                tension: 0,
-                data: toScatterData(window.bpchart.data, 'systolic')
-            }, {
-                type: 'line',
-                label: 'Systolic Trend',
-                pointRadius: 0,
-                fill: false,
-                borderColor: 'rgba(0, 127, 109, 1)',
-                borderWidth: 2,
-                tension: 0.1,
-                data: toTrendLineData(window.bpchart.data, 'systolic')
-            }, /* {
-                type: 'line',
-                label: 'Systolic Regression',
-                pointRadius: 0,
-                fill: false,
-                borderColor: 'rgba(255, 0, 0, 0.3)',
-                borderWidth: 3,
-                data: toRegressionData(data, 'systolic')
-            },*/ {
-                type: 'scatter',
-                label: 'Diastolic',
-                pointRadius: 3,
-                pointStyle: pointStyleArr,
-                fill: false,
-                borderColor: 'rgba(207, 178, 137, 0.6)',
-                borderWidth: 2,
-                pointBorderColor: 'rgba(207, 178, 137, 1)',
-                pointBackgroundColor: 'rgba(207, 178, 137, 0.6)',
-                tension: 0,
-                data: toScatterData(window.bpchart.data, 'diastolic')
-            }, {
-                type: 'line',
-                label: 'Diastolic Trend',
-                pointRadius: 0,
-                fill: false,
-                borderColor: 'rgba(153, 97, 36, 1)',
-                borderWidth: 1,
-                tension: 0.1,
-                data: toTrendLineData(window.bpchart.data, 'diastolic')
-            } /*, {
-                type: 'line',
-                label: 'Diastolic Regression',
-                pointRadius: 0,
-                fill: false,
-                borderColor: 'rgba(0, 0, 255, 0.3)',
-                borderWidth: 3,
-                data: toRegressionData(data, 'diastolic')
-            }*/ ]
-        },
-        options: {
-            title: {
-                text: "Blood Pressure"
-            },
-            legend: {
-                labels: {
-                    usePointStyle: true
-                }
-            },
-            scales: {
-                x: {
-                    type: 'time'
-                },
-                y: {
-                    type: 'linear',
-                    title: {
-                        text: 'Blood Pressure',
-                        display: true
-                    },
-                    suggestedMin: 0,
-                    suggestedMax: 200
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                annotation: {
-                    annotations: {
-                        targetSystolic: {
-                            drawTime: 'beforeDatasetsDraw',
-                            id: 'target-systolic',
-                            type: 'box',
-                            yScaleID: 'y',
-                            yMin: 90,
-                            yMax: goal.systolic,
-                            backgroundColor: 'rgba(172, 242, 233, 0.5)',
-                            borderWidth: 0
-                        },
-                        targetDiastolic: {
-                            drawTime: 'beforeDatasetsDraw',
-                            id: 'target-diastolic',
-                            type: 'box',
-                            yScaleID: 'y',
-                            yMin: 60,
-                            yMax: goal.diastolic,
-                            backgroundColor: 'rgba(244, 225, 172, 0.5)',
-                            borderWidth: 0
-                        }
-                        // systolicGoal: {
-                        //     type: 'line',
-                        //     yMin: goal.systolic,
-                        //     yMax: goal.systolic,
-                        //     borderColor: 'rgb(255,0,0)', //'rgba(73,167,156,1)',
-                        //     borderWidth: 1
-                        // },
-                        // diastolicGoal: {
-                        //     type: 'line',
-                        //     yMin: goal.diastolic,
-                        //     yMax: goal.diastolic,
-                        //     borderColor: 'rgb(255,0,255)', //'rgba(167,139,51,1)',
-                        //     borderWidth: 1
-                        // }
-                    }
-                }
-            }
-        }
-    };
-
-    if (window.bpchart.startDate !== undefined) {
-        config.options.scales.x.suggestedMin = window.bpchart.startDate;
-    }
-
-    if (window.bpchart.endDate !== undefined) {
-        config.options.scales.x.suggestedMax = window.bpchart.endDate;
-    }
-
-    return new Chart(ctx, config);
-}
-
 function buildPointStyleArray(data) {
     // see https://www.chartjs.org/docs/latest/configuration/elements.html for options
     let arr = [];
     data.forEach(function(item) {
-        if (item.source === 'HOME') {
+        if (item.source === 'HOME' || item.source === 'HOME_BLUETOOTH') {
             arr.push('circle');
         } else if (item.source === 'OFFICE') {
             arr.push('rect');
@@ -349,37 +175,6 @@ function updateChart() {
     buildChart();
 }
 
-/*
-function buildChartSlider() {
-    let el = $('#chartRangeSlider');
-    let data = window.bpdata;
-    let minYear = data[0].timestamp.getFullYear();
-    let maxYear = data[data.length - 1].timestamp.getFullYear();
-
-    $(el).slider({
-        range: true,
-        min: minYear,
-        max: maxYear,
-        values: [minYear, maxYear],
-        slide: function (event, ui) {
-            $('#sliderRangeFrom').val(ui.values[0]);
-            $('#sliderRangeTo').val(ui.values[1]);
-            let truncatedData = truncateData(window.chartData, ui.values[0], ui.values[1]);
-            updateChart(truncatedData);
-        }
-    });
-    $('#sliderRangeFrom').val($(el).slider("values", 0));
-    $('#sliderRangeTo').val($(el).slider("values", 1));
-}
-*/
-
-// function truncateData(data, minYear, maxYear) {
-//     return jQuery.grep(data, function (item) {
-//         let y = item.timestamp.getFullYear();
-//         return y >= minYear && y <= maxYear;
-//     });
-// }
-
 function truncateData(data, startDate) {
     return jQuery.grep(data, function (item) {
         return item.readingDate >= startDate;
@@ -389,17 +184,25 @@ function truncateData(data, startDate) {
 function toScatterData(data, type) {
     let arr = [];
     data.forEach(function (item) {
-        let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
-        arr.push({
-            x: new Date(item.readingDate),
-            y: val
-        });
+        let val = null;
+        if (type === 'systolic' && item.systolic) {
+            val = item.systolic.value;
+        } else if (type === 'diastolic' && item.diastolic) {
+            val = item.diastolic.value;
+        }
+
+        if (val !== null) {
+            arr.push({
+                x: new Date(item.readingDate),
+                y: val
+            });
+        }
     });
     return arr;
 }
 
 function toTrendLineData(data, type) {
-    let chunks = 20;
+    let chunks = 100;
     let groupingFactor = 10;
     let dateRange = getDateRange(data);
     let minTime = dateRange.min.getTime();
@@ -409,43 +212,75 @@ function toTrendLineData(data, type) {
     let arr = [];
     let tempArr = [];
     let lastDate = null;
-    // let distanceFromLastDate = null;
     let diffArr = [];
 
     data.forEach(function (item) {
-        let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
-
-        if (lastDate !== null) {
-            let diff = item.readingDate.getTime() - lastDate.getTime();
-            diffArr.push(diff);
-            let avgDiff = Math.round(diffArr.reduce((a, b) => a + b, 0) / diffArr.length);
-
-            if (diff > threshold || (diffArr.length > 1 && diff > avgDiff * groupingFactor)) {
-                let lastDates = tempArr.map(o => o.timestamp.getTime());
-                let lastDateAvg = Math.round(lastDates.reduce((a, b) => a + b, 0) / lastDates.length);
-                let lastVals = tempArr.map(o => o.val);
-                let lastValsAvg = Math.round(lastVals.reduce((a, b) => a + b, 0) / lastVals.length);
-                arr.push({
-                    x: new Date(lastDateAvg),
-                    y: lastValsAvg
-                });
-                diffArr = [];
-                tempArr = [];
-            }
+        let val = null;
+        if (type === 'systolic' && item.systolic) {
+            val = item.systolic.value;
+        } else if (type === 'diastolic' && item.diastolic) {
+            val = item.diastolic.value;
         }
 
-        tempArr.push({
-            timestamp: item.readingDate,
-            val: val
-        });
-        lastDate = item.readingDate;
+        if (val !== null) {
+            if (lastDate !== null) {
+                let diff = item.readingDate.getTime() - lastDate.getTime();
+                diffArr.push(diff);
+
+                let avgDiff = Math.round(diffArr.reduce(function (a, b) {
+                    return a + b;
+                }, 0) / diffArr.length);
+
+                // zone check ensures that trendline data points are created at least once per zone
+                // if the zone contains any data points
+                let zone = Math.round((item.readingDate.getTime() - minTime) / threshold);
+                let lastZone = lastDate !== null ?
+                    Math.round((lastDate.getTime() - minTime) / threshold) :
+                    null;
+
+                if (diff > threshold || (diffArr.length > 1 && diff > avgDiff * groupingFactor) || zone !== lastZone) {
+                    let lastDates = tempArr.map(function (o) {
+                        return o.timestamp.getTime();
+                    });
+                    let lastDateAvg = Math.round(lastDates.reduce(function (a, b) {
+                        return a + b;
+                    }, 0) / lastDates.length);
+                    let lastVals = tempArr.map(function (o) {
+                        return o.val;
+                    });
+                    let lastValsAvg = Math.round(lastVals.reduce(function (a, b) {
+                        return a + b;
+                    }, 0) / lastVals.length);
+                    arr.push({
+                        x: new Date(lastDateAvg),
+                        y: lastValsAvg
+                    });
+                    diffArr = [];
+                    tempArr = [];
+                }
+            }
+
+            tempArr.push({
+                timestamp: item.readingDate,
+                val: val
+            });
+            lastDate = item.readingDate;
+        }
     });
 
     if (tempArr.length > 0) {   // process final records
-        let lastDates = tempArr.map(o => o.timestamp.getTime());
-        let lastDateAvg = Math.round(lastDates.reduce((a, b) => a + b, 0) / lastDates.length);
-        let lastVals = tempArr.map(o => o.val);
-        let lastValsAvg = Math.round(lastVals.reduce((a, b) => a + b, 0) / lastVals.length);
+        let lastDates = tempArr.map(function(o) {
+            return o.timestamp.getTime();
+        });
+        let lastDateAvg = Math.round(lastDates.reduce(function(a, b) {
+            return a + b;
+        }, 0) / lastDates.length);
+        let lastVals = tempArr.map(function(o) {
+            return o.val;
+        });
+        let lastValsAvg = Math.round(lastVals.reduce(function(a, b) {
+            return a + b;
+        }, 0) / lastVals.length);
         arr.push({
             x: new Date(lastDateAvg),
             y: lastValsAvg

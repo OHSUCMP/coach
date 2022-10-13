@@ -1,12 +1,8 @@
-async function doRefresh(_callback) {
-    let response = await fetch("/refresh", {
+function doRefresh(_callback) {
+    $.ajax({
         method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8"
-        }
+        url: "/refresh"
+    }).done(function(msg, textStatus, jqXHR) {
+        _callback(msg);
     });
-
-    let msg = await response.text();
-
-    _callback(msg);
 }

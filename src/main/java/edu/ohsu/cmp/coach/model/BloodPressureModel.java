@@ -1,26 +1,20 @@
 package edu.ohsu.cmp.coach.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import edu.ohsu.cmp.coach.entity.app.HomeBloodPressureReading;
-import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
+import edu.ohsu.cmp.coach.entity.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
-import edu.ohsu.cmp.coach.fhir.EncounterMatcher;
 import edu.ohsu.cmp.coach.util.FhirUtil;
-import org.apache.commons.lang3.StringUtils;
+import edu.ohsu.cmp.coach.util.ObservationUtil;
 import org.hl7.fhir.r4.model.*;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.UUID;
 
 public class BloodPressureModel extends AbstractVitalsModel implements FHIRCompatible {
     private Observation sourceBPObservation;
 
-    private QuantityModel systolic;
-    private QuantityModel diastolic;
+    private QuantityModel systolic = null;
+    private QuantityModel diastolic = null;
 
     private enum ValueType {
         SYSTOLIC,
@@ -34,71 +28,136 @@ public class BloodPressureModel extends AbstractVitalsModel implements FHIRCompa
 //
 
     // create
-    public BloodPressureModel(Source source, Integer systolic, Integer diastolic,
+    public BloodPressureModel(ObservationSource source, Integer systolic, Integer diastolic,
                               Date readingDate, Boolean followedProtocol,
-                              FhirConfigManager fcm) {
+                              FhirConfigManager fcm) throws DataException {
 
         super(source, followedProtocol, readingDate);
 
-        this.systolic = new QuantityModel(systolic, fcm.getBpValueUnit());
-        this.diastolic = new QuantityModel(diastolic, fcm.getBpValueUnit());
+        if (systolic == null && diastolic == null) {
+            throw new DataException("systolic and diastolic are null (at least one must be provided)");
+        }
+
+        if (systolic != null) {
+            this.systolic = new QuantityModel(systolic, fcm.getBpValueUnit());
+        }
+
+        if (diastolic != null) {
+            this.diastolic = new QuantityModel(diastolic, fcm.getBpValueUnit());
+        }
+
         this.readingDate = readingDate; //.getTime();
     }
 
     // read local
-    public BloodPressureModel(HomeBloodPressureReading reading, FhirConfigManager fcm) {
-        super(Source.HOME, reading.getFollowedInstructions(), reading.getReadingDate());
+    public BloodPressureModel(HomeBloodPressureReading reading, FhirConfigManager fcm) throws DataException {
+        super(ObservationSource.valueOf(reading.getSource()), reading.getFollowedInstructions(), reading.getReadingDate());
 
-        systolic = new QuantityModel(reading.getSystolic(), fcm.getBpValueUnit());
-        diastolic = new QuantityModel(reading.getDiastolic(), fcm.getBpValueUnit());
+        if (reading.getSystolic() == null && reading.getDiastolic() == null) {
+            throw new DataException("systolic and diastolic are null (at least one must be provided)");
+        }
+
+        if (reading.getSystolic() != null) {
+            systolic = new QuantityModel(reading.getSystolic(), fcm.getBpValueUnit());
+        }
+
+        if (reading.getDiastolic() != null) {
+            diastolic = new QuantityModel(reading.getDiastolic(), fcm.getBpValueUnit());
+        }
+
         readingDate = reading.getReadingDate(); //.getTime();
     }
 
-    // read remote
-    public BloodPressureModel(Encounter enc, Observation bpObservation,
-                              Observation protocolObservation,
-                              FhirConfigManager fcm) throws DataException {
+    // read remote, no encounter reference or resource available
+    public BloodPressureModel(Observation bpObservation, FhirConfigManager fcm) throws DataException {
+        super(ObservationUtil.getBPSource(bpObservation, fcm), bpObservation, null, fcm);
 
-        super(enc, protocolObservation, bpObservation, fcm);
+        buildFromBPObservation(bpObservation, fcm);
+    }
 
+    // read remote, has encounter and possibly protocol
+    public BloodPressureModel(Encounter encounter, Observation bpObservation,
+                              Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+
+        super(ObservationUtil.getBPSource(bpObservation, encounter, fcm), bpObservation, protocolObservation, fcm);
+
+        buildFromBPObservation(bpObservation, fcm);
+    }
+
+    private void buildFromBPObservation(Observation bpObservation, FhirConfigManager fcm) {
         this.sourceBPObservation = bpObservation;
 
         // todo : set id.  but to what?  first Observation's id?  what about the others?  how is id used?  do we need
         //        to retain the ids for the Encounter and other Observations?
 
-        for (Observation.ObservationComponentComponent occ : bpObservation.getComponent()) {
-            ValueType valueType = ValueType.UNKNOWN;
+        CodeableConcept code = bpObservation.getCode();
+        if (FhirUtil.hasCoding(code, fcm.getBpSystolicCoding()) || FhirUtil.hasCoding(code, fcm.getBpHomeBluetoothSystolicCoding())) {
+            systolic = new QuantityModel(bpObservation.getValueQuantity());
 
-            CodeableConcept cc = occ.getCode();
-            for (Coding c : cc.getCoding()) {
-                if (c.getSystem().equals(fcm.getBpSystem()) && c.getCode().equals(fcm.getBpSystolicCode())) {
-                    valueType = ValueType.SYSTOLIC;
-                    break;
+        } else if (FhirUtil.hasCoding(code, fcm.getBpDiastolicCoding()) || FhirUtil.hasCoding(code, fcm.getBpHomeBluetoothDiastolicCoding())) {
+            diastolic = new QuantityModel(bpObservation.getValueQuantity());
 
-                } else if (c.getSystem().equals(fcm.getBpSystem()) && c.getCode().equals(fcm.getBpDiastolicCode())) {
-                    valueType = ValueType.DIASTOLIC;
-                    break;
+        } else { // it's not a raw systolic or diastolic reading of any sort, so it must be a panel.  right?
+            for (Observation.ObservationComponentComponent occ : bpObservation.getComponent()) {
+                ValueType valueType = ValueType.UNKNOWN;
+
+                CodeableConcept cc = occ.getCode();
+                for (Coding c : cc.getCoding()) {
+                    if (FhirUtil.matches(c, fcm.getBpSystolicCoding()) || FhirUtil.matches(c, fcm.getBpHomeBluetoothSystolicCoding())) {
+                        valueType = ValueType.SYSTOLIC;
+                        break;
+
+                    } else if (FhirUtil.matches(c, fcm.getBpDiastolicCoding()) || FhirUtil.matches(c, fcm.getBpHomeBluetoothDiastolicCoding())) {
+                        valueType = ValueType.DIASTOLIC;
+                        break;
+                    }
                 }
-            }
 
-            if (valueType != ValueType.UNKNOWN) {
-                Quantity q = occ.getValueQuantity();
-                switch (valueType) {
-                    case SYSTOLIC: systolic = new QuantityModel(q); break;
-                    case DIASTOLIC: diastolic = new QuantityModel(q); break;
+                if (valueType != ValueType.UNKNOWN) {
+                    Quantity q = occ.getValueQuantity();
+                    switch (valueType) {
+                        case SYSTOLIC: systolic = new QuantityModel(q); break;
+                        case DIASTOLIC: diastolic = new QuantityModel(q); break;
+                    }
                 }
             }
         }
     }
 
+    public boolean isHomeReading() {
+        return source == ObservationSource.HOME || source == ObservationSource.HOME_BLUETOOTH;
+    }
+
     @Override
     public String getReadingType() {
-        return "BP";
+        if (systolic != null && diastolic == null) {
+            return "Systolic";
+
+        } else if (systolic == null && diastolic != null) {
+            return "Diastolic";
+
+        } else if (systolic != null && diastolic != null) {
+            return "BP Panel";
+
+        } else {    // shouldn't ever get here
+            return "(n/a)";
+        }
     }
 
     @Override
     public String getValue() {
-        return systolic.getValue() + "/" + diastolic.getValue() + " " + systolic.getUnit();
+        if (systolic != null && diastolic != null) {
+            return systolic.getValue() + "/" + diastolic.getValue() + " " + systolic.getUnit();
+
+        } else if (systolic != null) {
+            return systolic.getValue() + " " + systolic.getUnit();
+
+        } else if (diastolic != null) {
+            return diastolic.getValue() + " " + diastolic.getUnit();
+
+        } else {    // shouldn't ever get here
+            return "(n/a)";
+        }
     }
 
     @JsonIgnore
@@ -115,21 +174,28 @@ public class BloodPressureModel extends AbstractVitalsModel implements FHIRCompa
     }
 
     @Override
-    public Bundle toBundle(String patientId, FhirConfigManager fcm) {
+    public Bundle toBundle(String patientId, FhirConfigManager fcm) throws DataException {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
-        if (sourceEncounter != null && sourceBPObservation != null) {
-            bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(sourceEncounter));
+        // if the observation came from the EHR, just package it up and send it along
+        if (sourceBPObservation != null) {
             bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(sourceBPObservation));
             if (sourceProtocolObservation != null) {
                 bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(sourceProtocolObservation));
             }
 
         } else {
+            // the BP observation didn't come from the EHR, so it necessarily came from COACH, and is
+            // thereby necessarily a HOME based observation.
+
             // Logica doesn't handle absolute URLs in references well.  it's possible other FHIR server
             // implementations don't handle them well either.
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
+
+            // todo : we can't write encounters, we don't use encounters (except to link EHR-based observations when
+            //        reading them), the ruler doesn't use them ... why are we building them?  on one hand, it makes
+            //        sense to link this way, but on the other hand, it's unnecessary.  can we simplify?  should we?
 
             Encounter enc = buildNewHomeHealthEncounter(fcm, patientIdRef);
             bundle.getEntry().add(new Bundle.BundleEntryComponent().setResource(enc));
@@ -150,8 +216,7 @@ public class BloodPressureModel extends AbstractVitalsModel implements FHIRCompa
 
 //    adapted from CDSHooksExecutor.buildHomeBloodPressureObservation()
 //    used when creating new Home Health (HH) Blood Pressure Observations
-    private Observation buildHomeHealthBloodPressureObservation(String patientId, Encounter enc,
-                                                                FhirConfigManager fcm) {
+    private Observation buildHomeHealthBloodPressureObservation(String patientId, Encounter enc, FhirConfigManager fcm) throws DataException {
         Observation o = new Observation();
 
         o.setId(genTemporaryId());
@@ -167,50 +232,51 @@ public class BloodPressureModel extends AbstractVitalsModel implements FHIRCompa
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
-        o.getCode().addCoding()
-                .setCode(fcm.getBpCode())           // 55284-4
-                .setSystem(fcm.getBpSystem())       // http://loinc.org
-                .setDisplay(fcm.getBpDisplay());
+        FhirUtil.addHomeSettingExtension(o);
 
-        if (StringUtils.isNotEmpty(fcm.getBpHomeSystem()) && StringUtils.isNotEmpty(fcm.getBpHomeCode())) {
-            o.getCode().addCoding()
-                    .setCode(fcm.getBpHomeCode())
-                    .setSystem(fcm.getBpHomeSystem())
-                    .setDisplay(fcm.getBpHomeDisplay());
+        if (systolic != null && diastolic == null) {            // systolic only
+            o.getCode().addCoding(fcm.getBpSystolicCoding());
+            o.getCode().addCoding(fcm.getBpHomeBluetoothSystolicCoding());
+            o.setValue(new Quantity());
+            setBPValue(o.getValueQuantity(), systolic, fcm);
+
+        } else if (systolic == null && diastolic != null) {     // diastolic only
+            o.getCode().addCoding(fcm.getBpDiastolicCoding());
+            o.getCode().addCoding(fcm.getBpHomeBluetoothDiastolicCoding());
+            o.setValue(new Quantity());
+            setBPValue(o.getValueQuantity(), diastolic, fcm);
+
+        } else if (systolic != null && diastolic != null) {     // both systolic and diastolic
+            o.getCode().addCoding(fcm.getBpCoding());
+            for (Coding c : fcm.getBpHomeCodings()) {
+                o.getCode().addCoding(c);
+            }
+
+            Observation.ObservationComponentComponent occSystolic = new Observation.ObservationComponentComponent();
+            occSystolic.getCode().addCoding(fcm.getBpSystolicCoding());
+            occSystolic.setValue(new Quantity());
+            setBPValue(occSystolic.getValueQuantity(), systolic, fcm);
+            o.getComponent().add(occSystolic);
+
+            Observation.ObservationComponentComponent occDiastolic = new Observation.ObservationComponentComponent();
+            occDiastolic.getCode().addCoding(fcm.getBpDiastolicCoding());
+            occDiastolic.setValue(new Quantity());
+            setBPValue(occDiastolic.getValueQuantity(), diastolic, fcm);
+            o.getComponent().add(occDiastolic);
+
+        } else {
+            throw new DataException("BP observation requires systolic and / or diastolic");
         }
-
-        addHomeSettingExtension(o);
 
         o.setEffective(new DateTimeType(readingDate));
 
-        Observation.ObservationComponentComponent occSystolic = new Observation.ObservationComponentComponent();
-        occSystolic.getCode().addCoding()
-                .setCode(fcm.getBpSystolicCode())
-                .setSystem(fcm.getBpSystem())
-                .setDisplay(fcm.getBpSystolicDisplay());
-
-        occSystolic.setValue(new Quantity());
-        occSystolic.getValueQuantity()
-                .setCode(fcm.getBpValueCode())
-                .setSystem(fcm.getBpValueSystem())
-                .setUnit(fcm.getBpValueUnit())
-                .setValue(systolic.getValue().intValue());
-        o.getComponent().add(occSystolic);
-
-        Observation.ObservationComponentComponent occDiastolic = new Observation.ObservationComponentComponent();
-        occDiastolic.getCode().addCoding()
-                .setCode(fcm.getBpDiastolicCode())
-                .setSystem(fcm.getBpSystem())
-                .setDisplay(fcm.getBpDiastolicDisplay());
-
-        occDiastolic.setValue(new Quantity());
-        occDiastolic.getValueQuantity()
-                .setCode(fcm.getBpValueCode())
-                .setSystem(fcm.getBpValueSystem())
-                .setUnit(fcm.getBpValueUnit())
-                .setValue(diastolic.getValue().intValue());
-        o.getComponent().add(occDiastolic);
-
         return o;
+    }
+
+    private void setBPValue(Quantity q, QuantityModel qm, FhirConfigManager fcm) {
+        q.setCode(fcm.getBpValueCode())
+                .setSystem(fcm.getBpValueSystem())
+                .setUnit(fcm.getBpValueUnit())
+                .setValue(qm.getValue().intValue());
     }
 }

@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.model.recommendation;
 
-import edu.ohsu.cmp.coach.entity.app.MyGoal;
+import edu.ohsu.cmp.coach.entity.MyGoal;
 
 import java.util.List;
 

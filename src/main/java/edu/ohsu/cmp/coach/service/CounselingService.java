@@ -1,10 +1,10 @@
 package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import edu.ohsu.cmp.coach.entity.app.Counseling;
-import edu.ohsu.cmp.coach.entity.app.CounselingPage;
-import edu.ohsu.cmp.coach.repository.app.CounselingPageRepository;
-import edu.ohsu.cmp.coach.repository.app.CounselingRepository;
+import edu.ohsu.cmp.coach.entity.Counseling;
+import edu.ohsu.cmp.coach.entity.CounselingPage;
+import edu.ohsu.cmp.coach.repository.CounselingPageRepository;
+import edu.ohsu.cmp.coach.repository.CounselingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,5 +39,10 @@ public class CounselingService extends AbstractService {
 
     public CounselingPage getPage(String key) {
         return pageRepository.findOneByPageKey(key);
+    }
+
+    public void deleteAll(String sessionId) {
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        repository.deleteAllByPatId(workspace.getInternalPatientId());
     }
 }

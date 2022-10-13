@@ -47,35 +47,21 @@ function buildVitalsData() {
     readingDate.setHours(h);
     readingDate.setMinutes(m);
 
-    data.readingDate = readingDate;
+    data.readingDateTS = $.datepicker.formatDate('@', readingDate);
 
     data.followedInstructions = $('input[type=radio][name=confirm]:checked').val() === 'yes';
 
     return data;
 }
 
-async function createVitals(data, _callback) {
-    let readingDateTS = $.datepicker.formatDate('@', data.readingDate);
-
-    let formData = new FormData();
-    formData.append("systolic1", data.systolic1);
-    formData.append("diastolic1", data.diastolic1);
-    if (data.pulse1)        formData.append("pulse1", data.pulse1);
-    if (data.systolic2)     formData.append("systolic2", data.systolic2);
-    if (data.diastolic2)    formData.append("diastolic2", data.diastolic2);
-    if (data.pulse2)        formData.append("pulse2", data.pulse2);
-    formData.append("readingDateTS", readingDateTS);
-    formData.append("followedInstructions", data.followedInstructions);
-
-    let response = await fetch("/vitals/create", {
+function createVitals(vitalsData, _callback) {
+    $.ajax({
         method: "POST",
-        body: formData
+        url: "/vitals/create",
+        data: vitalsData
+    }).done(function(vitals, textStatus, jqXHR) {
+        _callback(jqXHR.status, vitals);
     });
-
-    let status = response.status;
-    let vitals = await response.json();
-
-    _callback(status, vitals);
 }
 
 function appendReadingToTable(obj) {

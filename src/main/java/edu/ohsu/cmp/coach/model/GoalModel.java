@@ -1,8 +1,8 @@
 package edu.ohsu.cmp.coach.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import edu.ohsu.cmp.coach.entity.app.GoalHistory;
-import edu.ohsu.cmp.coach.entity.app.MyGoal;
+import edu.ohsu.cmp.coach.entity.GoalHistory;
+import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.*;
@@ -59,16 +59,19 @@ public class GoalModel implements FHIRCompatible, Comparable<GoalModel> {
         this.id = null; // EHR-based
 //        this.patId = null; // EHR-based
         this.extGoalId = g.getId();
-        this.referenceSystem = fcm.getBpSystem();
-        this.referenceCode = fcm.getBpCode();
-        this.referenceDisplay = "Blood Pressure";
+
+        Coding bpCoding = fcm.getBpCoding();
+        this.referenceSystem = bpCoding.getSystem();
+        this.referenceCode = bpCoding.getCode();
+        this.referenceDisplay = bpCoding.getDisplay();
+
         this.goalText = g.getDescription().getText();
 
         for (Goal.GoalTargetComponent gtc : g.getTarget()) {
-            if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpSystolicCode())) {
+            if (FhirUtil.hasCoding(gtc.getMeasure(), fcm.getBpSystolicCoding())) {
                 this.systolicTarget = gtc.getDetailQuantity().getValue().intValue();
 
-            } else if (gtc.getMeasure().hasCoding(fcm.getBpSystem(), fcm.getBpDiastolicCode())) {
+            } else if (FhirUtil.hasCoding(gtc.getMeasure(), fcm.getBpDiastolicCoding())) {
                 this.diastolicTarget = gtc.getDetailQuantity().getValue().intValue();
             }
         }
@@ -109,7 +112,7 @@ public class GoalModel implements FHIRCompatible, Comparable<GoalModel> {
 
         if (isBPGoal()) {
             Goal.GoalTargetComponent systolic = new Goal.GoalTargetComponent();
-            systolic.getMeasure().addCoding().setCode(fcm.getBpSystolicCode()).setSystem(fcm.getBpSystem());
+            systolic.getMeasure().addCoding(fcm.getBpSystolicCoding());
             systolic.setDetail(new Quantity());
             systolic.getDetailQuantity().setCode(fcm.getBpValueCode());
             systolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
@@ -118,7 +121,7 @@ public class GoalModel implements FHIRCompatible, Comparable<GoalModel> {
             g.getTarget().add(systolic);
 
             Goal.GoalTargetComponent diastolic = new Goal.GoalTargetComponent();
-            diastolic.getMeasure().addCoding().setCode(fcm.getBpDiastolicCode()).setSystem(fcm.getBpSystem());
+            diastolic.getMeasure().addCoding(fcm.getBpDiastolicCoding());
             diastolic.setDetail(new Quantity());
             diastolic.getDetailQuantity().setCode(fcm.getBpValueCode());
             diastolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());

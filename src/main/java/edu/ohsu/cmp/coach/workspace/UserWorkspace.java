@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.workspace;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
@@ -13,6 +14,7 @@ import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Reference;
 import org.slf4j.Logger;
@@ -20,10 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +41,9 @@ public class UserWorkspace {
     private static final String CACHE_ADVERSE_EVENT = "AdverseEvent";
     private static final String CACHE_GOAL = "Goal";
     private static final String CACHE_MEDICATION = "Medication";
+
+    private static final String CACHE_CONDITION_ENCOUNTER_DIAGNOSIS = "ConditionEncounterDiagnosis";
+    private static final String CACHE_SUPPLEMENTAL_RESOURCES = "SupplementalResources";
 
     private final ApplicationContext ctx;
     private final String sessionId;
@@ -108,8 +110,10 @@ public class UserWorkspace {
                 getProtocolObservations();
                 getBloodPressures();
                 getPulses();
+                getEncounterDiagnosisConditions();
                 getAdverseEvents();
                 getMedications();
+                getSupplementalResources();
                 getAllCards();
                 logger.info("DONE populating workspace for session=" + sessionId +
                         " (took " + (System.currentTimeMillis() - start) + "ms)");
@@ -207,7 +211,7 @@ public class UserWorkspace {
                 logger.info("BEGIN build Protocol Observations for session=" + sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
-                Bundle bundle = svc.getObservations(sessionId, fcm.getProtocolSystem() + "|" + fcm.getProtocolCode(), null);
+                Bundle bundle = svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getProtocolCoding()), fcm.getProtocolLookbackPeriod(),null);
 
                 int size = bundle.hasEntry() ? bundle.getEntry().size() : 0;
                 logger.info("DONE building Protocol Observations for session=" + sessionId +
@@ -260,6 +264,25 @@ public class UserWorkspace {
                 } catch (DataException e) {
                     throw new RuntimeException(e);
                 }
+            }
+        });
+    }
+
+    public Bundle getEncounterDiagnosisConditions() {
+        return bundleCache.get(CACHE_CONDITION_ENCOUNTER_DIAGNOSIS, new Function<String, Bundle>() {
+            @Override
+            public Bundle apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Encounter Diagnosis Conditions for session=" + sessionId);
+
+                EHRService svc = ctx.getBean(EHRService.class);
+                Bundle bundle = svc.getEncounterDiagnosisConditions(sessionId);
+
+                int size = bundle.hasEntry() ? bundle.getEntry().size() : 0;
+                logger.info("DONE building Encounter Diagnosis Conditions for session=" + sessionId +
+                        " (size=" + size + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return bundle;
             }
         });
     }
@@ -324,6 +347,34 @@ public class UserWorkspace {
                 } catch (DataException e) {
                     throw new RuntimeException(e);
                 }
+            }
+        });
+    }
+
+    public Bundle getSupplementalResources() {
+        return bundleCache.get(CACHE_SUPPLEMENTAL_RESOURCES, new Function<String, Bundle>() {
+            @Override
+            public Bundle apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Supplemental Resources for session=" + sessionId);
+
+                EHRService svc = ctx.getBean(EHRService.class);
+                CompositeBundle compositeBundle = new CompositeBundle();
+
+                compositeBundle.consume(svc.getProblemListConditions(sessionId));
+
+                List<Coding> codings = new ArrayList<>();
+                codings.add(fcm.getBmiCoding());
+                codings.add(fcm.getSmokingCoding());
+                codings.add(fcm.getDrinksCoding());
+                compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(codings), fcm.getBmiLookbackPeriod(),null));
+
+                compositeBundle.consume(svc.getCounselingProcedures(sessionId));
+
+                logger.info("DONE building Supplemental Resources for session=" + sessionId +
+                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return compositeBundle.getBundle();
             }
         });
     }
@@ -400,5 +451,19 @@ public class UserWorkspace {
             }
         }
         return rval;
+    }
+
+    public void clearSupplementalData() {
+        HomeBloodPressureReadingService hbprService = ctx.getBean(HomeBloodPressureReadingService.class);
+        hbprService.deleteAll(sessionId);
+
+        HomePulseReadingService hprService = ctx.getBean(HomePulseReadingService.class);
+        hprService.deleteAll(sessionId);
+
+        GoalService gService = ctx.getBean(GoalService.class);
+        gService.deleteAll(sessionId);
+
+        CounselingService cService = ctx.getBean(CounselingService.class);
+        cService.deleteAll(sessionId);
     }
 }

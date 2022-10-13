@@ -6,6 +6,16 @@
 /*    width: 200px;*/
 /*}*/
 
+#clearSupplementalDataContainer {
+    position: absolute;
+    top: 44px;
+    left: 580px;
+    z-index: 9;
+}
+
+#clearSupplementalData {
+    color: red;
+}
 
 #legend {
     position: absolute;
@@ -174,4 +184,12 @@ div.chartKeyItem {
 
 div.medication {
     max-width: 200px;
+}
+
+#prefetchModifiedInfo {
+    display: block;
+    background-color: #ffffcc;
+    padding: 5px;
+    font-size: small;
+    font-style: italic;
 }

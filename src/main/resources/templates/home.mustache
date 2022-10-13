@@ -3,22 +3,45 @@
     {{#head}}
         <!-- chartjs - see: https://www.chartjs.org/docs/latest/getting-started/installation.html -->
         <!-- chartjs-plugin-annotation - see: https://github.com/chartjs/chartjs-plugin-annotation -->
-        <script type="text/javascript" src="/node_modules/regression/dist/regression.js"></script>
-        <script type="text/javascript" src="/node_modules/chart.js/dist/Chart.js"></script>
-        <script type="text/javascript" src="/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js"></script>
-        <script type="text/javascript" src="/node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js"></script>
+<!--        <script type="text/javascript" src="/node_modules/regression/dist/regression.js"></script>-->
+<!--        <script type="text/javascript" src="/node_modules/chart.js/dist/Chart.js"></script>-->
+<!--        <script type="text/javascript" src="/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js"></script>-->
+<!--        <script type="text/javascript" src="/node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js"></script>-->
 
         <!-- https://www.npmjs.com/package/inputmask -->
         <script type="text/javascript" src="/node_modules/inputmask/dist/jquery.inputmask.js"></script>
         <script type="text/javascript" src="/node_modules/inputmask/dist/bindings/inputmask.binding.js"></script>
 
-        <link rel="stylesheet" href="/css/home.css"/>
-        <script type="text/javascript" src="/js/home.js"></script>
+        <link rel="stylesheet" href="/css/home.css?v=2"/>
+        <script type="text/javascript" src="/js/home.js?v=1"></script>
 
-        <link rel="stylesheet" href="/css/recommendations.css"/>
-        <script type="text/javascript" src="/js/recommendations.js"></script>
+        <link rel="stylesheet" href="/css/recommendations.css?v=1"/>
+        <script type="text/javascript" src="/js/recommendations.js?v=1"></script>
 
+    {{#showClearSupplementalData}}
         <script type="text/javascript">
+            $(document).on('click', '#clearSupplementalData', function() {
+                doClearSupplementalData(function(msg) {
+                    doRefresh(function(msg) {
+                        window.location.href = "/";
+                    });
+                });
+            });
+        </script>
+    {{/showClearSupplementalData}}
+
+    <script type="text/javascript">
+            function loadChart() {
+                loadBloodPressureObservations(function(bpdata) {
+                    window.bpdata = bpdata;
+                    window.bpchart = {};
+                    window.bpchart.data = window.bpdata;
+
+                    populateSummaryDiv();
+                    buildChart();
+                });
+            }
+
             $(document).on('click', '#chartTimelineContainer > .button:not(.selected)', function() {
                 window.bpchart = {};
 
@@ -66,16 +89,27 @@
 
                 enableHover('#chartTimelineContainer .button');
 
-                loadBloodPressureObservations(function(bpdata) {
-                    window.bpdata = bpdata;
-                    window.bpchart = {};
-                    window.bpchart.data = window.bpdata;
+                if (isInternetExplorer()) {
+                    loadScript("/js/ie/chart.js-2.9.3/Chart.js", function() {
+                        loadScript("/js/ie/bpchart.js", function() {
+                            console.log("done loading IE chart scripts");
+                            loadChart();
+                        });
+                    });
 
-                    populateSummaryDiv();
-                    buildChart();
-                });
-
-                // populateCurrentBPGoal(getCurrentBPGoal());
+                } else {
+                    loadScript("/node_modules/regression/dist/regression.js", function() {
+                        loadScript("/node_modules/chart.js/dist/Chart.js", function() {
+                            loadScript("/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js", function() {
+                                loadScript("/node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js", function() {
+                                    loadScript("/js/bpchart.js", function() {
+                                        loadChart();
+                                    })
+                                })
+                            })
+                        })
+                    });
+                }
 
                 loadMedications(function(meds) {
                     window.meds = meds;
@@ -121,6 +155,11 @@
     {{/menuItems}}
     {{#content}}
         <div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
+        {{#showClearSupplementalData}}
+            <div id="clearSupplementalDataContainer">
+                <span id="clearSupplementalData" class="link">Clear Supplemental Data</span>
+            </div>
+        {{/showClearSupplementalData}}
         <table class="content">
             <tr>
                 <td id="patientInfo">
@@ -226,7 +265,7 @@
                                     <div id="noChartData" class="hidden">
                                         <div>No Data</div>
                                     </div>
-                                    <canvas id="chart" class="hidden" width="700" height=250"></canvas>
+                                    <canvas id="chart" class="hidden" width="700" height="250"></canvas>
                                 </div>
                             </td>
                         </tr>
@@ -235,7 +274,7 @@
                         Your Current Blood Pressure Goal: <em><strong>Below {{bpGoal.systolicTarget}} /
                         {{bpGoal.diastolicTarget}}</strong></em> (<a href="/goals">update</a>)
                     </div>
-                    <div id="currentMedications" data-name="{{medicationsOfInterestName}}">
+                    <div id="currentMedications">
                     </div>
                     <div id="adverseEvents"></div>
                 </td>
@@ -243,6 +282,13 @@
             <tr>
                 <td class="heading">
                     Recommendations
+                </td>
+            </tr>
+            <tr id="prefetchModifiedInfo" class="hidden">
+                <td>
+                    <strong>Note:</strong> Source patient data contained one or more problematic characters that needed to be converted
+                    before being sent to the recommendation engine.  Instances of these characters have been replaced
+                    with the question mark character ("<strong>?</strong>")
                 </td>
             </tr>
             <tr>

@@ -1,9 +1,10 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.entity.vsac.Concept;
-import edu.ohsu.cmp.coach.entity.vsac.ValueSet;
+import edu.ohsu.cmp.coach.entity.Concept;
+import edu.ohsu.cmp.coach.entity.ValueSet;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.MedicationModel;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.MedicationRequest;
 import org.hl7.fhir.r4.model.MedicationStatement;
@@ -11,10 +12,10 @@ import org.opencds.cqf.tooling.terminology.CodeSystemLookupDictionary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class MedicationService extends AbstractService {
@@ -25,6 +26,15 @@ public class MedicationService extends AbstractService {
 
     @Autowired
     private ValueSetService valueSetService;
+
+    @Scheduled(cron = "${antihypertensive.medication.valueset.refresh-cron}") // 0 0 5 * * SUN
+    public void refreshAntihypertensiveMedicationValueSets() {
+        logger.info("refreshing anti-hypertensive medication ValueSets -");
+        for (String oid : getAntihypertensiveMedicationValueSetOIDsList()) {
+            valueSetService.refresh(oid);
+        }
+        logger.info("done refreshing anti-hypertensive medication ValueSets.");
+    }
 
     public List<MedicationModel> buildMedications(String sessionId) throws DataException {
         List<MedicationModel> list = new ArrayList<>();
@@ -44,7 +54,15 @@ public class MedicationService extends AbstractService {
             for (Bundle.BundleEntryComponent entry : medicationRequestsBundle.getEntry()) {
                 if (entry.hasResource() && entry.getResource() instanceof MedicationRequest) {
                     MedicationRequest medicationRequest = (MedicationRequest) entry.getResource();
-                    list.add(new MedicationModel(medicationRequest, medicationRequestsBundle));
+                    try {
+                        list.add(new MedicationModel(medicationRequest, medicationRequestsBundle));
+
+                    } catch (Exception e) {
+                        logger.error("caught " + e.getClass().getName() + " - " + e.getMessage() + " - " +
+                                " attempting to build MedicationModel for MedicationRequest:\n" +
+                                FhirUtil.toJson(medicationRequest));
+                        logger.warn("MedicationRequest " + medicationRequest.getId() + " not added to Medications list!");
+                    }
                 }
             }
         }
@@ -52,12 +70,7 @@ public class MedicationService extends AbstractService {
         return list;
     }
 
-    public String getMedicationsOfInterestName() {
-        ValueSet valueSet = valueSetService.getValueSet(fcm.getMedicationValueSetOid());
-        return valueSet.getDisplayName();
-    }
-
-    public List<MedicationModel> getMedicationsOfInterest(String sessionId) {
+    public List<MedicationModel> getAntihypertensiveMedications(String sessionId) {
         return getMedications(sessionId, true);
     }
 
@@ -65,28 +78,60 @@ public class MedicationService extends AbstractService {
         return getMedications(sessionId, false);
     }
 
-    private List<MedicationModel> getMedications(String sessionId, boolean includeOfInterest) {
+    private List<MedicationModel> getMedications(String sessionId, boolean includeAntihypertensive) {
+        logger.debug("getting Medications for session " + sessionId + ", includeAntihypertensive=" + includeAntihypertensive);
         return filterByValueSet(workspaceService.get(sessionId).getMedications(),
-                fcm.getMedicationValueSetOid(),
-                includeOfInterest);
+                getAntihypertensiveMedicationValueSetOIDsList(),
+                includeAntihypertensive);
     }
 
-    private List<MedicationModel> filterByValueSet(List<MedicationModel> list, String valueSetOid, boolean includeOnMatch) {
+    private List<MedicationModel> filterByValueSet(List<MedicationModel> list, String valueSetOID, boolean includeOnMatch) {
+        return filterByValueSet(list, Arrays.asList(valueSetOID), includeOnMatch);
+    }
+
+    private List<MedicationModel> filterByValueSet(List<MedicationModel> list, List<String> valueSetOIDList, boolean includeOnMatch) {
         if (list == null) return null;
 
         List<MedicationModel> filtered = new ArrayList<>();
 
-        ValueSet valueSet = valueSetService.getValueSet(valueSetOid);
-        for (Concept c : valueSet.getConcepts()) {
-            String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
-            for (MedicationModel item : list) {
-                boolean matches = item.matches(codeSystem, c.getCode());
-                if ((includeOnMatch && matches) || (!includeOnMatch && !matches)) {
-                    filtered.add(item);
-                }
+        logger.debug("in filterByValueSet(includeOnMatch=" + includeOnMatch + ") - list.size() = " + list.size());
+
+        List<Concept> concepts = new ArrayList<>();
+        for (String oid : valueSetOIDList) {
+            ValueSet valueSet = valueSetService.getValueSet(oid);
+            if (valueSet != null && valueSet.getConcepts() != null) {
+                concepts.addAll(valueSet.getConcepts());
+            } else {
+                logger.warn("ValueSet with OID=" + oid + " does not exist and / or has no concepts!");
             }
         }
 
+        logger.debug("filtering Medications -");
+        for (MedicationModel item : list) {
+            logger.debug(" - processing " + item.getDescription() + " (id=" + item.getSourceId() + ") -");
+
+            boolean matches = false;
+            for (Concept c : concepts) {
+                String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
+                if (item.matches(codeSystem, c.getCode())) {
+                    logger.debug("   - matches codeSystem=" + codeSystem + ", code=" + c.getCode() + "!");
+                    matches = true;
+                    break;
+                }
+            }
+
+            if ((includeOnMatch && matches) || (!includeOnMatch && !matches)) {
+                logger.debug("   - adding to filtered list");
+                filtered.add(item);
+            }
+        }
+        logger.debug("done filtering Medications.  filtered.size() = " + filtered.size());
+
         return filtered;
+    }
+
+    private List<String> getAntihypertensiveMedicationValueSetOIDsList() {
+        String csv = env.getProperty("antihypertensive.medication.valueset.oid.csv");
+        return Arrays.asList(csv.split("\\s*,\\s*"));
     }
 }

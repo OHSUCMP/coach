@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import edu.ohsu.cmp.coach.entity.app.Outcome;
+import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.service.AdverseEventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -27,7 +27,9 @@ public class Card {
 
     private String errorMessage;
 
-    public Card(CDSCard cdsCard) throws IOException {
+    private boolean prefetchModified;
+
+    public Card(CDSCard cdsCard, boolean prefetchModified) {
         this.summary = cdsCard.getSummary();
         this.indicator = cdsCard.getIndicator();
         this.detail = cdsCard.getDetail();
@@ -36,6 +38,8 @@ public class Card {
         this.rationale = cdsCard.getRationale();
 
         this.selectionBehavior = cdsCard.getSelectionBehavior();
+
+        this.prefetchModified = prefetchModified;
 
         Gson gson = new GsonBuilder().create();
         try {
@@ -57,9 +61,10 @@ public class Card {
         }
     }
 
-    public Card(String errorMessage) {
+    public Card(String errorMessage, boolean prefetchModified) {
         this.indicator = "critical";
         this.errorMessage = errorMessage;
+        this.prefetchModified = prefetchModified;
     }
 
     public String getSummary() {
@@ -96,5 +101,9 @@ public class Card {
 
     public String getErrorMessage() {
         return errorMessage;
+    }
+
+    public boolean isPrefetchModified() {
+        return prefetchModified;
     }
 }

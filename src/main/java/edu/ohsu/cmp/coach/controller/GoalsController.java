@@ -2,8 +2,8 @@ package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
-import edu.ohsu.cmp.coach.entity.app.GoalHistory;
-import edu.ohsu.cmp.coach.entity.app.MyGoal;
+import edu.ohsu.cmp.coach.entity.GoalHistory;
+import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.model.GoalHistoryModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.service.EHRService;
@@ -107,8 +107,7 @@ public class GoalsController extends BaseController {
             goal = goalService.update(goal);
 
         } else {
-            goal = goalService.create(session.getId(), new MyGoal(
-                    fcm.getBpSystem(), fcm.getBpCode(), "Blood Pressure",
+            goal = goalService.create(session.getId(), new MyGoal(fcm.getBpCoding(),
                     systolicTarget, diastolicTarget));
         }
 
@@ -119,6 +118,11 @@ public class GoalsController extends BaseController {
     public ResponseEntity<GoalHistoryModel> updateStatus(HttpSession session,
                                                          @RequestParam("extGoalId") String extGoalId,
                                                          @RequestParam("achievementStatus") String achievementStatusStr) {
+
+        // todo : this may need to be adjusted to handle a case where there is no persisted Goal
+        //        for the specified extGoalId (there see the "BehaviorGoal Exists" patient in Logica)
+        //        note that the Logica test patient above may trigger an unrealistic scenario, in
+        //        which case this is probably a non-issue, but this should be considered
 
         MyGoal g = goalService.getLocalGoal(session.getId(), extGoalId);
         GoalHistory gh = new GoalHistory(AchievementStatus.valueOf(achievementStatusStr), g);

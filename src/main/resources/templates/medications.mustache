@@ -41,13 +41,13 @@
         <table class="content">
             <tr>
                 <td class="heading">
-                    My {{medicationsOfInterestName}}
+                    My Antihypertensive Medications
                 </td>
             </tr>
             <tr>
                 <td>
-                    <table id=medicationsOfInterestTable" class="data">
-                        <tr id="medicationsOfInterestTableHeader">
+                    <table id=antihypertensiveMedicationsTable" class="data">
+                        <tr id="antihypertensiveMedicationsTableHeader">
                             <th>Name</th>
                             <th>Reason</th>
                             <th>Dose</th>
@@ -55,8 +55,8 @@
                             <th>Issues</th>
                             <th>Priority</th>
                         </tr>
-                        {{#medicationsOfInterest}}
-                            <tr class='medication' data-system="{{system}}" data-code="{{code}}">
+                        {{#antihypertensiveMedications}}
+                            <tr class='medication' data-system="{{#system}}{{system}}{{/system}}" data-code="{{#code}}{{code}}{{/code}}">
                                 <td>{{description}}</td>
                                 <td>{{#reason}}{{reason}}{{/reason}}</td>
                                 <td>{{#dose}}{{dose}}{{/dose}}</td>
@@ -64,7 +64,7 @@
                                 <td>{{#issues}}{{issues}}{{/issues}}</td>
                                 <td>{{#priority}}{{priority}}{{/priority}}</td>
                             </tr>
-                        {{/medicationsOfInterest}}
+                        {{/antihypertensiveMedications}}
                     </table>
                 </td>
             </tr>
@@ -88,7 +88,7 @@
                             <th>Priority</th>
                         </tr>
                         {{#otherMedications}}
-                            <tr class='medication' data-system="{{system}}" data-code="{{code}}">
+                            <tr class='medication' data-system="{{#system}}{{system}}{{/system}}" data-code="{{#code}}{{code}}{{/code}}">
                                 <td>{{description}}</td>
                                 <td>{{#reason}}{{reason}}{{/reason}}</td>
                                 <td>{{#dose}}{{dose}}{{/dose}}</td>

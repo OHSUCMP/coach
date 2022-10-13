@@ -34,3 +34,10 @@ build/
 
 *.log
 *.zip
+
+*.pem
+
+### Mac and Docker ###
+.DS_Store
+.env
+docker_data

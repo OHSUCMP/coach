@@ -1,12 +1,12 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.entity.app.MyAdverseEvent;
-import edu.ohsu.cmp.coach.entity.app.MyAdverseEventOutcome;
-import edu.ohsu.cmp.coach.entity.app.Outcome;
+import edu.ohsu.cmp.coach.entity.MyAdverseEvent;
+import edu.ohsu.cmp.coach.entity.MyAdverseEventOutcome;
+import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.AdverseEventModel;
-import edu.ohsu.cmp.coach.repository.app.AdverseEventOutcomeRepository;
-import edu.ohsu.cmp.coach.repository.app.AdverseEventRepository;
+import edu.ohsu.cmp.coach.repository.AdverseEventOutcomeRepository;
+import edu.ohsu.cmp.coach.repository.AdverseEventRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
@@ -151,7 +151,7 @@ public class AdverseEventService extends AbstractService {
     }
 
     private Bundle buildAdverseEventConditions(String sessionId) {
-        Bundle conditions = ehrService.getEncounterDiagnosisConditions(sessionId);
+        Bundle conditions = workspaceService.get(sessionId).getEncounterDiagnosisConditions().copy();
 
         Map<String, List<MyAdverseEvent>> codesWeCareAbout = new HashMap<>();
         for (MyAdverseEvent mae : getAll()) {

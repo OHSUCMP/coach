@@ -1,7 +1,11 @@
 package edu.ohsu.cmp.coach.controller;
 
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
+import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.model.AbstractVitalsModel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
+import edu.ohsu.cmp.coach.model.ObservationSource;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
 import edu.ohsu.cmp.coach.service.PulseService;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -35,7 +40,7 @@ public class VitalsController extends BaseController {
     private PulseService pulseService;
 
     @GetMapping(value={"", "/"})
-    public String view(HttpSession session, Model model) {
+    public String view(HttpSession session, Model model) throws DataException {
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
 
@@ -59,7 +64,7 @@ public class VitalsController extends BaseController {
                                                             @RequestParam(required = false) Integer diastolic2,
                                                             @RequestParam(required = false) Integer pulse2,
                                                             @RequestParam Long readingDateTS,
-                                                            @RequestParam Boolean followedInstructions) {
+                                                            @RequestParam Boolean followedInstructions) throws DataException, ConfigurationException, IOException, ScopeException {
 
         // get the cache just to make sure it's defined and the user is properly authenticated
         workspaceService.get(session.getId());
@@ -67,26 +72,26 @@ public class VitalsController extends BaseController {
         Date readingDate = new Date(readingDateTS);
 
         List<AbstractVitalsModel> list = new ArrayList<>();
-        BloodPressureModel bpm1 = new BloodPressureModel(BloodPressureModel.Source.HOME,
+        BloodPressureModel bpm1 = new BloodPressureModel(ObservationSource.HOME,
                 systolic1, diastolic1, readingDate, followedInstructions, fcm);
         bpm1 = bpService.create(session.getId(), bpm1);
         list.add(bpm1);
 
         if (pulse1 != null) {
-            PulseModel p1 = new PulseModel(PulseModel.Source.HOME, pulse1, readingDate, followedInstructions, fcm);
+            PulseModel p1 = new PulseModel(ObservationSource.HOME, pulse1, readingDate, followedInstructions, fcm);
             p1 = pulseService.create(session.getId(), p1);
             list.add(p1);
         }
 
         if (systolic2 != null && diastolic2 != null) {
-            BloodPressureModel bpm2 = new BloodPressureModel(BloodPressureModel.Source.HOME,
+            BloodPressureModel bpm2 = new BloodPressureModel(ObservationSource.HOME,
                     systolic2, diastolic2, readingDate, followedInstructions, fcm);
             bpm2 = bpService.create(session.getId(), bpm2);
             list.add(bpm2);
         }
 
         if (pulse2 != null) {
-            PulseModel p2 = new PulseModel(PulseModel.Source.HOME, pulse2, readingDate, followedInstructions, fcm);
+            PulseModel p2 = new PulseModel(ObservationSource.HOME, pulse2, readingDate, followedInstructions, fcm);
             p2 = pulseService.create(session.getId(), p2);
             list.add(p2);
         }

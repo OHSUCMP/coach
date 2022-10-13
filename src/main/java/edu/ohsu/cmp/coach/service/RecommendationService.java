@@ -6,15 +6,13 @@ import com.github.mustachejava.MustacheFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import edu.ohsu.cmp.coach.entity.app.Counseling;
-import edu.ohsu.cmp.coach.entity.app.MyGoal;
+import edu.ohsu.cmp.coach.entity.Counseling;
+import edu.ohsu.cmp.coach.entity.MyGoal;
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
-import edu.ohsu.cmp.coach.model.AdverseEventModel;
-import edu.ohsu.cmp.coach.model.BloodPressureModel;
-import edu.ohsu.cmp.coach.model.GoalModel;
-import edu.ohsu.cmp.coach.model.PulseModel;
+import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSCard;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHookResponse;
@@ -98,18 +96,26 @@ public class RecommendationService extends AbstractService {
         Audience audience = workspace.getAudience();
 
         List<Card> cards = new ArrayList<>();
+        boolean prefetchModified = false;
 
         try {
             Patient p = workspace.getPatient().getSourcePatient();
 
+//            List<IBaseResource> prefetch = new ArrayList<>();
             CompositeBundle compositeBundle = new CompositeBundle();
 
-//            compositeBundle.consume(p);       // don't send the patient resource, which contains nested extensions
-                                                // that CQF Ruler can't handle via prefetch
+//            prefetch.add(p);
+            compositeBundle.consume(p);
 
+//            prefetch.add(buildBPBundle(sessionId, p.getId()));
             compositeBundle.consume(buildBPBundle(sessionId, p.getId()));
+
 //            compositeBundle.consume(buildPulseBundle(sessionId, p.getId()));      // do we care about pulses in recommendations?
-            compositeBundle.consume(buildCounselingBundle(sessionId, p.getId()));
+
+//            prefetch.add(buildLocalCounselingBundle(sessionId, p.getId()));
+            compositeBundle.consume(buildLocalCounselingBundle(sessionId, p.getId()));
+
+//            prefetch.add(buildGoalsBundle(sessionId, p.getId()));
             compositeBundle.consume(buildGoalsBundle(sessionId, p.getId()));
 
             // HACK: if the patient has no Adverse Events, we must construct a fake one to send to
@@ -118,18 +124,40 @@ public class RecommendationService extends AbstractService {
             List<AdverseEventModel> adverseEvents = workspace.getAdverseEvents();
             if (adverseEvents.size() > 0) {
                 for (AdverseEventModel adverseEvent : workspace.getAdverseEvents()) {
+//                    prefetch.add(adverseEvent.toBundle(p.getId(), fcm));
                     compositeBundle.consume(adverseEvent.toBundle(p.getId(), fcm));
                 }
             } else {
+//                prefetch.add(buildFakeAdverseEventHACK(sessionId));
                 compositeBundle.consume(buildFakeAdverseEventHACK(sessionId));
             }
 
-            HookRequest request = new HookRequest(fcc.getCredentials(), compositeBundle.getBundle());
+//            prefetch.add(workspace.getEncounterDiagnosisConditions());
+            compositeBundle.consume(workspace.getEncounterDiagnosisConditions());
+
+            for (MedicationModel m : workspace.getMedications()) {
+                if (m.hasSourceMedicationStatement()) {
+                    compositeBundle.consume(m.getSourceMedicationStatement());
+                } else if (m.hasSourceMedicationRequest()) {
+                    compositeBundle.consume(m.getSourceMedicationRequest());
+                    if (m.hasSourceMedicationRequestMedication()) {
+                        compositeBundle.consume(m.getSourceMedicationRequestMedication());
+                    }
+                }
+            }
+
+//            prefetch.add(workspace.getSupplementalResources());
+            compositeBundle.consume(workspace.getSupplementalResources());
+
+//            HookRequest hookRequest = new HookRequest(fcc.getCredentials(), prefetch);
+            HookRequest hookRequest = new HookRequest(fcc.getCredentials(), compositeBundle.getBundle());
+
+            prefetchModified = hookRequest.isPrefetchModified();
 
             MustacheFactory mf = new DefaultMustacheFactory();
             Mustache mustache = mf.compile("cqfruler/hookRequest.mustache");
             StringWriter writer = new StringWriter();
-            mustache.execute(writer, request).flush();
+            mustache.execute(writer, hookRequest).flush();
 
             logger.debug("hookRequest = " + writer.toString());
 
@@ -160,9 +188,10 @@ public class RecommendationService extends AbstractService {
             logger.debug("got response code=" + code + ", body=" + body);
 
             if (code < 200 || code > 299) {
+                logger.error("CQF-RULER ERROR: " + body);
                 Card card = showDevErrors ?
-                        new Card(body) :
-                        new Card(GENERIC_ERROR_MESSAGE);
+                        new Card(body, prefetchModified) :
+                        new Card(GENERIC_ERROR_MESSAGE, prefetchModified);
                 cards.add(card);
 
             } else {
@@ -174,7 +203,7 @@ public class RecommendationService extends AbstractService {
                     List<String> filterGoalIds = goalService.getExtGoalIdList(sessionId);
 
                     for (CDSCard cdsCard : response.getCards()) {
-                        Card card = new Card(cdsCard);
+                        Card card = new Card(cdsCard, prefetchModified);
 
                         if (card.getSuggestions() != null) {
                             Iterator<Suggestion> iter = card.getSuggestions().iterator();
@@ -212,8 +241,8 @@ public class RecommendationService extends AbstractService {
 
             } else {
                 Card card = showDevErrors ?
-                        new Card(msg) :
-                        new Card(GENERIC_ERROR_MESSAGE);
+                        new Card(msg, prefetchModified) :
+                        new Card(GENERIC_ERROR_MESSAGE, prefetchModified);
                 cards.add(card);
             }
 
@@ -224,7 +253,7 @@ public class RecommendationService extends AbstractService {
         return cards;
     }
 
-    private Bundle buildCounselingBundle(String sessionId, String patientId) {
+    private Bundle buildLocalCounselingBundle(String sessionId, String patientId) {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
@@ -235,14 +264,14 @@ public class RecommendationService extends AbstractService {
             Encounter e = buildEncounter(uuid, patientId, c.getCreatedDate());
             bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
 
-            Procedure p = buildCounselingProcedure(patientId, e.getId(), c);
+            Procedure p = buildLocalCounselingProcedure(patientId, e.getId(), c);
             bundle.addEntry().setFullUrl("http://hl7.org/fhir/Procedure/" + p.getId()).setResource(p);
         }
 
         return bundle;
     }
 
-    private Procedure buildCounselingProcedure(String patientId, String encounterId, Counseling c) {
+    private Procedure buildLocalCounselingProcedure(String patientId, String encounterId, Counseling c) {
         Procedure p = new Procedure();
 
         p.setId(c.getExtCounselingId());
@@ -251,9 +280,7 @@ public class RecommendationService extends AbstractService {
         p.setStatus(Procedure.ProcedureStatus.COMPLETED);
 
         // set counseling category.  see https://www.hl7.org/fhir/valueset-procedure-category.html
-        p.getCategory().addCoding()
-                .setCode("409063005")
-                .setSystem("http://snomed.info/sct");
+        p.getCategory().addCoding(fcm.getProcedureCounselingCoding());
 
         p.getCode().addCoding().setCode(c.getReferenceCode()).setSystem(c.getReferenceSystem());
 
@@ -270,7 +297,7 @@ public class RecommendationService extends AbstractService {
         return bundle.getBundle();
     }
 
-    private Bundle buildBPBundle(String sessionId, String patientId) {
+    private Bundle buildBPBundle(String sessionId, String patientId) throws DataException {
         CompositeBundle bundle = new CompositeBundle();
         for (BloodPressureModel bpm : bpService.getBloodPressureReadings(sessionId)) {
             bundle.consume(bpm.toBundle(patientId, fcm));
