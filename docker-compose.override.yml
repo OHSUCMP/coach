@@ -6,8 +6,10 @@ services:
       - "8082:8082"
     depends_on:
       - mysql
+      - cqfruler
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql/coach
+      - CQFRULER_CDSHOOKS_ENDPOINT_URL=http://cqfruler:8080/cds-services
       - VSAC_API_KEY
   mysql:
     image: mysql:5.7
@@ -20,3 +22,11 @@ services:
       - MYSQL_USER=coach
       - MYSQL_PASSWORD
       - MYSQL_ROOT_PASSWORD
+  cqfruler:
+    image: alphora/cqf-ruler:0.5.0
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker_data/cqfruler:/data
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:hsqldb:file:/data/h2
