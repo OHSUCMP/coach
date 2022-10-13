@@ -7,6 +7,8 @@ services:
     depends_on:
       - mysql
       - cqfruler
+    volumes:
+      - ./docker_data/logs:/opt/app/logs
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql/coach
       - CQFRULER_CDSHOOKS_ENDPOINT_URL=http://cqfruler:8080/cds-services
