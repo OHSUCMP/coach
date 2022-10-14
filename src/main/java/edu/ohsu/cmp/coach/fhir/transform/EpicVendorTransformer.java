@@ -147,9 +147,9 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
             }
 
         } else {
-            String patientId = workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
-            FhirConfigManager fcm = workspace.getFhirConfigManager();
+            String patientId = workspace.getPatient().getSourcePatient().getId(); //workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
+            FhirConfigManager fcm = workspace.getFhirConfigManager();
 
             // When transforming a BP model to be used in Epic, we need to set a custom serialized note that
             // contains protocol information since we can't store that record separately in its own flowsheet record
@@ -262,9 +262,9 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
             }
 
         } else {
-            String patientId = workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
-            FhirConfigManager fcm = workspace.getFhirConfigManager();
+            String patientId = workspace.getPatient().getSourcePatient().getId(); //workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
+            FhirConfigManager fcm = workspace.getFhirConfigManager();
 
             // When transforming a Pulse model to be used in Epic, we need to set a custom serialized note that
             // contains protocol information since we can't store that record separately in its own flowsheet record

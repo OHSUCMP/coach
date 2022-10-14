@@ -29,7 +29,7 @@ public abstract class AbstractVitalsService extends AbstractService {
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
             entry.setFullUrl(URN_UUID + entry.getResource().getId())
                     .setRequest(new Bundle.BundleEntryRequestComponent()
-                            .setMethod(Bundle.HTTPVerb.PUT)
+                            .setMethod(Bundle.HTTPVerb.POST)
                             .setUrl(entry.getResource().fhirType()));
         }
 

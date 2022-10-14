@@ -114,15 +114,12 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             }
 
         } else {
-            String patientId = workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
+            String patientId = workspace.getPatient().getSourcePatient().getId(); //workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
+            String patientIdRef = FhirUtil.toRelativeReference(patientId);
             FhirConfigManager fcm = workspace.getFhirConfigManager();
 
             // the BP observation didn't come from the EHR, so it necessarily came from COACH, and is
             // thereby necessarily a HOME based observation.
-
-            // Logica doesn't handle absolute URLs in references well.  it's possible other FHIR server
-            // implementations don't handle them well either.
-            String patientIdRef = FhirUtil.toRelativeReference(patientId);
 
             Observation bpObservation = buildHomeHealthBloodPressureObservation(model, patientIdRef, fcm);
             FhirUtil.appendResourceToBundle(bundle, bpObservation);
@@ -152,6 +149,8 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         FhirConfigManager fcm = workspace.getFhirConfigManager();
 
         List<PulseModel> list = new ArrayList<>();
+
+        // todo : outer loop should iterate over encounterObservationsMap, ignoring items where the key is null
 
         for (Encounter encounter : workspace.getEncounters()) {
             logger.debug("processing Encounter: " + encounter.getId());
@@ -229,12 +228,9 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             }
 
         } else {
-            String patientId = workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
-            FhirConfigManager fcm = workspace.getFhirConfigManager();
-
-            // Logica doesn't handle absolute URLs in references well.  it's possible other FHIR server
-            // implementations don't handle them well either.
+            String patientId = workspace.getPatient().getSourcePatient().getId(); //workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
+            FhirConfigManager fcm = workspace.getFhirConfigManager();
 
             Observation pulseObservation = buildPulseObservation(model, patientIdRef, fcm);
             FhirUtil.appendResourceToBundle(bundle, pulseObservation);
@@ -279,12 +275,13 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
      */
     @Override
     public Bundle transformOutgoingGoal(GoalModel model) throws DataException {
-        String patientId = workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
+        String patientId = workspace.getPatient().getSourcePatient().getId();
+        String patientIdRef = FhirUtil.toRelativeReference(patientId);
         FhirConfigManager fcm = workspace.getFhirConfigManager();
 
         Goal goal = model.getSourceGoal() != null ?
                 model.getSourceGoal() :
-                buildGoal(model, patientId, fcm);
+                buildGoal(model, patientIdRef, fcm);
 
         return FhirUtil.bundleResources(goal);
     }
