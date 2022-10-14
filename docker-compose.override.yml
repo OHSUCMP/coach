@@ -8,7 +8,11 @@ services:
       - mysql
       - cqfruler
     volumes:
-      - ./docker_data/logs:/opt/app/logs
+      - ./docker_data/coach/logs:/opt/app/logs
+      # to override logging configuration, mount a logback.xml file to /opt/app/config
+      # - ./docker_data/coach/logback.xml:/opt/app/config/logback.xml
+      # to override configuration properties, mount an application.properties file to /opt/app/config
+      # - ./docker_data/coach/application.properties:/opt/app/config/application.properties
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql/coach
       - CQFRULER_CDSHOOKS_ENDPOINT_URL=http://cqfruler:8080/cds-services

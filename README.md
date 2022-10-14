@@ -16,7 +16,7 @@ In order to run COACH, connections to the database, the EHR FHIR server, and CQF
 
 If you already have these pieces in place and they are externally addressable, then configure a properties file to provide COACH the information needed. Make a local copy of [application.properties](src/main/resources/application.properties), override any configuration needed, and mount the file into the Docker container when running:
 
-```docker run -p 8082:8082 -v $(pwd)/override.properties:/opt/app/application.properties ghcr.io/ohsucmp/coach```
+```docker run -p 8082:8082 -v $(pwd)/override.properties:/opt/app/config/application.properties ghcr.io/ohsucmp/coach```
 
 If you want to run everything locally, both the database and CQF Ruler can also be set up as containers. Docker-compose files are provided to facilitate this. To use these, clone this repository. Copy the file "env.sample" to ".env" and fill out the API key in this file.
 
@@ -42,5 +42,10 @@ The docker-compose setup creates connections between the three Dockerized contai
 
 ```docker-compose up app```
 
+### Configuration
 
+As described above, you can override the application's configuration by making a copy of [application.properties](./src/main/resources/application.properties), overriding the desired properties, and mounting the file into the container at `/opt/app/config/application.properties`. An example mount definition is included in [docker-compose.override.yml](./docker-compose.override.yml).
 
+### Logging
+
+In addition to being sent to the console, logs from the COACH container are persisted to `./docker_data/coach/logs`. If this isn't desirable, you can override the logging configuration by mounting a `logback.xml` file into the container at `/opt/app/config/logback.xml`. You can find example configuration in [logback-console-only.xml](./docker-image-files/logback-console-only.xml) and comments in [docker-compose.override.yml](./docker-compose.override.yml).
