@@ -1,0 +1,35 @@
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/opt/app/logs/coach.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>coach.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+            <maxHistory>10</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+    </root>
+
+    <logger name="edu.ohsu.cmp.coach.workspace.UserWorkspace" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.service.RecommendationService" level="INFO" />
+    <logger name="edu.ohsu.cmp.coach.service.EHRService" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.service.FHIRService" level="INFO" />
+    <logger name="edu.ohsu.cmp.coach.fhir.EncounterMatcher" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.controller.MedicationController" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.service.MedicationService" level="DEBUG" />
+
+</configuration>
