@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -46,12 +47,19 @@ public class HomeController extends BaseController {
     @Autowired
     private MedicationService medicationService;
 
+    @Value("${graph.trendline.loess-bandwidth}")
+    private Number loessBandwidth;
+
     @GetMapping(value = {"", "/"})
-    public String view(HttpSession session, Model model) {
+    public String view(HttpSession session, Model model,
+                       @RequestParam(name = "bandwidth", required = false) Number bandwidthOverride) {
         boolean sessionEstablished = workspaceService.exists(session.getId());
 
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
+
+        Number b = bandwidthOverride != null ? bandwidthOverride : loessBandwidth;
+        model.addAttribute("loessBandwidth", b);
 
         if (sessionEstablished) {
             logger.info("requesting data for session " + session.getId());

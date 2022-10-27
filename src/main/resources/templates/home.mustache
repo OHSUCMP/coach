@@ -12,8 +12,12 @@
         <script type="text/javascript" src="/node_modules/inputmask/dist/jquery.inputmask.js"></script>
         <script type="text/javascript" src="/node_modules/inputmask/dist/bindings/inputmask.binding.js"></script>
 
+<!--        <script type="text/javascript" src="/js/loess/loess.js"></script>-->
+        <script src="/js/science.js/science.v1.js"></script>
+        <script src="/js/science.js/lib/d3/d3.js"></script>
+
         <link rel="stylesheet" href="/css/home.css?v=2"/>
-        <script type="text/javascript" src="/js/home.js?v=1"></script>
+        <script type="text/javascript" src="/js/home.js?v=2"></script>
 
         <link rel="stylesheet" href="/css/recommendations.css?v=1"/>
         <script type="text/javascript" src="/js/recommendations.js?v=1"></script>
@@ -98,7 +102,7 @@
                     });
 
                 } else {
-                    loadScript("/node_modules/regression/dist/regression.js", function() {
+                    // loadScript("/node_modules/regression/dist/regression.js", function() {
                         loadScript("/node_modules/chart.js/dist/Chart.js", function() {
                             loadScript("/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js", function() {
                                 loadScript("/node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js", function() {
@@ -107,7 +111,7 @@
                                     })
                                 })
                             })
-                        })
+                        // })
                     });
                 }
 
@@ -155,6 +159,7 @@
     {{/menuItems}}
     {{#content}}
         <div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
+        <div id="LOESSBandwidth" class="hidden">{{loessBandwidth}}</div>
         {{#showClearSupplementalData}}
             <div id="clearSupplementalDataContainer">
                 <span id="clearSupplementalData" class="link">Clear Supplemental Data</span>
