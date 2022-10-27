@@ -236,13 +236,6 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         return o;
     }
 
-    private void setBPValue(Quantity q, QuantityModel qm, FhirConfigManager fcm) {
-        q.setCode(fcm.getBpValueCode())
-                .setSystem(fcm.getBpValueSystem())
-                .setUnit(fcm.getBpValueUnit())
-                .setValue(qm.getValue().intValue());
-    }
-
     protected Goal buildGoal(GoalModel model, String patientId, FhirConfigManager fcm) {
 
         // this is only used when building local goals, for which sourceGoal == null
@@ -283,29 +276,14 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         return g;
     }
 
-    protected Encounter buildNewHomeHealthEncounter(Date readingDate, FhirConfigManager fcm, String patientId) {
-        Encounter e = new Encounter();
+///////////////////////////////////////////////////////////////////////
+// private methods
+//
 
-        e.setId(genTemporaryId());
-
-        e.setStatus(Encounter.EncounterStatus.FINISHED);
-
-        e.getClass_().setSystem(fcm.getEncounterClassSystem())
-                .setCode(fcm.getEncounterClassHHCode())
-                .setDisplay(fcm.getEncounterClassHHDisplay());
-
-        e.setSubject(new Reference().setReference(patientId));
-
-        Calendar start = Calendar.getInstance();
-        start.setTime(readingDate);
-        start.add(Calendar.MINUTE, -1);
-
-        Calendar end = Calendar.getInstance();
-        end.setTime(readingDate);
-        end.add(Calendar.MINUTE, 1);
-
-        e.getPeriod().setStart(start.getTime()).setEnd(end.getTime());
-
-        return e;
+    private void setBPValue(Quantity q, QuantityModel qm, FhirConfigManager fcm) {
+        q.setCode(fcm.getBpValueCode())
+                .setSystem(fcm.getBpValueSystem())
+                .setUnit(fcm.getBpValueUnit())
+                .setValue(qm.getValue().intValue());
     }
 }

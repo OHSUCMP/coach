@@ -9,14 +9,6 @@ import org.hl7.fhir.r4.model.Observation;
 
 public class ObservationUtil {
 
-    public static ObservationSource getBPSource(Observation bpObservation, Encounter encounter, FhirConfigManager fcm) {
-        ObservationSource source = getBPSource(bpObservation, fcm);
-        if (source == ObservationSource.UNKNOWN) {
-            source = getSourceByEncounter(encounter, fcm);
-        }
-        return source;
-    }
-
     public static ObservationSource getSourceByEncounter(Encounter encounter, FhirConfigManager fcm) {
         ObservationSource source = null;
 
@@ -27,6 +19,14 @@ public class ObservationUtil {
         return source != null ?
                 source :
                 ObservationSource.UNKNOWN;
+    }
+
+    public static ObservationSource getBPSource(Observation bpObservation, Encounter encounter, FhirConfigManager fcm) {
+        ObservationSource source = getBPSource(bpObservation, fcm);
+        if (source == ObservationSource.UNKNOWN) {
+            source = getSourceByEncounter(encounter, fcm);
+        }
+        return source;
     }
 
     public static ObservationSource getBPSource(Observation bpObservation, FhirConfigManager fcm) {
@@ -49,6 +49,12 @@ public class ObservationUtil {
 
         return source != null ?
                 source :
+                ObservationSource.UNKNOWN;
+    }
+
+    public static ObservationSource getPulseSource(Observation pulseObservation) {
+        return FhirUtil.hasHomeSettingExtension(pulseObservation) ?
+                ObservationSource.HOME :
                 ObservationSource.UNKNOWN;
     }
 }

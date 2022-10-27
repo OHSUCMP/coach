@@ -303,4 +303,34 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
 
         return FhirUtil.bundleResources(goal);
     }
+
+////////////////////////////////////////////////////////////////////////
+// private methods
+//
+
+    private Encounter buildNewHomeHealthEncounter(Date readingDate, FhirConfigManager fcm, String patientId) {
+        Encounter e = new Encounter();
+
+        e.setId(genTemporaryId());
+
+        e.setStatus(Encounter.EncounterStatus.FINISHED);
+
+        e.getClass_().setSystem(fcm.getEncounterClassSystem())
+                .setCode(fcm.getEncounterClassHHCode())
+                .setDisplay(fcm.getEncounterClassHHDisplay());
+
+        e.setSubject(new Reference().setReference(patientId));
+
+        Calendar start = Calendar.getInstance();
+        start.setTime(readingDate);
+        start.add(Calendar.MINUTE, -1);
+
+        Calendar end = Calendar.getInstance();
+        end.setTime(readingDate);
+        end.add(Calendar.MINUTE, 1);
+
+        e.getPeriod().setStart(start.getTime()).setEnd(end.getTime());
+
+        return e;
+    }
 }

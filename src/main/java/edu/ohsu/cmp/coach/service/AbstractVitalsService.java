@@ -22,18 +22,18 @@ public abstract class AbstractVitalsService extends AbstractService {
     protected Bundle writeRemote(String sessionId, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
         UserWorkspace workspace = workspaceService.get(sessionId);
 
-//        // modify bundle to be appropriate for submission as a CREATE TRANSACTION
-//        bundle.setType(Bundle.BundleType.TRANSACTION);
+        if (bundle.getType() != Bundle.BundleType.TRANSACTION) {
+            throw new ConfigurationException("bundle passed to writeRemote must be of type=TRANSACTION");
+        }
 
         // prepare bundle for POSTing resources (create)
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            entry.setFullUrl(URN_UUID + entry.getResource().getId())
-                    .setRequest(new Bundle.BundleEntryRequestComponent()
-                            .setMethod(Bundle.HTTPVerb.POST)
-                            .setUrl(entry.getResource().fhirType()));
+            entry.setRequest(new Bundle.BundleEntryRequestComponent()
+                    .setMethod(Bundle.HTTPVerb.POST)
+                    .setUrl(entry.getResource().fhirType()));
         }
 
-        // write BP reading to the FHIR server
+        // write reading to the FHIR server
 
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         Bundle responseBundle = fhirService.transact(fcc, bundle, true);
