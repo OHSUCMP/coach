@@ -79,7 +79,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
     public BloodPressureModel(Encounter encounter, Observation bpObservation,
                               Observation protocolObservation, FhirConfigManager fcm) throws DataException {
 
-        super(ObservationUtil.getBPSource(bpObservation, encounter, fcm), bpObservation, protocolObservation, fcm);
+        super(encounter, ObservationUtil.getBPSource(bpObservation, encounter, fcm), bpObservation, protocolObservation, fcm);
 
         buildFromBPObservation(bpObservation, fcm);
     }
@@ -172,111 +172,4 @@ public class BloodPressureModel extends AbstractVitalsModel {
     public QuantityModel getDiastolic() {
         return diastolic;
     }
-
-//    public Bundle toBundle(String patientId, FhirConfigManager fcm) throws DataException {
-//        Bundle bundle = new Bundle();
-//        bundle.setType(Bundle.BundleType.COLLECTION);
-//
-//        // if the observation came from the EHR, just package it up and send it along
-//        if (sourceBPObservation != null) {
-//            FhirUtil.appendResourceToBundle(bundle, sourceBPObservation);
-//            if (sourceProtocolObservation != null) {
-//                FhirUtil.appendResourceToBundle(bundle, sourceProtocolObservation);
-//            }
-//
-//        } else {
-//            // the BP observation didn't come from the EHR, so it necessarily came from COACH, and is
-//            // thereby necessarily a HOME based observation.
-//
-//            // Logica doesn't handle absolute URLs in references well.  it's possible other FHIR server
-//            // implementations don't handle them well either.
-//            String patientIdRef = FhirUtil.toRelativeReference(patientId);
-//
-//            Observation bpObservation = buildHomeHealthBloodPressureObservation(patientIdRef, fcm);
-//            FhirUtil.appendResourceToBundle(bundle, bpObservation);
-//
-//            if (followedProtocol != null) {
-//                Observation protocolObservation = buildProtocolObservation(patientIdRef, fcm);
-//                FhirUtil.appendResourceToBundle(bundle, protocolObservation);
-//            }
-//        }
-//
-//        // todo : combine / manipulate resources as needed based on target use case
-//        //  - CQF Ruler?  use as-is; PassThroughObservationTransformer
-//
-//        return bundle;
-//    }
-
-
-
-////    adapted from CDSHooksExecutor.buildHomeBloodPressureObservation()
-////    used when creating new Home Health (HH) Blood Pressure Observations
-//    private Observation buildHomeHealthBloodPressureObservation(String patientId, FhirConfigManager fcm) throws DataException {
-//        Observation o = new Observation();
-//
-//        o.setId(genTemporaryId());
-//
-//        o.setSubject(new Reference().setReference(patientId));
-//
-////        o.setEncounter(new Reference().setReference(URN_UUID + enc.getId()));
-//
-//        o.setStatus(Observation.ObservationStatus.FINAL);
-//
-//        o.addCategory().addCoding()
-//                .setCode(OBSERVATION_CATEGORY_CODE)
-//                .setSystem(OBSERVATION_CATEGORY_SYSTEM)
-//                .setDisplay("vital-signs");
-//
-//        FhirUtil.addHomeSettingExtension(o);
-//
-//        if (systolic != null && diastolic == null) {            // systolic only
-//            o.getCode().addCoding(fcm.getBpSystolicCoding());
-//            o.getCode().addCoding(fcm.getBpHomeBluetoothSystolicCoding());
-//            o.setValue(new Quantity());
-//            setBPValue(o.getValueQuantity(), systolic, fcm);
-//
-//        } else if (systolic == null && diastolic != null) {     // diastolic only
-//            o.getCode().addCoding(fcm.getBpDiastolicCoding());
-//            o.getCode().addCoding(fcm.getBpHomeBluetoothDiastolicCoding());
-//            o.setValue(new Quantity());
-//            setBPValue(o.getValueQuantity(), diastolic, fcm);
-//
-//        } else if (systolic != null && diastolic != null) {     // both systolic and diastolic
-//            o.getCode().addCoding(fcm.getBpCoding());
-//            for (Coding c : fcm.getBpHomeCodings()) {
-//                o.getCode().addCoding(c);
-//            }
-//
-//            Observation.ObservationComponentComponent occSystolic = new Observation.ObservationComponentComponent();
-//            occSystolic.getCode().addCoding(fcm.getBpSystolicCoding());
-//            occSystolic.setValue(new Quantity());
-//            setBPValue(occSystolic.getValueQuantity(), systolic, fcm);
-//            o.getComponent().add(occSystolic);
-//
-//            Observation.ObservationComponentComponent occDiastolic = new Observation.ObservationComponentComponent();
-//            occDiastolic.getCode().addCoding(fcm.getBpDiastolicCoding());
-//            occDiastolic.setValue(new Quantity());
-//            setBPValue(occDiastolic.getValueQuantity(), diastolic, fcm);
-//            o.getComponent().add(occDiastolic);
-//
-//        } else {
-//            throw new DataException("BP observation requires systolic and / or diastolic");
-//        }
-//
-//        o.setEffective(new DateTimeType(readingDate));
-//
-//        if (followedProtocol != null) {
-//            String s = followedProtocol ? fcm.getProtocolAnswerYes() : fcm.getProtocolAnswerNo();
-//            o.getNote().add(new Annotation().setText(PROTOCOL_NOTE_TAG + s));
-//        }
-//
-//        return o;
-//    }
-
-//    private void setBPValue(Quantity q, QuantityModel qm, FhirConfigManager fcm) {
-//        q.setCode(fcm.getBpValueCode())
-//                .setSystem(fcm.getBpValueSystem())
-//                .setUnit(fcm.getBpValueUnit())
-//                .setValue(qm.getValue().intValue());
-//    }
 }

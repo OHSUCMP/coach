@@ -109,6 +109,9 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         // if the observation came from the EHR, just package it up and send it along
         if (model.getSourceBPObservation() != null) {
             FhirUtil.appendResourceToBundle(bundle, model.getSourceBPObservation());
+            if (model.getSourceEncounter() != null) {
+                FhirUtil.appendResourceToBundle(bundle, model.getSourceEncounter());
+            }
             if (model.getSourceProtocolObservation() != null) {
                 FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation());
             }
@@ -121,11 +124,17 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             // the BP observation didn't come from the EHR, so it necessarily came from COACH, and is
             // thereby necessarily a HOME based observation.
 
-            Observation bpObservation = buildHomeHealthBloodPressureObservation(model, patientIdRef, fcm);
+            // in the default scenario, BP observations should have an associated Encounter that ties associated
+            // resources together
+
+            Encounter enc = buildNewHomeHealthEncounter(model.getReadingDate(), fcm, patientIdRef);
+            FhirUtil.appendResourceToBundle(bundle, enc);
+
+            Observation bpObservation = buildHomeHealthBloodPressureObservation(model, enc, patientIdRef, fcm);
             FhirUtil.appendResourceToBundle(bundle, bpObservation);
 
             if (model.getFollowedProtocol() != null) {
-                Observation protocolObservation = buildProtocolObservation(model, patientIdRef, fcm);
+                Observation protocolObservation = buildProtocolObservation(model, enc, patientIdRef, fcm);
                 FhirUtil.appendResourceToBundle(bundle, protocolObservation);
             }
         }
@@ -223,6 +232,9 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
 
         if (model.getSourcePulseObservation() != null) {
             FhirUtil.appendResourceToBundle(bundle, model.getSourcePulseObservation());
+            if (model.getSourceEncounter() != null) {
+                FhirUtil.appendResourceToBundle(bundle, model.getSourceEncounter());
+            }
             if (model.getSourceProtocolObservation() != null) {
                 FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation());
             }
@@ -232,11 +244,17 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
             FhirConfigManager fcm = workspace.getFhirConfigManager();
 
-            Observation pulseObservation = buildPulseObservation(model, patientIdRef, fcm);
+            // in the default scenario, Pulse observations should have an associated Encounter to tie it to
+            // associated resources
+
+            Encounter enc = buildNewHomeHealthEncounter(model.getReadingDate(), fcm, patientIdRef);
+            FhirUtil.appendResourceToBundle(bundle, enc);
+
+            Observation pulseObservation = buildPulseObservation(model, enc, patientIdRef, fcm);
             FhirUtil.appendResourceToBundle(bundle, pulseObservation);
 
             if (model.getFollowedProtocol() != null) {
-                Observation protocolObservation = buildProtocolObservation(model, patientIdRef, fcm);
+                Observation protocolObservation = buildProtocolObservation(model, enc, patientIdRef, fcm);
                 FhirUtil.appendResourceToBundle(bundle, protocolObservation);
             }
         }

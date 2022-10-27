@@ -93,16 +93,25 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         return UUID.randomUUID().toString();
     }
 
-    //    adapted from CDSHooksExecutor.buildHomeBloodPressureObservation()
+//    adapted from CDSHooksExecutor.buildHomeBloodPressureObservation()
 //    used when creating new Home Health (HH) Blood Pressure Observations
+
     protected Observation buildHomeHealthBloodPressureObservation(BloodPressureModel model, String patientId, FhirConfigManager fcm) throws DataException {
+        return buildHomeHealthBloodPressureObservation(model, null, patientId, fcm);
+    }
+
+    protected Observation buildHomeHealthBloodPressureObservation(BloodPressureModel model, Encounter encounter, String patientId, FhirConfigManager fcm) throws DataException {
         Observation o = new Observation();
 
         o.setId(genTemporaryId());
 
         o.setSubject(new Reference().setReference(patientId));
 
-//        o.setEncounter(new Reference().setReference(URN_UUID + enc.getId()));
+        if (encounter != null) {
+            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(encounter)));
+        } else if (model.getSourceEncounter() != null) {
+            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(model.getSourceEncounter())));
+        }
 
         o.setStatus(Observation.ObservationStatus.FINAL);
 
@@ -151,15 +160,22 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 
         return o;
     }
+    protected Observation buildProtocolObservation(AbstractVitalsModel model, String patientId, FhirConfigManager fcm) throws DataException {
+        return buildProtocolObservation(model, null, patientId, fcm);
+    }
 
-    protected Observation buildProtocolObservation(AbstractVitalsModel model, String patientId, FhirConfigManager fcm) {
+    protected Observation buildProtocolObservation(AbstractVitalsModel model, Encounter encounter, String patientId, FhirConfigManager fcm) throws DataException {
         Observation o = new Observation();
 
         o.setId(genTemporaryId());
 
         o.setSubject(new Reference().setReference(patientId));
 
-//        o.setEncounter(new Reference().setReference(URN_UUID + enc.getId()));
+        if (encounter != null) {
+            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(encounter)));
+        } else if (model.getSourceEncounter() != null) {
+            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(model.getSourceEncounter())));
+        }
 
         o.setStatus(Observation.ObservationStatus.FINAL);
         o.getCode().addCoding(fcm.getProtocolCoding());
@@ -179,14 +195,22 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 
         return o;
     }
+    protected Observation buildPulseObservation(PulseModel model, String patientId, FhirConfigManager fcm) throws DataException {
+        return buildPulseObservation(model, null, patientId, fcm);
+    }
 
-    protected Observation buildPulseObservation(PulseModel model, String patientId, FhirConfigManager fcm) {
+    protected Observation buildPulseObservation(PulseModel model, Encounter encounter, String patientId, FhirConfigManager fcm) throws DataException {
         Observation o = new Observation();
 
         o.setId(genTemporaryId());
 
         o.setSubject(new Reference().setReference(patientId));
 
+        if (encounter != null) {
+            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(encounter)));
+        } else if (model.getSourceEncounter() != null) {
+            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(model.getSourceEncounter())));
+        }
 //        o.setEncounter(new Reference().setReference(URN_UUID + enc.getId()));
 
         o.setStatus(Observation.ObservationStatus.FINAL);
@@ -257,5 +281,31 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         }
 
         return g;
+    }
+
+    protected Encounter buildNewHomeHealthEncounter(Date readingDate, FhirConfigManager fcm, String patientId) {
+        Encounter e = new Encounter();
+
+        e.setId(genTemporaryId());
+
+        e.setStatus(Encounter.EncounterStatus.FINISHED);
+
+        e.getClass_().setSystem(fcm.getEncounterClassSystem())
+                .setCode(fcm.getEncounterClassHHCode())
+                .setDisplay(fcm.getEncounterClassHHDisplay());
+
+        e.setSubject(new Reference().setReference(patientId));
+
+        Calendar start = Calendar.getInstance();
+        start.setTime(readingDate);
+        start.add(Calendar.MINUTE, -1);
+
+        Calendar end = Calendar.getInstance();
+        end.setTime(readingDate);
+        end.add(Calendar.MINUTE, 1);
+
+        e.getPeriod().setStart(start.getTime()).setEnd(end.getTime());
+
+        return e;
     }
 }

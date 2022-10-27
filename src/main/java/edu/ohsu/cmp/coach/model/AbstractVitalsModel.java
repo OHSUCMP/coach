@@ -24,6 +24,7 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    protected Encounter sourceEncounter;
     protected Observation sourceProtocolObservation;
 
     protected ObservationSource source = null;
@@ -38,6 +39,12 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
 
     public AbstractVitalsModel(ObservationSource source, Observation observation,
                                Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+        this(null, source, observation, protocolObservation, fcm);
+    }
+
+    public AbstractVitalsModel(Encounter encounter, ObservationSource source, Observation observation,
+                               Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+        this.sourceEncounter = encounter;
         this.source = source;
         this.sourceProtocolObservation = protocolObservation;
 
@@ -62,25 +69,6 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
             } else {
                 throw new CaseNotHandledException("couldn't handle case where protocol answer='" + answerValue + "'");
             }
-
-//        } else if (observation.hasNote()) {
-//            // in Epic, the protocol may be stored as a separate Observation, but it could also exist as
-//            // a specially-crafted annotation in the "note" element, if COACH was responsible for writing
-//            // it (Epic doesn't have a flowsheet row to store protocol info so this is a hack to get
-//            // around that limitation).
-//
-//            for (Annotation annotation : observation.getNote()) {
-//                if (annotation.hasText()) {
-//                    if (annotation.getText().equals(PROTOCOL_NOTE_TAG + fcm.getProtocolAnswerYes())) {
-//                        this.followedProtocol = true;
-//                        break;
-//
-//                    } else if (annotation.getText().equals(PROTOCOL_NOTE_TAG + fcm.getProtocolAnswerNo())) {
-//                        this.followedProtocol = false;
-//                        break;
-//                    }
-//                }
-//            }
         }
 
         if (observation.getEffectiveDateTimeType() != null) {
@@ -100,6 +88,11 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
     @Override
     public int compareTo(@NotNull AbstractVitalsModel o) {
         return readingDate.compareTo(o.readingDate);
+    }
+
+    @JsonIgnore
+    public Encounter getSourceEncounter() {
+        return sourceEncounter;
     }
 
     @JsonIgnore
@@ -134,65 +127,4 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
     public abstract String getReadingType();
     
     public abstract String getValue();
-
-//////////////////////////////////////////////////////////////////////////////
-// private methods
-//
-//    protected Encounter buildNewHomeHealthEncounter(FhirConfigManager fcm, String patientId) {
-//        Encounter e = new Encounter();
-//
-//        e.setId(genTemporaryId());
-//
-//        e.setStatus(Encounter.EncounterStatus.FINISHED);
-//
-//        e.getClass_().setSystem(fcm.getEncounterClassSystem())
-//                .setCode(fcm.getEncounterClassHHCode())
-//                .setDisplay(fcm.getEncounterClassHHDisplay());
-//
-//        e.setSubject(new Reference().setReference(patientId));
-//
-//        Calendar start = Calendar.getInstance();
-//        start.setTime(readingDate);
-//        start.add(Calendar.MINUTE, -1);
-//
-//        Calendar end = Calendar.getInstance();
-//        end.setTime(readingDate);
-//        end.add(Calendar.MINUTE, 1);
-//
-//        e.getPeriod().setStart(start.getTime()).setEnd(end.getTime());
-//
-//        return e;
-//    }
-
-//    protected Observation buildProtocolObservation(String patientId, FhirConfigManager fcm) {
-//        Observation o = new Observation();
-//
-//        o.setId(genTemporaryId());
-//
-//        o.setSubject(new Reference().setReference(patientId));
-//
-////        o.setEncounter(new Reference().setReference(URN_UUID + enc.getId()));
-//
-//        o.setStatus(Observation.ObservationStatus.FINAL);
-//        o.getCode().addCoding(fcm.getProtocolCoding());
-//
-//        FhirUtil.addHomeSettingExtension(o);
-//
-//        o.setEffective(new DateTimeType(readingDate));
-//
-//        String answerValue = followedProtocol ?
-//                fcm.getProtocolAnswerYes() :
-//                fcm.getProtocolAnswerNo();
-//
-//        o.setValue(new CodeableConcept());
-//        o.getValueCodeableConcept()
-//                .setText(answerValue)
-//                .addCoding(fcm.getProtocolAnswerCoding());
-//
-//        return o;
-//    }
-
-//    protected String genTemporaryId() {
-//        return UUID.randomUUID().toString();
-//    }
 }

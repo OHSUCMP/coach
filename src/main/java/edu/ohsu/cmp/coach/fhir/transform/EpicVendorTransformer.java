@@ -141,6 +141,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
         // if the observation came from the EHR, just package it up and send it along
         if (model.getSourceBPObservation() != null) {
+            // note : do not include Encounter for Epic
             FhirUtil.appendResourceToBundle(bundle, model.getSourceBPObservation());
             if (model.getSourceProtocolObservation() != null) {
                 FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation());
@@ -153,8 +154,12 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
             // When transforming a BP model to be used in Epic, we need to set a custom serialized note that
             // contains protocol information since we can't store that record separately in its own flowsheet record
+
+            // in Epic context, BP Observations do not have Encounters, but instead use timestamp as a mechanism
+            // to associated resources together
+
             Observation bpObservation = buildHomeHealthBloodPressureObservation(model, patientIdRef, fcm);
-            if (model.getFollowedProtocol()) {
+            if (model.getFollowedProtocol() != null) {
                 String s = model.getFollowedProtocol() ? fcm.getProtocolAnswerYes() : fcm.getProtocolAnswerNo();
                 bpObservation.getNote().add(new Annotation().setText(PROTOCOL_NOTE_TAG + s));
             }
@@ -202,8 +207,9 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                 for (Observation pulseObservation : pulseObservationList) {
                     PulseModel pm = new PulseModel(encounter, pulseObservation, protocolObservation, fcm);
 
-                    // Epic hack to set protocol information from custom-serialized note in the Observation resource
-                    // if no protocol resource is found
+                    // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
+                    // if no Observation resource for the protocol exists
+
                     if (protocolObservation == null) {
                         Boolean followedProtocol = getFollowedProtocolFromNote(pulseObservation, fcm);
                         if (followedProtocol != null) {
@@ -231,8 +237,9 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                         logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                         PulseModel pm = new PulseModel(o, fcm);
 
-                        // Epic hack to set protocol information from custom-serialized note in the Observation resource
-                        // if no protocol resource is found
+                        // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
+                        // if no Observation resource for the protocol exists
+
                         Boolean followedProtocol = getFollowedProtocolFromNote(o, fcm);
                         if (followedProtocol != null) {
                             pm.setFollowedProtocol(followedProtocol);
@@ -256,6 +263,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
         bundle.setType(Bundle.BundleType.COLLECTION);
 
         if (model.getSourcePulseObservation() != null) {
+            // note : do not include Encounter for Epic
             FhirUtil.appendResourceToBundle(bundle, model.getSourcePulseObservation());
             if (model.getSourceProtocolObservation() != null) {
                 FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation());
@@ -266,8 +274,12 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
             FhirConfigManager fcm = workspace.getFhirConfigManager();
 
-            // When transforming a Pulse model to be used in Epic, we need to set a custom serialized note that
-            // contains protocol information since we can't store that record separately in its own flowsheet record
+            // in Epic context, Pulse Observations do not have Encounters, but instead use timestamp as a mechanism
+            // to associated resources together
+
+            // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
+            // if no Observation resource for the protocol exists
+
             Observation pulseObservation = buildPulseObservation(model, patientIdRef, fcm);
             if (model.getFollowedProtocol() != null) {
                 String s = model.getFollowedProtocol() ? fcm.getProtocolAnswerYes() : fcm.getProtocolAnswerNo();
