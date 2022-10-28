@@ -57,8 +57,8 @@
                     let startDate = new Date();
                     let endDate = new Date();
 
-                    if (type === '2m') {
-                        startDate.setMonth(startDate.getMonth() - 2);
+                    if (type === 'mr') {
+                        startDate = getBPSetStartDate(window.bpdata);
                         startDate.setHours(0, 0, 0);
                         endDate.setHours(23, 59, 59);
 
@@ -247,23 +247,15 @@
                                                 <span id="chartKeySystolic"></span>
                                                 <label for="chartKeySystolic">Systolic BP</label>
                                             </div>
-<!--                                            <div class="chartKeyItem">-->
-<!--                                                <span id="chartKeySystolicGoal"></span>-->
-<!--                                                <label for="chartKeySystolicGoal">Systolic Goal</label>-->
-<!--                                            </div>-->
                                             <div class="chartKeyItem">
                                                 <span id="chartKeyDiastolic"></span>
                                                 <label for="chartKeyDiastolic">Diastolic BP</label>
                                             </div>
-<!--                                            <div class="chartKeyItem">-->
-<!--                                                <span id="chartKeyDiastolicGoal"></span>-->
-<!--                                                <label for="chartKeyDiastolicGoal">Diastolic Goal</label>-->
-<!--                                            </div>-->
                                         </div>
                                     </div>
                                     <div id="chartTimelineContainer" class="hidden">
                                         <span class="heading">Timeline</span>
-                                        <span class="button" data-window="2m">2 months</span>
+                                        <span class="button" data-window="mr">Most Recent</span>
                                         <span class="button" data-window="1y">1 year</span>
                                         <span class="button selected" data-window="all">All</span>
                                     </div>
