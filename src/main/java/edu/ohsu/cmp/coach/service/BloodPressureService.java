@@ -71,7 +71,6 @@ public class BloodPressureService extends AbstractVitalsService {
         if (storeRemotely) {
             VendorTransformer transformer = workspace.getVendorTransformer();
             Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
-            outgoingBundle.setType(Bundle.BundleType.TRANSACTION);
             List<BloodPressureModel> list = transformer.transformIncomingBloodPressureReadings(writeRemote(sessionId, outgoingBundle));
             if (list.size() >= 1) {
                 BloodPressureModel bpm2 = list.get(0);

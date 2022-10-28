@@ -276,6 +276,27 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         return g;
     }
 
+    // most Encounters will be in the workspace cache, but newly created ones will not be in there yet,
+    // although they *will* be in the bundle passed in as a parameter.  so consolidate those into one list
+    protected List<Encounter> getAllEncounters(Bundle bundle) {
+        List<Encounter> list = new ArrayList<>();
+
+        list.addAll(workspace.getEncounters());
+
+        if (bundle != null && bundle.hasEntry()) {
+            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+                if (entry.hasResource()) {
+                    if (entry.getResource() instanceof Encounter) {
+                        list.add((Encounter) entry.getResource());
+                    }
+                }
+            }
+        }
+
+        return list;
+    }
+
+
 ///////////////////////////////////////////////////////////////////////
 // private methods
 //

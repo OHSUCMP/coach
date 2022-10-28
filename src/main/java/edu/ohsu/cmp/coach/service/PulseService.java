@@ -71,7 +71,6 @@ public class PulseService extends AbstractVitalsService {
         if (storeRemotely) {
             VendorTransformer transformer = workspace.getVendorTransformer();
             Bundle outgoingBundle = transformer.transformOutgoingPulseReading(pm);
-            outgoingBundle.setType(Bundle.BundleType.TRANSACTION);
             List<PulseModel> list = transformer.transformIncomingPulseReadings(writeRemote(sessionId, outgoingBundle));
             if (list.size() >= 1) {
                 PulseModel pm2 = list.get(0);

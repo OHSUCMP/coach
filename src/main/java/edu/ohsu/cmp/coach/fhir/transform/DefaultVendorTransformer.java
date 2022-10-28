@@ -35,7 +35,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
 
         List<BloodPressureModel> list = new ArrayList<>();
 
-        for (Encounter encounter : workspace.getEncounters()) {
+        for (Encounter encounter : getAllEncounters(bundle)) {
             logger.debug("processing Encounter: " + encounter.getId());
 
             List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
@@ -127,13 +127,18 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             // in the default scenario, BP observations should have an associated Encounter that ties associated
             // resources together
 
-            Encounter enc = buildNewHomeHealthEncounter(model.getReadingDate(), fcm, patientIdRef);
+            Encounter enc = model.getSourceEncounter() != null ?
+                    model.getSourceEncounter() :
+                    buildNewHomeHealthEncounter(model.getReadingDate(), fcm, patientIdRef);
             FhirUtil.appendResourceToBundle(bundle, enc);
 
             Observation bpObservation = buildHomeHealthBloodPressureObservation(model, enc, patientIdRef, fcm);
             FhirUtil.appendResourceToBundle(bundle, bpObservation);
 
-            if (model.getFollowedProtocol() != null) {
+            if (model.getSourceProtocolObservation() != null) {
+                FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation());
+
+            } else if (model.getFollowedProtocol() != null) {
                 Observation protocolObservation = buildProtocolObservation(model, enc, patientIdRef, fcm);
                 FhirUtil.appendResourceToBundle(bundle, protocolObservation);
             }
@@ -161,7 +166,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
 
         // todo : outer loop should iterate over encounterObservationsMap, ignoring items where the key is null
 
-        for (Encounter encounter : workspace.getEncounters()) {
+        for (Encounter encounter : getAllEncounters(bundle)) {
             logger.debug("processing Encounter: " + encounter.getId());
 
             List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
@@ -247,13 +252,18 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             // in the default scenario, Pulse observations should have an associated Encounter to tie it to
             // associated resources
 
-            Encounter enc = buildNewHomeHealthEncounter(model.getReadingDate(), fcm, patientIdRef);
+            Encounter enc = model.getSourceEncounter() != null ?
+                    model.getSourceEncounter() :
+                    buildNewHomeHealthEncounter(model.getReadingDate(), fcm, patientIdRef);
             FhirUtil.appendResourceToBundle(bundle, enc);
 
             Observation pulseObservation = buildPulseObservation(model, enc, patientIdRef, fcm);
             FhirUtil.appendResourceToBundle(bundle, pulseObservation);
 
-            if (model.getFollowedProtocol() != null) {
+            if (model.getSourceProtocolObservation() != null) {
+                FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation());
+
+            } else if (model.getFollowedProtocol() != null) {
                 Observation protocolObservation = buildProtocolObservation(model, enc, patientIdRef, fcm);
                 FhirUtil.appendResourceToBundle(bundle, protocolObservation);
             }

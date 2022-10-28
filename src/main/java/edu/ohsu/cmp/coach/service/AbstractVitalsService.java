@@ -4,6 +4,7 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
@@ -22,21 +23,26 @@ public abstract class AbstractVitalsService extends AbstractService {
     protected Bundle writeRemote(String sessionId, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
         UserWorkspace workspace = workspaceService.get(sessionId);
 
-        if (bundle.getType() != Bundle.BundleType.TRANSACTION) {
-            throw new ConfigurationException("bundle passed to writeRemote must be of type=TRANSACTION");
+        Bundle bundleToTransact = new Bundle();
+        bundleToTransact.setType(Bundle.BundleType.TRANSACTION);
+
+        // prepare bundle for POSTing resources
+        // ONLY permit NEW resources (i.e. those with UUID identifiers) to pass
+        // based on the reasonable assumption that we NEVER want to update existing resources
+        for (Bundle.BundleEntryComponent sourceEntry : bundle.getEntry()) {
+            if (FhirUtil.isUUID(sourceEntry.getResource().getId())) {
+                Bundle.BundleEntryComponent entry = sourceEntry.copy();
+                entry.setRequest(new Bundle.BundleEntryRequestComponent()
+                        .setMethod(Bundle.HTTPVerb.POST)
+                        .setUrl(sourceEntry.getResource().fhirType()));
+                bundleToTransact.getEntry().add(entry);
+            }
         }
 
-        // prepare bundle for POSTing resources (create)
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            entry.setRequest(new Bundle.BundleEntryRequestComponent()
-                    .setMethod(Bundle.HTTPVerb.POST)
-                    .setUrl(entry.getResource().fhirType()));
-        }
-
-        // write reading to the FHIR server
+        // write resources to the FHIR server
 
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-        Bundle responseBundle = fhirService.transact(fcc, bundle, true);
+        Bundle responseBundle = fhirService.transact(fcc, bundleToTransact, true);
 
         // remove any responses that didn't result in a 201 Created response
         Iterator<Bundle.BundleEntryComponent> iter = responseBundle.getEntry().iterator();

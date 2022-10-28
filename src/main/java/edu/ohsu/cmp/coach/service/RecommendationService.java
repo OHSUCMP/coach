@@ -10,6 +10,7 @@ import edu.ohsu.cmp.coach.entity.Counseling;
 import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
+import edu.ohsu.cmp.coach.fhir.transform.DefaultVendorTransformer;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
@@ -96,6 +97,9 @@ public class RecommendationService extends AbstractService {
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         Audience audience = workspace.getAudience();
 
+        // force Default context when preparing resources for transmission to CQF-Ruler
+        DefaultVendorTransformer transformer = new DefaultVendorTransformer(workspace);
+
         List<Card> cards = new ArrayList<>();
         boolean prefetchModified = false;
 
@@ -109,15 +113,15 @@ public class RecommendationService extends AbstractService {
             compositeBundle.consume(p);
 
 //            prefetch.add(buildBPBundle(sessionId, p.getId()));
-            compositeBundle.consume(buildBPBundle(sessionId));
+            compositeBundle.consume(buildBPBundle(sessionId, transformer));
 
-//            compositeBundle.consume(buildPulseBundle(sessionId, p.getId()));      // do we care about pulses in recommendations?
+//            compositeBundle.consume(buildPulseBundle(sessionId, transformer));      // do we care about pulses in recommendations?
 
 //            prefetch.add(buildLocalCounselingBundle(sessionId, p.getId()));
             compositeBundle.consume(buildLocalCounselingBundle(sessionId, p.getId()));
 
 //            prefetch.add(buildGoalsBundle(sessionId, p.getId()));
-            compositeBundle.consume(buildGoalsBundle(sessionId));
+            compositeBundle.consume(buildGoalsBundle(sessionId, transformer));
 
             // HACK: if the patient has no Adverse Events, we must construct a fake one to send to
             //       CQF-Ruler to prevent it from querying the FHIR server for them and consequently
@@ -290,9 +294,8 @@ public class RecommendationService extends AbstractService {
         return p;
     }
 
-    private Bundle buildGoalsBundle(String sessionId) throws DataException {
+    private Bundle buildGoalsBundle(String sessionId, VendorTransformer transformer) throws DataException {
         CompositeBundle bundle = new CompositeBundle();
-        VendorTransformer transformer = workspaceService.get(sessionId).getVendorTransformer();
         for (GoalModel gm : goalService.getGoals(sessionId)) {
             transformer.transformOutgoingGoal(gm);
             bundle.consume(transformer.transformOutgoingGoal(gm));
@@ -300,18 +303,16 @@ public class RecommendationService extends AbstractService {
         return bundle.getBundle();
     }
 
-    private Bundle buildBPBundle(String sessionId) throws DataException {
+    private Bundle buildBPBundle(String sessionId, VendorTransformer transformer) throws DataException {
         CompositeBundle bundle = new CompositeBundle();
-        VendorTransformer transformer = workspaceService.get(sessionId).getVendorTransformer();
         for (BloodPressureModel bpm : bpService.getBloodPressureReadings(sessionId)) {
             bundle.consume(transformer.transformOutgoingBloodPressureReading(bpm));
         }
         return bundle.getBundle();
     }
 
-    private Bundle buildPulseBundle(String sessionId) throws DataException {
+    private Bundle buildPulseBundle(String sessionId, VendorTransformer transformer) throws DataException {
         CompositeBundle bundle = new CompositeBundle();
-        VendorTransformer transformer = workspaceService.get(sessionId).getVendorTransformer();
         for (PulseModel pm : pulseService.getPulseReadings(sessionId)) {
             bundle.consume(transformer.transformOutgoingPulseReading(pm));
         }

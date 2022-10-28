@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.fhir.transform;
 
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.model.AbstractVitalsModel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.PulseModel;
@@ -38,7 +39,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
         List<BloodPressureModel> list = new ArrayList<>();
 
-        for (Encounter encounter : workspace.getEncounters()) {
+        for (Encounter encounter : getAllEncounters(bundle)) {
             logger.debug("processing Encounter: " + encounter.getId());
 
             List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
@@ -69,6 +70,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
                     // Epic hack to set protocol information from custom-serialized note in the Observation resource
                     // if no protocol resource is found
+
                     if (protocolObservation == null) {
                         Boolean followedProtocol = getFollowedProtocolFromNote(bpObservation, fcm);
                         if (followedProtocol != null) {
@@ -96,8 +98,9 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                         logger.debug("bpObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                         BloodPressureModel bpm = new BloodPressureModel(o, fcm);
 
-                        // Epic hack to set protocol information from custom-serialized note in the Observation resource
-                        // if no protocol resource is found
+                        // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
+                        // if no Observation resource for the protocol exists
+
                         Boolean followedProtocol = getFollowedProtocolFromNote(o, fcm);
                         if (followedProtocol != null) {
                             bpm.setFollowedProtocol(followedProtocol);
@@ -115,23 +118,6 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
         return list;
     }
 
-    private Boolean getFollowedProtocolFromNote(Observation bpObservation, FhirConfigManager fcm) {
-        // Epic hack to handle when protocol-followed info is custom serialized into a note field
-        if (bpObservation.hasNote()) {
-            for (Annotation annotation : bpObservation.getNote()) {
-                if (annotation.hasText()) {
-                    if (annotation.getText().equals(PROTOCOL_NOTE_TAG + fcm.getProtocolAnswerYes())) {
-                        return true;
-
-                    } else if (annotation.getText().equals(PROTOCOL_NOTE_TAG + fcm.getProtocolAnswerNo())) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
     @Override
     public Bundle transformOutgoingBloodPressureReading(BloodPressureModel model) throws DataException {
         if (model == null) return null;
@@ -139,18 +125,19 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
+
         // if the observation came from the EHR, just package it up and send it along
         if (model.getSourceBPObservation() != null) {
             // note : do not include Encounter for Epic
-            FhirUtil.appendResourceToBundle(bundle, model.getSourceBPObservation());
-            if (model.getSourceProtocolObservation() != null) {
-                FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation());
-            }
+            //        also, combine protocol info into the bp observation if it exists
+            Observation bpObservation = model.getSourceBPObservation().copy();
+            appendProtocolAnswerToObservationIfNeeded(bpObservation, model, fcm);
+            FhirUtil.appendResourceToBundle(bundle, bpObservation);
 
         } else {
             String patientId = workspace.getPatient().getSourcePatient().getId(); //workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
-            FhirConfigManager fcm = workspace.getFhirConfigManager();
 
             // When transforming a BP model to be used in Epic, we need to set a custom serialized note that
             // contains protocol information since we can't store that record separately in its own flowsheet record
@@ -159,10 +146,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
             // to associated resources together
 
             Observation bpObservation = buildHomeHealthBloodPressureObservation(model, patientIdRef, fcm);
-            if (model.getFollowedProtocol() != null) {
-                String s = model.getFollowedProtocol() ? fcm.getProtocolAnswerYes() : fcm.getProtocolAnswerNo();
-                bpObservation.getNote().add(new Annotation().setText(PROTOCOL_NOTE_TAG + s));
-            }
+            appendProtocolAnswerToObservationIfNeeded(bpObservation, model, fcm);
             FhirUtil.appendResourceToBundle(bundle, bpObservation);
         }
 
@@ -178,7 +162,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
         List<PulseModel> list = new ArrayList<>();
 
-        for (Encounter encounter : workspace.getEncounters()) {
+        for (Encounter encounter : getAllEncounters(bundle)) {
             logger.debug("processing Encounter: " + encounter.getId());
 
             List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
@@ -262,17 +246,18 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
+
         if (model.getSourcePulseObservation() != null) {
             // note : do not include Encounter for Epic
-            FhirUtil.appendResourceToBundle(bundle, model.getSourcePulseObservation());
-            if (model.getSourceProtocolObservation() != null) {
-                FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation());
-            }
+            //        also, combine protocol info into the pulse observation if it exists
+            Observation pulseObservation = model.getSourcePulseObservation().copy();
+            appendProtocolAnswerToObservationIfNeeded(pulseObservation, model, fcm);
+            FhirUtil.appendResourceToBundle(bundle, pulseObservation);
 
         } else {
             String patientId = workspace.getPatient().getSourcePatient().getId(); //workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
-            FhirConfigManager fcm = workspace.getFhirConfigManager();
 
             // in Epic context, Pulse Observations do not have Encounters, but instead use timestamp as a mechanism
             // to associated resources together
@@ -281,10 +266,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
             // if no Observation resource for the protocol exists
 
             Observation pulseObservation = buildPulseObservation(model, patientIdRef, fcm);
-            if (model.getFollowedProtocol() != null) {
-                String s = model.getFollowedProtocol() ? fcm.getProtocolAnswerYes() : fcm.getProtocolAnswerNo();
-                pulseObservation.getNote().add(new Annotation().setText(PROTOCOL_NOTE_TAG + s));
-            }
+            appendProtocolAnswerToObservationIfNeeded(pulseObservation, model, fcm);
             FhirUtil.appendResourceToBundle(bundle, pulseObservation);
         }
 
@@ -299,5 +281,60 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     @Override
     public Bundle transformOutgoingGoal(GoalModel model) throws DataException {
         return defaultTransformer.transformOutgoingGoal(model);
+    }
+
+////////////////////////////////////////////////////////////////////////
+// private methods
+//
+
+    private Boolean getFollowedProtocolFromNote(Observation bpObservation, FhirConfigManager fcm) {
+        // Epic hack to handle when protocol-followed info is custom serialized into a note field
+        if (bpObservation.hasNote()) {
+            for (Annotation annotation : bpObservation.getNote()) {
+                if (annotation.hasText()) {
+                    if (annotation.getText().equals(PROTOCOL_NOTE_TAG + fcm.getProtocolAnswerYes())) {
+                        return true;
+
+                    } else if (annotation.getText().equals(PROTOCOL_NOTE_TAG + fcm.getProtocolAnswerNo())) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private void appendProtocolAnswerToObservationIfNeeded(Observation observation, AbstractVitalsModel model, FhirConfigManager fcm) {
+        if ( ! hasProtocolAnswerNote(observation) ) {
+            if (model.getSourceProtocolObservation() != null) {
+                Observation o = model.getSourceProtocolObservation();
+                if (o.hasValueCodeableConcept()) {
+                    CodeableConcept cc = o.getValueCodeableConcept();
+                    if (cc.hasText()) {
+                        appendProtocolAnswerNote(observation, cc.getText());
+                    }
+                }
+
+            } else if (model.getFollowedProtocol() != null) {
+                String s = model.getFollowedProtocol() ? fcm.getProtocolAnswerYes() : fcm.getProtocolAnswerNo();
+                appendProtocolAnswerNote(observation, s);
+            }
+        }
+    }
+
+    private boolean hasProtocolAnswerNote(Observation observation) {
+        if (observation == null) return false;
+        if (observation.hasNote()) {
+            for (Annotation annotation : observation.getNote()) {
+                if (annotation.hasText() && annotation.getText().startsWith(PROTOCOL_NOTE_TAG)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void appendProtocolAnswerNote(Observation observation, String note) {
+        observation.getNote().add(new Annotation().setText(PROTOCOL_NOTE_TAG + note));
     }
 }

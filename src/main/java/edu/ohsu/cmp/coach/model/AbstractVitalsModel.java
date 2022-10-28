@@ -95,9 +95,19 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
         return sourceEncounter;
     }
 
+    // implementing setSourceEncounter to facilitate the creation of new resources that use Encounter
+    @JsonIgnore
+    public void setSourceEncounter(Encounter sourceEncounter) {
+        this.sourceEncounter = sourceEncounter;
+    }
+
     @JsonIgnore
     public Observation getSourceProtocolObservation() {
         return sourceProtocolObservation;
+    }
+
+    public void setSourceProtocolObservation(Observation sourceProtocolObservation) {
+        this.sourceProtocolObservation = sourceProtocolObservation;
     }
 
     public ObservationSource getSource() {
