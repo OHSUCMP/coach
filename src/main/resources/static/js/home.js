@@ -171,7 +171,6 @@ function populateSummaryDiv() {
     if (hasData) {
         let avg = calculateAverageBP(window.bpdata);
 
-        // TODO: Might be better to hide average entirely when there's no data?
         if (avg) {
             avgSystolic = Math.round(avg.systolic);
             avgDiastolic = Math.round(avg.diastolic);
@@ -201,10 +200,11 @@ function populateSummaryDiv() {
 
     let el = $('#bpIcon');
     $(el).html("<img src='/images/" + indicator + "-icon.png' class='icon' alt='" + indicator + "' />");
-    $('#bpLabel').html('Recent BP Average:').attr('title', 'Averages the last several readings to compare to your goal')
+    $('#bpLabel').html('Recent BP Average:').attr('title', 'Average of the last several readings shaded in grey')
 
     let el2 = $('#bpGoalMetLabel');
-    if (hasData) {
+    // Only show if data exists and there were enough BPs to calculate an average
+    if (hasData && avgSystolic !== 0) {
         let currentBPGoal = getCurrentBPGoal();
         if (avgSystolic > currentBPGoal.systolic || avgDiastolic > currentBPGoal.diastolic) {
             $(el2).html('You are above goal');

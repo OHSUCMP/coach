@@ -50,15 +50,17 @@
                 window.bpchart = {};
 
                 let type = $(this).attr('data-window');
+                // The start date of the BP set used to calculate average
+                let bpSetStartDate = getBPSetStartDate(window.bpdata);
+                window.bpchart.bpSetStartDate = bpSetStartDate;
                 if (type === 'all') {
                     window.bpchart.data = window.bpdata;
-
                 } else {
                     let startDate = new Date();
                     let endDate = new Date();
 
                     if (type === 'mr') {
-                        startDate = getBPSetStartDate(window.bpdata);
+                        startDate = bpSetStartDate;
                         startDate.setHours(0, 0, 0);
                         endDate.setHours(23, 59, 59);
 
@@ -255,7 +257,7 @@
                                     </div>
                                     <div id="chartTimelineContainer" class="hidden">
                                         <span class="heading">Timeline</span>
-                                        <span class="button" data-window="mr">Most Recent</span>
+                                        <span class="button" data-window="mr">Recent</span>
                                         <span class="button" data-window="1y">1 year</span>
                                         <span class="button selected" data-window="all">All</span>
                                     </div>
