@@ -15,7 +15,6 @@
 <!--        <script type="text/javascript" src="/js/loess/loess.js"></script>-->
         <script src="/js/science.js/science.v1.js"></script>
         <script src="/js/science.js/lib/d3/d3.js"></script>
-
         <link rel="stylesheet" href="/css/home.css?v=2"/>
         <script type="text/javascript" src="/js/home.js?v=2"></script>
 
@@ -51,7 +50,7 @@
 
                 let type = $(this).attr('data-window');
                 // The start date of the BP set used to calculate average
-                let bpSetStartDate = getBPSetStartDate(window.bpdata);
+                const bpSetStartDate = getBPSetStartDate(window.bpdata);
                 window.bpchart.bpSetStartDate = bpSetStartDate;
                 if (type === 'all') {
                     window.bpchart.data = window.bpdata;
@@ -60,7 +59,12 @@
                     let endDate = new Date();
 
                     if (type === 'mr') {
-                        startDate = bpSetStartDate;
+                        if (bpSetStartDate) {
+                            startDate = bpSetStartDate;
+                        } else {
+                            // Fall back to showing 2 months if there is no set
+                            startDate.setMonth(startDate.getMonth() - 2);
+                        }
                         startDate.setHours(0, 0, 0);
                         endDate.setHours(23, 59, 59);
 
@@ -69,7 +73,6 @@
                         startDate.setHours(0, 0, 0);
                         endDate.setHours(23, 59, 59);
                     }
-
                     window.bpchart.data = truncateData(window.bpdata, startDate);
                     window.bpchart.startDate = startDate;
                     window.bpchart.endDate = endDate;
@@ -201,7 +204,10 @@
                             <td style="width:200px; vertical-align: top">
                                 <span style="font-weight: bold; white-space: nowrap">Your blood pressure:</span>
                                 <br/>
-                                <div id="avgBPContainer">
+                                <div id="avgPlaceholder">
+                                    <img src='/images/info-icon.png' class='icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>;
+                                </div>
+                                <div id="avgBPContainer" style="display:none">
                                     <table style="text-align:center">
                                         <tr>
                                             <td colspan="3">

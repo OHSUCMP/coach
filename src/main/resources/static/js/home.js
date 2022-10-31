@@ -136,12 +136,9 @@ function getBPSetStartDate(bps) {
     if (bpset) {
         const sorted = sortByDateAsc(bpset);
         return new Date(sorted[0].readingDate)
-    } 
+    }
 
-    // Fall back to 2 months if no set
-    let startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - 2);
-    return startDate;
+    return null;
 }
     
 /* Calculate the BP Average using the same logic from the recommendations */
@@ -176,6 +173,14 @@ function populateSummaryDiv() {
             avgDiastolic = Math.round(avg.diastolic);
         }
     }
+
+    if (avgSystolic === 0) {
+        $('#avgBPContainer').hide();
+        $('#avgPlaceholder').show();
+        return;
+    }
+    $('#avgPlaceholder').hide();
+    $('#avgBPContainer').show();
     $('#avgSystolic').html(avgSystolic);
     $('#avgDiastolic').html(avgDiastolic);
 
