@@ -90,14 +90,14 @@ function populateAdverseEvents() {
     }
 }
 
-// Sort blood pressures in date order
+// Sort blood pressures in date order, returning a new sorted array
 function sortByDateAsc(bps) {
-	return bps.sort((a, b) => Number(a.readingDate) - Number(b.readingDate));
+    return bps.slice(0).sort((a, b) => Number(a.readingDate) - Number(b.readingDate));
 }
 
-// Sort blood pressures in reverse date order
+// Sort blood pressures in reverse date order, returning a new sorted array
 function sortByDateDesc(bps) {
-	return bps.sort((a, b) => Number(b.readingDate) - Number(a.readingDate));
+	return bps.slice(0).sort((a, b) => Number(b.readingDate) - Number(a.readingDate));
 }
 
 /**
@@ -106,7 +106,7 @@ function sortByDateDesc(bps) {
  * @returns
  */
 function getBPSet(bps) {
-    let bpsDesc = sortByDateDesc(bps);
+    const bpsDesc = sortByDateDesc(bps);
     let set = bpsDesc.reduce((acc, bp) => {
         if (acc.score >= 4.0) {
             return acc;
@@ -284,7 +284,9 @@ function toLOESSData(data, type) {
 }
 
 function toLOESSData2(data, type) {
-    let map = data.map(function(item) {
+    // LOESS doesn't work if the data isn't sorted by date first. Make sure it is.
+    const sortedData = sortByDateAsc(data);
+    let map = sortedData.map(function(item) {
         return item[type] != null ? [item.readingDate, item[type].value] : null;
     }).filter(function(item) {
         return item != null;
@@ -303,7 +305,6 @@ function toLOESSData2(data, type) {
     });
 
     return loess_points;
-
 }
 
 function getLOESSBandwidth() {
