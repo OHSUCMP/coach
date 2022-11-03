@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 @Service
-public class PulseService extends AbstractVitalsService {
+public class PulseService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -71,7 +71,9 @@ public class PulseService extends AbstractVitalsService {
         if (storeRemotely) {
             VendorTransformer transformer = workspace.getVendorTransformer();
             Bundle outgoingBundle = transformer.transformOutgoingPulseReading(pm);
-            List<PulseModel> list = transformer.transformIncomingPulseReadings(writeRemote(sessionId, outgoingBundle));
+            List<PulseModel> list = transformer.transformIncomingPulseReadings(
+                    transformer.writeRemote(sessionId, fhirService, outgoingBundle)
+            );
             if (list.size() >= 1) {
                 PulseModel pm2 = list.get(0);
                 workspace.getPulses().add(pm2);

@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 @Service
-public class BloodPressureService extends AbstractVitalsService {
+public class BloodPressureService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -71,7 +71,9 @@ public class BloodPressureService extends AbstractVitalsService {
         if (storeRemotely) {
             VendorTransformer transformer = workspace.getVendorTransformer();
             Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
-            List<BloodPressureModel> list = transformer.transformIncomingBloodPressureReadings(writeRemote(sessionId, outgoingBundle));
+            List<BloodPressureModel> list = transformer.transformIncomingBloodPressureReadings(
+                    transformer.writeRemote(sessionId, fhirService, outgoingBundle)
+            );
             if (list.size() >= 1) {
                 BloodPressureModel bpm2 = list.get(0);
                 workspace.getBloodPressures().add(bpm2);

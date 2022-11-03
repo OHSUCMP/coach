@@ -1,15 +1,21 @@
 package edu.ohsu.cmp.coach.fhir.transform;
 
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.*;
+import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.service.FHIRService;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import org.hl7.fhir.instance.model.api.IDomainResource;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 
 public class EpicVendorTransformer extends BaseVendorTransformer implements VendorTransformer {
@@ -22,6 +28,29 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     public EpicVendorTransformer(UserWorkspace workspace) {
         super(workspace);
         defaultTransformer = new DefaultVendorTransformer(workspace);
+    }
+
+    @Override
+    public Bundle writeRemote(String sessionId, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
+
+        // in Epic, we need to post resources to flowsheets one at a time
+
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+
+        Bundle responseBundle = new Bundle();
+        responseBundle.setType(Bundle.BundleType.COLLECTION);
+
+        if (bundle != null && bundle.hasEntry()) {
+            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+                Resource r = entry.getResource();
+                if (r instanceof IDomainResource && FhirUtil.isUUID(r.getId())) {
+                    Resource r2 = fhirService.transact(fcc, (DomainResource) r);
+                    FhirUtil.appendResourceToBundle(responseBundle, r2);
+                }
+            }
+        }
+
+        return responseBundle;
     }
 
     @Override

@@ -1,14 +1,19 @@
 package edu.ohsu.cmp.coach.fhir.transform;
 
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.*;
+import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.service.FHIRService;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 
 public class DefaultVendorTransformer extends BaseVendorTransformer implements VendorTransformer {
@@ -16,6 +21,47 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
 
     public DefaultVendorTransformer(UserWorkspace workspace) {
         super(workspace);
+    }
+
+    @Override
+    public Bundle writeRemote(String sessionId, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
+        Bundle bundleToTransact = new Bundle();
+        bundleToTransact.setType(Bundle.BundleType.TRANSACTION);
+
+        // prepare bundle for POSTing resources
+        // ONLY permit NEW resources (i.e. those with UUID identifiers) to pass
+        // based on the reasonable assumption that we NEVER want to update existing resources
+        for (Bundle.BundleEntryComponent sourceEntry : bundle.getEntry()) {
+            if (FhirUtil.isUUID(sourceEntry.getResource().getId())) {
+                Bundle.BundleEntryComponent entry = sourceEntry.copy();
+                entry.setRequest(new Bundle.BundleEntryRequestComponent()
+                        .setMethod(Bundle.HTTPVerb.POST)
+                        .setUrl(sourceEntry.getResource().fhirType()));
+                bundleToTransact.getEntry().add(entry);
+            }
+        }
+
+        // write resources to the FHIR server
+
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        Bundle responseBundle = fhirService.transact(fcc, bundleToTransact, true);
+
+        // remove any responses that didn't result in a 201 Created response
+        Iterator<Bundle.BundleEntryComponent> iter = responseBundle.getEntry().iterator();
+        while (iter.hasNext()) {
+            Bundle.BundleEntryComponent entry = iter.next();
+            if (entry.hasResponse()) {
+                Bundle.BundleEntryResponseComponent response = entry.getResponse();
+                if (response.hasStatus() && response.getStatus().equals("201 Created")) {
+                    logger.debug("successfully created " + response.getLocation());
+                } else {
+                    logger.warn("got status = " + response.getStatus() + " attempting to write " + entry + " - removing");
+                    iter.remove();
+                }
+            }
+        }
+
+        return responseBundle;
     }
 
     /**
