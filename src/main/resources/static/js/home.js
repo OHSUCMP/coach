@@ -145,8 +145,10 @@ function getBPSetStartDate(bps) {
 function calculateAverageBP(bps) {
     const bpset = getBPSet(bps);
     if (bpset) {
-        const avgSys = bpset.reduce((acc,bp) => acc + bp.systolic.value, 0)/bpset.length;
-        const avgDia = bpset.reduce((acc,bp) => acc + bp.diastolic.value, 0)/bpset.length;
+        const systolicReadings = bpset.filter(r => r.systolic !== null).map(r => r.systolic.value);
+        const avgSys = systolicReadings.reduce((acc,val) => acc + val, 0)/systolicReadings.length;
+        const diastolicReadings = bpset.filter(r => r.diastolic !== null).map(r => r.diastolic.value);
+        const avgDia = diastolicReadings.reduce((acc,val) => acc + val, 0)/diastolicReadings.length;
         return {
             systolic: avgSys,
             diastolic: avgDia
