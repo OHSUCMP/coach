@@ -47,9 +47,6 @@ public class HomeController extends BaseController {
     @Autowired
     private MedicationService medicationService;
 
-    @Value("${graph.trendline.loess-bandwidth}")
-    private Number loessBandwidth;
-
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model,
                        @RequestParam(name = "bandwidth", required = false) Number bandwidthOverride) {
@@ -58,8 +55,7 @@ public class HomeController extends BaseController {
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
 
-        Number b = bandwidthOverride != null ? bandwidthOverride : loessBandwidth;
-        model.addAttribute("loessBandwidth", b);
+        model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
 
         if (sessionEstablished) {
             logger.info("requesting data for session " + session.getId());
