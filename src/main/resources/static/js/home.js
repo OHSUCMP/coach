@@ -1,3 +1,11 @@
+// Match the enum ObservationSource in Java
+const BPSource = Object.freeze({
+	Home: "HOME",
+	HomeBluetooth: "HOME_BLUETOOTH",
+	Office: "OFFICE",
+	Unknown: "UNKNOWN"
+})
+
 function doClearSupplementalData(_callback) {
     $.ajax({
         method: "POST",
@@ -82,33 +90,97 @@ function populateAdverseEvents() {
     }
 }
 
+// Sort blood pressures in date order, returning a new sorted array
+function sortByDateAsc(bps) {
+    return bps.slice(0).sort((a, b) => Number(a.readingDate) - Number(b.readingDate));
+}
+
+// Sort blood pressures in reverse date order, returning a new sorted array
+function sortByDateDesc(bps) {
+	return bps.slice(0).sort((a, b) => Number(b.readingDate) - Number(a.readingDate));
+}
+
+/**
+ * Get the set of BPs to use in average calculation or null if a set doesn't exist
+ * @param {*} bps
+ * @returns
+ */
+function getBPSet(bps) {
+    const bpsDesc = sortByDateDesc(bps);
+    let set = bpsDesc.reduce((acc, bp) => {
+        if (acc.score >= 4.0) {
+            return acc;
+        }
+        acc.bpset.push(bp);
+        if (bp.source === BPSource.Home | bp.source === BPSource.HomeBluetooth) {
+            acc.score += 0.667;
+        } else {
+            // Anything explicitly not home is considered OFFICE and given 1 point
+            acc.score += 1.0;
+        } 
+        return acc;
+    }, {
+        score: 0.0,
+        bpset: []
+    });
+
+    if (set.score >= 4) {
+        return set.bpset;
+    }
+
+    return null;
+}
+
+function getBPSetStartDate(bps) {
+    const bpset = getBPSet(bps);
+    if (bpset) {
+        const sorted = sortByDateAsc(bpset);
+        return new Date(sorted[0].readingDate)
+    }
+
+    return null;
+}
+    
+/* Calculate the BP Average using the same logic from the recommendations */
+function calculateAverageBP(bps) {
+    const bpset = getBPSet(bps);
+    if (bpset) {
+        const avgSys = bpset.reduce((acc,bp) => acc + bp.systolic.value, 0)/bpset.length;
+        const avgDia = bpset.reduce((acc,bp) => acc + bp.diastolic.value, 0)/bpset.length;
+        return {
+            systolic: avgSys,
+            diastolic: avgDia
+        };
+
+    }
+
+    return null;
+}
+      
 function populateSummaryDiv() {
-    let data = window.bpchart.data;
     let totalSystolic = 0;
     let totalDiastolic = 0;
     let avgSystolic = 0;
     let avgDiastolic = 0;
 
-    let hasData = Array.isArray(data) && data.length > 0;
+    let hasData = Array.isArray(window.bpdata) && window.bpdata.length > 0;
 
     if (hasData) {
-        let systolicCount = 0;
-        let diastolicCount = 0;
+        let avg = calculateAverageBP(window.bpdata);
 
-        data.forEach(function (o) {
-            if (o.systolic) {
-                totalSystolic += o.systolic.value;
-                systolicCount += 1;
-            }
-            if (o.diastolic) {
-                totalDiastolic += o.diastolic.value;
-                diastolicCount += 1;
-            }
-        });
-
-        avgSystolic = Math.round(totalSystolic / systolicCount);
-        avgDiastolic = Math.round(totalDiastolic / diastolicCount);
+        if (avg) {
+            avgSystolic = Math.round(avg.systolic);
+            avgDiastolic = Math.round(avg.diastolic);
+        }
     }
+
+    if (avgSystolic === 0) {
+        $('#avgBPContainer').hide();
+        $('#avgPlaceholder').show();
+        return;
+    }
+    $('#avgPlaceholder').hide();
+    $('#avgBPContainer').show();
     $('#avgSystolic').html(avgSystolic);
     $('#avgDiastolic').html(avgDiastolic);
 
@@ -133,10 +205,11 @@ function populateSummaryDiv() {
 
     let el = $('#bpIcon');
     $(el).html("<img src='/images/" + indicator + "-icon.png' class='icon' alt='" + indicator + "' />");
-    $('#bpLabel').html('Average BP:');
+    $('#bpLabel').html('Recent BP Average:').attr('title', 'Average of the last several readings shaded in grey')
 
     let el2 = $('#bpGoalMetLabel');
-    if (hasData) {
+    // Only show if data exists and there were enough BPs to calculate an average
+    if (hasData && avgSystolic !== 0) {
         let currentBPGoal = getCurrentBPGoal();
         if (avgSystolic > currentBPGoal.systolic || avgDiastolic > currentBPGoal.diastolic) {
             $(el2).html('You are above goal');
@@ -160,9 +233,9 @@ function buildPointStyleArray(data) {
     // see https://www.chartjs.org/docs/latest/configuration/elements.html for options
     let arr = [];
     data.forEach(function(item) {
-        if (item.source === 'HOME' || item.source === 'HOME_BLUETOOTH') {
+        if (item.source === BPSource.Home || item.source === BPSource.HomeBluetooth) {
             arr.push('circle');
-        } else if (item.source === 'OFFICE') {
+        } else if (item.source === BPSource.Office) {
             arr.push('rect');
         }
     });
@@ -211,7 +284,9 @@ function toLOESSData(data, type) {
 }
 
 function toLOESSData2(data, type) {
-    let map = data.map(function(item) {
+    // LOESS doesn't work if the data isn't sorted by date first. Make sure it is.
+    const sortedData = sortByDateAsc(data);
+    let map = sortedData.map(function(item) {
         return item[type] != null ? [item.readingDate, item[type].value] : null;
     }).filter(function(item) {
         return item != null;
@@ -230,7 +305,6 @@ function toLOESSData2(data, type) {
     });
 
     return loess_points;
-
 }
 
 function getLOESSBandwidth() {

@@ -17,6 +17,17 @@ function buildChart() {
 
     let goal = getCurrentBPGoal();
 
+    let bpSetStartDate = window.bpchart.bpSetStartDate;
+    showRecentAnnotation = true;
+    if (bpSetStartDate === undefined) {
+        // On first call, get the BPSetStartDate for chartjs annotation
+        bpSetStartDate = getBPSetStartDate(window.bpdata);  
+    }
+    if (!bpSetStartDate || (window.bpchart.startDate !== undefined && window.bpchart.startDate == bpSetStartDate)) {
+        // Don't shade recent BPs if no set exists or if "Recent" is selected in chart options
+        showRecentAnnotation = false;
+    }
+
     let config = {
         type: 'line',
         data: {
@@ -41,15 +52,7 @@ function buildChart() {
                 borderWidth: 2,
                 tension: 0.1,
                 data: toLOESSData2(window.bpchart.data, 'systolic')
-            }, /* {
-                type: 'line',
-                label: 'Systolic Regression',
-                pointRadius: 0,
-                fill: false,
-                borderColor: 'rgba(255, 0, 0, 0.3)',
-                borderWidth: 3,
-                data: toRegressionData(data, 'systolic')
-            },*/ {
+            }, {
                 type: 'scatter',
                 label: 'Diastolic',
                 pointRadius: 3,
@@ -70,15 +73,7 @@ function buildChart() {
                 borderWidth: 1,
                 tension: 0.1,
                 data: toLOESSData2(window.bpchart.data, 'diastolic')
-            } /*, {
-                type: 'line',
-                label: 'Diastolic Regression',
-                pointRadius: 0,
-                fill: false,
-                borderColor: 'rgba(0, 0, 255, 0.3)',
-                borderWidth: 3,
-                data: toRegressionData(data, 'diastolic')
-            }*/ ]
+            } ]
         },
         options: {
             title: {
@@ -128,21 +123,17 @@ function buildChart() {
                             yMax: goal.diastolic,
                             backgroundColor: 'rgba(244, 225, 172, 0.5)',
                             borderWidth: 0
+                        },
+                        recent: {
+                            drawTime: 'beforeDatasetsDraw',
+                            id: 'recent',
+                            type: 'box',
+                            xScaleID: 'x',
+                            xMin: bpSetStartDate,
+                            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                            borderWidth: 0,
+                            display: showRecentAnnotation
                         }
-                        // systolicGoal: {
-                        //     type: 'line',
-                        //     yMin: goal.systolic,
-                        //     yMax: goal.systolic,
-                        //     borderColor: 'rgb(255,0,0)', //'rgba(73,167,156,1)',
-                        //     borderWidth: 1
-                        // },
-                        // diastolicGoal: {
-                        //     type: 'line',
-                        //     yMin: goal.diastolic,
-                        //     yMax: goal.diastolic,
-                        //     borderColor: 'rgb(255,0,255)', //'rgba(167,139,51,1)',
-                        //     borderWidth: 1
-                        // }
                     }
                 }
             }
