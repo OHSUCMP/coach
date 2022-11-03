@@ -96,70 +96,10 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 //    adapted from CDSHooksExecutor.buildHomeBloodPressureObservation()
 //    used when creating new Home Health (HH) Blood Pressure Observations
 
-    protected Observation buildHomeHealthBloodPressureObservation(BloodPressureModel model, String patientId, FhirConfigManager fcm) throws DataException {
-        return buildHomeHealthBloodPressureObservation(model, null, patientId, fcm);
-    }
+//    protected Observation buildHomeHealthBloodPressureObservation(BloodPressureModel model, String patientId, FhirConfigManager fcm) throws DataException {
+//        return buildHomeHealthBloodPressureObservation(model, null, patientId, fcm);
+//    }
 
-    protected Observation buildHomeHealthBloodPressureObservation(BloodPressureModel model, Encounter encounter, String patientId, FhirConfigManager fcm) throws DataException {
-        Observation o = new Observation();
-
-        o.setId(genTemporaryId());
-
-        o.setSubject(new Reference().setReference(patientId));
-
-        if (encounter != null) {
-            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(encounter)));
-        } else if (model.getSourceEncounter() != null) {
-            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(model.getSourceEncounter())));
-        }
-
-        o.setStatus(Observation.ObservationStatus.FINAL);
-
-        o.addCategory().addCoding()
-                .setCode(OBSERVATION_CATEGORY_CODE)
-                .setSystem(OBSERVATION_CATEGORY_SYSTEM)
-                .setDisplay("vital-signs");
-
-        FhirUtil.addHomeSettingExtension(o);
-
-        if (model.getSystolic() != null && model.getDiastolic() == null) {            // systolic only
-            o.getCode().addCoding(fcm.getBpSystolicCoding());
-            o.getCode().addCoding(fcm.getBpHomeBluetoothSystolicCoding());
-            o.setValue(new Quantity());
-            setBPValue(o.getValueQuantity(), model.getSystolic(), fcm);
-
-        } else if (model.getSystolic() == null && model.getDiastolic() != null) {     // diastolic only
-            o.getCode().addCoding(fcm.getBpDiastolicCoding());
-            o.getCode().addCoding(fcm.getBpHomeBluetoothDiastolicCoding());
-            o.setValue(new Quantity());
-            setBPValue(o.getValueQuantity(), model.getDiastolic(), fcm);
-
-        } else if (model.getSystolic() != null && model.getDiastolic() != null) {     // both systolic and diastolic
-            o.getCode().addCoding(fcm.getBpCoding());
-            for (Coding c : fcm.getBpHomeCodings()) {
-                o.getCode().addCoding(c);
-            }
-
-            Observation.ObservationComponentComponent occSystolic = new Observation.ObservationComponentComponent();
-            occSystolic.getCode().addCoding(fcm.getBpSystolicCoding());
-            occSystolic.setValue(new Quantity());
-            setBPValue(occSystolic.getValueQuantity(), model.getSystolic(), fcm);
-            o.getComponent().add(occSystolic);
-
-            Observation.ObservationComponentComponent occDiastolic = new Observation.ObservationComponentComponent();
-            occDiastolic.getCode().addCoding(fcm.getBpDiastolicCoding());
-            occDiastolic.setValue(new Quantity());
-            setBPValue(occDiastolic.getValueQuantity(), model.getDiastolic(), fcm);
-            o.getComponent().add(occDiastolic);
-
-        } else {
-            throw new DataException("BP observation requires systolic and / or diastolic");
-        }
-
-        o.setEffective(new DateTimeType(model.getReadingDate()));
-
-        return o;
-    }
     protected Observation buildProtocolObservation(AbstractVitalsModel model, String patientId, FhirConfigManager fcm) throws DataException {
         return buildProtocolObservation(model, null, patientId, fcm);
     }
@@ -301,7 +241,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 // private methods
 //
 
-    private void setBPValue(Quantity q, QuantityModel qm, FhirConfigManager fcm) {
+    protected void setBPValue(Quantity q, QuantityModel qm, FhirConfigManager fcm) {
         q.setCode(fcm.getBpValueCode())
                 .setSystem(fcm.getBpValueSystem())
                 .setUnit(fcm.getBpValueUnit())

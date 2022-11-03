@@ -11,7 +11,9 @@ import org.hl7.fhir.r4.model.*;
 import java.util.Date;
 
 public class BloodPressureModel extends AbstractVitalsModel {
-    private Observation sourceBPObservation;
+    private Observation sourceBPObservation = null;
+    private Observation sourceSystolicObservation = null;
+    private Observation sourceDiastolicObservation = null;
 
     private QuantityModel systolic = null;
     private QuantityModel diastolic = null;
@@ -70,16 +72,24 @@ public class BloodPressureModel extends AbstractVitalsModel {
 
     // read remote, no encounter reference or resource available
     public BloodPressureModel(Observation bpObservation, FhirConfigManager fcm) throws DataException {
-        super(ObservationUtil.getBPSource(bpObservation, fcm), bpObservation, null, fcm);
+        super(ObservationUtil.getBPSource(bpObservation, fcm), null, ObservationUtil.getReadingDate(bpObservation), fcm);
 
         buildFromBPObservation(bpObservation, fcm);
+    }
+
+    // read remote, no encounter reference or resource available
+    // systolic and diastolic are split across two separate Observations
+    public BloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
+        super(ObservationUtil.getBPSource(systolicObservation, fcm), null, ObservationUtil.getReadingDate(systolicObservation), fcm);
+
+        buildFromSystolicDiastolicObservations(systolicObservation, diastolicObservation, fcm);
     }
 
     // read remote, has encounter and possibly protocol
     public BloodPressureModel(Encounter encounter, Observation bpObservation,
                               Observation protocolObservation, FhirConfigManager fcm) throws DataException {
 
-        super(encounter, ObservationUtil.getBPSource(bpObservation, encounter, fcm), bpObservation, protocolObservation, fcm);
+        super(encounter, ObservationUtil.getBPSource(bpObservation, encounter, fcm), protocolObservation, ObservationUtil.getReadingDate(bpObservation), fcm);
 
         buildFromBPObservation(bpObservation, fcm);
     }
@@ -91,10 +101,10 @@ public class BloodPressureModel extends AbstractVitalsModel {
         //        to retain the ids for the Encounter and other Observations?
 
         CodeableConcept code = bpObservation.getCode();
-        if (FhirUtil.hasCoding(code, fcm.getBpSystolicCoding()) || FhirUtil.hasCoding(code, fcm.getBpHomeBluetoothSystolicCoding())) {
+        if (FhirUtil.hasCoding(code, fcm.getSystolicCodings())) {
             systolic = new QuantityModel(bpObservation.getValueQuantity());
 
-        } else if (FhirUtil.hasCoding(code, fcm.getBpDiastolicCoding()) || FhirUtil.hasCoding(code, fcm.getBpHomeBluetoothDiastolicCoding())) {
+        } else if (FhirUtil.hasCoding(code, fcm.getDiastolicCodings())) {
             diastolic = new QuantityModel(bpObservation.getValueQuantity());
 
         } else { // it's not a raw systolic or diastolic reading of any sort, so it must be a panel.  right?
@@ -121,6 +131,26 @@ public class BloodPressureModel extends AbstractVitalsModel {
                     }
                 }
             }
+        }
+    }
+
+    private void buildFromSystolicDiastolicObservations(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
+        this.sourceSystolicObservation = systolicObservation;
+        this.sourceDiastolicObservation = diastolicObservation;
+
+        // todo : set id.  but to what?  first Observation's id?  what about the others?  how is id used?  do we need
+        //        to retain the ids for the Encounter and other Observations?
+
+        if (systolicObservation.hasCode() && FhirUtil.hasCoding(systolicObservation.getCode(), fcm.getSystolicCodings())) {
+            systolic = new QuantityModel(systolicObservation.getValueQuantity());
+        } else {
+            throw new DataException("systolic observation : invalid coding");
+        }
+
+        if (diastolicObservation.hasCode() && FhirUtil.hasCoding(diastolicObservation.getCode(), fcm.getDiastolicCodings())) {
+            diastolic = new QuantityModel(diastolicObservation.getValueQuantity());
+        } else {
+            throw new DataException("diastolic observation : invalid coding");
         }
     }
 
@@ -163,6 +193,16 @@ public class BloodPressureModel extends AbstractVitalsModel {
     @JsonIgnore
     public Observation getSourceBPObservation() {
         return sourceBPObservation;
+    }
+
+    @JsonIgnore
+    public Observation getSourceSystolicObservation() {
+        return sourceSystolicObservation;
+    }
+
+    @JsonIgnore
+    public Observation getSourceDiastolicObservation() {
+        return sourceDiastolicObservation;
     }
 
     public QuantityModel getSystolic() {

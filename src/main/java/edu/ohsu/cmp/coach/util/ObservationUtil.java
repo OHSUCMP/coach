@@ -1,11 +1,14 @@
 package edu.ohsu.cmp.coach.util;
 
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.EncounterMatcher;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.ObservationSource;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Observation;
+
+import java.util.Date;
 
 public class ObservationUtil {
 
@@ -56,5 +59,20 @@ public class ObservationUtil {
         return FhirUtil.hasHomeSettingExtension(pulseObservation) ?
                 ObservationSource.HOME :
                 ObservationSource.UNKNOWN;
+    }
+
+    public static Date getReadingDate(Observation observation) throws DataException {
+        if (observation.getEffectiveDateTimeType() != null) {
+            return observation.getEffectiveDateTimeType().getValue(); //.getTime();
+
+        } else if (observation.getEffectiveInstantType() != null) {
+            return observation.getEffectiveInstantType().getValue(); //.getTime();
+
+        } else if (observation.getEffectivePeriod() != null) {
+            return observation.getEffectivePeriod().getEnd(); //.getTime();
+
+        } else {
+            throw new DataException("missing timestamp");
+        }
     }
 }

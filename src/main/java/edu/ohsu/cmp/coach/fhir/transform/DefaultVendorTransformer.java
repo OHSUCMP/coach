@@ -116,6 +116,27 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
                 FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation());
             }
 
+        } else if (model.getSourceSystolicObservation() != null && model.getSourceDiastolicObservation() != null) {
+            FhirConfigManager fcm = workspace.getFhirConfigManager();
+
+            // enforce presence of LOINC codes, as this block of logic really only comes from Epic source
+            // where LOINC codes are prohibited
+
+            Observation systolicObservation = model.getSourceSystolicObservation().copy();
+            appendIfMissing(systolicObservation, fcm.getBpSystolicCoding());
+            FhirUtil.appendResourceToBundle(bundle,systolicObservation);
+
+            Observation diastolicObservation = model.getSourceDiastolicObservation().copy();
+            appendIfMissing(diastolicObservation, fcm.getBpDiastolicCoding());
+            FhirUtil.appendResourceToBundle(bundle, diastolicObservation);
+
+            if (model.getSourceEncounter() != null) {
+                FhirUtil.appendResourceToBundle(bundle, model.getSourceEncounter());
+            }
+            if (model.getSourceProtocolObservation() != null) {
+                FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation());
+            }
+
         } else {
             String patientId = workspace.getPatient().getSourcePatient().getId(); //workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
@@ -342,5 +363,76 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         e.getPeriod().setStart(start.getTime()).setEnd(end.getTime());
 
         return e;
+    }
+
+    private Observation buildHomeHealthBloodPressureObservation(BloodPressureModel model, Encounter encounter, String patientIdRef, FhirConfigManager fcm) throws DataException {
+        Observation o = new Observation();
+
+        o.setId(genTemporaryId());
+
+        o.setSubject(new Reference().setReference(patientIdRef));
+
+        if (encounter != null) {
+            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(encounter)));
+        } else if (model.getSourceEncounter() != null) {
+            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(model.getSourceEncounter())));
+        }
+
+        o.setStatus(Observation.ObservationStatus.FINAL);
+
+        o.addCategory().addCoding()
+                .setCode(OBSERVATION_CATEGORY_CODE)
+                .setSystem(OBSERVATION_CATEGORY_SYSTEM)
+                .setDisplay("vital-signs");
+
+        FhirUtil.addHomeSettingExtension(o);
+
+        if (model.getSystolic() != null && model.getDiastolic() == null) {            // systolic only
+            o.getCode().addCoding(fcm.getBpSystolicCoding());
+            o.getCode().addCoding(fcm.getBpHomeBluetoothSystolicCoding());
+            o.setValue(new Quantity());
+            setBPValue(o.getValueQuantity(), model.getSystolic(), fcm);
+
+        } else if (model.getSystolic() == null && model.getDiastolic() != null) {     // diastolic only
+            o.getCode().addCoding(fcm.getBpDiastolicCoding());
+            o.getCode().addCoding(fcm.getBpHomeBluetoothDiastolicCoding());
+            o.setValue(new Quantity());
+            setBPValue(o.getValueQuantity(), model.getDiastolic(), fcm);
+
+        } else if (model.getSystolic() != null && model.getDiastolic() != null) {     // both systolic and diastolic
+            o.getCode().addCoding(fcm.getBpCoding());
+            for (Coding c : fcm.getBpHomeCodings()) {
+                o.getCode().addCoding(c);
+            }
+
+            Observation.ObservationComponentComponent occSystolic = new Observation.ObservationComponentComponent();
+            occSystolic.getCode().addCoding(fcm.getBpSystolicCoding());
+            occSystolic.setValue(new Quantity());
+            setBPValue(occSystolic.getValueQuantity(), model.getSystolic(), fcm);
+            o.getComponent().add(occSystolic);
+
+            Observation.ObservationComponentComponent occDiastolic = new Observation.ObservationComponentComponent();
+            occDiastolic.getCode().addCoding(fcm.getBpDiastolicCoding());
+            occDiastolic.setValue(new Quantity());
+            setBPValue(occDiastolic.getValueQuantity(), model.getDiastolic(), fcm);
+            o.getComponent().add(occDiastolic);
+
+        } else {
+            throw new DataException("BP observation requires systolic and / or diastolic");
+        }
+
+        o.setEffective(new DateTimeType(model.getReadingDate()));
+
+        return o;
+    }
+
+    private void appendIfMissing(Observation observation, Coding coding) {
+        if (observation == null) return;
+
+        if (observation.hasCode() && observation.getCode().hasCoding(coding.getSystem(), coding.getCode())) {
+            return;
+        }
+
+        observation.getCode().addCoding(coding);
     }
 }

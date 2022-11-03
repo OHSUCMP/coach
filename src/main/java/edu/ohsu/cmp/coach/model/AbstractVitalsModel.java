@@ -37,20 +37,20 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
         this.readingDate = readingDate;
     }
 
-    public AbstractVitalsModel(ObservationSource source, Observation observation,
-                               Observation protocolObservation, FhirConfigManager fcm) throws DataException {
-        this(null, source, observation, protocolObservation, fcm);
+    public AbstractVitalsModel(ObservationSource source, Observation protocolObservation,
+                               Date readingDate, FhirConfigManager fcm) {
+        this(null, source, protocolObservation, readingDate, fcm);
     }
 
-    public AbstractVitalsModel(Encounter encounter, ObservationSource source, Observation observation,
-                               Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+    public AbstractVitalsModel(Encounter encounter, ObservationSource source, Observation protocolObservation,
+                               Date readingDate, FhirConfigManager fcm) {
         this.sourceEncounter = encounter;
         this.source = source;
         this.sourceProtocolObservation = protocolObservation;
 
-        if (source == ObservationSource.HOME && ! FhirUtil.hasHomeSettingExtension(observation)) {
-            logger.warn("Observation " + observation.getId() + " has HOME Encounter but is missing the Home Setting Extension");
-        }
+//        if (source == ObservationSource.HOME && ! FhirUtil.hasHomeSettingExtension(observation)) {
+//            logger.warn("Observation " + observation.getId() + " has HOME Encounter but is missing the Home Setting Extension");
+//        }
 
         if (protocolObservation != null &&
                 FhirUtil.hasCoding(protocolObservation.getCode(), fcm.getProtocolCoding()) &&
@@ -71,18 +71,7 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
             }
         }
 
-        if (observation.getEffectiveDateTimeType() != null) {
-            this.readingDate = observation.getEffectiveDateTimeType().getValue(); //.getTime();
-
-        } else if (observation.getEffectiveInstantType() != null) {
-            this.readingDate = observation.getEffectiveInstantType().getValue(); //.getTime();
-
-        } else if (observation.getEffectivePeriod() != null) {
-            this.readingDate = observation.getEffectivePeriod().getEnd(); //.getTime();
-
-        } else {
-            throw new DataException("missing timestamp");
-        }
+        this.readingDate = readingDate;
     }
 
     @Override

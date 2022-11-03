@@ -194,12 +194,30 @@ public class FhirConfigManager {
 
     public List<Coding> getAllBpCodings() {
         List<Coding> list = new ArrayList<>();
+        list.addAll(getBpPanelCodings());
+        list.addAll(getSystolicCodings());
+        list.addAll(getDiastolicCodings());
+        return list;
+    }
+
+    public List<Coding> getBpPanelCodings() {
+        List<Coding> list = new ArrayList<>();
         list.add(getBpCoding());
-        list.add(getBpSystolicCoding());
-        list.add(getBpDiastolicCoding());
         list.addAll(getBpOfficeCodings());
         list.addAll(getBpHomeCodings());
+        return list;
+    }
+
+    public List<Coding> getSystolicCodings() {
+        List<Coding> list = new ArrayList<>();
+        list.add(getBpSystolicCoding());
         list.add(getBpHomeBluetoothSystolicCoding());
+        return list;
+    }
+
+    public List<Coding> getDiastolicCodings() {
+        List<Coding> list = new ArrayList<>();
+        list.add(getBpDiastolicCoding());
         list.add(getBpHomeBluetoothDiastolicCoding());
         return list;
     }

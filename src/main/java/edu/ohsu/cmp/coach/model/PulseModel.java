@@ -38,7 +38,7 @@ public class PulseModel extends AbstractVitalsModel {
 
     // read remote, no encounter reference or resource available
     public PulseModel(Observation pulseObservation, FhirConfigManager fcm) throws DataException {
-        super(ObservationUtil.getPulseSource(pulseObservation), pulseObservation, null, fcm);
+        super(ObservationUtil.getPulseSource(pulseObservation), null, ObservationUtil.getReadingDate(pulseObservation), fcm);
 
         buildFromPulseObservation(pulseObservation);
     }
@@ -47,7 +47,7 @@ public class PulseModel extends AbstractVitalsModel {
     public PulseModel(Encounter enc, Observation pulseObservation,
                       Observation protocolObservation, FhirConfigManager fcm) throws DataException {
 
-        super(enc, ObservationUtil.getSourceByEncounter(enc, fcm), pulseObservation, protocolObservation, fcm);
+        super(enc, ObservationUtil.getSourceByEncounter(enc, fcm), protocolObservation, ObservationUtil.getReadingDate(pulseObservation), fcm);
 
         buildFromPulseObservation(pulseObservation);
     }
