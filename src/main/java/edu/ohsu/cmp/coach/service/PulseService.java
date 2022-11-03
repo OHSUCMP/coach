@@ -5,13 +5,12 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
+import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.ObservationSource;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,61 +33,9 @@ public class PulseService extends AbstractVitalsService {
         CompositeBundle compositeBundle = new CompositeBundle();
         compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getPulseCoding()), fcm.getPulseLookbackPeriod(),null));
         compositeBundle.consume(workspaceService.get(sessionId).getProtocolObservations());
-        Bundle observationBundle = compositeBundle.getBundle();
 
-        Map<String, List<Observation>> encounterObservationsMap = buildEncounterObservationsMap(observationBundle);
-
-        List<PulseModel> list = new ArrayList<>();
-
-        for (Encounter encounter : workspaceService.get(sessionId).getEncounters()) {
-            logger.debug("processing Encounter: " + encounter.getId());
-
-            List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
-
-            if (encounterObservations != null) {
-                logger.debug("building Observations for Encounter " + encounter.getId());
-
-                List<Observation> pulseObservationList = new ArrayList<>();    // potentially many per encounter
-                Observation protocolObservation = null;
-
-                Iterator<Observation> iter = encounterObservations.iterator();
-                while (iter.hasNext()) {
-                    Observation o = iter.next();
-                    if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCoding())) {
-                        logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        pulseObservationList.add(o);
-                        iter.remove();
-
-                    } else if (protocolObservation == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
-                        logger.debug("protocolObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        protocolObservation = o;
-                        iter.remove();
-                    }
-                }
-
-                for (Observation pulseObservation : pulseObservationList) {
-                    list.add(new PulseModel(encounter, pulseObservation, protocolObservation, fcm));
-                }
-
-                pulseObservationList.clear();
-
-            } else {
-                logger.debug("no Observations found for Encounter " + encounter.getId());
-            }
-        }
-
-        // if there are any pulse observations that didn't get processed, we want to know about it
-        if (logger.isDebugEnabled()) {
-            for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
-                if (entry.getValue() != null) {
-                    for (Observation o : entry.getValue()) {
-                        logger.debug("did not process Observation " + o.getId());
-                    }
-                }
-            }
-        }
-
-        return list;
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        return workspace.getVendorTransformer().transformIncomingPulseReadings(compositeBundle.getBundle());
     }
 
     public List<PulseModel> getHomePulseReadings(String sessionId) {
@@ -120,54 +67,16 @@ public class PulseService extends AbstractVitalsService {
     }
 
     public PulseModel create(String sessionId, PulseModel pm) throws DataException, ConfigurationException, IOException, ScopeException {
+        UserWorkspace workspace = workspaceService.get(sessionId);
         if (storeRemotely) {
-            Bundle responseBundle = writeRemote(sessionId, pm);
-
-            // read each response resource, and append to the BP cache if created
-            // also, create a fresh BloodPressureModel resource constructed from the actual resources
-
-            Encounter encounter = null;
-            Observation pulseObservation = null;
-            Observation protocolObservation = null;
-
-            for (Bundle.BundleEntryComponent entry : responseBundle.getEntry()) {
-                if (entry.hasResponse()) {
-                    Bundle.BundleEntryResponseComponent response = entry.getResponse();
-                    if (response.hasStatus() && response.getStatus().equals("201 Created")) {
-                        logger.debug("successfully created " + response.getLocation());
-                        if (entry.hasResource()) {
-                            Resource r = entry.getResource();
-
-                            if (r instanceof Encounter) {
-                                encounter = (Encounter) r;
-
-                            } else if (r instanceof Observation) {
-                                Observation o = (Observation) r;
-                                if (o.hasCode()) {
-                                    if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCoding())) {
-                                        pulseObservation = o;
-
-                                    } else if (FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
-                                        protocolObservation = o;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            try {
-                PulseModel pm2 = new PulseModel(encounter, pulseObservation, protocolObservation, fcm);
-                workspaceService.get(sessionId).getPulses().add(pm2);
+            VendorTransformer transformer = workspace.getVendorTransformer();
+            Bundle outgoingBundle = transformer.transformOutgoingPulseReading(pm);
+            List<PulseModel> list = transformer.transformIncomingPulseReadings(writeRemote(sessionId, outgoingBundle));
+            if (list.size() >= 1) {
+                PulseModel pm2 = list.get(0);
+                workspace.getPulses().add(pm2);
                 return pm2;
-
-            } catch (DataException de) {
-                logger.error("caught " + de.getClass().getName() +
-                        " attempting to construct PulseModel from remote create response - " +
-                        de.getMessage(), de);
             }
-
         } else {
             try {
                 HomePulseReading hpr = new HomePulseReading(pm);

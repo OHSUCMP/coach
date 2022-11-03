@@ -3,12 +3,10 @@ package edu.ohsu.cmp.coach.service;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
-import edu.ohsu.cmp.coach.model.FHIRCompatible;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,28 +20,46 @@ public abstract class AbstractVitalsService extends AbstractService {
 
     protected static final String NO_ENCOUNTERS_KEY = null; // intentionally instantiated with null value
 
-    protected Bundle writeRemote(String sessionId, FHIRCompatible fhirCompatible) throws DataException, IOException, ConfigurationException, ScopeException {
+    protected Bundle writeRemote(String sessionId, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
         UserWorkspace workspace = workspaceService.get(sessionId);
 
-        String patientId = workspace.getPatient().getSourcePatient().getId();
-        Bundle bundle = fhirCompatible.toBundle(patientId, fcm);
+        Bundle bundleToTransact = new Bundle();
+        bundleToTransact.setType(Bundle.BundleType.TRANSACTION);
 
-        // modify bundle to be appropriate for submission as a CREATE TRANSACTION
-
-        bundle.setType(Bundle.BundleType.TRANSACTION);
-
-        // prepare bundle for POSTing resources (create)
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            entry.setFullUrl(URN_UUID + entry.getResource().getId())
-                    .setRequest(new Bundle.BundleEntryRequestComponent()
-                            .setMethod(Bundle.HTTPVerb.PUT)
-                            .setUrl(entry.getResource().fhirType()));
+        // prepare bundle for POSTing resources
+        // ONLY permit NEW resources (i.e. those with UUID identifiers) to pass
+        // based on the reasonable assumption that we NEVER want to update existing resources
+        for (Bundle.BundleEntryComponent sourceEntry : bundle.getEntry()) {
+            if (FhirUtil.isUUID(sourceEntry.getResource().getId())) {
+                Bundle.BundleEntryComponent entry = sourceEntry.copy();
+                entry.setRequest(new Bundle.BundleEntryRequestComponent()
+                        .setMethod(Bundle.HTTPVerb.POST)
+                        .setUrl(sourceEntry.getResource().fhirType()));
+                bundleToTransact.getEntry().add(entry);
+            }
         }
 
-        // write BP reading to the FHIR server
+        // write resources to the FHIR server
 
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-        return fhirService.transact(fcc, bundle, true);
+        Bundle responseBundle = fhirService.transact(fcc, bundleToTransact, true);
+
+        // remove any responses that didn't result in a 201 Created response
+        Iterator<Bundle.BundleEntryComponent> iter = responseBundle.getEntry().iterator();
+        while (iter.hasNext()) {
+            Bundle.BundleEntryComponent entry = iter.next();
+            if (entry.hasResponse()) {
+                Bundle.BundleEntryResponseComponent response = entry.getResponse();
+                if (response.hasStatus() && response.getStatus().equals("201 Created")) {
+                    logger.debug("successfully created " + response.getLocation());
+                } else {
+                    logger.warn("got status = " + response.getStatus() + " attempting to write " + entry + " - removing");
+                    iter.remove();
+                }
+            }
+        }
+
+        return responseBundle;
     }
 
     protected Map<String, List<Observation>> buildEncounterObservationsMap(Bundle bundle) {

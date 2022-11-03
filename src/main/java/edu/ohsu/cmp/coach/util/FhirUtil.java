@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 public class FhirUtil {
     private static final Logger logger = LoggerFactory.getLogger(FhirUtil.class);
 
+    private static final String URN_UUID = "urn:uuid:";
     private static final String EXTENSION_HOME_SETTING_URL = "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt";
     private static final String EXTENSION_HOME_SETTING_CODE = "264362003";
     private static final String EXTENSION_HOME_SETTING_SYSTEM = "http://snomed.info/sct";
@@ -88,26 +89,26 @@ public class FhirUtil {
     }
 
 
-    public static Bundle toBundle(String patientId, FhirConfigManager fcm,
-                                  Collection<? extends FHIRCompatible> collection) throws DataException {
-        return toBundle(patientId, fcm, null, collection);
-    }
-
-    public static Bundle toBundle(String patientId, FhirConfigManager fcm, Bundle.BundleType bundleType,
-                                  Collection<? extends FHIRCompatible> collection) throws DataException {
-        if (collection == null) return null;
-
-        Bundle bundle = new Bundle();
-        bundle.setType(bundleType);
-
-        for (FHIRCompatible item : collection) {
-            bundle.getEntry().addAll(
-                    item.toBundle(patientId, fcm).getEntry()
-            );
-        }
-
-        return bundle;
-    }
+//    public static Bundle toBundle(String patientId, FhirConfigManager fcm,
+//                                  Collection<? extends FHIRCompatible> collection) throws DataException {
+//        return toBundle(patientId, fcm, null, collection);
+//    }
+//
+//    public static Bundle toBundle(String patientId, FhirConfigManager fcm, Bundle.BundleType bundleType,
+//                                  Collection<? extends FHIRCompatible> collection) throws DataException {
+//        if (collection == null) return null;
+//
+//        Bundle bundle = new Bundle();
+//        bundle.setType(bundleType);
+//
+//        for (FHIRCompatible item : collection) {
+//            bundle.getEntry().addAll(
+//                    item.toBundle(patientId, fcm).getEntry()
+//            );
+//        }
+//
+//        return bundle;
+//    }
 
     public static Bundle bundleResources(Resource ... resources) {
         return bundleResources(Bundle.BundleType.COLLECTION, Arrays.asList(resources));
@@ -133,11 +134,18 @@ public class FhirUtil {
     }
 
     public static void appendResourceToBundle(Bundle bundle, Resource resource) {
-        String fullUrl = resource.getId().startsWith("http://") || resource.getId().startsWith("https://") ?
-                resource.getId() :
-                "http://hl7.org/fhir/" + resource.getClass().getSimpleName() + "/" + resource.getId();
+        String fullUrl;
+        if (resource.getId().startsWith("http://") || resource.getId().startsWith("https://")) {
+            fullUrl = resource.getId();
+        } else if (isUUID(resource.getId())) {
+            fullUrl = URN_UUID + resource.getId();
+        } else {
+            fullUrl = "http://hl7.org/fhir/" + resource.getClass().getSimpleName() + "/" + resource.getId();
+        }
 
-        bundle.getEntry().add(new Bundle.BundleEntryComponent().setFullUrl(fullUrl).setResource(resource));
+        bundle.getEntry().add(new Bundle.BundleEntryComponent()
+                .setFullUrl(fullUrl)
+                .setResource(resource));
     }
 
     public static String toIdentifierString(Identifier identifier) {
@@ -155,22 +163,43 @@ public class FhirUtil {
     }
 
     public static String toRelativeReference(String reference) {
-        String s = reference;
-        // convert https://api.logicahealth.org/htnu18r42/data/Patient/MedicationTest/_history/4 into
-        //         Patient/MedicationTest
-        // convert Encounter/1146/_history/1 into Encounter/1146
+        if (reference.startsWith(URN_UUID)) {
+            return reference;
 
-        int suffixPos = s.indexOf("/_history/");
-        if (suffixPos > 0) {
-            s = s.substring(0, suffixPos);
-        }
-
-        if (reference.startsWith("http://") || reference.startsWith("https://")) {
-            String[] parts = s.split("\\/");
-            return parts[parts.length - 2] + "/" + parts[parts.length - 1];
+        } else if (isUUID(reference)) {
+            return URN_UUID + reference;
 
         } else {
-            return s;
+            String s = reference;
+            // convert https://api.logicahealth.org/htnu18r42/data/Patient/MedicationTest/_history/4 into
+            //         Patient/MedicationTest
+            // convert Encounter/1146/_history/1 into Encounter/1146
+
+            int suffixPos = s.indexOf("/_history/");
+            if (suffixPos > 0) {
+                s = s.substring(0, suffixPos);
+            }
+
+            if (reference.startsWith("http://") || reference.startsWith("https://")) {
+                String[] parts = s.split("\\/");
+                return parts[parts.length - 2] + "/" + parts[parts.length - 1];
+
+            } else {
+                return s;
+            }
+        }
+    }
+
+    public static String toRelativeReference(DomainResource resource) throws DataException {
+        if (resource == null) return null;
+
+        if (resource.hasId()) {
+            return isUUID(resource.getId()) ?
+                    URN_UUID + resource.getId() :
+                    resource.getClass().getSimpleName() + "/" + resource.getId();
+
+        } else {
+            throw new DataException("resource (" + resource.getClass().getSimpleName() + ") is missing id element");
         }
     }
 
@@ -178,10 +207,15 @@ public class FhirUtil {
     public static String extractIdFromReference(String reference) {
         if (reference == null) return null;
 
-        int index = reference.indexOf('/');
-        return index >= 0 ?
-                reference.substring(index + 1) :
-                reference;
+        if (reference.startsWith(URN_UUID)) {
+            return reference.substring(URN_UUID.length() + 1);
+
+        } else {
+            int index = reference.indexOf('/');
+            return index >= 0 ?
+                    reference.substring(index + 1) :
+                    reference;
+        }
     }
 
     public static boolean bundleContainsReference(Bundle b, Reference reference) {
@@ -447,5 +481,12 @@ public class FhirUtil {
 
         if (tokenAuthUrl == null) throw new DataException("could not find token auth URL in metadata");
         return tokenAuthUrl;
+    }
+
+    // UUID_REGEX pattern : see https://www.uuidtools.com/what-is-uuid
+    private static final Pattern UUID_REGEX = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
+
+    public static boolean isUUID(String s) {
+        return s != null && UUID_REGEX.matcher(s).matches();
     }
 }

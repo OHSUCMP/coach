@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class GoalModel implements FHIRCompatible, Comparable<GoalModel> {
+public class GoalModel implements Comparable<GoalModel> {
     public static final String BP_GOAL_ID = "bp-goal";
     public static final Integer BP_GOAL_DEFAULT_SYSTOLIC = 140;
     public static final Integer BP_GOAL_DEFAULT_DIASTOLIC = 90;
@@ -84,54 +84,54 @@ public class GoalModel implements FHIRCompatible, Comparable<GoalModel> {
         history = new TreeSet<>();
     }
 
-    @Override
-    public Bundle toBundle(String patientId, FhirConfigManager fcm) {
-        Goal goal = sourceGoal != null ?
-                sourceGoal :
-                buildGoal(patientId, fcm);
+//    @Override
+//    public Bundle toBundle(String patientId, FhirConfigManager fcm) {
+//        Goal goal = sourceGoal != null ?
+//                sourceGoal :
+//                buildGoal(patientId, fcm);
+//
+//        return FhirUtil.bundleResources(goal);
+//    }
 
-        return FhirUtil.bundleResources(goal);
-    }
-
-    private Goal buildGoal(String patientId, FhirConfigManager fcm) {
-
-        // this is only used when building local goals, for which sourceGoal == null
-
-        Goal g = new Goal();
-
-        g.setId(getExtGoalId());
-        g.setSubject(new Reference().setReference(patientId));
-        g.setLifecycleStatus(getLifecycleStatus().getFhirValue());
-        g.getAchievementStatus().addCoding().setCode(getAchievementStatus().getFhirValue())
-                .setSystem("http://terminology.hl7.org/CodeSystem/goal-achievement");
-        g.getCategoryFirstRep().addCoding().setCode(getReferenceCode()).setSystem(getReferenceSystem());
-        g.getDescription().setText(getGoalText());
-        g.setStatusDate(getStatusDate());
-        g.getTarget().add(new Goal.GoalTargetComponent()
-                .setDue(new DateType().setValue(getTargetDate())));
-
-        if (isBPGoal()) {
-            Goal.GoalTargetComponent systolic = new Goal.GoalTargetComponent();
-            systolic.getMeasure().addCoding(fcm.getBpSystolicCoding());
-            systolic.setDetail(new Quantity());
-            systolic.getDetailQuantity().setCode(fcm.getBpValueCode());
-            systolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
-            systolic.getDetailQuantity().setUnit(fcm.getBpValueUnit());
-            systolic.getDetailQuantity().setValue(getSystolicTarget());
-            g.getTarget().add(systolic);
-
-            Goal.GoalTargetComponent diastolic = new Goal.GoalTargetComponent();
-            diastolic.getMeasure().addCoding(fcm.getBpDiastolicCoding());
-            diastolic.setDetail(new Quantity());
-            diastolic.getDetailQuantity().setCode(fcm.getBpValueCode());
-            diastolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
-            diastolic.getDetailQuantity().setUnit(fcm.getBpValueUnit());
-            diastolic.getDetailQuantity().setValue(getDiastolicTarget());
-            g.getTarget().add(diastolic);
-        }
-
-        return g;
-    }
+//    private Goal buildGoal(String patientId, FhirConfigManager fcm) {
+//
+//        // this is only used when building local goals, for which sourceGoal == null
+//
+//        Goal g = new Goal();
+//
+//        g.setId(getExtGoalId());
+//        g.setSubject(new Reference().setReference(patientId));
+//        g.setLifecycleStatus(getLifecycleStatus().getFhirValue());
+//        g.getAchievementStatus().addCoding().setCode(getAchievementStatus().getFhirValue())
+//                .setSystem("http://terminology.hl7.org/CodeSystem/goal-achievement");
+//        g.getCategoryFirstRep().addCoding().setCode(getReferenceCode()).setSystem(getReferenceSystem());
+//        g.getDescription().setText(getGoalText());
+//        g.setStatusDate(getStatusDate());
+//        g.getTarget().add(new Goal.GoalTargetComponent()
+//                .setDue(new DateType().setValue(getTargetDate())));
+//
+//        if (isBPGoal()) {
+//            Goal.GoalTargetComponent systolic = new Goal.GoalTargetComponent();
+//            systolic.getMeasure().addCoding(fcm.getBpSystolicCoding());
+//            systolic.setDetail(new Quantity());
+//            systolic.getDetailQuantity().setCode(fcm.getBpValueCode());
+//            systolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
+//            systolic.getDetailQuantity().setUnit(fcm.getBpValueUnit());
+//            systolic.getDetailQuantity().setValue(getSystolicTarget());
+//            g.getTarget().add(systolic);
+//
+//            Goal.GoalTargetComponent diastolic = new Goal.GoalTargetComponent();
+//            diastolic.getMeasure().addCoding(fcm.getBpDiastolicCoding());
+//            diastolic.setDetail(new Quantity());
+//            diastolic.getDetailQuantity().setCode(fcm.getBpValueCode());
+//            diastolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
+//            diastolic.getDetailQuantity().setUnit(fcm.getBpValueUnit());
+//            diastolic.getDetailQuantity().setValue(getDiastolicTarget());
+//            g.getTarget().add(diastolic);
+//        }
+//
+//        return g;
+//    }
 
     public boolean isEHRGoal() {
         return sourceGoal != null;
