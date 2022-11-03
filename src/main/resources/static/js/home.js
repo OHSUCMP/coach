@@ -145,8 +145,10 @@ function getBPSetStartDate(bps) {
 function calculateAverageBP(bps) {
     const bpset = getBPSet(bps);
     if (bpset) {
-        const avgSys = bpset.reduce((acc,bp) => acc + bp.systolic.value, 0)/bpset.length;
-        const avgDia = bpset.reduce((acc,bp) => acc + bp.diastolic.value, 0)/bpset.length;
+        const systolicReadings = bpset.filter(r => r.systolic !== null).map(r => r.systolic.value);
+        const avgSys = systolicReadings.reduce((acc,val) => acc + val, 0)/systolicReadings.length;
+        const diastolicReadings = bpset.filter(r => r.diastolic !== null).map(r => r.diastolic.value);
+        const avgDia = diastolicReadings.reduce((acc,val) => acc + val, 0)/diastolicReadings.length;
         return {
             systolic: avgSys,
             diastolic: avgDia
@@ -284,13 +286,28 @@ function toLOESSData(data, type) {
 }
 
 function toLOESSData2(data, type) {
-    // LOESS doesn't work if the data isn't sorted by date first. Make sure it is.
     const sortedData = sortByDateAsc(data);
+
     let map = sortedData.map(function(item) {
         return item[type] != null ? [item.readingDate, item[type].value] : null;
     }).filter(function(item) {
         return item != null;
     });
+
+    // Adjust bandwidth based on number of points in the data
+    let bandwidth = 0.3;
+    let numPts = map.length;
+    // Allow an override of the bandwidth in the URL for testing
+    if (getLOESSBandwidth() !== -1) {
+        bandwidth = getLOESSBandwidth();
+    } else if (numPts <= 8) {
+        bandwidth = 0.6;
+    } else if (numPts <= 15) {
+        bandwidth = 0.5;
+    } else if (numPts <= 25) {
+        bandwidth = 0.4;
+    }
+    console.log("Starting bandwidth: " + bandwidth);
 
     let xval = [], yval = [];
     map.forEach(function(item) {
@@ -298,17 +315,40 @@ function toLOESSData2(data, type) {
         yval.push(item[1]);
     });
 
-    let loess = science.stats.loess().bandwidth(getLOESSBandwidth());
-    let loess_data = loess(xval, yval);
-    let loess_points = loess_data.map(function(yval, index) {
-        return [xval[index], yval];
-    });
+    let loess;
+    // Try incrementally increasing bandwidth if an error is thrown
+    while (bandwidth <= 1.0) {
+        loess = science.stats.loess().bandwidth(bandwidth);
+        try {
+            let loess_data = loess(xval, yval);
+            let loess_points = loess_data.map(function(yval, index) {
+                return [xval[index], yval];
+            });
 
-    return loess_points;
+            console.log("Final bandwidth used: " + bandwidth);
+            // If all values are NaN, fall back on a direct plot
+            if (loess_points.every(pt => isNaN(pt[1]))) {
+                console.log("All LOESS points are NaN. Fall back on direct plot.")
+                return map;
+            }
+            // Filter out NaN values
+            const filtered = loess_points.filter(pt => !isNaN(pt[1]));
+            if (filtered.length < loess_points.length) {
+                console.log("Some points failed regression. Returning a subset.");
+            }
+            return filtered;
+        } catch (error) {
+            bandwidth = bandwidth + 0.1;
+        }
+    }
+
+    // Fall back on a direct plot
+    return map;
+
 }
 
 function getLOESSBandwidth() {
-    return $('#LOESSBandwidth').html();
+    return Number($('#LOESSBandwidth').html());
 }
 
 function getDateRange(data) {
