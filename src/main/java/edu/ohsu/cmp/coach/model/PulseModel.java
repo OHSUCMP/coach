@@ -5,6 +5,7 @@ import edu.ohsu.cmp.coach.entity.HomePulseReading;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.util.ObservationUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
 
 import java.util.Date;
@@ -40,7 +41,7 @@ public class PulseModel extends AbstractVitalsModel {
     public PulseModel(Observation pulseObservation, FhirConfigManager fcm) throws DataException {
         super(ObservationUtil.getPulseSource(pulseObservation), null, ObservationUtil.getReadingDate(pulseObservation), fcm);
 
-        buildFromPulseObservation(pulseObservation);
+        buildFromPulseObservation(pulseObservation, fcm);
     }
 
     // read remote
@@ -49,12 +50,15 @@ public class PulseModel extends AbstractVitalsModel {
 
         super(enc, ObservationUtil.getSourceByEncounter(enc, fcm), protocolObservation, ObservationUtil.getReadingDate(pulseObservation), fcm);
 
-        buildFromPulseObservation(pulseObservation);
+        buildFromPulseObservation(pulseObservation, fcm);
     }
 
-    private void buildFromPulseObservation(Observation pulseObservation) {
+    private void buildFromPulseObservation(Observation pulseObservation, FhirConfigManager fcm) {
         this.sourcePulseObservation = pulseObservation;
         this.pulse = new QuantityModel(pulseObservation.getValueQuantity());
+        if (StringUtils.isEmpty(pulse.getUnit())) { // Epic doesn't use units so this will be null for Epic flowsheet-based data
+            pulse.setUnit(fcm.getPulseValueUnit());
+        }
     }
 
     @Override

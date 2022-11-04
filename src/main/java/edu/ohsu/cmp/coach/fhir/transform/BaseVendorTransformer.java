@@ -135,46 +135,6 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 
         return o;
     }
-    protected Observation buildPulseObservation(PulseModel model, String patientId, FhirConfigManager fcm) throws DataException {
-        return buildPulseObservation(model, null, patientId, fcm);
-    }
-
-    protected Observation buildPulseObservation(PulseModel model, Encounter encounter, String patientId, FhirConfigManager fcm) throws DataException {
-        Observation o = new Observation();
-
-        o.setId(genTemporaryId());
-
-        o.setSubject(new Reference().setReference(patientId));
-
-        if (encounter != null) {
-            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(encounter)));
-        } else if (model.getSourceEncounter() != null) {
-            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(model.getSourceEncounter())));
-        }
-//        o.setEncounter(new Reference().setReference(URN_UUID + enc.getId()));
-
-        o.setStatus(Observation.ObservationStatus.FINAL);
-
-        o.addCategory().addCoding()
-                .setCode(OBSERVATION_CATEGORY_CODE)
-                .setSystem(OBSERVATION_CATEGORY_SYSTEM)
-                .setDisplay("vital-signs");
-
-        o.getCode().addCoding(fcm.getPulseCoding());
-
-        FhirUtil.addHomeSettingExtension(o);
-
-        o.setEffective(new DateTimeType(model.getReadingDate()));
-
-        o.setValue(new Quantity());
-        o.getValueQuantity()
-                .setCode(fcm.getPulseValueCode())
-                .setSystem(fcm.getPulseValueSystem())
-                .setUnit(fcm.getPulseValueUnit())
-                .setValue(model.getPulse().getValue().intValue());
-
-        return o;
-    }
 
     protected Goal buildGoal(GoalModel model, String patientId, FhirConfigManager fcm) {
 
@@ -234,17 +194,5 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         }
 
         return list;
-    }
-
-
-///////////////////////////////////////////////////////////////////////
-// private methods
-//
-
-    protected void setBPValue(Quantity q, QuantityModel qm, FhirConfigManager fcm) {
-        q.setCode(fcm.getBpValueCode())
-                .setSystem(fcm.getBpValueSystem())
-                .setUnit(fcm.getBpValueUnit())
-                .setValue(qm.getValue().intValue());
     }
 }

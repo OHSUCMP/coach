@@ -481,4 +481,47 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
 
         observation.getCode().addCoding(coding);
     }
+
+    private void setBPValue(Quantity q, QuantityModel qm, FhirConfigManager fcm) {
+        q.setCode(fcm.getBpValueCode())
+                .setSystem(fcm.getBpValueSystem())
+                .setUnit(fcm.getBpValueUnit())
+                .setValue(qm.getValue().intValue());
+    }
+
+    private Observation buildPulseObservation(PulseModel model, Encounter encounter, String patientId, FhirConfigManager fcm) throws DataException {
+        Observation o = new Observation();
+
+        o.setId(genTemporaryId());
+
+        o.setSubject(new Reference().setReference(patientId));
+
+        if (encounter != null) {
+            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(encounter)));
+        } else if (model.getSourceEncounter() != null) {
+            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(model.getSourceEncounter())));
+        }
+
+        o.setStatus(Observation.ObservationStatus.FINAL);
+
+        o.addCategory().addCoding()
+                .setCode(OBSERVATION_CATEGORY_CODE)
+                .setSystem(OBSERVATION_CATEGORY_SYSTEM)
+                .setDisplay("vital-signs");
+
+        o.getCode().addCoding(fcm.getPulseCoding());
+
+        FhirUtil.addHomeSettingExtension(o);
+
+        o.setEffective(new DateTimeType(model.getReadingDate()));
+
+        o.setValue(new Quantity());
+        o.getValueQuantity()
+                .setCode(fcm.getPulseValueCode())
+                .setSystem(fcm.getPulseValueSystem())
+                .setUnit(fcm.getPulseValueUnit())
+                .setValue(model.getPulse().getValue().intValue());
+
+        return o;
+    }
 }

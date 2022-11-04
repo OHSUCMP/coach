@@ -462,7 +462,11 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
             } else {
                 throw new DataException("invalid coding");
             }
+        } else {
+            throw new DataException("missing coding");
         }
+
+        o.getValueQuantity().setUnit(null);         // Epic doesn't allow units to be specified
 
         o.setEffective(bpObservation.getEffective());
 
@@ -578,4 +582,48 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
         }
         throw new DataException("invalid coding");
     }
+
+    private void setBPValue(Quantity q, QuantityModel qm, FhirConfigManager fcm) {
+        q.setCode(fcm.getBpValueCode())
+                .setSystem(fcm.getBpValueSystem())
+//                .setUnit(fcm.getBpValueUnit())        // Epic doesn't allow units to be specified
+                .setValue(qm.getValue().intValue());
+    }
+
+    protected Observation buildPulseObservation(PulseModel model, String patientId, FhirConfigManager fcm) throws DataException {
+        Observation o = new Observation();
+
+        o.setId(genTemporaryId());
+
+        o.setSubject(new Reference().setReference(patientId));
+
+        // Epic doesn't use encounters for user-generated records, but if it came in with one, add it
+
+        if (model.getSourceEncounter() != null) {
+            o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(model.getSourceEncounter())));
+        }
+
+        o.setStatus(Observation.ObservationStatus.FINAL);
+
+        o.addCategory().addCoding()
+                .setCode(OBSERVATION_CATEGORY_CODE)
+                .setSystem(OBSERVATION_CATEGORY_SYSTEM)
+                .setDisplay("vital-signs");
+
+        o.getCode().addCoding(fcm.getPulseCoding());
+
+        FhirUtil.addHomeSettingExtension(o);
+
+        o.setEffective(new DateTimeType(model.getReadingDate()));
+
+        o.setValue(new Quantity());
+        o.getValueQuantity()
+                .setCode(fcm.getPulseValueCode())
+                .setSystem(fcm.getPulseValueSystem())
+//                .setUnit(fcm.getPulseValueUnit())     // Epic doesn't like units
+                .setValue(model.getPulse().getValue().intValue());
+
+        return o;
+    }
+
 }

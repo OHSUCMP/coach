@@ -22,7 +22,15 @@ public class QuantityModel {
         return value;
     }
 
+    public void setValue(BigDecimal value) {
+        this.value = value;
+    }
+
     public String getUnit() {
         return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 }

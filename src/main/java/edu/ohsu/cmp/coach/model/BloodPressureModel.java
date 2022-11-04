@@ -6,6 +6,7 @@ import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.util.ObservationUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
 
 import java.util.Date;
@@ -143,12 +144,18 @@ public class BloodPressureModel extends AbstractVitalsModel {
 
         if (systolicObservation.hasCode() && FhirUtil.hasCoding(systolicObservation.getCode(), fcm.getSystolicCodings())) {
             systolic = new QuantityModel(systolicObservation.getValueQuantity());
+            if (StringUtils.isEmpty(systolic.getUnit())) {
+                systolic.setUnit(fcm.getBpValueUnit());
+            }
         } else {
             throw new DataException("systolic observation : invalid coding");
         }
 
         if (diastolicObservation.hasCode() && FhirUtil.hasCoding(diastolicObservation.getCode(), fcm.getDiastolicCodings())) {
             diastolic = new QuantityModel(diastolicObservation.getValueQuantity());
+            if (StringUtils.isEmpty(diastolic.getUnit())) {
+                diastolic.setUnit(fcm.getBpValueUnit());
+            }
         } else {
             throw new DataException("diastolic observation : invalid coding");
         }
