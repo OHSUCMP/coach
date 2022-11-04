@@ -113,15 +113,10 @@ public class BloodPressureModel extends AbstractVitalsModel {
                 ValueType valueType = ValueType.UNKNOWN;
 
                 CodeableConcept cc = occ.getCode();
-                for (Coding c : cc.getCoding()) {
-                    if (FhirUtil.matches(c, fcm.getBpSystolicCoding()) || FhirUtil.matches(c, fcm.getBpHomeBluetoothSystolicCoding())) {
-                        valueType = ValueType.SYSTOLIC;
-                        break;
-
-                    } else if (FhirUtil.matches(c, fcm.getBpDiastolicCoding()) || FhirUtil.matches(c, fcm.getBpHomeBluetoothDiastolicCoding())) {
-                        valueType = ValueType.DIASTOLIC;
-                        break;
-                    }
+                if (FhirUtil.hasCoding(cc, fcm.getSystolicCodings())) {
+                    valueType = ValueType.SYSTOLIC;
+                } else if (FhirUtil.hasCoding(cc, fcm.getDiastolicCodings())) {
+                    valueType = ValueType.DIASTOLIC;
                 }
 
                 if (valueType != ValueType.UNKNOWN) {

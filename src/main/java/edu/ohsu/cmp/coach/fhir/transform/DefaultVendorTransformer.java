@@ -247,7 +247,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
                 Iterator<Observation> iter = encounterObservations.iterator();
                 while (iter.hasNext()) {
                     Observation o = iter.next();
-                    if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCoding())) {
+                    if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCodings())) {
                         logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                         pulseObservationList.add(o);
                         iter.remove();
@@ -276,7 +276,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
             if (entry.getValue() != null) {
                 for (Observation o : entry.getValue()) {
-                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getPulseCoding())) {
+                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getPulseCodings())) {
                         logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                         list.add(new PulseModel(o, fcm));
 
@@ -435,13 +435,11 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
 
         if (model.getSystolic() != null && model.getDiastolic() == null) {            // systolic only
             o.getCode().addCoding(fcm.getBpSystolicCoding());
-            o.getCode().addCoding(fcm.getBpHomeBluetoothSystolicCoding());
             o.setValue(new Quantity());
             setBPValue(o.getValueQuantity(), model.getSystolic(), fcm);
 
         } else if (model.getSystolic() == null && model.getDiastolic() != null) {     // diastolic only
             o.getCode().addCoding(fcm.getBpDiastolicCoding());
-            o.getCode().addCoding(fcm.getBpHomeBluetoothDiastolicCoding());
             o.setValue(new Quantity());
             setBPValue(o.getValueQuantity(), model.getDiastolic(), fcm);
 

@@ -39,14 +39,15 @@ public class FhirConfigManager {
     private Coding bpDiastolicCoding = null;
     private List<Coding> bpOfficeCodings = null;
     private List<Coding> bpHomeCodings = null;
-    private Coding bpHomeBluetoothSystolicCoding = null;
-    private Coding bpHomeBluetoothDiastolicCoding = null;
+    private Coding bpEpicSystolicCoding = null;
+    private Coding bpEpicDiastolicCoding = null;
     @Value("${bp.value.code}")      private String bpValueCode;
     @Value("${bp.value.system}")    private String bpValueSystem;
     @Value("${bp.value.unit}")      private String bpValueUnit;
     @Value("${bp.limit}")           private String bpLimit;
     @Value("${bp.lookbackPeriod}")  private String bpLookbackPeriod;
     private Coding pulseCoding = null;
+    private Coding pulseEpicCoding = null;
     @Value("${pulse.value.code}")   private String pulseValueCode;
     @Value("${pulse.value.system}") private String pulseValueSystem;
     @Value("${pulse.value.unit}")   private String pulseValueUnit;
@@ -160,18 +161,18 @@ public class FhirConfigManager {
         return bpHomeCodings;
     }
 
-    public Coding getBpHomeBluetoothSystolicCoding() {
-        if (bpHomeBluetoothSystolicCoding == null) {
-            bpHomeBluetoothSystolicCoding = buildCoding(env.getProperty("bp.home.bluetooth.systolic.coding"));
+    public Coding getBpEpicSystolicCoding() {
+        if (bpEpicSystolicCoding == null) {
+            bpEpicSystolicCoding = buildCoding(env.getProperty("bp.epic.systolic.coding"));
         }
-        return bpHomeBluetoothSystolicCoding;
+        return bpEpicSystolicCoding;
     }
 
-    public Coding getBpHomeBluetoothDiastolicCoding() {
-        if (bpHomeBluetoothDiastolicCoding == null) {
-            bpHomeBluetoothDiastolicCoding = buildCoding(env.getProperty("bp.home.bluetooth.diastolic.coding"));
+    public Coding getBpEpicDiastolicCoding() {
+        if (bpEpicDiastolicCoding == null) {
+            bpEpicDiastolicCoding = buildCoding(env.getProperty("bp.epic.diastolic.coding"));
         }
-        return bpHomeBluetoothDiastolicCoding;
+        return bpEpicDiastolicCoding;
     }
 
     public String getBpValueCode() {
@@ -211,14 +212,14 @@ public class FhirConfigManager {
     public List<Coding> getSystolicCodings() {
         List<Coding> list = new ArrayList<>();
         list.add(getBpSystolicCoding());
-        list.add(getBpHomeBluetoothSystolicCoding());
+        list.add(getBpEpicSystolicCoding());
         return list;
     }
 
     public List<Coding> getDiastolicCodings() {
         List<Coding> list = new ArrayList<>();
         list.add(getBpDiastolicCoding());
-        list.add(getBpHomeBluetoothDiastolicCoding());
+        list.add(getBpEpicDiastolicCoding());
         return list;
     }
 
@@ -231,6 +232,20 @@ public class FhirConfigManager {
             pulseCoding = buildCoding(env.getProperty("pulse.coding"));
         }
         return pulseCoding;
+    }
+
+    public Coding getPulseEpicCoding() {
+        if (pulseEpicCoding == null) {
+            pulseEpicCoding = buildCoding(env.getProperty("pulse.epic.coding"));
+        }
+        return pulseEpicCoding;
+    }
+
+    public List<Coding> getPulseCodings() {
+        List<Coding> list = new ArrayList<>();
+        list.add(getPulseCoding());
+        list.add(getPulseEpicCoding());
+        return list;
     }
 
     public String getPulseValueCode() {

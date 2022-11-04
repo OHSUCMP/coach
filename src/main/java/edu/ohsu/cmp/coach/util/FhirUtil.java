@@ -422,20 +422,6 @@ public class FhirUtil {
         return cc.hasCoding(c.getSystem(), c.getCode());
     }
 
-    public static boolean matches(Coding c1, Coding c2) {
-        if (c1 == null || c2 == null) return false;
-        if (c1 == c2) return true;
-        if ( ! c1.hasSystem() && ! c1.hasCode() ) return false;
-        if ( ! c2.hasSystem() && ! c2.hasCode() ) return false;
-
-        boolean systemMatch = (! c1.hasSystem() && ! c2.hasSystem()) ||
-                (c1.hasSystem() && c2.hasSystem() && c1.getSystem().equals(c2.getSystem()));
-        boolean codeMatch = (! c1.hasCode() && ! c2.hasCode()) ||
-                (c1.hasCode() && c2.hasCode() && c1.getCode().equals(c2.getCode()));
-
-        return systemMatch && codeMatch;
-    }
-
     public static boolean hasHomeSettingExtension(DomainResource domainResource) {
         if (domainResource != null && domainResource.hasExtension(EXTENSION_HOME_SETTING_URL)) {
             Extension extension = domainResource.getExtensionByUrl(EXTENSION_HOME_SETTING_URL);

@@ -295,7 +295,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                 Iterator<Observation> iter = encounterObservations.iterator();
                 while (iter.hasNext()) {
                     Observation o = iter.next();
-                    if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCoding())) {
+                    if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCodings())) {
                         logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                         pulseObservationList.add(o);
                         iter.remove();
@@ -336,7 +336,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
         for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
             if (entry.getValue() != null) {
                 for (Observation o : entry.getValue()) {
-                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getPulseCoding())) {
+                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getPulseCodings())) {
                         logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                         PulseModel pm = new PulseModel(o, fcm);
 
@@ -436,12 +436,12 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
             CodeableConcept code = bpObservation.getCode();
             if (type == ResourceType.SYSTOLIC && FhirUtil.hasCoding(code, fcm.getSystolicCodings())) {
 //                o.getCode().addCoding(fcm.getBpSystolicCoding());     // do not include LOINC codes in Epic-destined observations
-                o.getCode().addCoding(fcm.getBpHomeBluetoothSystolicCoding());
+                o.getCode().addCoding(fcm.getBpEpicSystolicCoding());
                 o.setValue(bpObservation.getValueQuantity());
 
             } else if (type == ResourceType.DIASTOLIC && FhirUtil.hasCoding(code, fcm.getDiastolicCodings())) {
 //                o.getCode().addCoding(fcm.getBpDiastolicCoding());    // do not include LOINC codes in Epic-destined observations
-                o.getCode().addCoding(fcm.getBpHomeBluetoothDiastolicCoding());
+                o.getCode().addCoding(fcm.getBpEpicDiastolicCoding());
                 o.setValue(bpObservation.getValueQuantity());
 
             } else if (FhirUtil.hasCoding(code, fcm.getBpPanelCodings())) {
@@ -492,7 +492,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
         if (type == ResourceType.SYSTOLIC) {
             if (model.getSystolic() != null) {
 //                o.getCode().addCoding(fcm.getBpSystolicCoding()); // Epic flowsheet observations should not have LOINC code
-                o.getCode().addCoding(fcm.getBpHomeBluetoothSystolicCoding());
+                o.getCode().addCoding(fcm.getBpEpicSystolicCoding());
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getSystolic(), fcm);
 
@@ -503,7 +503,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
         } else if (type == ResourceType.DIASTOLIC) {
             if (model.getDiastolic() != null) {
 //                o.getCode().addCoding(fcm.getBpDiastolicCoding()); // Epic flowsheet observations should not have LOINC code
-                o.getCode().addCoding(fcm.getBpHomeBluetoothDiastolicCoding());
+                o.getCode().addCoding(fcm.getBpEpicDiastolicCoding());
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getDiastolic(), fcm);
 
@@ -610,7 +610,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
-        o.getCode().addCoding(fcm.getPulseCoding());
+        o.getCode().addCoding(fcm.getPulseEpicCoding());
 
         FhirUtil.addHomeSettingExtension(o);
 

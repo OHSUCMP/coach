@@ -31,7 +31,7 @@ public class PulseService extends AbstractService {
 
     public List<PulseModel> buildPulseList(String sessionId) throws DataException {
         CompositeBundle compositeBundle = new CompositeBundle();
-        compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getPulseCoding()), fcm.getPulseLookbackPeriod(),null));
+        compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getPulseCodings()), fcm.getPulseLookbackPeriod(),null));
         compositeBundle.consume(workspaceService.get(sessionId).getProtocolObservations());
 
         UserWorkspace workspace = workspaceService.get(sessionId);
