@@ -206,7 +206,13 @@ public class FHIRService {
                 .withAdditionalHeader("Prefer", "return=representation")
                 .execute();
 
-        return (T) outcome.getResource();
+        T t = (T) outcome.getResource();
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("received response " + t.getClass().getSimpleName() + ": " + FhirUtil.toJson(t));
+        }
+
+        return t;
     }
 
     public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle, boolean stripIfNotInScope) throws IOException, DataException, ConfigurationException, ScopeException {
