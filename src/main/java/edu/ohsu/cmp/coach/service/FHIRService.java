@@ -197,6 +197,10 @@ public class FHIRService {
             client = fcc.getClient();
         }
 
+        if (logger.isDebugEnabled()) {
+            logger.debug("transacting " + resource.getClass().getSimpleName() + ": " + FhirUtil.toJson(resource));
+        }
+
         MethodOutcome outcome = client.create()
                 .resource(resource)
                 .withAdditionalHeader("Prefer", "return=representation")
