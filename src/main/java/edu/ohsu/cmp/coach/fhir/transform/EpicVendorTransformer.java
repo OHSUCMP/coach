@@ -44,8 +44,18 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
             for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
                 Resource r = entry.getResource();
                 if (r instanceof IDomainResource && FhirUtil.isUUID(r.getId())) {
-                    Resource r2 = fhirService.transact(fcc, (DomainResource) r);
-                    FhirUtil.appendResourceToBundle(responseBundle, r2);
+                    try {
+                        FhirUtil.appendResourceToBundle(responseBundle,
+                                fhirService.transact(fcc, (DomainResource) r)
+                        );
+
+                    } catch (Exception e) {
+                        logger.error("caught " + e.getClass().getSimpleName() + " attempting to transact " +
+                                r.getClass().getSimpleName() + " - " + e.getMessage() + " - skipping -", e);
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(r.getClass().getSimpleName() + " resource : " + FhirUtil.toJson(r));
+                        }
+                    }
                 }
             }
         }
