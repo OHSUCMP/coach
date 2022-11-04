@@ -205,7 +205,7 @@ public class FhirConfigManager {
         List<Coding> list = new ArrayList<>();
         list.add(getBpCoding());
         list.addAll(getBpOfficeCodings());
-        list.addAll(getBpHomeCodings());
+//        list.addAll(getBpHomeCodings());      // home codings are also appended to individual systolic and diastolic readings
         return list;
     }
 

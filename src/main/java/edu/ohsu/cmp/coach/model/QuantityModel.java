@@ -8,9 +8,9 @@ public class QuantityModel {
     private BigDecimal value;
     private String unit;
 
-    public QuantityModel(Quantity q) {
+    public QuantityModel(Quantity q, String unit) {
         this.value = q.getValue();
-        this.unit = q.getUnit();
+        this.unit = q.hasUnit() ? q.getUnit() : unit;
     }
 
     public QuantityModel(Integer value, String unit) {
