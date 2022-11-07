@@ -88,12 +88,14 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                 while (iter.hasNext()) {
                     Observation o = iter.next();
                     if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), bpCodings)) {
-                        logger.debug("bpObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                        logger.debug("bpObservation = " + o.getId() + " (encounter=" + encounter.getId() +
+                                ") (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                         bpObservationList.add(o);
                         iter.remove();
 
                     } else if (protocolObservation == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
-                        logger.debug("protocolObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                        logger.debug("protocolObservation = " + o.getId() + " (encounter=" + encounter.getId() +
+                                ") (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                         protocolObservation = o;
                         iter.remove();
                     }
@@ -140,7 +142,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                 for (Observation o : entry.getValue()) {
                     if (o.hasCode()) {
                         if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
-                            logger.debug("bpObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                            logger.debug("bpObservation = " + o.getId() + " (no encounter) (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                             BloodPressureModel bpm = new BloodPressureModel(o, fcm);
 
                             // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
@@ -175,7 +177,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
             if (list2.size() == 1) {        // systolic OR diastolic only; treat the same as above
                 Observation o = list2.get(0);
-                logger.debug("bpObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                logger.debug("bpObservation = " + o.getId() + " (no encounter) (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                 BloodPressureModel bpm = new BloodPressureModel(o, fcm);
 
                 // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
@@ -210,6 +212,11 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                             o1.getId() + ", " + o2.getId() + "] - skipping -");
                     continue;
                 }
+
+                logger.debug("systolicObservation = " + systolicObservation.getId() + " (effectiveDateTime=" +
+                        systolicObservation.getEffectiveDateTimeType().getValueAsString() + ")");
+                logger.debug("diastolicObservation = " + diastolicObservation.getId() + " (effectiveDateTime=" +
+                        diastolicObservation.getEffectiveDateTimeType().getValueAsString() + ")");
 
                 BloodPressureModel bpm = new BloodPressureModel(systolicObservation, diastolicObservation, fcm);
 

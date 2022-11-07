@@ -55,7 +55,7 @@ public class PulseModel extends AbstractVitalsModel {
 
     private void buildFromPulseObservation(Observation pulseObservation, FhirConfigManager fcm) {
         this.sourcePulseObservation = pulseObservation;
-        this.pulse = new QuantityModel(pulseObservation.getValueQuantity());
+        this.pulse = new QuantityModel(pulseObservation.getValueQuantity(), fcm.getPulseValueUnit());
         if (StringUtils.isEmpty(pulse.getUnit())) { // Epic doesn't use units so this will be null for Epic flowsheet-based data
             pulse.setUnit(fcm.getPulseValueUnit());
         }

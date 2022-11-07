@@ -103,10 +103,10 @@ public class BloodPressureModel extends AbstractVitalsModel {
 
         CodeableConcept code = bpObservation.getCode();
         if (FhirUtil.hasCoding(code, fcm.getSystolicCodings())) {
-            systolic = new QuantityModel(bpObservation.getValueQuantity());
+            systolic = new QuantityModel(bpObservation.getValueQuantity(), fcm.getBpValueUnit());
 
         } else if (FhirUtil.hasCoding(code, fcm.getDiastolicCodings())) {
-            diastolic = new QuantityModel(bpObservation.getValueQuantity());
+            diastolic = new QuantityModel(bpObservation.getValueQuantity(), fcm.getBpValueUnit());
 
         } else { // it's not a raw systolic or diastolic reading of any sort, so it must be a panel.  right?
             for (Observation.ObservationComponentComponent occ : bpObservation.getComponent()) {
@@ -122,8 +122,8 @@ public class BloodPressureModel extends AbstractVitalsModel {
                 if (valueType != ValueType.UNKNOWN) {
                     Quantity q = occ.getValueQuantity();
                     switch (valueType) {
-                        case SYSTOLIC: systolic = new QuantityModel(q); break;
-                        case DIASTOLIC: diastolic = new QuantityModel(q); break;
+                        case SYSTOLIC: systolic = new QuantityModel(q, fcm.getBpValueUnit()); break;
+                        case DIASTOLIC: diastolic = new QuantityModel(q, fcm.getBpValueUnit()); break;
                     }
                 }
             }
@@ -138,7 +138,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
         //        to retain the ids for the Encounter and other Observations?
 
         if (systolicObservation.hasCode() && FhirUtil.hasCoding(systolicObservation.getCode(), fcm.getSystolicCodings())) {
-            systolic = new QuantityModel(systolicObservation.getValueQuantity());
+            systolic = new QuantityModel(systolicObservation.getValueQuantity(), fcm.getBpValueUnit());
             if (StringUtils.isEmpty(systolic.getUnit())) {
                 systolic.setUnit(fcm.getBpValueUnit());
             }
@@ -147,7 +147,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
         }
 
         if (diastolicObservation.hasCode() && FhirUtil.hasCoding(diastolicObservation.getCode(), fcm.getDiastolicCodings())) {
-            diastolic = new QuantityModel(diastolicObservation.getValueQuantity());
+            diastolic = new QuantityModel(diastolicObservation.getValueQuantity(), fcm.getBpValueUnit());
             if (StringUtils.isEmpty(diastolic.getUnit())) {
                 diastolic.setUnit(fcm.getBpValueUnit());
             }
