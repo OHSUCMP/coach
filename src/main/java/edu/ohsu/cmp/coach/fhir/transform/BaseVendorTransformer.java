@@ -6,6 +6,8 @@ import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -15,11 +17,147 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
     public static final String OBSERVATION_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category";
     public static final String OBSERVATION_CATEGORY_CODE = "vital-signs";
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected UserWorkspace workspace;
 
     public BaseVendorTransformer(UserWorkspace workspace) {
         this.workspace = workspace;
+    }
+
+
+    protected abstract BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException;
+    protected abstract BloodPressureModel buildBloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException;
+    protected abstract BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException;
+
+    @Override
+    public List<BloodPressureModel> transformIncomingBloodPressureReadings(Bundle bundle) throws DataException {
+        if (bundle == null) return null;
+
+        Map<String, List<Observation>> encounterObservationsMap = buildEncounterObservationsMap(bundle);
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
+        List<Coding> bpCodings = fcm.getAllBpCodings();
+
+        List<BloodPressureModel> list = new ArrayList<>();
+
+        for (Encounter encounter : getAllEncounters(bundle)) {
+            logger.debug("processing Encounter: " + encounter.getId());
+
+            List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
+
+            if (encounterObservations != null) {
+                logger.debug("building Observations for Encounter " + encounter.getId());
+
+                List<Observation> bpObservationList = new ArrayList<>();    // potentially many per encounter
+                Observation protocolObservation = null;
+
+                Iterator<Observation> iter = encounterObservations.iterator();
+                while (iter.hasNext()) {
+                    Observation o = iter.next();
+                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), bpCodings)) {
+                        logger.debug("bpObservation = " + o.getId() + " (encounter=" + encounter.getId() +
+                                ") (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                        bpObservationList.add(o);
+                        iter.remove();
+
+                    } else if (protocolObservation == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
+                        logger.debug("protocolObservation = " + o.getId() + " (encounter=" + encounter.getId() +
+                                ") (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                        protocolObservation = o;
+                        iter.remove();
+                    }
+                }
+
+                for (Observation bpObservation : bpObservationList) {
+                    list.add(buildBloodPressureModel(encounter, bpObservation, protocolObservation, fcm));
+                }
+
+                bpObservationList.clear();
+
+            } else {
+                logger.debug("no Observations found for Encounter " + encounter.getId());
+            }
+        }
+
+        // there may be BP observations in the system that aren't tied to any encounters.  we still want to capture these
+        // of course, we can't associate any other observations with them (e.g. protocol), but whatever.  better than nothing
+
+        // these observations without Encounters that also have identical timestamps are presumed to be related.
+        // these need to be combined into a single BloodPresureModel object for any pair of (systolic, diastolic) that
+        // have the same timestamp
+
+        List<Coding> systolicCodings = fcm.getSystolicCodings();
+        List<Coding> diastolicCodings = fcm.getDiastolicCodings();
+        List<Coding> bpPanelCodings = fcm.getBpPanelCodings();
+
+        Map<String, List<Observation>> dateObservationsMap = new LinkedHashMap<>();
+
+        for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
+            if (entry.getValue() != null) {
+                for (Observation o : entry.getValue()) {
+                    if (o.hasCode()) {
+                        if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
+                            logger.debug("bpObservation = " + o.getId() + " (no encounter) (effectiveDateTime=" +
+                                    o.getEffectiveDateTimeType().getValueAsString() + ")");
+                            list.add(buildBloodPressureModel(o, fcm));
+
+                        } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings) || FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
+                            String dateStr = o.getEffectiveDateTimeType().getValueAsString();
+                            if ( ! dateObservationsMap.containsKey(dateStr) ) {
+                                dateObservationsMap.put(dateStr, new ArrayList<>());
+                            }
+                            dateObservationsMap.get(dateStr).add(o);
+
+                        } else {
+                            logger.debug("did not process Observation " + o.getId());
+                        }
+                    }
+                }
+            }
+        }
+
+        // now process dateObservationsMap, which should only include individual systolic and diastolic readings
+
+        for (Map.Entry<String, List<Observation>> entry : dateObservationsMap.entrySet()) {
+            List<Observation> list2 = entry.getValue();
+
+            if (list2.size() == 2) { // probably both systolic and diastolic, but check for sure
+                Observation o1 = list2.get(0);
+                Observation o2 = list2.get(1);
+
+                Observation systolicObservation;
+                Observation diastolicObservation;
+
+                if (o1.hasCode() && FhirUtil.hasCoding(o1.getCode(), systolicCodings) &&
+                        o2.hasCode() && FhirUtil.hasCoding(o2.getCode(), diastolicCodings)) {
+                    systolicObservation = o1;
+                    diastolicObservation = o2;
+
+                } else if (o1.hasCode() && FhirUtil.hasCoding(o1.getCode(), diastolicCodings) &&
+                        o2.hasCode() && FhirUtil.hasCoding(o2.getCode(), systolicCodings)) {
+                    systolicObservation = o2;
+                    diastolicObservation = o1;
+
+                } else {
+                    logger.warn("unexpected Observation pair building BloodPressureModel for ids=[" +
+                            o1.getId() + ", " + o2.getId() + "] - skipping -");
+                    continue;
+                }
+
+                logger.debug("systolicObservation = " + systolicObservation.getId() + " (effectiveDateTime=" +
+                        systolicObservation.getEffectiveDateTimeType().getValueAsString() + ")");
+                logger.debug("diastolicObservation = " + diastolicObservation.getId() + " (effectiveDateTime=" +
+                        diastolicObservation.getEffectiveDateTimeType().getValueAsString() + ")");
+
+                list.add(buildBloodPressureModel(systolicObservation, diastolicObservation, fcm));
+
+            } else {                        // more readings than expected, handle somehow?
+                logger.warn("expected 2 observations but encountered " + list2.size() +
+                        " for readingDate=" + entry.getKey() + " - skipping -");
+            }
+        }
+
+        return list;
     }
 
     protected Map<String, List<Observation>> buildEncounterObservationsMap(Bundle bundle) {
