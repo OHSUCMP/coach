@@ -28,9 +28,33 @@ function loadBloodPressureObservations(_callback) {
                 return a.readingDate - b.readingDate;
             });
 
-            _callback(bpdata);
+            const pairedbpdata = pairedBPData(bpdata);
+            _callback(pairedbpdata);
         }
     });
+}
+
+/**
+ * Find and match any lone systolic/diastolic observations and combine them back with those already paired
+ * @param {*} bpdata
+ * @returns
+ */
+function pairedBPData(bpdata) {
+    let clone = structuredClone(bpdata)
+    const systolicMatches = clone.filter(bp => bp.systolic !== null && bp.diastolic === null)
+        .map(sysonly => Object.create({
+            systolicObservation: sysonly,
+            diastolicValues:
+                clone.filter(
+                    bp => bp.systolic === null && bp.diastolic !== null && bp.readingDate.getTime() === sysonly.readingDate.getTime()).map(d => d.diastolic)}))
+    // Modify the matched systolic observations in place
+    const matchedObservations = systolicMatches.filter(m => m.diastolicValues.length === 1).map(m => {
+        let obs = m.systolicObservation
+        obs.diastolic = m.diastolicValues[0]
+        return obs
+    })
+    // Filter out the unmatched observations
+    return clone.filter(o => o.systolic !== null && o.diastolic !== null)
 }
 
 function loadMedications(_callback) {
@@ -326,9 +350,10 @@ function toLOESSData2(data, type) {
             });
 
             console.log("Final bandwidth used: " + bandwidth);
-            // If all values are NaN, fall back on a direct plot
-            if (loess_points.every(pt => isNaN(pt[1]))) {
-                console.log("All LOESS points are NaN. Fall back on direct plot.")
+            console.log(loess_points)
+            // If first or last are NaN, fall back on a direct plot
+            if (isNaN(loess_points.find(p => true)[1]) | isNaN(loess_points.findLast(p => true)[1])) {
+                console.log("First or last values are NaN. Fall back on direct plot.")
                 return map;
             }
             // Filter out NaN values
