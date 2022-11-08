@@ -64,78 +64,19 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         return responseBundle;
     }
 
-    /**
-     * Transforms incoming Blood Pressure Observations in an idealized manner.
-      * @param bundle a Bundle of FHIR Resources including BP and special-circumstance Observations with
-     *               optional Encounters.
-     * @return a List of one or more populated BloodPressureModel objects.
-     * @throws DataException
-     */
     @Override
-    public List<BloodPressureModel> transformIncomingBloodPressureReadings(Bundle bundle) throws DataException {
-        if (bundle == null) return null;
+    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+        return new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm);
+    }
 
-        Map<String, List<Observation>> encounterObservationsMap = buildEncounterObservationsMap(bundle);
-        FhirConfigManager fcm = workspace.getFhirConfigManager();
-        List<Coding> bpCodings = fcm.getAllBpCodings();
+    @Override
+    protected BloodPressureModel buildBloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException {
+        return new BloodPressureModel(o, fcm);
+    }
 
-        List<BloodPressureModel> list = new ArrayList<>();
-
-        for (Encounter encounter : getAllEncounters(bundle)) {
-            logger.debug("processing Encounter: " + encounter.getId());
-
-            List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
-
-            if (encounterObservations != null) {
-                logger.debug("building Observations for Encounter " + encounter.getId());
-
-                List<Observation> bpObservationList = new ArrayList<>();    // potentially many per encounter
-                Observation protocolObservation = null;
-
-                Iterator<Observation> iter = encounterObservations.iterator();
-                while (iter.hasNext()) {
-                    Observation o = iter.next();
-                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), bpCodings)) {
-                        logger.debug("bpObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        bpObservationList.add(o);
-                        iter.remove();
-
-                    } else if (protocolObservation == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
-                        logger.debug("protocolObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        protocolObservation = o;
-                        iter.remove();
-                    }
-                }
-
-                for (Observation bpObservation : bpObservationList) {
-                    list.add(new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm));
-                }
-
-                bpObservationList.clear();
-
-            } else {
-                logger.debug("no Observations found for Encounter " + encounter.getId());
-            }
-        }
-
-        // there may be BP observations in the system that aren't tied to any encounters.  we still want to capture these
-        // of course, we can't associate any other observations with them (e.g. protocol), but whatever.  better than nothing
-
-        for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
-            if (entry.getValue() != null) {
-                for (Observation o : entry.getValue()) {
-                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), bpCodings)) {
-                        logger.debug("bpObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        list.add(new BloodPressureModel(o, fcm));
-
-                    } else {
-                        logger.debug("did not process Observation " + o.getId());
-                    }
-                }
-            }
-        }
-
-        return list;
+    @Override
+    protected BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
+        return new BloodPressureModel(systolicObservation, diastolicObservation, fcm);
     }
 
     /**

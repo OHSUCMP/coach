@@ -64,178 +64,50 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     @Override
-    public List<BloodPressureModel> transformIncomingBloodPressureReadings(Bundle bundle) throws DataException {
-        if (bundle == null) return null;
+    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+        BloodPressureModel bpm = new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm);
 
-        Map<String, List<Observation>> encounterObservationsMap = buildEncounterObservationsMap(bundle);
-        FhirConfigManager fcm = workspace.getFhirConfigManager();
-        List<Coding> bpCodings = fcm.getAllBpCodings();
+        // Epic hack to set protocol information from custom-serialized note in the Observation resource
+        // if no protocol resource is found
 
-        List<BloodPressureModel> list = new ArrayList<>();
-
-        for (Encounter encounter : getAllEncounters(bundle)) {
-            logger.debug("processing Encounter: " + encounter.getId());
-
-            List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
-
-            if (encounterObservations != null) {
-                logger.debug("building Observations for Encounter " + encounter.getId());
-
-                List<Observation> bpObservationList = new ArrayList<>();    // potentially many per encounter
-                Observation protocolObservation = null;
-
-                Iterator<Observation> iter = encounterObservations.iterator();
-                while (iter.hasNext()) {
-                    Observation o = iter.next();
-                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), bpCodings)) {
-                        logger.debug("bpObservation = " + o.getId() + " (encounter=" + encounter.getId() +
-                                ") (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        bpObservationList.add(o);
-                        iter.remove();
-
-                    } else if (protocolObservation == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
-                        logger.debug("protocolObservation = " + o.getId() + " (encounter=" + encounter.getId() +
-                                ") (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        protocolObservation = o;
-                        iter.remove();
-                    }
-                }
-
-                for (Observation bpObservation : bpObservationList) {
-                    BloodPressureModel bpm = new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm);
-
-                    // Epic hack to set protocol information from custom-serialized note in the Observation resource
-                    // if no protocol resource is found
-
-                    if (protocolObservation == null) {
-                        Boolean followedProtocol = getFollowedProtocolFromNote(bpObservation, fcm);
-                        if (followedProtocol != null) {
-                            bpm.setFollowedProtocol(followedProtocol);
-                        }
-                    }
-
-                    list.add(bpm);
-                }
-
-                bpObservationList.clear();
-
-            } else {
-                logger.debug("no Observations found for Encounter " + encounter.getId());
+        if (protocolObservation == null) {
+            Boolean followedProtocol = getFollowedProtocolFromNote(bpObservation, fcm);
+            if (followedProtocol != null) {
+                bpm.setFollowedProtocol(followedProtocol);
             }
         }
 
-        // there may be BP observations in the system that aren't tied to any encounters.  we still want to capture these
-        // of course, we can't associate any other observations with them (e.g. protocol), but whatever.  better than nothing
+        return bpm;
+    }
 
-        // these observations without Encounters are probably stored in flowsheets as individual systolic
-        // and diastolic readings.  these need to be combined into a single BloodPresureModel object for any
-        // pair of (systolic, diastolic) that have the same timestamp
+    @Override
+    protected BloodPressureModel buildBloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException {
+        BloodPressureModel bpm = new BloodPressureModel(o, fcm);
 
-        List<Coding> systolicCodings = fcm.getSystolicCodings();
-        List<Coding> diastolicCodings = fcm.getDiastolicCodings();
-        List<Coding> bpPanelCodings = fcm.getBpPanelCodings();
+        // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
+        // if no Observation resource for the protocol exists
 
-        Map<String, List<Observation>> dateObservationsMap = new LinkedHashMap<>();
-
-        for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
-            if (entry.getValue() != null) {
-                for (Observation o : entry.getValue()) {
-                    if (o.hasCode()) {
-                        if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
-                            logger.debug("bpObservation = " + o.getId() + " (no encounter) (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                            BloodPressureModel bpm = new BloodPressureModel(o, fcm);
-
-                            // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
-                            // if no Observation resource for the protocol exists
-
-                            Boolean followedProtocol = getFollowedProtocolFromNote(o, fcm);
-                            if (followedProtocol != null) {
-                                bpm.setFollowedProtocol(followedProtocol);
-                            }
-
-                            list.add(bpm);
-
-                        } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings) || FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
-                            String dateStr = o.getEffectiveDateTimeType().getValueAsString();
-                            if ( ! dateObservationsMap.containsKey(dateStr) ) {
-                                dateObservationsMap.put(dateStr, new ArrayList<>());
-                            }
-                            dateObservationsMap.get(dateStr).add(o);
-
-                        } else {
-                            logger.debug("did not process Observation " + o.getId());
-                        }
-                    }
-                }
-            }
+        Boolean followedProtocol = getFollowedProtocolFromNote(o, fcm);
+        if (followedProtocol != null) {
+            bpm.setFollowedProtocol(followedProtocol);
         }
 
-        // now process dateObservationsMap, which should only include individual systolic and diastolic readings
+        return bpm;
+    }
 
-        for (Map.Entry<String, List<Observation>> entry : dateObservationsMap.entrySet()) {
-            List<Observation> list2 = entry.getValue();
+    @Override
+    protected BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
+        BloodPressureModel bpm = new BloodPressureModel(systolicObservation, diastolicObservation, fcm);
 
-            if (list2.size() == 1) {        // systolic OR diastolic only; treat the same as above
-                Observation o = list2.get(0);
-                logger.debug("bpObservation = " + o.getId() + " (no encounter) (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                BloodPressureModel bpm = new BloodPressureModel(o, fcm);
-
-                // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
-                // if no Observation resource for the protocol exists
-
-                Boolean followedProtocol = getFollowedProtocolFromNote(o, fcm);
-                if (followedProtocol != null) {
-                    bpm.setFollowedProtocol(followedProtocol);
-                }
-
-                list.add(bpm);
-
-            } else if (list2.size() == 2) { // probably both systolic and diastolic, but check for sure
-                Observation o1 = list2.get(0);
-                Observation o2 = list2.get(1);
-
-                Observation systolicObservation;
-                Observation diastolicObservation;
-
-                if (o1.hasCode() && FhirUtil.hasCoding(o1.getCode(), systolicCodings) &&
-                        o2.hasCode() && FhirUtil.hasCoding(o2.getCode(), diastolicCodings)) {
-                    systolicObservation = o1;
-                    diastolicObservation = o2;
-
-                } else if (o1.hasCode() && FhirUtil.hasCoding(o1.getCode(), diastolicCodings) &&
-                        o2.hasCode() && FhirUtil.hasCoding(o2.getCode(), systolicCodings)) {
-                    systolicObservation = o2;
-                    diastolicObservation = o1;
-
-                } else {
-                    logger.warn("unexpected Observation pair building BloodPressureModel for ids=[" +
-                            o1.getId() + ", " + o2.getId() + "] - skipping -");
-                    continue;
-                }
-
-                logger.debug("systolicObservation = " + systolicObservation.getId() + " (effectiveDateTime=" +
-                        systolicObservation.getEffectiveDateTimeType().getValueAsString() + ")");
-                logger.debug("diastolicObservation = " + diastolicObservation.getId() + " (effectiveDateTime=" +
-                        diastolicObservation.getEffectiveDateTimeType().getValueAsString() + ")");
-
-                BloodPressureModel bpm = new BloodPressureModel(systolicObservation, diastolicObservation, fcm);
-
-                Boolean followedProtocol = getFollowedProtocolFromNote(systolicObservation, fcm);
-                if (followedProtocol == null) {
-                    followedProtocol = getFollowedProtocolFromNote(diastolicObservation, fcm);
-                }
-                if (followedProtocol != null) {
-                    bpm.setFollowedProtocol(followedProtocol);
-                }
-
-                list.add(bpm);
-
-            } else {                        // more readings than expected, handle somehow?
-                logger.warn("too many observations found with readingDate=" + entry.getKey());
-            }
+        Boolean followedProtocol = getFollowedProtocolFromNote(systolicObservation, fcm);
+        if (followedProtocol == null) {
+            followedProtocol = getFollowedProtocolFromNote(diastolicObservation, fcm);
+        }
+        if (followedProtocol != null) {
+            bpm.setFollowedProtocol(followedProtocol);
         }
 
-        return list;
+        return bpm;
     }
 
     @Override
