@@ -81,6 +81,26 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     @Override
+    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+        BloodPressureModel bpm = new BloodPressureModel(encounter, systolicObservation, diastolicObservation, protocolObservation, fcm);
+
+        // Epic hack to set protocol information from custom-serialized note in the Observation resource
+        // if no protocol resource is found
+
+        if (protocolObservation == null) {
+            Boolean followedProtocol = getFollowedProtocolFromNote(systolicObservation, fcm);
+            if (followedProtocol == null) {
+                followedProtocol = getFollowedProtocolFromNote(diastolicObservation, fcm);
+            }
+            if (followedProtocol != null) {
+                bpm.setFollowedProtocol(followedProtocol);
+            }
+        }
+
+        return bpm;
+    }
+
+    @Override
     protected BloodPressureModel buildBloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException {
         BloodPressureModel bpm = new BloodPressureModel(o, fcm);
 

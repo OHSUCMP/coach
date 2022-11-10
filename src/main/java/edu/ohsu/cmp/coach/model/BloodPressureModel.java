@@ -37,18 +37,12 @@ public class BloodPressureModel extends AbstractVitalsModel {
 
         super(source, followedProtocol, readingDate);
 
-        if (systolic == null && diastolic == null) {
-            throw new DataException("systolic and diastolic are null (at least one must be provided)");
+        if (systolic == null || diastolic == null) {
+            throw new DataException("both systolic and diastolic required");
         }
 
-        if (systolic != null) {
-            this.systolic = new QuantityModel(systolic, fcm.getBpValueUnit());
-        }
-
-        if (diastolic != null) {
-            this.diastolic = new QuantityModel(diastolic, fcm.getBpValueUnit());
-        }
-
+        this.systolic = new QuantityModel(systolic, fcm.getBpValueUnit());
+        this.diastolic = new QuantityModel(diastolic, fcm.getBpValueUnit());
         this.readingDate = readingDate; //.getTime();
     }
 
@@ -56,18 +50,12 @@ public class BloodPressureModel extends AbstractVitalsModel {
     public BloodPressureModel(HomeBloodPressureReading reading, FhirConfigManager fcm) throws DataException {
         super(ObservationSource.valueOf(reading.getSource()), reading.getFollowedInstructions(), reading.getReadingDate());
 
-        if (reading.getSystolic() == null && reading.getDiastolic() == null) {
-            throw new DataException("systolic and diastolic are null (at least one must be provided)");
+        if (reading.getSystolic() == null || reading.getDiastolic() == null) {
+            throw new DataException("both systolic and diastolic are required");
         }
 
-        if (reading.getSystolic() != null) {
-            systolic = new QuantityModel(reading.getSystolic(), fcm.getBpValueUnit());
-        }
-
-        if (reading.getDiastolic() != null) {
-            diastolic = new QuantityModel(reading.getDiastolic(), fcm.getBpValueUnit());
-        }
-
+        systolic = new QuantityModel(reading.getSystolic(), fcm.getBpValueUnit());
+        diastolic = new QuantityModel(reading.getDiastolic(), fcm.getBpValueUnit());
         readingDate = reading.getReadingDate(); //.getTime();
     }
 
@@ -76,14 +64,6 @@ public class BloodPressureModel extends AbstractVitalsModel {
         super(ObservationUtil.getBPSource(bpObservation, fcm), null, ObservationUtil.getReadingDate(bpObservation), fcm);
 
         buildFromBPObservation(bpObservation, fcm);
-    }
-
-    // read remote, no encounter reference or resource available
-    // systolic and diastolic are split across two separate Observations
-    public BloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
-        super(ObservationUtil.getBPSource(systolicObservation, fcm), null, ObservationUtil.getReadingDate(systolicObservation), fcm);
-
-        buildFromSystolicDiastolicObservations(systolicObservation, diastolicObservation, fcm);
     }
 
     // read remote, has encounter and possibly protocol
@@ -95,44 +75,53 @@ public class BloodPressureModel extends AbstractVitalsModel {
         buildFromBPObservation(bpObservation, fcm);
     }
 
-    private void buildFromBPObservation(Observation bpObservation, FhirConfigManager fcm) {
+    public BloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation,
+                              Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+
+        super(encounter, ObservationUtil.getBPSource(systolicObservation, encounter, fcm), protocolObservation, ObservationUtil.getReadingDate(systolicObservation), fcm);
+
+        buildFromSystolicDiastolicObservations(systolicObservation, diastolicObservation, fcm);
+    }
+
+    private void buildFromBPObservation(Observation bpObservation, FhirConfigManager fcm) throws DataException {
         this.sourceBPObservation = bpObservation;
 
-        // todo : set id.  but to what?  first Observation's id?  what about the others?  how is id used?  do we need
-        //        to retain the ids for the Encounter and other Observations?
-
         CodeableConcept code = bpObservation.getCode();
-        if (FhirUtil.hasCoding(code, fcm.getSystolicCodings())) {
-            systolic = new QuantityModel(bpObservation.getValueQuantity(), fcm.getBpValueUnit());
-
-        } else if (FhirUtil.hasCoding(code, fcm.getDiastolicCodings())) {
-            diastolic = new QuantityModel(bpObservation.getValueQuantity(), fcm.getBpValueUnit());
-
-        } else { // it's not a raw systolic or diastolic reading of any sort, so it must be a panel.  right?
+        if (FhirUtil.hasCoding(code, fcm.getBpPanelCodings())) {
             for (Observation.ObservationComponentComponent occ : bpObservation.getComponent()) {
-                ValueType valueType = ValueType.UNKNOWN;
-
                 CodeableConcept cc = occ.getCode();
                 if (FhirUtil.hasCoding(cc, fcm.getSystolicCodings())) {
-                    valueType = ValueType.SYSTOLIC;
-                } else if (FhirUtil.hasCoding(cc, fcm.getDiastolicCodings())) {
-                    valueType = ValueType.DIASTOLIC;
-                }
+                    systolic = new QuantityModel(occ.getValueQuantity(), fcm.getBpValueUnit());
 
-                if (valueType != ValueType.UNKNOWN) {
-                    Quantity q = occ.getValueQuantity();
-                    switch (valueType) {
-                        case SYSTOLIC: systolic = new QuantityModel(q, fcm.getBpValueUnit()); break;
-                        case DIASTOLIC: diastolic = new QuantityModel(q, fcm.getBpValueUnit()); break;
-                    }
+                } else if (FhirUtil.hasCoding(cc, fcm.getDiastolicCodings())) {
+                    diastolic = new QuantityModel(occ.getValueQuantity(), fcm.getBpValueUnit());
                 }
             }
+
+            if (systolic == null || diastolic == null) {
+                throw new DataException("both systolic and diastolic required");
+            }
+
+        } else {
+            throw new DataException("only BP panel Observations permitted in this context");
         }
+    }
+
+    // read remote, no encounter reference or resource available
+    // systolic and diastolic are split across two separate Observations
+    public BloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
+        super(ObservationUtil.getBPSource(systolicObservation, fcm), null, ObservationUtil.getReadingDate(systolicObservation), fcm);
+
+        buildFromSystolicDiastolicObservations(systolicObservation, diastolicObservation, fcm);
     }
 
     private void buildFromSystolicDiastolicObservations(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
         this.sourceSystolicObservation = systolicObservation;
         this.sourceDiastolicObservation = diastolicObservation;
+
+        if (systolicObservation == null || diastolicObservation == null) {
+            throw new DataException("both systolic and diastolic Observations are required");
+        }
 
         // todo : set id.  but to what?  first Observation's id?  what about the others?  how is id used?  do we need
         //        to retain the ids for the Encounter and other Observations?
@@ -162,34 +151,16 @@ public class BloodPressureModel extends AbstractVitalsModel {
 
     @Override
     public String getReadingType() {
-        if (systolic != null && diastolic == null) {
-            return "Systolic";
-
-        } else if (systolic == null && diastolic != null) {
-            return "Diastolic";
-
-        } else if (systolic != null && diastolic != null) {
-            return "BP Panel";
-
-        } else {    // shouldn't ever get here
-            return "(n/a)";
-        }
+        return systolic != null && diastolic != null ?
+                "BP Panel" :
+                "(n/a)";        // shouldn't ever get here
     }
 
     @Override
     public String getValue() {
-        if (systolic != null && diastolic != null) {
-            return systolic.getValue() + "/" + diastolic.getValue() + " " + systolic.getUnit();
-
-        } else if (systolic != null) {
-            return systolic.getValue() + " " + systolic.getUnit();
-
-        } else if (diastolic != null) {
-            return diastolic.getValue() + " " + diastolic.getUnit();
-
-        } else {    // shouldn't ever get here
-            return "(n/a)";
-        }
+        return systolic != null && diastolic != null ?
+                systolic.getValue() + "/" + diastolic.getValue() + " " + systolic.getUnit() :
+                "(n/a)";        // shouldn't ever get here
     }
 
     @JsonIgnore

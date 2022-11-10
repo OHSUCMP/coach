@@ -70,6 +70,11 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
     }
 
     @Override
+    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+        return new BloodPressureModel(encounter, systolicObservation, diastolicObservation, protocolObservation, fcm);
+    }
+
+    @Override
     protected BloodPressureModel buildBloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException {
         return new BloodPressureModel(o, fcm);
     }

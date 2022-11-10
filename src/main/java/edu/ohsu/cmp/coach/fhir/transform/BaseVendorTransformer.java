@@ -27,6 +27,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 
 
     protected abstract BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException;
+    protected abstract BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException;
     protected abstract BloodPressureModel buildBloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException;
     protected abstract BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException;
 
@@ -36,7 +37,10 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 
         Map<String, List<Observation>> encounterObservationsMap = buildEncounterObservationsMap(bundle);
         FhirConfigManager fcm = workspace.getFhirConfigManager();
-        List<Coding> bpCodings = fcm.getAllBpCodings();
+
+        List<Coding> bpPanelCodings = fcm.getBpPanelCodings();
+        List<Coding> systolicCodings = fcm.getSystolicCodings();
+        List<Coding> diastolicCodings = fcm.getDiastolicCodings();
 
         List<BloodPressureModel> list = new ArrayList<>();
 
@@ -48,31 +52,68 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
             if (encounterObservations != null) {
                 logger.debug("building Observations for Encounter " + encounter.getId());
 
-                List<Observation> bpObservationList = new ArrayList<>();    // potentially many per encounter
-                Observation protocolObservation = null;
+                List<Observation> bpObservationList = new ArrayList<>();                // potentially many per encounter
+                Map<String, SystolicDiastolicPair> datePairMap = new LinkedHashMap<>(); // potentially many per encounter
+
+                Observation protocol = null;
 
                 Iterator<Observation> iter = encounterObservations.iterator();
                 while (iter.hasNext()) {
                     Observation o = iter.next();
-                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), bpCodings)) {
-                        logger.debug("bpObservation = " + o.getId() + " (encounter=" + encounter.getId() +
-                                ") (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                    if ( ! o.hasCode() ) {
+                        logger.warn("observation " + o.getId() + " missing code - skipping -");
+                        continue;
+                    }
+
+                    if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
                         bpObservationList.add(o);
                         iter.remove();
 
-                    } else if (protocolObservation == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
+                    } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
+                        String dateStr = o.getEffectiveDateTimeType().getValueAsString();
+                        if ( ! datePairMap.containsKey(dateStr) ) {
+                            datePairMap.put(dateStr, new SystolicDiastolicPair());
+                        }
+                        datePairMap.get(dateStr).setSystolicObservation(o);
+
+                    } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
+                        String dateStr = o.getEffectiveDateTimeType().getValueAsString();
+                        if ( ! datePairMap.containsKey(dateStr) ) {
+                            datePairMap.put(dateStr, new SystolicDiastolicPair());
+                        }
+                        datePairMap.get(dateStr).setDiastolicObservation(o);
+
+                    } else if (protocol == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
                         logger.debug("protocolObservation = " + o.getId() + " (encounter=" + encounter.getId() +
                                 ") (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        protocolObservation = o;
+                        protocol = o;
                         iter.remove();
                     }
                 }
 
-                for (Observation bpObservation : bpObservationList) {
-                    list.add(buildBloodPressureModel(encounter, bpObservation, protocolObservation, fcm));
+                for (Observation bp : bpObservationList) {
+                    logger.debug("bpObservation = " + bp.getId() + " (encounter=" + encounter.getId() +
+                            ") (effectiveDateTime=" + bp.getEffectiveDateTimeType().getValueAsString() + ")");
+                    list.add(buildBloodPressureModel(encounter, bp, protocol, fcm));
                 }
 
-                bpObservationList.clear();
+                for (Map.Entry<String, SystolicDiastolicPair> entry : datePairMap.entrySet()) {
+                    SystolicDiastolicPair sdp = entry.getValue();
+                    if (sdp.isValid()) {
+                        Observation systolic = sdp.getSystolicObservation();
+                        Observation diastolic = sdp.getDiastolicObservation();
+
+                        logger.debug("systolicObservation = " + systolic.getId() + " (effectiveDateTime=" +
+                                systolic.getEffectiveDateTimeType().getValueAsString() + ")");
+                        logger.debug("diastolicObservation = " + diastolic.getId() + " (effectiveDateTime=" +
+                                diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
+
+                        list.add(buildBloodPressureModel(encounter, systolic, diastolic, protocol, fcm));
+
+                    } else {
+                        logger.warn("found incomplete systolic-diastolic pair for readingDate=" + entry.getKey() + " - skipping -");
+                    }
+                }
 
             } else {
                 logger.debug("no Observations found for Encounter " + encounter.getId());
@@ -86,11 +127,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         // these need to be combined into a single BloodPresureModel object for any pair of (systolic, diastolic) that
         // have the same timestamp
 
-        List<Coding> systolicCodings = fcm.getSystolicCodings();
-        List<Coding> diastolicCodings = fcm.getDiastolicCodings();
-        List<Coding> bpPanelCodings = fcm.getBpPanelCodings();
-
-        Map<String, List<Observation>> dateObservationsMap = new LinkedHashMap<>();
+        Map<String, SystolicDiastolicPair> datePairMap = new LinkedHashMap<>();
 
         for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
             if (entry.getValue() != null) {
@@ -101,12 +138,19 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                                     o.getEffectiveDateTimeType().getValueAsString() + ")");
                             list.add(buildBloodPressureModel(o, fcm));
 
-                        } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings) || FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
+                        } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
                             String dateStr = o.getEffectiveDateTimeType().getValueAsString();
-                            if ( ! dateObservationsMap.containsKey(dateStr) ) {
-                                dateObservationsMap.put(dateStr, new ArrayList<>());
+                            if ( ! datePairMap.containsKey(dateStr) ) {
+                                datePairMap.put(dateStr, new SystolicDiastolicPair());
                             }
-                            dateObservationsMap.get(dateStr).add(o);
+                            datePairMap.get(dateStr).setSystolicObservation(o);
+
+                        } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
+                            String dateStr = o.getEffectiveDateTimeType().getValueAsString();
+                            if ( ! datePairMap.containsKey(dateStr) ) {
+                                datePairMap.put(dateStr, new SystolicDiastolicPair());
+                            }
+                            datePairMap.get(dateStr).setDiastolicObservation(o);
 
                         } else {
                             logger.debug("did not process Observation " + o.getId());
@@ -118,46 +162,51 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 
         // now process dateObservationsMap, which should only include individual systolic and diastolic readings
 
-        for (Map.Entry<String, List<Observation>> entry : dateObservationsMap.entrySet()) {
-            List<Observation> list2 = entry.getValue();
+        for (Map.Entry<String, SystolicDiastolicPair> entry : datePairMap.entrySet()) {
+            SystolicDiastolicPair sdp = entry.getValue();
+            if (sdp.isValid()) {
+                Observation systolic = sdp.getSystolicObservation();
+                Observation diastolic = sdp.getDiastolicObservation();
 
-            if (list2.size() == 2) { // probably both systolic and diastolic, but check for sure
-                Observation o1 = list2.get(0);
-                Observation o2 = list2.get(1);
+                logger.debug("systolicObservation = " + systolic.getId() + " (effectiveDateTime=" +
+                        systolic.getEffectiveDateTimeType().getValueAsString() + ")");
+                logger.debug("diastolicObservation = " + diastolic.getId() + " (effectiveDateTime=" +
+                        diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
 
-                Observation systolicObservation;
-                Observation diastolicObservation;
+                list.add(buildBloodPressureModel(systolic, diastolic, fcm));
 
-                if (o1.hasCode() && FhirUtil.hasCoding(o1.getCode(), systolicCodings) &&
-                        o2.hasCode() && FhirUtil.hasCoding(o2.getCode(), diastolicCodings)) {
-                    systolicObservation = o1;
-                    diastolicObservation = o2;
-
-                } else if (o1.hasCode() && FhirUtil.hasCoding(o1.getCode(), diastolicCodings) &&
-                        o2.hasCode() && FhirUtil.hasCoding(o2.getCode(), systolicCodings)) {
-                    systolicObservation = o2;
-                    diastolicObservation = o1;
-
-                } else {
-                    logger.warn("unexpected Observation pair building BloodPressureModel for ids=[" +
-                            o1.getId() + ", " + o2.getId() + "] - skipping -");
-                    continue;
-                }
-
-                logger.debug("systolicObservation = " + systolicObservation.getId() + " (effectiveDateTime=" +
-                        systolicObservation.getEffectiveDateTimeType().getValueAsString() + ")");
-                logger.debug("diastolicObservation = " + diastolicObservation.getId() + " (effectiveDateTime=" +
-                        diastolicObservation.getEffectiveDateTimeType().getValueAsString() + ")");
-
-                list.add(buildBloodPressureModel(systolicObservation, diastolicObservation, fcm));
-
-            } else {                        // more readings than expected, handle somehow?
-                logger.warn("expected 2 observations but encountered " + list2.size() +
-                        " for readingDate=" + entry.getKey() + " - skipping -");
+            } else {
+                logger.warn("found incomplete systolic-diastolic pair for readingDate=" + entry.getKey() + " - skipping -");
             }
         }
 
         return list;
+    }
+
+    // helper class for organizing working objects
+    private static final class SystolicDiastolicPair {
+        private Observation systolicObservation = null;
+        private Observation diastolicObservation = null;
+
+        public boolean isValid() {
+            return systolicObservation != null && diastolicObservation != null;
+        }
+
+        public Observation getSystolicObservation() {
+            return systolicObservation;
+        }
+
+        public void setSystolicObservation(Observation systolicObservation) {
+            this.systolicObservation = systolicObservation;
+        }
+
+        public Observation getDiastolicObservation() {
+            return diastolicObservation;
+        }
+
+        public void setDiastolicObservation(Observation diastolicObservation) {
+            this.diastolicObservation = diastolicObservation;
+        }
     }
 
     protected Map<String, List<Observation>> buildEncounterObservationsMap(Bundle bundle) {
