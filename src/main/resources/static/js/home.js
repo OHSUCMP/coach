@@ -27,34 +27,9 @@ function loadBloodPressureObservations(_callback) {
             bpdata.sort(function (a, b) {
                 return a.readingDate - b.readingDate;
             });
-
-            const pairedbpdata = pairedBPData(bpdata);
-            _callback(pairedbpdata);
+            _callback(bpdata);
         }
     });
-}
-
-/**
- * Find and match any lone systolic/diastolic observations and combine them back with those already paired
- * @param {*} bpdata
- * @returns
- */
-function pairedBPData(bpdata) {
-    let clone = structuredClone(bpdata)
-    const systolicMatches = clone.filter(bp => bp.systolic !== null && bp.diastolic === null)
-        .map(sysonly => Object.create({
-            systolicObservation: sysonly,
-            diastolicValues:
-                clone.filter(
-                    bp => bp.systolic === null && bp.diastolic !== null && bp.readingDate.getTime() === sysonly.readingDate.getTime()).map(d => d.diastolic)}))
-    // Modify the matched systolic observations in place
-    const matchedObservations = systolicMatches.filter(m => m.diastolicValues.length === 1).map(m => {
-        let obs = m.systolicObservation
-        obs.diastolic = m.diastolicValues[0]
-        return obs
-    })
-    // Filter out the unmatched observations
-    return clone.filter(o => o.systolic !== null && o.diastolic !== null)
 }
 
 function loadMedications(_callback) {
