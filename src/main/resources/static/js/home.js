@@ -27,34 +27,9 @@ function loadBloodPressureObservations(_callback) {
             bpdata.sort(function (a, b) {
                 return a.readingDate - b.readingDate;
             });
-
-            const pairedbpdata = pairedBPData(bpdata);
-            _callback(pairedbpdata);
+            _callback(bpdata);
         }
     });
-}
-
-/**
- * Find and match any lone systolic/diastolic observations and combine them back with those already paired
- * @param {*} bpdata
- * @returns
- */
-function pairedBPData(bpdata) {
-    let clone = structuredClone(bpdata)
-    const systolicMatches = clone.filter(bp => bp.systolic !== null && bp.diastolic === null)
-        .map(sysonly => Object.create({
-            systolicObservation: sysonly,
-            diastolicValues:
-                clone.filter(
-                    bp => bp.systolic === null && bp.diastolic !== null && bp.readingDate.getTime() === sysonly.readingDate.getTime()).map(d => d.diastolic)}))
-    // Modify the matched systolic observations in place
-    const matchedObservations = systolicMatches.filter(m => m.diastolicValues.length === 1).map(m => {
-        let obs = m.systolicObservation
-        obs.diastolic = m.diastolicValues[0]
-        return obs
-    })
-    // Filter out the unmatched observations
-    return clone.filter(o => o.systolic !== null && o.diastolic !== null)
 }
 
 function loadMedications(_callback) {
@@ -332,6 +307,7 @@ function toLOESSData2(data, type) {
         bandwidth = 0.4;
     }
     console.log("Starting bandwidth: " + bandwidth);
+    console.log(map);
 
     let xval = [], yval = [];
     map.forEach(function(item) {
@@ -351,13 +327,13 @@ function toLOESSData2(data, type) {
 
             console.log("Final bandwidth used: " + bandwidth);
             console.log(loess_points)
-            // If first or last are NaN, fall back on a direct plot
-            if (isNaN(loess_points.find(p => true)[1]) | isNaN(loess_points.findLast(p => true)[1])) {
+            // If first or last are out of bounds, fall back on a direct plot
+            if (isOutOfBounds(loess_points.find(p => true)[1]) | isOutOfBounds(loess_points.findLast(p => true)[1])) {
                 console.log("First or last values are NaN. Fall back on direct plot.")
                 return map;
             }
             // Filter out NaN values
-            const filtered = loess_points.filter(pt => !isNaN(pt[1]));
+            const filtered = loess_points.filter(pt => !isOutOfBounds(pt[1]));
             if (filtered.length < loess_points.length) {
                 console.log("Some points failed regression. Returning a subset.");
             }
@@ -370,6 +346,11 @@ function toLOESSData2(data, type) {
     // Fall back on a direct plot
     return map;
 
+}
+
+// Boundaries on the LOESS interpretation
+function isOutOfBounds(pt) {
+    return isNaN(pt) || pt < 0  || pt > 300
 }
 
 function getLOESSBandwidth() {
