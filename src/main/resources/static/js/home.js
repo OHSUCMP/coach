@@ -332,6 +332,7 @@ function toLOESSData2(data, type) {
         bandwidth = 0.4;
     }
     console.log("Starting bandwidth: " + bandwidth);
+    console.log(map);
 
     let xval = [], yval = [];
     map.forEach(function(item) {
@@ -351,13 +352,13 @@ function toLOESSData2(data, type) {
 
             console.log("Final bandwidth used: " + bandwidth);
             console.log(loess_points)
-            // If first or last are NaN, fall back on a direct plot
-            if (isNaN(loess_points.find(p => true)[1]) | isNaN(loess_points.findLast(p => true)[1])) {
+            // If first or last are out of bounds, fall back on a direct plot
+            if (isOutOfBounds(loess_points.find(p => true)[1]) | isOutOfBounds(loess_points.findLast(p => true)[1])) {
                 console.log("First or last values are NaN. Fall back on direct plot.")
                 return map;
             }
             // Filter out NaN values
-            const filtered = loess_points.filter(pt => !isNaN(pt[1]));
+            const filtered = loess_points.filter(pt => !isOutOfBounds(pt[1]));
             if (filtered.length < loess_points.length) {
                 console.log("Some points failed regression. Returning a subset.");
             }
@@ -370,6 +371,11 @@ function toLOESSData2(data, type) {
     // Fall back on a direct plot
     return map;
 
+}
+
+// Boundaries on the LOESS interpretation
+function isOutOfBounds(pt) {
+    return isNaN(pt) || pt < 0  || pt > 300
 }
 
 function getLOESSBandwidth() {
