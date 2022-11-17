@@ -86,7 +86,24 @@ function buildChart() {
             },
             scales: {
                 x: {
-                    type: 'time'
+                    type: 'time',
+                    time: {
+                        displayFormats: {
+                            millisecond: 'MMM dd yyyy HH:mm:ss',
+                            second: 'MMM dd yyyy H:mm',
+                            minute: 'MMM dd yyyy H:mm',
+                            hour: 'MMM dd yyyy ha',
+                            day: 'MMM dd yyyy',
+                            week: 'MMM dd yyyy',
+                            month: 'MMM yyyy',
+                            quarter: 'MMM yyyy',
+                            year: 'MMM yyyy'
+                        }
+                    },
+                    ticks: {
+                        autoSkip: true,
+                        maxTicksLimit: 15
+                    }    
                 },
                 y: {
                     type: 'linear',
