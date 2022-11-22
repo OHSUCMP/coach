@@ -8,9 +8,9 @@ public class QuantityModel {
     private BigDecimal value;
     private String unit;
 
-    public QuantityModel(Quantity q) {
+    public QuantityModel(Quantity q, String unit) {
         this.value = q.getValue();
-        this.unit = q.getUnit();
+        this.unit = q.hasUnit() ? q.getUnit() : unit;
     }
 
     public QuantityModel(Integer value, String unit) {
@@ -22,7 +22,15 @@ public class QuantityModel {
         return value;
     }
 
+    public void setValue(BigDecimal value) {
+        this.value = value;
+    }
+
     public String getUnit() {
         return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 }

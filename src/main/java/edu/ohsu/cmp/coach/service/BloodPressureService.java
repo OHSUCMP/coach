@@ -3,11 +3,13 @@ package edu.ohsu.cmp.coach.service;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
+import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.entity.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.MethodNotImplementedException;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 @Service
-public class BloodPressureService extends AbstractVitalsService {
+public class BloodPressureService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -29,73 +31,11 @@ public class BloodPressureService extends AbstractVitalsService {
 
     public List<BloodPressureModel> buildBloodPressureList(String sessionId) throws DataException {
         CompositeBundle compositeBundle = new CompositeBundle();
+        compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getAllBpCodings()), fcm.getBpLookbackPeriod(), null));
+        compositeBundle.consume(workspaceService.get(sessionId).getProtocolObservations());
 
-        List<Coding> bpCodings = fcm.getAllBpCodings();
-        compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(bpCodings), fcm.getBpLookbackPeriod(), null));
-
-        Bundle protocolObservations = workspaceService.get(sessionId).getProtocolObservations();
-        compositeBundle.consume(protocolObservations);
-
-        Bundle observationBundle = compositeBundle.getBundle();
-
-        List<BloodPressureModel> list = new ArrayList<>();
-        Map<String, List<Observation>> encounterObservationsMap = buildEncounterObservationsMap(observationBundle);
-
-        for (Encounter encounter : workspaceService.get(sessionId).getEncounters()) {
-            logger.debug("processing Encounter: " + encounter.getId());
-
-            List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
-
-            if (encounterObservations != null) {
-                logger.debug("building Observations for Encounter " + encounter.getId());
-
-                List<Observation> bpObservationList = new ArrayList<>();    // potentially many per encounter
-                Observation protocolObservation = null;
-
-                Iterator<Observation> iter = encounterObservations.iterator();
-                while (iter.hasNext()) {
-                    Observation o = iter.next();
-                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), bpCodings)) {
-                        logger.debug("bpObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        bpObservationList.add(o);
-                        iter.remove();
-
-                    } else if (protocolObservation == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
-                        logger.debug("protocolObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        protocolObservation = o;
-                        iter.remove();
-                    }
-                }
-
-                for (Observation bpObservation : bpObservationList) {
-                    list.add(new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm));
-                }
-
-                bpObservationList.clear();
-
-            } else {
-                logger.debug("no Observations found for Encounter " + encounter.getId());
-            }
-        }
-
-        // there may be BP observations in the system that aren't tied to any encounters.  we still want to capture these
-        // of course, we can't associate any other observations with them (e.g. protocol), but whatever.  better than nothing
-
-        for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
-            if (entry.getValue() != null) {
-                for (Observation o : entry.getValue()) {
-                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), bpCodings)) {
-                        logger.debug("bpObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        list.add(new BloodPressureModel(o, fcm));
-
-                    } else {
-                        logger.debug("did not process Observation " + o.getId());
-                    }
-                }
-            }
-        }
-
-        return list;
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        return workspace.getVendorTransformer().transformIncomingBloodPressureReadings(compositeBundle.getBundle());
     }
 
     public List<BloodPressureModel> getHomeBloodPressureReadings(String sessionId) throws DataException {
@@ -127,57 +67,17 @@ public class BloodPressureService extends AbstractVitalsService {
     }
 
     public BloodPressureModel create(String sessionId, BloodPressureModel bpm) throws DataException, ConfigurationException, IOException, ScopeException {
+        UserWorkspace workspace = workspaceService.get(sessionId);
         if (storeRemotely) {
-            Bundle responseBundle = writeRemote(sessionId, bpm);
-
-            // read each response resource, and append to the BP cache if created
-            // also, create a fresh BloodPressureModel resource constructed from the actual resources
-
-            Encounter encounter = null;
-            Observation bpObservation = null;
-            Observation protocolObservation = null;
-
-            List<Coding> bpCodings = fcm.getAllBpCodings();
-
-            for (Bundle.BundleEntryComponent entry : responseBundle.getEntry()) {
-                if (entry.hasResponse()) {
-                    Bundle.BundleEntryResponseComponent response = entry.getResponse();
-                    if (response.hasStatus() && response.getStatus().equals("201 Created")) {
-                        logger.debug("successfully created " + response.getLocation());
-                        if (entry.hasResource()) {
-                            Resource r = entry.getResource();
-
-                            if (r instanceof Encounter) {
-                                encounter = (Encounter) r;
-
-                            } else if (r instanceof Observation) {
-                                Observation o = (Observation) r;
-                                if (o.hasCode()) {
-                                    if (FhirUtil.hasCoding(o.getCode(), bpCodings)) {
-                                        bpObservation = o;
-
-//                                    } else if (o.getCode().hasCoding(fcm.getPulseSystem(), fcm.getPulseCode())) {
-//                                        pulseObservation = o;
-
-                                    } else if (FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
-                                        protocolObservation = o;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            try {
-                BloodPressureModel bpm2 = new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm);
-                workspaceService.get(sessionId).getBloodPressures().add(bpm2);
+            VendorTransformer transformer = workspace.getVendorTransformer();
+            Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
+            List<BloodPressureModel> list = transformer.transformIncomingBloodPressureReadings(
+                    transformer.writeRemote(sessionId, fhirService, outgoingBundle)
+            );
+            if (list.size() >= 1) {
+                BloodPressureModel bpm2 = list.get(0);
+                workspace.getBloodPressures().add(bpm2);
                 return bpm2;
-
-            } catch (DataException de) {
-                logger.error("caught " + de.getClass().getName() +
-                        " attempting to construct BloodPressureModel from remote create response - " +
-                        de.getMessage(), de);
             }
 
         } else {

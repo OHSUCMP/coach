@@ -12,19 +12,19 @@ import org.slf4j.LoggerFactory;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.UUID;
 
 public abstract class AbstractVitalsModel extends AbstractModel implements Comparable<AbstractVitalsModel> {
-    public static final String OBSERVATION_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category";
-    public static final String OBSERVATION_CATEGORY_CODE = "vital-signs";
+//    public static final String OBSERVATION_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category";
+//    public static final String OBSERVATION_CATEGORY_CODE = "vital-signs";
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy h:mm a");
 
+//    protected static final String PROTOCOL_NOTE_TAG = "COACH_PROTOCOL::";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    protected Encounter sourceEncounter;
     protected Observation sourceProtocolObservation;
 
     protected ObservationSource source = null;
@@ -37,14 +37,20 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
         this.readingDate = readingDate;
     }
 
-    public AbstractVitalsModel(ObservationSource source, Observation observation,
-                               Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+    public AbstractVitalsModel(ObservationSource source, Observation protocolObservation,
+                               Date readingDate, FhirConfigManager fcm) {
+        this(null, source, protocolObservation, readingDate, fcm);
+    }
+
+    public AbstractVitalsModel(Encounter encounter, ObservationSource source, Observation protocolObservation,
+                               Date readingDate, FhirConfigManager fcm) {
+        this.sourceEncounter = encounter;
         this.source = source;
         this.sourceProtocolObservation = protocolObservation;
 
-        if (source == ObservationSource.HOME && ! FhirUtil.hasHomeSettingExtension(observation)) {
-            logger.warn("Observation " + observation.getId() + " has HOME Encounter but is missing the Home Setting Extension");
-        }
+//        if (source == ObservationSource.HOME && ! FhirUtil.hasHomeSettingExtension(observation)) {
+//            logger.warn("Observation " + observation.getId() + " has HOME Encounter but is missing the Home Setting Extension");
+//        }
 
         if (protocolObservation != null &&
                 FhirUtil.hasCoding(protocolObservation.getCode(), fcm.getProtocolCoding()) &&
@@ -65,18 +71,7 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
             }
         }
 
-        if (observation.getEffectiveDateTimeType() != null) {
-            this.readingDate = observation.getEffectiveDateTimeType().getValue(); //.getTime();
-
-        } else if (observation.getEffectiveInstantType() != null) {
-            this.readingDate = observation.getEffectiveInstantType().getValue(); //.getTime();
-
-        } else if (observation.getEffectivePeriod() != null) {
-            this.readingDate = observation.getEffectivePeriod().getEnd(); //.getTime();
-
-        } else {
-            throw new DataException("missing timestamp");
-        }
+        this.readingDate = readingDate;
     }
 
     @Override
@@ -85,8 +80,23 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
     }
 
     @JsonIgnore
+    public Encounter getSourceEncounter() {
+        return sourceEncounter;
+    }
+
+    // implementing setSourceEncounter to facilitate the creation of new resources that use Encounter
+    @JsonIgnore
+    public void setSourceEncounter(Encounter sourceEncounter) {
+        this.sourceEncounter = sourceEncounter;
+    }
+
+    @JsonIgnore
     public Observation getSourceProtocolObservation() {
         return sourceProtocolObservation;
+    }
+
+    public void setSourceProtocolObservation(Observation sourceProtocolObservation) {
+        this.sourceProtocolObservation = sourceProtocolObservation;
     }
 
     public ObservationSource getSource() {
@@ -95,6 +105,10 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
 
     public Boolean getFollowedProtocol() {
         return followedProtocol;
+    }
+
+    public void setFollowedProtocol(Boolean followedProtocol) {
+        this.followedProtocol = followedProtocol;
     }
 
     public Date getReadingDate() {
@@ -112,65 +126,4 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
     public abstract String getReadingType();
     
     public abstract String getValue();
-
-//////////////////////////////////////////////////////////////////////////////
-// private methods
-//
-    protected Encounter buildNewHomeHealthEncounter(FhirConfigManager fcm, String patientId) {
-        Encounter e = new Encounter();
-
-        e.setId(genTemporaryId());
-
-        e.setStatus(Encounter.EncounterStatus.FINISHED);
-
-        e.getClass_().setSystem(fcm.getEncounterClassSystem())
-                .setCode(fcm.getEncounterClassHHCode())
-                .setDisplay(fcm.getEncounterClassHHDisplay());
-
-        e.setSubject(new Reference().setReference(patientId));
-
-        Calendar start = Calendar.getInstance();
-        start.setTime(readingDate);
-        start.add(Calendar.MINUTE, -1);
-
-        Calendar end = Calendar.getInstance();
-        end.setTime(readingDate);
-        end.add(Calendar.MINUTE, 1);
-
-        e.getPeriod().setStart(start.getTime()).setEnd(end.getTime());
-
-        return e;
-    }
-
-    protected Observation buildProtocolObservation(String patientId, Encounter enc, FhirConfigManager fcm) {
-        Observation o = new Observation();
-
-        o.setId(genTemporaryId());
-
-        o.setSubject(new Reference().setReference(patientId));
-
-        o.setEncounter(new Reference().setReference(URN_UUID + enc.getId()));
-
-        o.setStatus(Observation.ObservationStatus.FINAL);
-        o.getCode().addCoding(fcm.getProtocolCoding());
-
-        FhirUtil.addHomeSettingExtension(o);
-
-        o.setEffective(new DateTimeType(readingDate));
-
-        String answerValue = followedProtocol ?
-                fcm.getProtocolAnswerYes() :
-                fcm.getProtocolAnswerNo();
-
-        o.setValue(new CodeableConcept());
-        o.getValueCodeableConcept()
-                .setText(answerValue)
-                .addCoding(fcm.getProtocolAnswerCoding());
-
-        return o;
-    }
-
-    protected String genTemporaryId() {
-        return UUID.randomUUID().toString();
-    }
 }
