@@ -1,3 +1,11 @@
+// Match the enum ObservationSource in Java
+const BPSource = Object.freeze({
+	Home: "HOME",
+	HomeBluetooth: "HOME_BLUETOOTH",
+	Office: "OFFICE",
+	Unknown: "UNKNOWN"
+})
+
 function doClearSupplementalData(_callback) {
     $.ajax({
         method: "POST",
@@ -19,7 +27,6 @@ function loadBloodPressureObservations(_callback) {
             bpdata.sort(function (a, b) {
                 return a.readingDate - b.readingDate;
             });
-
             _callback(bpdata);
         }
     });
@@ -82,33 +89,99 @@ function populateAdverseEvents() {
     }
 }
 
+// Sort blood pressures in date order, returning a new sorted array
+function sortByDateAsc(bps) {
+    return bps.slice(0).sort((a, b) => Number(a.readingDate) - Number(b.readingDate));
+}
+
+// Sort blood pressures in reverse date order, returning a new sorted array
+function sortByDateDesc(bps) {
+	return bps.slice(0).sort((a, b) => Number(b.readingDate) - Number(a.readingDate));
+}
+
+/**
+ * Get the set of BPs to use in average calculation or null if a set doesn't exist
+ * @param {*} bps
+ * @returns
+ */
+function getBPSet(bps) {
+    const bpsDesc = sortByDateDesc(bps);
+    let set = bpsDesc.reduce((acc, bp) => {
+        if (acc.score >= 4.0) {
+            return acc;
+        }
+        acc.bpset.push(bp);
+        if (bp.source === BPSource.Home | bp.source === BPSource.HomeBluetooth) {
+            acc.score += 0.667;
+        } else {
+            // Anything explicitly not home is considered OFFICE and given 1 point
+            acc.score += 1.0;
+        } 
+        return acc;
+    }, {
+        score: 0.0,
+        bpset: []
+    });
+
+    if (set.score >= 4) {
+        return set.bpset;
+    }
+
+    return null;
+}
+
+function getBPSetStartDate(bps) {
+    const bpset = getBPSet(bps);
+    if (bpset) {
+        const sorted = sortByDateAsc(bpset);
+        return new Date(sorted[0].readingDate)
+    }
+
+    return null;
+}
+    
+/* Calculate the BP Average using the same logic from the recommendations */
+function calculateAverageBP(bps) {
+    const bpset = getBPSet(bps);
+    if (bpset) {
+        const systolicReadings = bpset.filter(r => r.systolic !== null).map(r => r.systolic.value);
+        const avgSys = systolicReadings.reduce((acc,val) => acc + val, 0)/systolicReadings.length;
+        const diastolicReadings = bpset.filter(r => r.diastolic !== null).map(r => r.diastolic.value);
+        const avgDia = diastolicReadings.reduce((acc,val) => acc + val, 0)/diastolicReadings.length;
+        return {
+            systolic: avgSys,
+            diastolic: avgDia
+        };
+
+    }
+
+    return null;
+}
+      
 function populateSummaryDiv() {
-    let data = window.bpchart.data;
     let totalSystolic = 0;
     let totalDiastolic = 0;
     let avgSystolic = 0;
     let avgDiastolic = 0;
 
-    let hasData = Array.isArray(data) && data.length > 0;
+    let hasData = Array.isArray(window.bpdata) && window.bpdata.length > 0;
 
     if (hasData) {
-        let systolicCount = 0;
-        let diastolicCount = 0;
+        let avg = calculateAverageBP(window.bpdata);
 
-        data.forEach(function (o) {
-            if (o.systolic) {
-                totalSystolic += o.systolic.value;
-                systolicCount += 1;
-            }
-            if (o.diastolic) {
-                totalDiastolic += o.diastolic.value;
-                diastolicCount += 1;
-            }
-        });
-
-        avgSystolic = Math.round(totalSystolic / systolicCount);
-        avgDiastolic = Math.round(totalDiastolic / diastolicCount);
+        if (avg) {
+            avgSystolic = Math.round(avg.systolic);
+            avgDiastolic = Math.round(avg.diastolic);
+        }
     }
+
+    if (avgSystolic === 0) {
+        $('#avgBPContainer').hide();
+        $('#avgPlaceholder').show();
+        return;
+    }
+    $('#avgPlaceholder').hide();
+    $('#avgBPContainer').show();
     $('#avgSystolic').html(avgSystolic);
     $('#avgDiastolic').html(avgDiastolic);
 
@@ -133,10 +206,11 @@ function populateSummaryDiv() {
 
     let el = $('#bpIcon');
     $(el).html("<img src='/images/" + indicator + "-icon.png' class='icon' alt='" + indicator + "' />");
-    $('#bpLabel').html('Average BP:');
+    $('#bpLabel').html('Recent BP Average:').attr('title', 'Average of the last several readings shaded in grey')
 
     let el2 = $('#bpGoalMetLabel');
-    if (hasData) {
+    // Only show if data exists and there were enough BPs to calculate an average
+    if (hasData && avgSystolic !== 0) {
         let currentBPGoal = getCurrentBPGoal();
         if (avgSystolic > currentBPGoal.systolic || avgDiastolic > currentBPGoal.diastolic) {
             $(el2).html('You are above goal');
@@ -160,9 +234,9 @@ function buildPointStyleArray(data) {
     // see https://www.chartjs.org/docs/latest/configuration/elements.html for options
     let arr = [];
     data.forEach(function(item) {
-        if (item.source === 'HOME' || item.source === 'HOME_BLUETOOTH') {
+        if (item.source === BPSource.Home || item.source === BPSource.HomeBluetooth) {
             arr.push('circle');
-        } else if (item.source === 'OFFICE') {
+        } else if (item.source === BPSource.Office) {
             arr.push('rect');
         }
     });
@@ -201,133 +275,87 @@ function toScatterData(data, type) {
     return arr;
 }
 
-function toTrendLineData(data, type) {
-    let chunks = 100;
-    let groupingFactor = 10;
-    let dateRange = getDateRange(data);
-    let minTime = dateRange.min.getTime();
-    let maxTime = dateRange.max.getTime();
-    let threshold = Math.round((maxTime - minTime) / chunks);
-
-    let arr = [];
-    let tempArr = [];
-    let lastDate = null;
-    let diffArr = [];
-
-    data.forEach(function (item) {
-        let val = null;
-        if (type === 'systolic' && item.systolic) {
-            val = item.systolic.value;
-        } else if (type === 'diastolic' && item.diastolic) {
-            val = item.diastolic.value;
-        }
-
-        if (val !== null) {
-            if (lastDate !== null) {
-                let diff = item.readingDate.getTime() - lastDate.getTime();
-                diffArr.push(diff);
-
-                let avgDiff = Math.round(diffArr.reduce(function (a, b) {
-                    return a + b;
-                }, 0) / diffArr.length);
-
-                // zone check ensures that trendline data points are created at least once per zone
-                // if the zone contains any data points
-                let zone = Math.round((item.readingDate.getTime() - minTime) / threshold);
-                let lastZone = lastDate !== null ?
-                    Math.round((lastDate.getTime() - minTime) / threshold) :
-                    null;
-
-                if (diff > threshold || (diffArr.length > 1 && diff > avgDiff * groupingFactor) || zone !== lastZone) {
-                    let lastDates = tempArr.map(function (o) {
-                        return o.timestamp.getTime();
-                    });
-                    let lastDateAvg = Math.round(lastDates.reduce(function (a, b) {
-                        return a + b;
-                    }, 0) / lastDates.length);
-                    let lastVals = tempArr.map(function (o) {
-                        return o.val;
-                    });
-                    let lastValsAvg = Math.round(lastVals.reduce(function (a, b) {
-                        return a + b;
-                    }, 0) / lastVals.length);
-                    arr.push({
-                        x: new Date(lastDateAvg),
-                        y: lastValsAvg
-                    });
-                    diffArr = [];
-                    tempArr = [];
-                }
-            }
-
-            tempArr.push({
-                timestamp: item.readingDate,
-                val: val
-            });
-            lastDate = item.readingDate;
-        }
+function toLOESSData(data, type) {
+    let map = data.map(function(item) {
+        return item[type] != null ? [item.readingDate, item[type].value] : null;
+    }).filter(function(item) {
+        return item != null;
     });
-
-    if (tempArr.length > 0) {   // process final records
-        let lastDates = tempArr.map(function(o) {
-            return o.timestamp.getTime();
-        });
-        let lastDateAvg = Math.round(lastDates.reduce(function(a, b) {
-            return a + b;
-        }, 0) / lastDates.length);
-        let lastVals = tempArr.map(function(o) {
-            return o.val;
-        });
-        let lastValsAvg = Math.round(lastVals.reduce(function(a, b) {
-            return a + b;
-        }, 0) / lastVals.length);
-        arr.push({
-            x: new Date(lastDateAvg),
-            y: lastValsAvg
-        });
-    }
-
-    return arr;
+    return loess(map, getLOESSBandwidth());
 }
 
-// function toRegressionData(data, type) {
-//     // the regression library can't handle large X values (where "large" is not really that large at all),
-//     // so we need to finagle the data it consumes so that can process things correctly.  the way I've decided
-//     // to do this is to feed it *proportional* values (numbers between 0 and 100) that represent the relative
-//     // position of those dates with respect to the min and max dates in the dataset.  so that's what's going
-//     // on here.
-//
-//     // first calculate min and max dates in the dataset -
-//     var dateRange = getDateRange(data);
-//     var minTime = dateRange.min.getTime();
-//     var maxTime = dateRange.max.getTime();
-//
-//     // now we craft an array of arrays that we'll feed to the regression engine, where the X value
-//     // is a number between 0 and 100 that represents the relative position of the date in the range
-//     var arr = [];
-//     data.forEach(function (item, i) {
-//         let val = type === 'systolic' ? item.systolic.value : item.diastolic.value;
-//         arr.push([
-//             ((item.timestamp.getTime() - minTime) / (maxTime - minTime)) * 100,
-//             val
-//         ]);
-//     });
-//
-//     // calculate the regression (duh) -
-//     var result = regression.linear(arr);
-//
-//     // then construct a new array of {x,y} objects where the X value is the original date used in the
-//     // dataset (we don't care about the proportions anymore, that was just for calculating regression)
-//     var r = [];
-//     result.points.forEach(function (item, i) {
-//         r.push({
-//             x: new Date(data[i].timestamp),
-//             // x: moment(data[i].timestamp),
-//             y: item[1]
-//         });
-//     });
-//     return r;
-// }
+function toLOESSData2(data, type) {
+    const sortedData = sortByDateAsc(data);
+
+    let map = sortedData.map(function(item) {
+        return item[type] != null ? [item.readingDate, item[type].value] : null;
+    }).filter(function(item) {
+        return item != null;
+    });
+
+    // Adjust bandwidth based on number of points in the data
+    let bandwidth = 0.3;
+    let numPts = map.length;
+    // Allow an override of the bandwidth in the URL for testing
+    if (getLOESSBandwidth() !== -1) {
+        bandwidth = getLOESSBandwidth();
+    } else if (numPts <= 8) {
+        bandwidth = 0.6;
+    } else if (numPts <= 15) {
+        bandwidth = 0.5;
+    } else if (numPts <= 25) {
+        bandwidth = 0.4;
+    }
+    console.log("Starting bandwidth: " + bandwidth);
+    console.log(map);
+
+    let xval = [], yval = [];
+    map.forEach(function(item) {
+        xval.push(item[0]);
+        yval.push(item[1]);
+    });
+
+    let loess;
+    // Try incrementally increasing bandwidth if an error is thrown
+    while (bandwidth <= 1.0) {
+        loess = science.stats.loess().bandwidth(bandwidth);
+        try {
+            let loess_data = loess(xval, yval);
+            let loess_points = loess_data.map(function(yval, index) {
+                return [xval[index], yval];
+            });
+
+            console.log("Final bandwidth used: " + bandwidth);
+            console.log(loess_points)
+            // If first or last are out of bounds, fall back on a direct plot
+            if (isOutOfBounds(loess_points.find(p => true)[1]) | isOutOfBounds(loess_points.findLast(p => true)[1])) {
+                console.log("First or last values are NaN. Fall back on direct plot.")
+                return map;
+            }
+            // Filter out NaN values
+            const filtered = loess_points.filter(pt => !isOutOfBounds(pt[1]));
+            if (filtered.length < loess_points.length) {
+                console.log("Some points failed regression. Returning a subset.");
+            }
+            return filtered;
+        } catch (error) {
+            bandwidth = bandwidth + 0.1;
+        }
+    }
+
+    // Fall back on a direct plot
+    return map;
+
+}
+
+// Boundaries on the LOESS interpretation
+function isOutOfBounds(pt) {
+    return isNaN(pt) || pt < 0  || pt > 300
+}
+
+function getLOESSBandwidth() {
+    return Number($('#LOESSBandwidth').html());
+}
 
 function getDateRange(data) {
     let minDate = null;

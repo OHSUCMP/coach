@@ -9,6 +9,8 @@ import edu.ohsu.cmp.coach.model.ObservationSource;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
 import edu.ohsu.cmp.coach.service.PulseService;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Observation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,8 +79,15 @@ public class VitalsController extends BaseController {
         bpm1 = bpService.create(session.getId(), bpm1);
         list.add(bpm1);
 
+        // grabbing Encounter and Protocol Observation here as we want to reuse it across other resources we want
+        // to create below
+        Encounter encounter = bpm1.getSourceEncounter();
+        Observation protocolObservation = bpm1.getSourceProtocolObservation();
+
         if (pulse1 != null) {
             PulseModel p1 = new PulseModel(ObservationSource.HOME, pulse1, readingDate, followedInstructions, fcm);
+            p1.setSourceEncounter(encounter);
+            p1.setSourceProtocolObservation(protocolObservation);
             p1 = pulseService.create(session.getId(), p1);
             list.add(p1);
         }
@@ -86,12 +95,16 @@ public class VitalsController extends BaseController {
         if (systolic2 != null && diastolic2 != null) {
             BloodPressureModel bpm2 = new BloodPressureModel(ObservationSource.HOME,
                     systolic2, diastolic2, readingDate, followedInstructions, fcm);
+            bpm2.setSourceEncounter(encounter);
+            bpm2.setSourceProtocolObservation(protocolObservation);
             bpm2 = bpService.create(session.getId(), bpm2);
             list.add(bpm2);
         }
 
         if (pulse2 != null) {
             PulseModel p2 = new PulseModel(ObservationSource.HOME, pulse2, readingDate, followedInstructions, fcm);
+            p2.setSourceEncounter(encounter);
+            p2.setSourceProtocolObservation(protocolObservation);
             p2 = pulseService.create(session.getId(), p2);
             list.add(p2);
         }

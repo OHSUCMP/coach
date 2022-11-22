@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.service;
 
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
@@ -10,6 +11,7 @@ import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.instance.model.api.IDomainResource;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -179,6 +181,38 @@ public class FHIRService {
 
             return compositeBundle.getBundle();
         }
+    }
+
+    public <T extends IDomainResource> T transact(FHIRCredentialsWithClient fcc, T resource) throws IOException, ConfigurationException, DataException {
+        IGenericClient client;
+        if (jwtService.isJWTEnabled()) {
+            String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
+            String jwt = jwtService.createToken(tokenAuthUrl);
+            AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
+
+            client = FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
+                    accessToken.getAccessToken(),
+                    socketTimeout);
+        } else {
+            client = fcc.getClient();
+        }
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("transacting " + resource.getClass().getSimpleName() + ": " + FhirUtil.toJson(resource));
+        }
+
+        MethodOutcome outcome = client.create()
+                .resource(resource)
+                .withAdditionalHeader("Prefer", "return=representation")
+                .execute();
+
+        T t = (T) outcome.getResource();
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("received response " + t.getClass().getSimpleName() + ": " + FhirUtil.toJson(t));
+        }
+
+        return t;
     }
 
     public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle, boolean stripIfNotInScope) throws IOException, DataException, ConfigurationException, ScopeException {

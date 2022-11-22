@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
+import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
 import edu.ohsu.cmp.coach.entity.GoalHistory;
@@ -7,8 +9,6 @@ import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.repository.GoalHistoryRepository;
 import edu.ohsu.cmp.coach.repository.GoalRepository;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Goal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,22 +47,18 @@ public class GoalService extends AbstractService {
         return list;
     }
 
-    public List<GoalModel> buildCurrentGoals(String sessionId) {
-        List<GoalModel> list = new ArrayList<>();
-
-        Bundle b = ehrService.getGoals(sessionId);
-
-        if (b == null) return null;
-
-        for (Bundle.BundleEntryComponent entry : b.getEntry()) {
-            if (entry.getResource() instanceof Goal) {
-                Goal g = (Goal) entry.getResource();
-                list.add(new GoalModel(g, fcm));
-            }
-        }
-
-        return list;
+    /**
+     * Builds a list of GoalModel objects from FHIR Resources read directly from the FHIR server
+     * @param sessionId
+     * @return
+     * @throws DataException
+     */
+    public List<GoalModel> buildCurrentGoals(String sessionId) throws DataException {
+        VendorTransformer transformer = workspaceService.get(sessionId).getVendorTransformer();
+        return transformer.transformIncomingGoals(ehrService.getGoals(sessionId));
     }
+
+
 
     public List<String> getExtGoalIdList(String sessionId) {
         List<String> list = new ArrayList<>();
@@ -170,6 +166,8 @@ public class GoalService extends AbstractService {
     public MyGoal create(String sessionId, MyGoal goal) {
         UserWorkspace workspace = workspaceService.get(sessionId);
 
+        // todo : implement remote storage
+
         goal.setPatId(workspace.getInternalPatientId());
         goal.setCreatedDate(new Date());
 
@@ -203,7 +201,17 @@ public class GoalService extends AbstractService {
     }
 
     public void deleteAll(String sessionId) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
-        repository.deleteAllByPatId(workspace.getInternalPatientId());
+        // todo : uncomment when 'create' remote storage is implemented
+//        try {
+//            if (storeRemotely) {
+//                throw new MethodNotImplementedException("remote delete is not implemented");
+//
+//            } else {
+                UserWorkspace workspace = workspaceService.get(sessionId);
+                repository.deleteAllByPatId(workspace.getInternalPatientId());
+//            }
+//        } catch (Exception e) {
+//            logger.error("caught " + e.getClass().getName() + " attempting to delete Goals for session " + sessionId, e);
+//        }
     }
 }

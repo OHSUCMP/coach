@@ -46,7 +46,7 @@ function buildChart() {
                 borderColor: 'rgba(0, 127, 109, 1)',
                 borderWidth: 2,
                 // tension: 0.1,
-                data: toIETrendLineData(window.bpchart.data, 'systolic')
+                data: toIELOESSData2(window.bpchart.data, 'systolic')
             }, {
                 type: 'scatter',
                 label: 'Diastolic',
@@ -68,7 +68,7 @@ function buildChart() {
                 borderColor: 'rgba(153, 97, 36, 1)',
                 borderWidth: 1,
                 // tension: 0.1,
-                data: toIETrendLineData(window.bpchart.data, 'diastolic')
+                data: toIELOESSData2(window.bpchart.data, 'diastolic')
             } ]
         },
         options: {
@@ -102,11 +102,23 @@ function buildChart() {
     };
 
     if (window.bpchart.startDate !== undefined) {
-        config.options.scales.x.suggestedMin = window.bpchart.startDate;
+        let startDate = null;
+        window.bpchart.data.forEach(function(item) {
+            if (item.readingDate >= window.bpchart.startDate && (startDate === null || startDate < item.readingDate)) {
+                startDate = item.readingDate;
+            }
+        });
+        config.options.scales.x.suggestedMin = startDate;
     }
 
     if (window.bpchart.endDate !== undefined) {
-        config.options.scales.x.suggestedMax = window.bpchart.endDate;
+        let endDate = null;
+        window.bpchart.data.forEach(function(item) {
+            if (item.readingDate < window.bpchart.endDate && (endDate === null || endDate > item.readingDate)) {
+                endDate = item.readingDate;
+            }
+        });
+        config.options.scales.x.suggestedMax = endDate;
     }
 
     return new Chart(ctx, config);
@@ -121,8 +133,17 @@ function toIEScatterData(data, type) {
     });
 }
 
-function toIETrendLineData(data, type) {
-    return toTrendLineData(data, type).map(function(item) {
+function toIELOESSData(data, type) {
+    return toLOESSData(data, type).map(function(item) {
+        return {
+            x: item.x,
+            y: item.y
+        }
+    });
+}
+
+function toIELOESSData2(data, type) {
+    return toLOESSData2(data, type).map(function(item) {
         return {
             x: item.x,
             y: item.y

@@ -65,7 +65,7 @@ public class AdverseEventService extends AbstractService {
         return list;
     }
 
-    public AdverseEvent convertConditionToAdverseEvent(String sessionId, Condition c) {
+    private AdverseEvent convertConditionToAdverseEvent(String sessionId, Condition c) {
         String aeid = "adverseevent-" + DigestUtils.sha256Hex(c.getId() + salt);
 
         AdverseEvent ae = new AdverseEvent();
@@ -112,7 +112,7 @@ public class AdverseEventService extends AbstractService {
         return repository.findAll();
     }
 
-    public MyAdverseEventOutcome getOutcome(String adverseEventId) {
+    private MyAdverseEventOutcome getOutcome(String adverseEventId) {
         String adverseEventIdHash = hash(adverseEventId);
 
         MyAdverseEventOutcome outcome;
