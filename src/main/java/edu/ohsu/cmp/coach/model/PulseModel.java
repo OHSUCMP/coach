@@ -8,6 +8,9 @@ import edu.ohsu.cmp.coach.util.ObservationUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class PulseModel extends AbstractVitalsModel {
@@ -69,6 +72,15 @@ public class PulseModel extends AbstractVitalsModel {
     @Override
     public String getValue() {
         return pulse.getValue() + " " + pulse.getUnit();
+    }
+
+    @Override
+    public String getLogicalEqualityKey() {
+        return "P" + KEY_DELIM +
+                pulse.getValue().intValue() + KEY_DELIM +
+                DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(
+                        ZonedDateTime.ofInstant(readingDate.toInstant(), ZoneOffset.UTC)
+                );
     }
 
     @JsonIgnore

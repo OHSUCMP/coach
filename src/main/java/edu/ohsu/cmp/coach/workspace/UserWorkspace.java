@@ -113,8 +113,8 @@ public class UserWorkspace {
                 getGoals();
                 getEncounters();
                 getProtocolObservations();
-                getBloodPressures();
-                getPulses();
+                getRemoteBloodPressures();
+                getRemotePulses();
                 getEncounterDiagnosisConditions();
                 getAdverseEvents();
                 getMedications();
@@ -227,18 +227,18 @@ public class UserWorkspace {
         });
     }
 
-    public List<BloodPressureModel> getBloodPressures() {
+    public List<BloodPressureModel> getRemoteBloodPressures() {
         return (List<BloodPressureModel>) cache.get(CACHE_BP, new Function<String, List<BloodPressureModel>>() {
             @Override
             public List<BloodPressureModel> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Blood Pressures for session=" + sessionId);
+                logger.info("BEGIN build remote Blood Pressures for session=" + sessionId);
 
                 BloodPressureService svc = ctx.getBean(BloodPressureService.class);
                 try {
-                    List<BloodPressureModel> list = svc.buildBloodPressureList(sessionId);
+                    List<BloodPressureModel> list = svc.buildRemoteBloodPressureList(sessionId);
 
-                    logger.info("DONE building Blood Pressures for session=" + sessionId +
+                    logger.info("DONE building remote Blood Pressures for session=" + sessionId +
                             " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
                     return list;
@@ -250,18 +250,18 @@ public class UserWorkspace {
         });
     }
 
-    public List<PulseModel> getPulses() {
+    public List<PulseModel> getRemotePulses() {
         return (List<PulseModel>) cache.get(CACHE_PULSE, new Function<String, List<PulseModel>>() {
             @Override
             public List<PulseModel> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Pulses for session=" + sessionId);
+                logger.info("BEGIN build remote Pulses for session=" + sessionId);
 
                 PulseService svc = ctx.getBean(PulseService.class);
                 try {
-                    List<PulseModel> list = svc.buildPulseList(sessionId);
+                    List<PulseModel> list = svc.buildRemotePulseList(sessionId);
 
-                    logger.info("DONE building Pulses for session=" + sessionId +
+                    logger.info("DONE building remote Pulses for session=" + sessionId +
                             " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
                     return list;
