@@ -96,7 +96,14 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 for (Observation bp : bpObservationList) {
                     logger.debug("bpObservation = " + bp.getId() + " (encounter=" + encounter.getId() +
                             ") (effectiveDateTime=" + bp.getEffectiveDateTimeType().getValueAsString() + ")");
-                    list.add(buildBloodPressureModel(encounter, bp, protocol, fcm));
+                    try {
+                        list.add(buildBloodPressureModel(encounter, bp, protocol, fcm));
+
+                    } catch (DataException e) {
+                        logger.warn("caught " + e.getClass().getSimpleName() +
+                                " building BloodPressureModel from Observation with id=" + bp.getId() + " - " +
+                                e.getMessage() + " - skipping -", e);
+                    }
                 }
 
                 for (Map.Entry<String, SystolicDiastolicPair> entry : map.entrySet()) {
@@ -110,7 +117,15 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                         logger.debug("diastolicObservation = " + diastolic.getId() + " (effectiveDateTime=" +
                                 diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
 
-                        list.add(buildBloodPressureModel(encounter, systolic, diastolic, protocol, fcm));
+                        try {
+                            list.add(buildBloodPressureModel(encounter, systolic, diastolic, protocol, fcm));
+
+                        } catch (DataException e) {
+                            logger.warn("caught " + e.getClass().getSimpleName() +
+                                    " building BloodPressureModel from (systolic, diastolic) Observations with systolic.id=" +
+                                    systolic.getId() + ", diastolic.id=" + diastolic.getId() + " - " +
+                                    e.getMessage() + " - skipping -", e);
+                        }
 
                     } else {
                         logger.warn("found incomplete systolic-diastolic pair for readingDate=" + entry.getKey() + " - skipping -");
@@ -138,7 +153,15 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                         if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
                             logger.debug("bpObservation = " + o.getId() + " (no encounter) (effectiveDateTime=" +
                                     o.getEffectiveDateTimeType().getValueAsString() + ")");
-                            list.add(buildBloodPressureModel(o, fcm));
+
+                            try {
+                                list.add(buildBloodPressureModel(o, fcm));
+
+                            } catch (DataException e) {
+                                logger.warn("caught " + e.getClass().getSimpleName() +
+                                        " building BloodPressureModel from Observation with id=" + o.getId() + " - " +
+                                        e.getMessage() + " - skipping -", e);
+                            }
 
                         } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
                             String key = getObservationMatchKey(o);
@@ -175,7 +198,15 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 logger.debug("diastolicObservation = " + diastolic.getId() + " (effectiveDateTime=" +
                         diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
 
-                list.add(buildBloodPressureModel(systolic, diastolic, fcm));
+                try {
+                    list.add(buildBloodPressureModel(systolic, diastolic, fcm));
+
+                } catch (DataException e) {
+                    logger.warn("caught " + e.getClass().getSimpleName() +
+                            " building BloodPressureModel from (systolic, diastolic) Observations with systolic.id=" +
+                            systolic.getId() + ", diastolic.id=" + diastolic.getId() + " - " +
+                            e.getMessage() + " - skipping -", e);
+                }
 
             } else {
                 logger.warn("found incomplete systolic-diastolic pair for readingDate=" + entry.getKey() + " - skipping -");
