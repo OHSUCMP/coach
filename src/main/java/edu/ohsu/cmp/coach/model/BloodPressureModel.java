@@ -41,7 +41,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
         super(source, followedProtocol, readingDate);
 
         if (systolic == null || diastolic == null) {
-            throw new DataException("both systolic and diastolic required");
+            throw new DataException("both systolic and diastolic required (manual method)");
         }
 
         this.systolic = new QuantityModel(systolic, fcm.getBpValueUnit());
@@ -54,7 +54,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
         super(ObservationSource.valueOf(reading.getSource()), reading.getFollowedInstructions(), reading.getReadingDate());
 
         if (reading.getSystolic() == null || reading.getDiastolic() == null) {
-            throw new DataException("both systolic and diastolic are required");
+            throw new DataException("both systolic and diastolic are required (reading.id=" + reading.getId() + ")");
         }
 
         systolic = new QuantityModel(reading.getSystolic(), fcm.getBpValueUnit());
@@ -102,7 +102,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
             }
 
             if (systolic == null || diastolic == null) {
-                throw new DataException("both systolic and diastolic required");
+                throw new DataException("both systolic and diastolic required (Observation.id=" + bpObservation.getId() + ")");
             }
 
         } else {
@@ -135,7 +135,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
                 systolic.setUnit(fcm.getBpValueUnit());
             }
         } else {
-            throw new DataException("systolic observation : invalid coding");
+            throw new DataException("systolic observation : invalid coding (Observation.id=" + systolicObservation.getId() + ")");
         }
 
         if (diastolicObservation.hasCode() && FhirUtil.hasCoding(diastolicObservation.getCode(), fcm.getDiastolicCodings())) {
@@ -144,7 +144,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
                 diastolic.setUnit(fcm.getBpValueUnit());
             }
         } else {
-            throw new DataException("diastolic observation : invalid coding");
+            throw new DataException("diastolic observation : invalid coding (Observation.id=" + diastolicObservation.getId() + ")");
         }
     }
 
