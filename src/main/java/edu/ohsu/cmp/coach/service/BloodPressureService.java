@@ -29,7 +29,7 @@ public class BloodPressureService extends AbstractService {
     @Autowired
     private HomeBloodPressureReadingService hbprService;
 
-    public List<BloodPressureModel> buildBloodPressureList(String sessionId) throws DataException {
+    public List<BloodPressureModel> buildRemoteBloodPressureList(String sessionId) throws DataException {
         CompositeBundle compositeBundle = new CompositeBundle();
         compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getAllBpCodings()), fcm.getBpLookbackPeriod(), null));
         compositeBundle.consume(workspaceService.get(sessionId).getProtocolObservations());
@@ -49,11 +49,25 @@ public class BloodPressureService extends AbstractService {
     }
 
     public List<BloodPressureModel> getBloodPressureReadings(String sessionId) throws DataException {
-        List<BloodPressureModel> list = new ArrayList<>();
-        list.addAll(workspaceService.get(sessionId).getBloodPressures());
+        List<BloodPressureModel> remoteList = workspaceService.get(sessionId).getRemoteBloodPressures();
+        Set<String> remoteBPKeySet = new HashSet<>();
+        for (BloodPressureModel bpm : remoteList) {
+            String key = bpm.getLogicalEqualityKey();
+            logger.debug("found remote BP with key: " + key);
+            remoteBPKeySet.add(key);
+        }
 
-        if ( ! storeRemotely ) {
-            list.addAll(buildLocalBloodPressureReadings(sessionId));
+        List<BloodPressureModel> list = new ArrayList<>();
+        list.addAll(remoteList);
+        for (BloodPressureModel bpm : buildLocalBloodPressureReadings(sessionId)) {
+            String key = bpm.getLogicalEqualityKey();
+            if (remoteBPKeySet.contains(key)) {
+                logger.debug("NOT ADDING local BP matching remote BP with key: " + key);
+
+            } else {
+                logger.debug("adding local BP with key: " + key);
+                list.add(bpm);
+            }
         }
 
         Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1);
@@ -68,30 +82,41 @@ public class BloodPressureService extends AbstractService {
 
     public BloodPressureModel create(String sessionId, BloodPressureModel bpm) throws DataException, ConfigurationException, IOException, ScopeException {
         UserWorkspace workspace = workspaceService.get(sessionId);
+
+        BloodPressureModel bpm2 = null;
+
         if (storeRemotely) {
-            VendorTransformer transformer = workspace.getVendorTransformer();
-            Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
-            List<BloodPressureModel> list = transformer.transformIncomingBloodPressureReadings(
-                    transformer.writeRemote(sessionId, fhirService, outgoingBundle)
-            );
-            if (list.size() >= 1) {
-                BloodPressureModel bpm2 = list.get(0);
-                workspace.getBloodPressures().add(bpm2);
-                return bpm2;
-            }
-
-        } else {
             try {
-                HomeBloodPressureReading hbpr = new HomeBloodPressureReading(bpm);
-                HomeBloodPressureReading response = hbprService.create(sessionId, hbpr);
-                return new BloodPressureModel(response, fcm);
+                VendorTransformer transformer = workspace.getVendorTransformer();
+                Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
+                List<BloodPressureModel> list = transformer.transformIncomingBloodPressureReadings(
+                        transformer.writeRemote(sessionId, fhirService, outgoingBundle)
+                );
+                if (list.size() >= 1) {
+                    bpm2 = list.get(0);
+                    workspace.getRemoteBloodPressures().add(bpm2);
+                }
 
-            } catch (DataException de) {
-                logger.error("caught " + de.getClass().getName() + " attempting to create BloodPressureModel " + bpm);
+            } catch (Exception e) {
+                // remote errors are tolerable, since we will always store locally too
+                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " + e.getMessage(), e);
             }
         }
 
-        return null;
+        try {
+            HomeBloodPressureReading hbpr = new HomeBloodPressureReading(bpm);
+            HomeBloodPressureReading response = hbprService.create(sessionId, hbpr);
+
+            if (bpm2 == null) { // give priority to the remotely created resource, if it exists
+                bpm2 = new BloodPressureModel(response, fcm);
+            }
+
+        } catch (DataException de) {
+            // okay if it's failing to write locally, that's a problem.
+            logger.error("caught " + de.getClass().getName() + " attempting to create BloodPressureModel " + bpm);
+        }
+
+        return bpm2;
     }
 
     public Boolean delete(String sessionId, String id) {

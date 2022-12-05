@@ -9,6 +9,9 @@ import edu.ohsu.cmp.coach.util.ObservationUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class BloodPressureModel extends AbstractVitalsModel {
@@ -161,6 +164,17 @@ public class BloodPressureModel extends AbstractVitalsModel {
         return systolic != null && diastolic != null ?
                 systolic.getValue() + "/" + diastolic.getValue() + " " + systolic.getUnit() :
                 "(n/a)";        // shouldn't ever get here
+    }
+
+
+    @Override
+    public String getLogicalEqualityKey() {
+        return "BP" + KEY_DELIM +
+                systolic.getValue().intValue() + KEY_DELIM +
+                diastolic.getValue().intValue() + KEY_DELIM +
+                DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(
+                        ZonedDateTime.ofInstant(readingDate.toInstant(), ZoneOffset.UTC)
+                );
     }
 
     @JsonIgnore
