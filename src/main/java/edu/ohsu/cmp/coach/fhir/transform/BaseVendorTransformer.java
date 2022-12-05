@@ -102,7 +102,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                     } catch (DataException e) {
                         logger.warn("caught " + e.getClass().getSimpleName() +
                                 " building BloodPressureModel from Observation with id=" + bp.getId() + " - " +
-                                e.getMessage() + " - skipping -", e);
+                                e.getMessage() + " - skipping -");
                     }
                 }
 
@@ -124,7 +124,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                             logger.warn("caught " + e.getClass().getSimpleName() +
                                     " building BloodPressureModel from (systolic, diastolic) Observations with systolic.id=" +
                                     systolic.getId() + ", diastolic.id=" + diastolic.getId() + " - " +
-                                    e.getMessage() + " - skipping -", e);
+                                    e.getMessage() + " - skipping -");
                         }
 
                     } else {
@@ -160,7 +160,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                             } catch (DataException e) {
                                 logger.warn("caught " + e.getClass().getSimpleName() +
                                         " building BloodPressureModel from Observation with id=" + o.getId() + " - " +
-                                        e.getMessage() + " - skipping -", e);
+                                        e.getMessage() + " - skipping -");
                             }
 
                         } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
@@ -205,7 +205,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                     logger.warn("caught " + e.getClass().getSimpleName() +
                             " building BloodPressureModel from (systolic, diastolic) Observations with systolic.id=" +
                             systolic.getId() + ", diastolic.id=" + diastolic.getId() + " - " +
-                            e.getMessage() + " - skipping -", e);
+                            e.getMessage() + " - skipping -");
                 }
 
             } else {
