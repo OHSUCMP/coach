@@ -17,6 +17,8 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
     public static final String OBSERVATION_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category";
     public static final String OBSERVATION_CATEGORY_CODE = "vital-signs";
 
+    protected static final String UUID_NOTE_TAG = "COACH_OBSERVATION_GROUP_UUID::";
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected UserWorkspace workspace;
@@ -52,8 +54,8 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
             if (encounterObservations != null) {
                 logger.debug("building Observations for Encounter " + encounter.getId());
 
-                List<Observation> bpObservationList = new ArrayList<>();                // potentially many per encounter
-                Map<String, SystolicDiastolicPair> datePairMap = new LinkedHashMap<>(); // potentially many per encounter
+                List<Observation> bpObservationList = new ArrayList<>();            // potentially many per encounter
+                Map<String, SystolicDiastolicPair> map = new LinkedHashMap<>();     // potentially many per encounter
 
                 Observation protocol = null;
 
@@ -70,18 +72,18 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                         iter.remove();
 
                     } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
-                        String dateStr = o.getEffectiveDateTimeType().getValueAsString();
-                        if ( ! datePairMap.containsKey(dateStr) ) {
-                            datePairMap.put(dateStr, new SystolicDiastolicPair());
+                        String key = getObservationMatchKey(o);
+                        if ( ! map.containsKey(key) ) {
+                            map.put(key, new SystolicDiastolicPair());
                         }
-                        datePairMap.get(dateStr).setSystolicObservation(o);
+                        map.get(key).setSystolicObservation(o);
 
                     } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
-                        String dateStr = o.getEffectiveDateTimeType().getValueAsString();
-                        if ( ! datePairMap.containsKey(dateStr) ) {
-                            datePairMap.put(dateStr, new SystolicDiastolicPair());
+                        String key = getObservationMatchKey(o);
+                        if ( ! map.containsKey(key) ) {
+                            map.put(key, new SystolicDiastolicPair());
                         }
-                        datePairMap.get(dateStr).setDiastolicObservation(o);
+                        map.get(key).setDiastolicObservation(o);
 
                     } else if (protocol == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
                         logger.debug("protocolObservation = " + o.getId() + " (encounter=" + encounter.getId() +
@@ -97,7 +99,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                     list.add(buildBloodPressureModel(encounter, bp, protocol, fcm));
                 }
 
-                for (Map.Entry<String, SystolicDiastolicPair> entry : datePairMap.entrySet()) {
+                for (Map.Entry<String, SystolicDiastolicPair> entry : map.entrySet()) {
                     SystolicDiastolicPair sdp = entry.getValue();
                     if (sdp.isValid()) {
                         Observation systolic = sdp.getSystolicObservation();
@@ -127,7 +129,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         // these need to be combined into a single BloodPresureModel object for any pair of (systolic, diastolic) that
         // have the same timestamp
 
-        Map<String, SystolicDiastolicPair> datePairMap = new LinkedHashMap<>();
+        Map<String, SystolicDiastolicPair> map = new LinkedHashMap<>();
 
         for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
             if (entry.getValue() != null) {
@@ -139,18 +141,18 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                             list.add(buildBloodPressureModel(o, fcm));
 
                         } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
-                            String dateStr = o.getEffectiveDateTimeType().getValueAsString();
-                            if ( ! datePairMap.containsKey(dateStr) ) {
-                                datePairMap.put(dateStr, new SystolicDiastolicPair());
+                            String key = getObservationMatchKey(o);
+                            if ( ! map.containsKey(key) ) {
+                                map.put(key, new SystolicDiastolicPair());
                             }
-                            datePairMap.get(dateStr).setSystolicObservation(o);
+                            map.get(key).setSystolicObservation(o);
 
                         } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
-                            String dateStr = o.getEffectiveDateTimeType().getValueAsString();
-                            if ( ! datePairMap.containsKey(dateStr) ) {
-                                datePairMap.put(dateStr, new SystolicDiastolicPair());
+                            String key = getObservationMatchKey(o);
+                            if ( ! map.containsKey(key) ) {
+                                map.put(key, new SystolicDiastolicPair());
                             }
-                            datePairMap.get(dateStr).setDiastolicObservation(o);
+                            map.get(key).setDiastolicObservation(o);
 
                         } else {
                             logger.debug("did not process Observation " + o.getId());
@@ -162,7 +164,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 
         // now process dateObservationsMap, which should only include individual systolic and diastolic readings
 
-        for (Map.Entry<String, SystolicDiastolicPair> entry : datePairMap.entrySet()) {
+        for (Map.Entry<String, SystolicDiastolicPair> entry : map.entrySet()) {
             SystolicDiastolicPair sdp = entry.getValue();
             if (sdp.isValid()) {
                 Observation systolic = sdp.getSystolicObservation();
@@ -381,5 +383,23 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         }
 
         return list;
+    }
+
+    private String getObservationMatchKey(Observation observation) {
+        String uuid = getUUIDFromNote(observation); // used by Epic, but Default should still understand and use this if it exists
+        return uuid != null ?
+                uuid :
+                observation.getEffectiveDateTimeType().getValueAsString();
+    }
+
+    private String getUUIDFromNote(Observation observation) {
+        if (observation != null && observation.hasNote()) {
+            for (Annotation annotation : observation.getNote()) {
+                if (annotation.hasText() && annotation.getText().startsWith(UUID_NOTE_TAG)) {
+                    return annotation.getText().substring(UUID_NOTE_TAG.length() + 1);
+                }
+            }
+        }
+        return null;
     }
 }
