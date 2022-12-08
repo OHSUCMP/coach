@@ -182,8 +182,11 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                         map.get(key).setDiastolicObservation(o);
 
                     } else {
-                        logger.debug("did not process Observation " + o.getId());
+                        logger.debug("did not process Observation " + o.getId() + " - invalid coding");
                     }
+
+                } else {
+                    logger.debug("did not process Observation " + o.getId() + " - no coding");
                 }
             }
 
