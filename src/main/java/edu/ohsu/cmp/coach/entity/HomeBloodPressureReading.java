@@ -38,7 +38,7 @@ public class HomeBloodPressureReading {
 
     // used during create, do not set ID
     public HomeBloodPressureReading(BloodPressureModel bpm) throws DataException {
-        if (bpm.getSource() != ObservationSource.HOME && bpm.getSource() != ObservationSource.HOME_BLUETOOTH) {
+        if (bpm.getSource() != ObservationSource.HOME) {
             throw new DataException("cannot convert BloodPressureModel with source=" +
                     bpm.getSource() + " to HomeBloodPressureReading");
         }
