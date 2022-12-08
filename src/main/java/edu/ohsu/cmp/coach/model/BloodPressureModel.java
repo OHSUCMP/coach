@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class BloodPressureModel extends AbstractVitalsModel {
+    private Long localDatabaseId = null;
     private Observation sourceBPObservation = null;
     private Observation sourceSystolicObservation = null;
     private Observation sourceDiastolicObservation = null;
@@ -22,12 +23,6 @@ public class BloodPressureModel extends AbstractVitalsModel {
     private QuantityModel systolic = null;
     private QuantityModel diastolic = null;
 
-    private enum ValueType {
-        SYSTOLIC,
-        DIASTOLIC,
-        OTHER,
-        UNKNOWN
-    }
 
 //////////////////////////////////////////////////////////////////////////////
 // instance methods
@@ -57,6 +52,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
             throw new DataException("both systolic and diastolic are required (reading.id=" + reading.getId() + ")");
         }
 
+        localDatabaseId = reading.getId();
         systolic = new QuantityModel(reading.getSystolic(), fcm.getBpValueUnit());
         diastolic = new QuantityModel(reading.getDiastolic(), fcm.getBpValueUnit());
         readingDate = reading.getReadingDate(); //.getTime();
@@ -149,7 +145,20 @@ public class BloodPressureModel extends AbstractVitalsModel {
     }
 
     public boolean isHomeReading() {
-        return source == ObservationSource.HOME || source == ObservationSource.HOME_BLUETOOTH;
+        return source == ObservationSource.HOME;
+    }
+
+    @Override
+    public String toString() {
+        if (sourceBPObservation != null) {
+            return sourceBPObservation.getId();
+        } else if (sourceSystolicObservation != null) {
+            return sourceSystolicObservation.getId();
+        } else if (localDatabaseId != null) {
+            return "local-" + localDatabaseId;
+        } else {
+            return systolic + "/" + diastolic + " (id unknown)";
+        }
     }
 
     @Override

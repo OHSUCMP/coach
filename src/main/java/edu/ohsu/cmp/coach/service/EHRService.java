@@ -68,9 +68,14 @@ public class EHRService extends AbstractService {
                             }
 
                             EncounterMatcher matcher = new EncounterMatcher(fcm, true);
-                            if (!matcher.isAmbEncounter(encounter) && !matcher.isHomeHealthEncounter(encounter)) {
+                            boolean amb = matcher.isAmbEncounter(encounter);
+                            boolean hh = matcher.isHomeHealthEncounter(encounter);
+                            if ( ! amb && ! hh ) {
                                 logger.debug("removing Encounter " + encounter.getId() + " - not AMB or HH");
                                 return false;
+
+                            } else {
+                                logger.debug("keeping Encounter " + encounter.getId() + " (AMB=" + amb + ", HH=" + hh + ")");
                             }
                         }
 
