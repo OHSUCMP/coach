@@ -46,7 +46,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
 
     // read local
     public BloodPressureModel(HomeBloodPressureReading reading, FhirConfigManager fcm) throws DataException {
-        super(ObservationSource.valueOf(reading.getSource()), reading.getFollowedInstructions(), reading.getReadingDate());
+        super(ObservationSource.HOME, reading.getFollowedInstructions(), reading.getReadingDate());
 
         if (reading.getSystolic() == null || reading.getDiastolic() == null) {
             throw new DataException("both systolic and diastolic are required (reading.id=" + reading.getId() + ")");
