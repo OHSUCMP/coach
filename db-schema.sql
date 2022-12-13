@@ -276,3 +276,9 @@ create table vsac_valueset_concept (
     constraint fk2 foreign key (conceptId) references vsac_concept (id)
        on delete cascade
 );
+
+
+# update 2022-12-08 to remove source column from home BP readings; no longer using HOME_BLUETOOTH, so
+# this column is vestigial and should be removed
+
+alter table home_bp_reading drop column source;
