@@ -34,7 +34,7 @@ Run the CQF Ruler service in the docker-compose setup:
 
 ```docker-compose up cqfruler```
 
-Once this is running, you have to populate it with the plan definitions COACH needs to provide recommendations. Like the mysql service, you only have to do this the first time you run - the resources will persist on restart. To populate CQF Ruler, grab the latest release of the [implementation guide](https://github.com/OHSUCMP/htnu18ig/releases), unzip, and run the Python script at specification/PopulateCQFRuler2.py
+Once this is running, you have to populate it with the plan definitions COACH needs to provide recommendations. Like the mysql service, you only have to do this the first time you run - the resources will persist on restart. To populate CQF Ruler, grab the latest release of the [implementation guide](https://github.com/OHSUCMP/htnu18ig/releases), unzip, and run the Python script at specification/PopulateCQFRuler.py
 
 ## Running COACH with docker-compose
 
