@@ -55,6 +55,7 @@ public class SessionController extends BaseController {
                                             @RequestParam("audience") String audienceStr) throws ConfigurationException {
 
         FHIRCredentials credentials = new FHIRCredentials(clientId, serverUrl, bearerToken, patientId, userId);
+        logger.debug("preparing session " + session.getId() + " with credentials=" + credentials);
         IGenericClient client = FhirUtil.buildClient(
                 credentials.getServerURL(),
                 credentials.getBearerToken(),
