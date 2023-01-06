@@ -137,6 +137,7 @@ public class FHIRService {
             bundle = fcc.getClient().search()
                     .byUrl(fcc.getCredentials().getServerURL() + '/' + fhirQuery)
                     .count(searchCount)
+                    .accept("application/fhir+json")        // required for Cerner
                     .returnBundle(Bundle.class)
                     .execute();
 
