@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
@@ -50,6 +51,7 @@ public class UserWorkspace {
     private final String sessionId;
     private final Audience audience;
     private final FHIRCredentialsWithClient fhirCredentialsWithClient;
+    private final FhirQueryManager fqm;
     private final FhirConfigManager fcm;
     private final Long internalPatientId;
     private VendorTransformer vendorTransformer = null;
@@ -60,11 +62,13 @@ public class UserWorkspace {
     private final ExecutorService executorService;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
-                            FHIRCredentialsWithClient fhirCredentialsWithClient, FhirConfigManager fcm) {
+                            FHIRCredentialsWithClient fhirCredentialsWithClient,
+                            FhirQueryManager fqm, FhirConfigManager fcm) {
         this.ctx = ctx;
         this.sessionId = sessionId;
         this.audience = audience;
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
+        this.fqm = fqm;
         this.fcm = fcm;
 
         PatientService patientService = ctx.getBean(PatientService.class);
@@ -93,6 +97,10 @@ public class UserWorkspace {
 
     public FHIRCredentialsWithClient getFhirCredentialsWithClient() {
         return fhirCredentialsWithClient;
+    }
+
+    public FhirQueryManager getFhirQueryManager() {
+        return fqm;
     }
 
     public FhirConfigManager getFhirConfigManager() {

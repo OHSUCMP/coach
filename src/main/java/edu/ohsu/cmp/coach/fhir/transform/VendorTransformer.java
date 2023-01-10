@@ -13,6 +13,20 @@ import java.io.IOException;
 import java.util.List;
 
 public interface VendorTransformer {
+
+    String getPatientLookup(String id);
+    String getEncounterQuery(String patientId);
+    String getEncounterQuery(String patientId, String lookbackPeriod);
+    String getObservationCategoryQuery(String patientId, String category);
+    String getObservationCategoryQuery(String patientId, String category, String lookbackPeriod);
+    String getObservationCodeQuery(String patientId, String code);
+    String getObservationCodeQuery(String patientId, String code, String lookbackPeriod);
+    String getConditionQuery(String patientId, String category);
+    String getGoalQuery(String patientId);
+    String getMedicationStatementQuery(String patientId);
+    String getMedicationRequestQuery(String patientId);
+    String getProcedureQuery(String patientId);
+
     Bundle writeRemote(String sessionId, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException;
 
     List<BloodPressureModel> transformIncomingBloodPressureReadings(Bundle bundle) throws DataException;

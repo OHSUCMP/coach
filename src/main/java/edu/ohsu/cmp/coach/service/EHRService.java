@@ -1,10 +1,10 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.fhir.EncounterMatcher;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,23 +37,23 @@ public class EHRService extends AbstractService {
     private String salt;
 
     @Autowired
-    private FhirQueryManager fhirQueryManager;
-
-    @Autowired
     private FHIRService fhirService;
 
     public Patient getPatient(String sessionId) {
         logger.info("getting Patient for session=" + sessionId);
-        FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.readByReference(fcc, Patient.class,
-                fhirQueryManager.getPatientLookup(fcc.getCredentials().getPatientId())
+                workspace.getVendorTransformer().getPatientLookup(fcc.getCredentials().getPatientId())
         );
     }
 
     public List<Encounter> getEncounters(String sessionId) {
         logger.info("getting Encounters for session=" + sessionId);
-        FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        Bundle bundle = fhirService.search(fcc, fhirQueryManager.getEncounterQuery(fcc.getCredentials().getPatientId(), fcm.getEncounterLookbackPeriod()),
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        Bundle bundle = fhirService.search(fcc,
+                workspace.getVendorTransformer().getEncounterQuery(fcc.getCredentials().getPatientId(), fcm.getEncounterLookbackPeriod()),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {
@@ -84,6 +84,10 @@ public class EHRService extends AbstractService {
                 }
         );
 
+        if (logger.isDebugEnabled()) {
+            logger.debug("Encounter bundle = " + FhirUtil.toJson(bundle));
+        }
+
         List<Encounter> list = new ArrayList<>();
         if (bundle.hasEntry()) {
             for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -107,29 +111,31 @@ public class EHRService extends AbstractService {
      */
     public Bundle getObservations(String sessionId, String code, String lookbackPeriod, @Nullable Integer limit) {
         logger.info("getting Observations for session=" + sessionId + " having code(s): " + code);
-        FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        return fhirService.search(fcc, fhirQueryManager.getObservationCodeQuery(fcc.getCredentials().getPatientId(), code, lookbackPeriod),
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        return fhirService.search(fcc,
+                workspace.getVendorTransformer().getObservationCodeQuery(fcc.getCredentials().getPatientId(), code, lookbackPeriod),
                 new Function<Resource, Boolean>() {
-            @Override
-            public Boolean apply(Resource resource) {
-                if (resource instanceof Observation) {
-                    Observation observation = (Observation) resource;
-                    if (observation.getStatus() != Observation.ObservationStatus.FINAL &&
-                            observation.getStatus() != Observation.ObservationStatus.AMENDED &&
-                            observation.getStatus() != Observation.ObservationStatus.CORRECTED) {
-                        logger.debug("removing Observation " + observation.getId() + " - invalid status");
-                        return false;
-                    }
+                    @Override
+                    public Boolean apply(Resource resource) {
+                        if (resource instanceof Observation) {
+                            Observation observation = (Observation) resource;
+                            if (observation.getStatus() != Observation.ObservationStatus.FINAL &&
+                                    observation.getStatus() != Observation.ObservationStatus.AMENDED &&
+                                    observation.getStatus() != Observation.ObservationStatus.CORRECTED) {
+                                logger.debug("removing Observation " + observation.getId() + " - invalid status");
+                                return false;
+                            }
 
 // storer 2022-08-15 - can now handle observations that don't have associated encounters, as janky as that might be
-//                    if (!observation.hasEncounter()) {
-//                        logger.debug("removing Observation " + observation.getId() + " - no Encounter referenced");
-//                        return false;
-//                    }
-                }
+//                            if (!observation.hasEncounter()) {
+//                                logger.debug("removing Observation " + observation.getId() + " - no Encounter referenced");
+//                                return false;
+//                            }
+                        }
 
-                return true;
-            }
+                        return true;
+                    }
         });
     }
 
@@ -143,8 +149,10 @@ public class EHRService extends AbstractService {
 
     public Bundle getConditions(String sessionId, String category) {
         logger.info("getting " + category + " Conditions for session=" + sessionId);
-        FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        return fhirService.search(fcc, fhirQueryManager.getConditionQuery(fcc.getCredentials().getPatientId(), category),
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        return fhirService.search(fcc,
+                workspace.getVendorTransformer().getConditionQuery(fcc.getCredentials().getPatientId(), category),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {
@@ -178,8 +186,10 @@ public class EHRService extends AbstractService {
 
     public Bundle getGoals(String sessionId) {
         logger.info("getting Goals for session=" + sessionId);
-        FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        return fhirService.search(fcc, fhirQueryManager.getGoalQuery(fcc.getCredentials().getPatientId()),
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        return fhirService.search(fcc,
+                workspace.getVendorTransformer().getGoalQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {
@@ -210,8 +220,10 @@ public class EHRService extends AbstractService {
 
     public Bundle getMedicationStatements(String sessionId) {
         logger.info("getting MedicationStatements for session=" + sessionId);
-        FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        return fhirService.search(fcc, fhirQueryManager.getMedicationStatementQuery(fcc.getCredentials().getPatientId()),
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        return fhirService.search(fcc,
+                workspace.getVendorTransformer().getMedicationStatementQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {
@@ -230,9 +242,10 @@ public class EHRService extends AbstractService {
 
     public Bundle getMedicationRequests(String sessionId) {
         logger.info("getting MedicationRequests for session=" + sessionId);
-        FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-
-        Bundle bundle = fhirService.search(fcc, fhirQueryManager.getMedicationRequestQuery(fcc.getCredentials().getPatientId()),
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        Bundle bundle = fhirService.search(fcc,
+                workspace.getVendorTransformer().getMedicationRequestQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {
@@ -290,8 +303,10 @@ public class EHRService extends AbstractService {
 
     public Bundle getCounselingProcedures(String sessionId) {
         logger.info("getting Counseling Procedures for session=" + sessionId);
-        FHIRCredentialsWithClient fcc = workspaceService.get(sessionId).getFhirCredentialsWithClient();
-        return fhirService.search(fcc, fhirQueryManager.getProcedureQuery(fcc.getCredentials().getPatientId()),
+        UserWorkspace workspace = workspaceService.get(sessionId);
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        return fhirService.search(fcc,
+                workspace.getVendorTransformer().getProcedureQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {
                     @Override
                     public Boolean apply(Resource resource) {

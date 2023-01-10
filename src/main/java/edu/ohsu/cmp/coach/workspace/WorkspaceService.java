@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.workspace;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.SessionMissingException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
@@ -25,6 +26,9 @@ public class WorkspaceService {
     private ApplicationContext ctx;
 
     @Autowired
+    private FhirQueryManager fqm;
+
+    @Autowired
     private FhirConfigManager fcm;
 
     @Value("${fhir.vendor-transformer-class}")
@@ -42,7 +46,7 @@ public class WorkspaceService {
 
     public void init(String sessionId, Audience audience, FHIRCredentialsWithClient fcc) throws ConfigurationException {
         try {
-            UserWorkspace workspace = new UserWorkspace(ctx, sessionId, audience, fcc, fcm);
+            UserWorkspace workspace = new UserWorkspace(ctx, sessionId, audience, fcc, fqm, fcm);
             workspace.setVendorTransformer(buildVendorTransformer(workspace));
             map.put(sessionId, workspace);
 

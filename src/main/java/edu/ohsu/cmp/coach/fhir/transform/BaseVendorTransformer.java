@@ -5,13 +5,28 @@ import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class BaseVendorTransformer implements VendorTransformer {
+    private static final String TOKEN_ID = "\\{id}";
+    private static final String TOKEN_SUBJECT = "\\{subject}";
+    private static final String TOKEN_ENCOUNTER = "\\{encounter}";
+    private static final String TOKEN_CODE = "\\{code}";
+    private static final String TOKEN_CATEGORY = "\\{category}";
+    private static final String TOKEN_RELATIVE_DATE = "\\{now([-+])([mMdDyY0-9]+)}"; // "\\{now[-+][mMdDyY0-9]+}";
+    private static final Pattern PATTERN_RELATIVE_DATE = Pattern.compile("now([-+])([mMdDyY0-9]+)");
+    private static final Pattern PATTERN_RELATIVE_DATE_PART = Pattern.compile("([0-9]+)([mMdDyY])");
+    private static final DateFormat FHIR_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
     protected static final String NO_ENCOUNTERS_KEY = null; // intentionally instantiated with null value
 
     public static final String OBSERVATION_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category";
@@ -27,11 +42,194 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         this.workspace = workspace;
     }
 
+    protected abstract BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation) throws DataException;
+    protected abstract BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation) throws DataException;
+    protected abstract BloodPressureModel buildBloodPressureModel(Observation o) throws DataException;
+    protected abstract BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation) throws DataException;
 
-    protected abstract BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException;
-    protected abstract BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException;
-    protected abstract BloodPressureModel buildBloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException;
-    protected abstract BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException;
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public String getPatientLookup(String id) {
+        String patientLookup = workspace.getFhirQueryManager().getPatientLookup();
+        return buildQuery(patientLookup, params()
+                .add(TOKEN_ID, id)
+        );
+    }
+
+    @Override
+    public String getEncounterQuery(String patientId) {
+        return getEncounterQuery(patientId, null);
+    }
+
+    @Override
+    public String getEncounterQuery(String patientId, String lookbackPeriod) {
+        String encounterQuery = workspace.getFhirQueryManager().getEncounterQuery();
+        String query = lookbackPeriod != null ?
+                addLookbackPeriodParam(encounterQuery, lookbackPeriod) :
+                encounterQuery;
+
+        return buildQuery(query, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
+    @Override
+    public String getObservationCategoryQuery(String patientId, String category) {
+        return getObservationCategoryQuery(patientId, category, null);
+    }
+
+    @Override
+    public String getObservationCategoryQuery(String patientId, String category, String lookbackPeriod) {
+        String observationCategoryQuery = workspace.getFhirQueryManager().getObservationCategoryQuery();
+        String query = lookbackPeriod != null ?
+                addLookbackPeriodParam(observationCategoryQuery, lookbackPeriod) :
+                observationCategoryQuery;
+
+        return buildQuery(query, params()
+                .add(TOKEN_SUBJECT, patientId)
+                .add(TOKEN_CATEGORY, category)
+        );
+    }
+
+    @Override
+    public String getObservationCodeQuery(String patientId, String code) {
+        return getObservationCodeQuery(patientId, code, null);
+    }
+
+    @Override
+    public String getObservationCodeQuery(String patientId, String code, String lookbackPeriod) {
+        String observationCodeQuery = workspace.getFhirQueryManager().getObservationCodeQuery();
+        String query = StringUtils.isNotBlank(lookbackPeriod) ?
+                addLookbackPeriodParam(observationCodeQuery, lookbackPeriod) :
+                observationCodeQuery;
+
+        return buildQuery(query, params()
+                .add(TOKEN_SUBJECT, patientId)
+                .add(TOKEN_CODE, code)
+        );
+    }
+
+    @Override
+    public String getConditionQuery(String patientId, String category) {
+        String conditionQuery = workspace.getFhirQueryManager().getConditionQuery();
+        return buildQuery(conditionQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+                .add(TOKEN_CATEGORY, category)
+        );
+    }
+
+    @Override
+    public String getGoalQuery(String patientId) {
+        String goalQuery = workspace.getFhirQueryManager().getGoalQuery();
+        return buildQuery(goalQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
+    @Override
+    public String getMedicationStatementQuery(String patientId) {
+        String medicationStatementQuery = workspace.getFhirQueryManager().getMedicationStatementQuery();
+        return buildQuery(medicationStatementQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
+    @Override
+    public String getMedicationRequestQuery(String patientId) {
+        String medicationRequestQuery = workspace.getFhirQueryManager().getMedicationRequestQuery();
+        return buildQuery(medicationRequestQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
+    @Override
+    public String getProcedureQuery(String patientId) {
+        String procedureQuery = workspace.getFhirQueryManager().getProcedureQuery();
+        return buildQuery(procedureQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
+    private static Params params() {
+        return new Params();
+    }
+
+    private static final class Params extends HashMap<String, String> {
+        public Params add(String key, String value) {
+            put(key, value);
+            return this;
+        }
+    }
+
+    private String buildQuery(String template, Map<String, String> params) {
+        return buildQuery(template, params, null);
+    }
+
+    private String buildQuery(String template, Map<String, String> params, Integer limit) {
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            template = template.replaceAll(entry.getKey(), entry.getValue());
+        }
+        template = template.replaceAll(TOKEN_RELATIVE_DATE, buildRelativeDate(extract(TOKEN_RELATIVE_DATE, template)));
+        return limit != null ?
+                template + "&_count=" + limit + "&_total=" + limit :
+                template;
+    }
+
+    private String buildRelativeDate(String s) {
+        Matcher m1 = PATTERN_RELATIVE_DATE.matcher(s);
+
+        if (m1.matches()) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(new Date());
+            cal.set(Calendar.HOUR, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+
+            int multiplier = m1.group(1).equals("-") ? -1 : 1;
+
+            Matcher m2 = PATTERN_RELATIVE_DATE_PART.matcher(m1.group(2));
+            while (m2.find()) {
+                int i = Integer.parseInt(m2.group(1));
+                String datePart = m2.group(2);
+
+                if (datePart.equalsIgnoreCase("y")) {
+                    cal.add(Calendar.YEAR, multiplier * i);
+
+                } else if (datePart.equalsIgnoreCase("m")) {
+                    cal.add(Calendar.MONTH, multiplier * i);
+
+                } else if (datePart.equalsIgnoreCase("d")) {
+                    cal.add(Calendar.DAY_OF_MONTH, multiplier * i);
+                }
+            }
+
+            return getFhirDateFormat().format(cal.getTime());
+        }
+
+        return "";
+    }
+
+    protected DateFormat getFhirDateFormat() {
+        return FHIR_DATE_FORMAT;
+    }
+
+    private String extract(String token, String s) {
+        Pattern p = Pattern.compile(".*(" + token + ").*");
+        Matcher m = p.matcher(s);
+        if (m.matches()) {
+            String s2 = m.group(1);
+            return s2.substring(1, s2.length() - 1);
+        }
+        return "";
+    }
+
+    private String addLookbackPeriodParam(String query, String lookbackPeriod) {
+        return query + "&date=ge{now-" + lookbackPeriod + "}";
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
     public List<BloodPressureModel> transformIncomingBloodPressureReadings(Bundle bundle) throws DataException {
@@ -97,7 +295,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 logger.debug("bpObservation = " + bp.getId() + " (encounter=" + encounter.getId() +
                         ") (effectiveDateTime=" + bp.getEffectiveDateTimeType().getValueAsString() + ")");
                 try {
-                    list.add(buildBloodPressureModel(encounter, bp, protocol, fcm));
+                    list.add(buildBloodPressureModel(encounter, bp, protocol));
 
                 } catch (DataException e) {
                     logger.warn("caught " + e.getClass().getSimpleName() +
@@ -120,7 +318,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                             diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
 
                     try {
-                        list.add(buildBloodPressureModel(encounter, systolic, diastolic, protocol, fcm));
+                        list.add(buildBloodPressureModel(encounter, systolic, diastolic, protocol));
 
                     } catch (DataException e) {
                         logger.warn("caught " + e.getClass().getSimpleName() +
@@ -159,7 +357,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                                 o.getEffectiveDateTimeType().getValueAsString() + ")");
 
                         try {
-                            list.add(buildBloodPressureModel(o, fcm));
+                            list.add(buildBloodPressureModel(o));
 
                         } catch (DataException e) {
                             logger.warn("caught " + e.getClass().getSimpleName() +
@@ -204,7 +402,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                             diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
 
                     try {
-                        list.add(buildBloodPressureModel(systolic, diastolic, fcm));
+                        list.add(buildBloodPressureModel(systolic, diastolic));
 
                     } catch (DataException e) {
                         logger.warn("caught " + e.getClass().getSimpleName() +

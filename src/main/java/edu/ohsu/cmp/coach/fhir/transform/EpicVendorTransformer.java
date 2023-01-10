@@ -64,7 +64,8 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation) throws DataException {
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm);
 
         // Epic hack to set protocol information from custom-serialized note in the Observation resource
@@ -81,7 +82,8 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation) throws DataException {
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(encounter, systolicObservation, diastolicObservation, protocolObservation, fcm);
 
         // Epic hack to set protocol information from custom-serialized note in the Observation resource
@@ -101,7 +103,8 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException {
+    protected BloodPressureModel buildBloodPressureModel(Observation o) throws DataException {
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(o, fcm);
 
         // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
@@ -116,7 +119,8 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
+    protected BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation) throws DataException {
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(systolicObservation, diastolicObservation, fcm);
 
         Boolean followedProtocol = getFollowedProtocolFromNote(systolicObservation, fcm);
