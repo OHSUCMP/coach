@@ -42,5 +42,6 @@ build/
 .env
 docker_data
 
-### ignore Cerner integration files ###
-cerner/
+### ignore local configurations ###
+local-config/
+
