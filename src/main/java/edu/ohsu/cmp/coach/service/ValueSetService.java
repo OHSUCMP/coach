@@ -31,40 +31,31 @@ public class ValueSetService extends AbstractService {
 
     public void refresh(String oid) {
         try {
-            ValueSet valueSet = getValueSet(oid);
-            if (valueSet != null) {
-                logger.info("refreshing ValueSet with oid=" + oid);
+            logger.info("acquiring ValueSet with oid=" + oid + " from VSAC");
+            ValueSet fresh = vsacService.getValueSet(oid);
 
-                // the ValueSet already exists in the local DB, so it will be prepopulated with Concepts that also
-                // exist in the local DB.  calling valueSet.update() with the fresh data from VSAC will apply those
-                // fresh chances to the persisted objects, adding any that don't exist and removing those that are
-                // missing
+            // update incoming ValueSet concepts to reference existing persistence records if they exist
+            Set<Concept> concepts = new LinkedHashSet<>();
+            for (Concept c : fresh.getConcepts()) {
+                Concept existingConcept = conceptService.getConcept(c.getCode(), c.getCodeSystem(), c.getCodeSystemVersion());
+                if (existingConcept != null) {
+                    concepts.add(existingConcept);
+                } else {
+                    concepts.add(c);
+                }
+            }
+            fresh.setConcepts(concepts);
 
-                valueSet.update(vsacService.getValueSet(oid));
+            ValueSet existing = getValueSet(oid);
+            if (existing != null) {
+                logger.info("updating existing ValueSet with oid=" + oid);
+                existing.update(fresh);
+                repository.save(existing);
 
             } else {
-                logger.info("acquiring new ValueSet with oid=" + oid);
-                valueSet = vsacService.getValueSet(oid);
-
-                // the ValueSet does not yet exist in the local DB, so the object we're working with is straight
-                // from VSAC.  none of its Concepts come from the local DB and don't have IDs assigned.  however, these
-                // referenced Concepts *may* be represented in the local DB.  if they are, we *need* to replace those
-                // copies from VSAC with the locally persisted copies, so that JPA will perform an update instead of
-                // trying to recreate them with inserts.  this block of code below performs that operation
-
-                Set<Concept> concepts = new LinkedHashSet<>();
-                for (Concept c : valueSet.getConcepts()) {
-                    Concept existingConcept = conceptService.getConcept(c.getCode(), c.getCodeSystem(), c.getCodeSystemVersion());
-                    if (existingConcept != null) {
-                        concepts.add(existingConcept);
-                    } else {
-                        concepts.add(c);
-                    }
-                }
-                valueSet.setConcepts(concepts);
+                logger.info("creating new ValueSet with oid=" + oid);
+                repository.save(fresh);
             }
-
-            repository.save(valueSet);
 
         } catch (Exception e) {
             logger.error("caught " + e.getClass().getName() + " refreshing ValueSet with oid=" + oid, e);
