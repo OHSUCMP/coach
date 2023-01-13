@@ -31,7 +31,11 @@ public class MedicationService extends AbstractService {
     public void refreshAntihypertensiveMedicationValueSets() {
         logger.info("refreshing anti-hypertensive medication ValueSets -");
         for (String oid : getAntihypertensiveMedicationValueSetOIDsList()) {
-            valueSetService.refresh(oid);
+            try {
+                valueSetService.refresh(oid);
+            } catch (Exception e) {
+                logger.error("caught " + e.getClass().getName() + " refreshing ValueSet with OID=" + oid + " - " + e.getMessage(), e);
+            }
         }
         logger.info("done refreshing anti-hypertensive medication ValueSets.");
     }
