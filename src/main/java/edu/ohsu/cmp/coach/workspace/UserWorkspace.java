@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
@@ -50,6 +51,7 @@ public class UserWorkspace {
     private final String sessionId;
     private final Audience audience;
     private final FHIRCredentialsWithClient fhirCredentialsWithClient;
+    private final FhirQueryManager fqm;
     private final FhirConfigManager fcm;
     private final Long internalPatientId;
     private VendorTransformer vendorTransformer = null;
@@ -60,11 +62,13 @@ public class UserWorkspace {
     private final ExecutorService executorService;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
-                            FHIRCredentialsWithClient fhirCredentialsWithClient, FhirConfigManager fcm) {
+                            FHIRCredentialsWithClient fhirCredentialsWithClient,
+                            FhirQueryManager fqm, FhirConfigManager fcm) {
         this.ctx = ctx;
         this.sessionId = sessionId;
         this.audience = audience;
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
+        this.fqm = fqm;
         this.fcm = fcm;
 
         PatientService patientService = ctx.getBean(PatientService.class);
@@ -95,6 +99,10 @@ public class UserWorkspace {
         return fhirCredentialsWithClient;
     }
 
+    public FhirQueryManager getFhirQueryManager() {
+        return fqm;
+    }
+
     public FhirConfigManager getFhirConfigManager() {
         return fcm;
     }
@@ -113,8 +121,8 @@ public class UserWorkspace {
                 getGoals();
                 getEncounters();
                 getProtocolObservations();
-                getBloodPressures();
-                getPulses();
+                getRemoteBloodPressures();
+                getRemotePulses();
                 getEncounterDiagnosisConditions();
                 getAdverseEvents();
                 getMedications();
@@ -227,18 +235,18 @@ public class UserWorkspace {
         });
     }
 
-    public List<BloodPressureModel> getBloodPressures() {
+    public List<BloodPressureModel> getRemoteBloodPressures() {
         return (List<BloodPressureModel>) cache.get(CACHE_BP, new Function<String, List<BloodPressureModel>>() {
             @Override
             public List<BloodPressureModel> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Blood Pressures for session=" + sessionId);
+                logger.info("BEGIN build remote Blood Pressures for session=" + sessionId);
 
                 BloodPressureService svc = ctx.getBean(BloodPressureService.class);
                 try {
-                    List<BloodPressureModel> list = svc.buildBloodPressureList(sessionId);
+                    List<BloodPressureModel> list = svc.buildRemoteBloodPressureList(sessionId);
 
-                    logger.info("DONE building Blood Pressures for session=" + sessionId +
+                    logger.info("DONE building remote Blood Pressures for session=" + sessionId +
                             " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
                     return list;
@@ -250,18 +258,18 @@ public class UserWorkspace {
         });
     }
 
-    public List<PulseModel> getPulses() {
+    public List<PulseModel> getRemotePulses() {
         return (List<PulseModel>) cache.get(CACHE_PULSE, new Function<String, List<PulseModel>>() {
             @Override
             public List<PulseModel> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Pulses for session=" + sessionId);
+                logger.info("BEGIN build remote Pulses for session=" + sessionId);
 
                 PulseService svc = ctx.getBean(PulseService.class);
                 try {
-                    List<PulseModel> list = svc.buildPulseList(sessionId);
+                    List<PulseModel> list = svc.buildRemotePulseList(sessionId);
 
-                    logger.info("DONE building Pulses for session=" + sessionId +
+                    logger.info("DONE building remote Pulses for session=" + sessionId +
                             " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
                     return list;

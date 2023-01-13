@@ -21,7 +21,7 @@ import java.util.*;
 public class EpicVendorTransformer extends BaseVendorTransformer implements VendorTransformer {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    protected static final String PROTOCOL_NOTE_TAG = "COACH_PROTOCOL::";
+    private static final String PROTOCOL_NOTE_TAG = "COACH_PROTOCOL::";
 
     private final DefaultVendorTransformer defaultTransformer;
 
@@ -64,7 +64,8 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation) throws DataException {
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm);
 
         // Epic hack to set protocol information from custom-serialized note in the Observation resource
@@ -81,7 +82,8 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException {
+    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation) throws DataException {
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(encounter, systolicObservation, diastolicObservation, protocolObservation, fcm);
 
         // Epic hack to set protocol information from custom-serialized note in the Observation resource
@@ -101,7 +103,8 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException {
+    protected BloodPressureModel buildBloodPressureModel(Observation o) throws DataException {
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(o, fcm);
 
         // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
@@ -116,7 +119,8 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
+    protected BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation) throws DataException {
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(systolicObservation, diastolicObservation, fcm);
 
         Boolean followedProtocol = getFollowedProtocolFromNote(systolicObservation, fcm);
@@ -144,12 +148,18 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
             // note : do not include Encounter for Epic
             //        also, combine protocol info into the bp observation if it exists
             //        also, the BP observation needs to be split into separate systolic and diastolic resources
+            //        also, link the resultant Observations together using a UUID in the note field, so we can reliably recombine them later
+
+            String uuid = genTemporaryId();
+
             Observation systolicObservation = buildHomeHealthBloodPressureObservation(ResourceType.SYSTOLIC, model.getSourceBPObservation(), fcm);
             appendProtocolAnswerToObservationIfNeeded(systolicObservation, model, fcm);
+            appendUUIDNoteToObservationIfNeeded(systolicObservation, uuid);
             FhirUtil.appendResourceToBundle(bundle, systolicObservation);
 
             Observation diastolicObservation = buildHomeHealthBloodPressureObservation(ResourceType.DIASTOLIC, model.getSourceBPObservation(), fcm);
             appendProtocolAnswerToObservationIfNeeded(diastolicObservation, model, fcm);
+            appendUUIDNoteToObservationIfNeeded(diastolicObservation, uuid);
             FhirUtil.appendResourceToBundle(bundle, diastolicObservation);
 
         } else if (model.getSourceSystolicObservation() != null && model.getSourceDiastolicObservation() != null) {
@@ -169,12 +179,16 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
             // in Epic context, BP Observations do not have Encounters, but instead use timestamp as a mechanism
             // to associated resources together
 
+            String uuid = genTemporaryId();
+
             Observation systolicObservation = buildHomeHealthBloodPressureObservation(ResourceType.SYSTOLIC, model, patientIdRef, fcm);
             appendProtocolAnswerToObservationIfNeeded(systolicObservation, model, fcm);
+            appendUUIDNoteToObservationIfNeeded(systolicObservation, uuid);
             FhirUtil.appendResourceToBundle(bundle, systolicObservation);
 
             Observation diastolicObservation = buildHomeHealthBloodPressureObservation(ResourceType.DIASTOLIC, model, patientIdRef, fcm);
             appendProtocolAnswerToObservationIfNeeded(diastolicObservation, model, fcm);
+            appendUUIDNoteToObservationIfNeeded(diastolicObservation, uuid);
             FhirUtil.appendResourceToBundle(bundle, diastolicObservation);
         }
 
@@ -431,7 +445,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
     private Boolean getFollowedProtocolFromNote(Observation bpObservation, FhirConfigManager fcm) {
         // Epic hack to handle when protocol-followed info is custom serialized into a note field
-        if (bpObservation.hasNote()) {
+        if (bpObservation != null && bpObservation.hasNote()) {
             for (Annotation annotation : bpObservation.getNote()) {
                 if (annotation.hasText()) {
                     if (annotation.getText().equals(PROTOCOL_NOTE_TAG + fcm.getProtocolAnswerYes())) {
@@ -447,28 +461,34 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     private void appendProtocolAnswerToObservationIfNeeded(Observation observation, AbstractVitalsModel model, FhirConfigManager fcm) {
-        if ( ! hasProtocolAnswerNote(observation) ) {
+        if ( ! hasNoteStartingWith(observation, PROTOCOL_NOTE_TAG) ) {
             if (model.getSourceProtocolObservation() != null) {
                 Observation o = model.getSourceProtocolObservation();
                 if (o.hasValueCodeableConcept()) {
                     CodeableConcept cc = o.getValueCodeableConcept();
                     if (cc.hasText()) {
-                        appendProtocolAnswerNote(observation, cc.getText());
+                        appendNote(observation, PROTOCOL_NOTE_TAG + cc.getText());
                     }
                 }
 
             } else if (model.getFollowedProtocol() != null) {
                 String s = model.getFollowedProtocol() ? fcm.getProtocolAnswerYes() : fcm.getProtocolAnswerNo();
-                appendProtocolAnswerNote(observation, s);
+                appendNote(observation, PROTOCOL_NOTE_TAG + s);
             }
         }
     }
 
-    private boolean hasProtocolAnswerNote(Observation observation) {
+    private void appendUUIDNoteToObservationIfNeeded(Observation observation, String uuid) {
+        if ( ! hasNoteStartingWith(observation, UUID_NOTE_TAG) ) {
+            appendNote(observation, UUID_NOTE_TAG + uuid);
+        }
+    }
+
+    private boolean hasNoteStartingWith(Observation observation, String s) {
         if (observation == null) return false;
         if (observation.hasNote()) {
             for (Annotation annotation : observation.getNote()) {
-                if (annotation.hasText() && annotation.getText().startsWith(PROTOCOL_NOTE_TAG)) {
+                if (annotation.hasText() && annotation.getText().startsWith(s)) {
                     return true;
                 }
             }
@@ -476,8 +496,8 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
         return false;
     }
 
-    private void appendProtocolAnswerNote(Observation observation, String note) {
-        observation.getNote().add(new Annotation().setText(PROTOCOL_NOTE_TAG + note));
+    private void appendNote(Observation observation, String note) {
+        observation.getNote().add(new Annotation().setText(note));
     }
 
     private Observation.ObservationComponentComponent getComponentHavingCoding(Observation observation, List<Coding> coding) throws DataException {
@@ -534,5 +554,4 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
         return o;
     }
-
 }

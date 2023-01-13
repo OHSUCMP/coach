@@ -65,23 +65,23 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException {
-        return new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm);
+    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation) throws DataException {
+        return new BloodPressureModel(encounter, bpObservation, protocolObservation, workspace.getFhirConfigManager());
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException {
-        return new BloodPressureModel(encounter, systolicObservation, diastolicObservation, protocolObservation, fcm);
+    protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation) throws DataException {
+        return new BloodPressureModel(encounter, systolicObservation, diastolicObservation, protocolObservation, workspace.getFhirConfigManager());
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException {
-        return new BloodPressureModel(o, fcm);
+    protected BloodPressureModel buildBloodPressureModel(Observation o) throws DataException {
+        return new BloodPressureModel(o, workspace.getFhirConfigManager());
     }
 
     @Override
-    protected BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
-        return new BloodPressureModel(systolicObservation, diastolicObservation, fcm);
+    protected BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation) throws DataException {
+        return new BloodPressureModel(systolicObservation, diastolicObservation, workspace.getFhirConfigManager());
     }
 
     /**

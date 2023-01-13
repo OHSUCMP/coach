@@ -22,23 +22,23 @@ public class HomeBloodPressureReading {
     private Integer diastolic;
     private Date readingDate;
     private Boolean followedInstructions;
-    private String source;
+//    private String source;
     private Date createdDate;
 
     protected HomeBloodPressureReading() {
     }
 
-    public HomeBloodPressureReading(Integer systolic, Integer diastolic, Date readingDate, Boolean followedInstructions, ObservationSource source) {
+    public HomeBloodPressureReading(Integer systolic, Integer diastolic, Date readingDate, Boolean followedInstructions) {
         this.systolic = systolic;
         this.diastolic = diastolic;
         this.readingDate = readingDate;
         this.followedInstructions = followedInstructions;
-        this.source = source.name();
+//        this.source = source.name();
     }
 
     // used during create, do not set ID
     public HomeBloodPressureReading(BloodPressureModel bpm) throws DataException {
-        if (bpm.getSource() != ObservationSource.HOME && bpm.getSource() != ObservationSource.HOME_BLUETOOTH) {
+        if (bpm.getSource() != ObservationSource.HOME) {
             throw new DataException("cannot convert BloodPressureModel with source=" +
                     bpm.getSource() + " to HomeBloodPressureReading");
         }
@@ -57,7 +57,7 @@ public class HomeBloodPressureReading {
 
         this.readingDate = bpm.getReadingDate();
         this.followedInstructions = bpm.getFollowedProtocol();
-        this.source = bpm.getSource().name();
+//        this.source = bpm.getSource().name();
     }
 
     public Long getId() {
@@ -108,13 +108,13 @@ public class HomeBloodPressureReading {
         this.followedInstructions = followedInstructions;
     }
 
-    public String getSource() {
-        return source;
-    }
+//    public String getSource() {
+//        return source;
+//    }
 
-    public void setSource(String source) {
-        this.source = source;
-    }
+//    public void setSource(String source) {
+//        this.source = source;
+//    }
 
     public Date getCreatedDate() {
         return createdDate;

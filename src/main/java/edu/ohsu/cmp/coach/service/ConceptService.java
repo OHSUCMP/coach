@@ -10,8 +10,8 @@ public class ConceptService extends AbstractService {
     @Autowired
     private ConceptRepository repository;
 
-    public Concept getConcept(String codeSystemName, String code) {
-        Concept concept = repository.findOneByCodeSystemNameAndCode(codeSystemName, code);
+    public Concept getConcept(String code, String codeSystem, String codeSystemVersion) {
+        Concept concept = repository.findConcept(code, codeSystem, codeSystemVersion);
         return concept;
     }
 }

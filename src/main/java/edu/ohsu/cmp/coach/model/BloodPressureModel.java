@@ -9,9 +9,13 @@ import edu.ohsu.cmp.coach.util.ObservationUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class BloodPressureModel extends AbstractVitalsModel {
+    private Long localDatabaseId = null;
     private Observation sourceBPObservation = null;
     private Observation sourceSystolicObservation = null;
     private Observation sourceDiastolicObservation = null;
@@ -19,12 +23,6 @@ public class BloodPressureModel extends AbstractVitalsModel {
     private QuantityModel systolic = null;
     private QuantityModel diastolic = null;
 
-    private enum ValueType {
-        SYSTOLIC,
-        DIASTOLIC,
-        OTHER,
-        UNKNOWN
-    }
 
 //////////////////////////////////////////////////////////////////////////////
 // instance methods
@@ -38,7 +36,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
         super(source, followedProtocol, readingDate);
 
         if (systolic == null || diastolic == null) {
-            throw new DataException("both systolic and diastolic required");
+            throw new DataException("both systolic and diastolic required (manual method)");
         }
 
         this.systolic = new QuantityModel(systolic, fcm.getBpValueUnit());
@@ -48,12 +46,13 @@ public class BloodPressureModel extends AbstractVitalsModel {
 
     // read local
     public BloodPressureModel(HomeBloodPressureReading reading, FhirConfigManager fcm) throws DataException {
-        super(ObservationSource.valueOf(reading.getSource()), reading.getFollowedInstructions(), reading.getReadingDate());
+        super(ObservationSource.HOME, reading.getFollowedInstructions(), reading.getReadingDate());
 
         if (reading.getSystolic() == null || reading.getDiastolic() == null) {
-            throw new DataException("both systolic and diastolic are required");
+            throw new DataException("both systolic and diastolic are required (reading.id=" + reading.getId() + ")");
         }
 
+        localDatabaseId = reading.getId();
         systolic = new QuantityModel(reading.getSystolic(), fcm.getBpValueUnit());
         diastolic = new QuantityModel(reading.getDiastolic(), fcm.getBpValueUnit());
         readingDate = reading.getReadingDate(); //.getTime();
@@ -99,7 +98,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
             }
 
             if (systolic == null || diastolic == null) {
-                throw new DataException("both systolic and diastolic required");
+                throw new DataException("both systolic and diastolic required (Observation.id=" + bpObservation.getId() + ")");
             }
 
         } else {
@@ -132,7 +131,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
                 systolic.setUnit(fcm.getBpValueUnit());
             }
         } else {
-            throw new DataException("systolic observation : invalid coding");
+            throw new DataException("systolic observation : invalid coding (Observation.id=" + systolicObservation.getId() + ")");
         }
 
         if (diastolicObservation.hasCode() && FhirUtil.hasCoding(diastolicObservation.getCode(), fcm.getDiastolicCodings())) {
@@ -141,12 +140,25 @@ public class BloodPressureModel extends AbstractVitalsModel {
                 diastolic.setUnit(fcm.getBpValueUnit());
             }
         } else {
-            throw new DataException("diastolic observation : invalid coding");
+            throw new DataException("diastolic observation : invalid coding (Observation.id=" + diastolicObservation.getId() + ")");
         }
     }
 
     public boolean isHomeReading() {
-        return source == ObservationSource.HOME || source == ObservationSource.HOME_BLUETOOTH;
+        return source == ObservationSource.HOME;
+    }
+
+    @Override
+    public String toString() {
+        if (sourceBPObservation != null) {
+            return sourceBPObservation.getId();
+        } else if (sourceSystolicObservation != null) {
+            return sourceSystolicObservation.getId();
+        } else if (localDatabaseId != null) {
+            return "local-" + localDatabaseId;
+        } else {
+            return systolic + "/" + diastolic + " (id unknown)";
+        }
     }
 
     @Override
@@ -161,6 +173,17 @@ public class BloodPressureModel extends AbstractVitalsModel {
         return systolic != null && diastolic != null ?
                 systolic.getValue() + "/" + diastolic.getValue() + " " + systolic.getUnit() :
                 "(n/a)";        // shouldn't ever get here
+    }
+
+
+    @Override
+    public String getLogicalEqualityKey() {
+        return "BP" + KEY_DELIM +
+                systolic.getValue().intValue() + KEY_DELIM +
+                diastolic.getValue().intValue() + KEY_DELIM +
+                DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(
+                        ZonedDateTime.ofInstant(readingDate.toInstant(), ZoneOffset.UTC)
+                );
     }
 
     @JsonIgnore

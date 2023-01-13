@@ -5,17 +5,34 @@ import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class BaseVendorTransformer implements VendorTransformer {
+    private static final String TOKEN_ID = "\\{id}";
+    private static final String TOKEN_SUBJECT = "\\{subject}";
+    private static final String TOKEN_ENCOUNTER = "\\{encounter}";
+    private static final String TOKEN_CODE = "\\{code}";
+    private static final String TOKEN_CATEGORY = "\\{category}";
+    private static final String TOKEN_RELATIVE_DATE = "\\{now([-+])([mMdDyY0-9]+)}"; // "\\{now[-+][mMdDyY0-9]+}";
+    private static final Pattern PATTERN_RELATIVE_DATE = Pattern.compile("now([-+])([mMdDyY0-9]+)");
+    private static final Pattern PATTERN_RELATIVE_DATE_PART = Pattern.compile("([0-9]+)([mMdDyY])");
+    private static final DateFormat FHIR_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
     protected static final String NO_ENCOUNTERS_KEY = null; // intentionally instantiated with null value
 
     public static final String OBSERVATION_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category";
     public static final String OBSERVATION_CATEGORY_CODE = "vital-signs";
+
+    protected static final String UUID_NOTE_TAG = "COACH_OBSERVATION_GROUP_UUID::";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -25,11 +42,194 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         this.workspace = workspace;
     }
 
+    protected abstract BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation) throws DataException;
+    protected abstract BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation) throws DataException;
+    protected abstract BloodPressureModel buildBloodPressureModel(Observation o) throws DataException;
+    protected abstract BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation) throws DataException;
 
-    protected abstract BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException;
-    protected abstract BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation systolicObservation, Observation diastolicObservation, Observation protocolObservation, FhirConfigManager fcm) throws DataException;
-    protected abstract BloodPressureModel buildBloodPressureModel(Observation o, FhirConfigManager fcm) throws DataException;
-    protected abstract BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException;
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public String getPatientLookup(String id) {
+        String patientLookup = workspace.getFhirQueryManager().getPatientLookup();
+        return buildQuery(patientLookup, params()
+                .add(TOKEN_ID, id)
+        );
+    }
+
+    @Override
+    public String getEncounterQuery(String patientId) {
+        return getEncounterQuery(patientId, null);
+    }
+
+    @Override
+    public String getEncounterQuery(String patientId, String lookbackPeriod) {
+        String encounterQuery = workspace.getFhirQueryManager().getEncounterQuery();
+        String query = lookbackPeriod != null ?
+                addLookbackPeriodParam(encounterQuery, lookbackPeriod) :
+                encounterQuery;
+
+        return buildQuery(query, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
+    @Override
+    public String getObservationCategoryQuery(String patientId, String category) {
+        return getObservationCategoryQuery(patientId, category, null);
+    }
+
+    @Override
+    public String getObservationCategoryQuery(String patientId, String category, String lookbackPeriod) {
+        String observationCategoryQuery = workspace.getFhirQueryManager().getObservationCategoryQuery();
+        String query = lookbackPeriod != null ?
+                addLookbackPeriodParam(observationCategoryQuery, lookbackPeriod) :
+                observationCategoryQuery;
+
+        return buildQuery(query, params()
+                .add(TOKEN_SUBJECT, patientId)
+                .add(TOKEN_CATEGORY, category)
+        );
+    }
+
+    @Override
+    public String getObservationCodeQuery(String patientId, String code) {
+        return getObservationCodeQuery(patientId, code, null);
+    }
+
+    @Override
+    public String getObservationCodeQuery(String patientId, String code, String lookbackPeriod) {
+        String observationCodeQuery = workspace.getFhirQueryManager().getObservationCodeQuery();
+        String query = StringUtils.isNotBlank(lookbackPeriod) ?
+                addLookbackPeriodParam(observationCodeQuery, lookbackPeriod) :
+                observationCodeQuery;
+
+        return buildQuery(query, params()
+                .add(TOKEN_SUBJECT, patientId)
+                .add(TOKEN_CODE, code)
+        );
+    }
+
+    @Override
+    public String getConditionQuery(String patientId, String category) {
+        String conditionQuery = workspace.getFhirQueryManager().getConditionQuery();
+        return buildQuery(conditionQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+                .add(TOKEN_CATEGORY, category)
+        );
+    }
+
+    @Override
+    public String getGoalQuery(String patientId) {
+        String goalQuery = workspace.getFhirQueryManager().getGoalQuery();
+        return buildQuery(goalQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
+    @Override
+    public String getMedicationStatementQuery(String patientId) {
+        String medicationStatementQuery = workspace.getFhirQueryManager().getMedicationStatementQuery();
+        return buildQuery(medicationStatementQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
+    @Override
+    public String getMedicationRequestQuery(String patientId) {
+        String medicationRequestQuery = workspace.getFhirQueryManager().getMedicationRequestQuery();
+        return buildQuery(medicationRequestQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
+    @Override
+    public String getProcedureQuery(String patientId) {
+        String procedureQuery = workspace.getFhirQueryManager().getProcedureQuery();
+        return buildQuery(procedureQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
+    private static Params params() {
+        return new Params();
+    }
+
+    private static final class Params extends HashMap<String, String> {
+        public Params add(String key, String value) {
+            put(key, value);
+            return this;
+        }
+    }
+
+    private String buildQuery(String template, Map<String, String> params) {
+        return buildQuery(template, params, null);
+    }
+
+    private String buildQuery(String template, Map<String, String> params, Integer limit) {
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            template = template.replaceAll(entry.getKey(), entry.getValue());
+        }
+        template = template.replaceAll(TOKEN_RELATIVE_DATE, buildRelativeDate(extract(TOKEN_RELATIVE_DATE, template)));
+        return limit != null ?
+                template + "&_count=" + limit + "&_total=" + limit :
+                template;
+    }
+
+    private String buildRelativeDate(String s) {
+        Matcher m1 = PATTERN_RELATIVE_DATE.matcher(s);
+
+        if (m1.matches()) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(new Date());
+            cal.set(Calendar.HOUR, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+
+            int multiplier = m1.group(1).equals("-") ? -1 : 1;
+
+            Matcher m2 = PATTERN_RELATIVE_DATE_PART.matcher(m1.group(2));
+            while (m2.find()) {
+                int i = Integer.parseInt(m2.group(1));
+                String datePart = m2.group(2);
+
+                if (datePart.equalsIgnoreCase("y")) {
+                    cal.add(Calendar.YEAR, multiplier * i);
+
+                } else if (datePart.equalsIgnoreCase("m")) {
+                    cal.add(Calendar.MONTH, multiplier * i);
+
+                } else if (datePart.equalsIgnoreCase("d")) {
+                    cal.add(Calendar.DAY_OF_MONTH, multiplier * i);
+                }
+            }
+
+            return getFhirDateFormat().format(cal.getTime());
+        }
+
+        return "";
+    }
+
+    protected DateFormat getFhirDateFormat() {
+        return FHIR_DATE_FORMAT;
+    }
+
+    private String extract(String token, String s) {
+        Pattern p = Pattern.compile(".*(" + token + ").*");
+        Matcher m = p.matcher(s);
+        if (m.matches()) {
+            String s2 = m.group(1);
+            return s2.substring(1, s2.length() - 1);
+        }
+        return "";
+    }
+
+    private String addLookbackPeriodParam(String query, String lookbackPeriod) {
+        return query + "&date=ge{now-" + lookbackPeriod + "}";
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
     public List<BloodPressureModel> transformIncomingBloodPressureReadings(Bundle bundle) throws DataException {
@@ -47,76 +247,89 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         for (Encounter encounter : getAllEncounters(bundle)) {
             logger.debug("processing Encounter: " + encounter.getId());
 
+            // these Observations get popped / removed from the map
             List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
 
-            if (encounterObservations != null) {
-                logger.debug("building Observations for Encounter " + encounter.getId());
+            if (encounterObservations == null) {
+                logger.debug("no Observations found for Encounter " + encounter.getId() + " - skipping -");
+                continue;
+            }
 
-                List<Observation> bpObservationList = new ArrayList<>();                // potentially many per encounter
-                Map<String, SystolicDiastolicPair> datePairMap = new LinkedHashMap<>(); // potentially many per encounter
+            logger.debug("building Observations for Encounter " + encounter.getId());
 
-                Observation protocol = null;
+            List<Observation> bpObservationList = new ArrayList<>();            // potentially many per encounter
+            Map<String, SystolicDiastolicPair> map = new LinkedHashMap<>();     // potentially many per encounter
+            Observation protocol = null;
 
-                Iterator<Observation> iter = encounterObservations.iterator();
-                while (iter.hasNext()) {
-                    Observation o = iter.next();
-                    if ( ! o.hasCode() ) {
-                        logger.warn("observation " + o.getId() + " missing code - skipping -");
-                        continue;
+            for (Observation o : encounterObservations) {
+                if ( ! o.hasCode() ) {
+                    logger.warn("observation " + o.getId() + " missing code - skipping -");
+
+                } else if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
+                    bpObservationList.add(o);
+
+                } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
+                    String key = getObservationMatchKey(o);
+                    if ( ! map.containsKey(key) ) {
+                        map.put(key, new SystolicDiastolicPair());
+                    }
+                    map.get(key).setSystolicObservation(o);
+
+                } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
+                    String key = getObservationMatchKey(o);
+                    if ( ! map.containsKey(key) ) {
+                        map.put(key, new SystolicDiastolicPair());
+                    }
+                    map.get(key).setDiastolicObservation(o);
+
+                } else if (protocol == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
+                    logger.debug("protocolObservation = " + o.getId() + " (encounter=" + encounter.getId() +
+                            ") (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                    protocol = o;
+                }
+            }
+
+            // process BP panel Observations
+
+            for (Observation bp : bpObservationList) {
+                logger.debug("bpObservation = " + bp.getId() + " (encounter=" + encounter.getId() +
+                        ") (effectiveDateTime=" + bp.getEffectiveDateTimeType().getValueAsString() + ")");
+                try {
+                    list.add(buildBloodPressureModel(encounter, bp, protocol));
+
+                } catch (DataException e) {
+                    logger.warn("caught " + e.getClass().getSimpleName() +
+                            " building BloodPressureModel from Observation with id=" + bp.getId() + " - " +
+                            e.getMessage() + " - skipping -");
+                }
+            }
+
+            // process systolic and diastolic Observation pairs
+
+            for (Map.Entry<String, SystolicDiastolicPair> entry : map.entrySet()) {
+                SystolicDiastolicPair sdp = entry.getValue();
+                if (sdp.isValid()) {
+                    Observation systolic = sdp.getSystolicObservation();
+                    Observation diastolic = sdp.getDiastolicObservation();
+
+                    logger.debug("systolicObservation = " + systolic.getId() + " (effectiveDateTime=" +
+                            systolic.getEffectiveDateTimeType().getValueAsString() + ")");
+                    logger.debug("diastolicObservation = " + diastolic.getId() + " (effectiveDateTime=" +
+                            diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
+
+                    try {
+                        list.add(buildBloodPressureModel(encounter, systolic, diastolic, protocol));
+
+                    } catch (DataException e) {
+                        logger.warn("caught " + e.getClass().getSimpleName() +
+                                " building BloodPressureModel from (systolic, diastolic) Observations with systolic.id=" +
+                                systolic.getId() + ", diastolic.id=" + diastolic.getId() + " - " +
+                                e.getMessage() + " - skipping -");
                     }
 
-                    if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
-                        bpObservationList.add(o);
-                        iter.remove();
-
-                    } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
-                        String dateStr = o.getEffectiveDateTimeType().getValueAsString();
-                        if ( ! datePairMap.containsKey(dateStr) ) {
-                            datePairMap.put(dateStr, new SystolicDiastolicPair());
-                        }
-                        datePairMap.get(dateStr).setSystolicObservation(o);
-
-                    } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
-                        String dateStr = o.getEffectiveDateTimeType().getValueAsString();
-                        if ( ! datePairMap.containsKey(dateStr) ) {
-                            datePairMap.put(dateStr, new SystolicDiastolicPair());
-                        }
-                        datePairMap.get(dateStr).setDiastolicObservation(o);
-
-                    } else if (protocol == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
-                        logger.debug("protocolObservation = " + o.getId() + " (encounter=" + encounter.getId() +
-                                ") (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        protocol = o;
-                        iter.remove();
-                    }
+                } else {
+                    logger.warn("found incomplete systolic-diastolic pair for readingDate=" + entry.getKey() + " - skipping -");
                 }
-
-                for (Observation bp : bpObservationList) {
-                    logger.debug("bpObservation = " + bp.getId() + " (encounter=" + encounter.getId() +
-                            ") (effectiveDateTime=" + bp.getEffectiveDateTimeType().getValueAsString() + ")");
-                    list.add(buildBloodPressureModel(encounter, bp, protocol, fcm));
-                }
-
-                for (Map.Entry<String, SystolicDiastolicPair> entry : datePairMap.entrySet()) {
-                    SystolicDiastolicPair sdp = entry.getValue();
-                    if (sdp.isValid()) {
-                        Observation systolic = sdp.getSystolicObservation();
-                        Observation diastolic = sdp.getDiastolicObservation();
-
-                        logger.debug("systolicObservation = " + systolic.getId() + " (effectiveDateTime=" +
-                                systolic.getEffectiveDateTimeType().getValueAsString() + ")");
-                        logger.debug("diastolicObservation = " + diastolic.getId() + " (effectiveDateTime=" +
-                                diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
-
-                        list.add(buildBloodPressureModel(encounter, systolic, diastolic, protocol, fcm));
-
-                    } else {
-                        logger.warn("found incomplete systolic-diastolic pair for readingDate=" + entry.getKey() + " - skipping -");
-                    }
-                }
-
-            } else {
-                logger.debug("no Observations found for Encounter " + encounter.getId());
             }
         }
 
@@ -126,57 +339,92 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         // these observations without Encounters that also have identical timestamps are presumed to be related.
         // these need to be combined into a single BloodPresureModel object for any pair of (systolic, diastolic) that
         // have the same timestamp
+        // alternatively, Observations may have a specially-crafted note element that contains a UUID that can be used to
+        // recombine independent systolic and diastolic readings
 
-        Map<String, SystolicDiastolicPair> datePairMap = new LinkedHashMap<>();
+        // storer 12/7: Observations may have Encounter references, but if we can't get at those Encounter records,
+        // we probably shouldn't be processing them.
 
-        for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
-            if (entry.getValue() != null) {
-                for (Observation o : entry.getValue()) {
-                    if (o.hasCode()) {
-                        if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
-                            logger.debug("bpObservation = " + o.getId() + " (no encounter) (effectiveDateTime=" +
-                                    o.getEffectiveDateTimeType().getValueAsString() + ")");
-                            list.add(buildBloodPressureModel(o, fcm));
+        logger.debug("processing BP Observations that do not reference Encounters -");
 
-                        } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
-                            String dateStr = o.getEffectiveDateTimeType().getValueAsString();
-                            if ( ! datePairMap.containsKey(dateStr) ) {
-                                datePairMap.put(dateStr, new SystolicDiastolicPair());
-                            }
-                            datePairMap.get(dateStr).setSystolicObservation(o);
+        if (encounterObservationsMap.containsKey(NO_ENCOUNTERS_KEY)) {
+            Map<String, SystolicDiastolicPair> map = new LinkedHashMap<>();
 
-                        } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
-                            String dateStr = o.getEffectiveDateTimeType().getValueAsString();
-                            if ( ! datePairMap.containsKey(dateStr) ) {
-                                datePairMap.put(dateStr, new SystolicDiastolicPair());
-                            }
-                            datePairMap.get(dateStr).setDiastolicObservation(o);
+            for (Observation o : encounterObservationsMap.remove(NO_ENCOUNTERS_KEY)) {
+                if (o.hasCode()) {
+                    if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
+                        logger.debug("bpObservation = " + o.getId() + " (no encounter) (effectiveDateTime=" +
+                                o.getEffectiveDateTimeType().getValueAsString() + ")");
 
-                        } else {
-                            logger.debug("did not process Observation " + o.getId());
+                        try {
+                            list.add(buildBloodPressureModel(o));
+
+                        } catch (DataException e) {
+                            logger.warn("caught " + e.getClass().getSimpleName() +
+                                    " building BloodPressureModel from Observation with id=" + o.getId() + " - " +
+                                    e.getMessage() + " - skipping -");
                         }
+
+                    } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
+                        String key = getObservationMatchKey(o);
+                        if ( ! map.containsKey(key) ) {
+                            map.put(key, new SystolicDiastolicPair());
+                        }
+                        map.get(key).setSystolicObservation(o);
+
+                    } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
+                        String key = getObservationMatchKey(o);
+                        if ( ! map.containsKey(key) ) {
+                            map.put(key, new SystolicDiastolicPair());
+                        }
+                        map.get(key).setDiastolicObservation(o);
+
+                    } else {
+                        logger.debug("did not process Observation " + o.getId() + " - invalid coding");
                     }
+
+                } else {
+                    logger.debug("did not process Observation " + o.getId() + " - no coding");
+                }
+            }
+
+            // now process dateObservationsMap, which should only include individual systolic and diastolic readings
+
+            for (Map.Entry<String, SystolicDiastolicPair> entry : map.entrySet()) {
+                SystolicDiastolicPair sdp = entry.getValue();
+                if (sdp.isValid()) {
+                    Observation systolic = sdp.getSystolicObservation();
+                    Observation diastolic = sdp.getDiastolicObservation();
+
+                    logger.debug("systolicObservation = " + systolic.getId() + " (effectiveDateTime=" +
+                            systolic.getEffectiveDateTimeType().getValueAsString() + ")");
+                    logger.debug("diastolicObservation = " + diastolic.getId() + " (effectiveDateTime=" +
+                            diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
+
+                    try {
+                        list.add(buildBloodPressureModel(systolic, diastolic));
+
+                    } catch (DataException e) {
+                        logger.warn("caught " + e.getClass().getSimpleName() +
+                                " building BloodPressureModel from (systolic, diastolic) Observations with systolic.id=" +
+                                systolic.getId() + ", diastolic.id=" + diastolic.getId() + " - " +
+                                e.getMessage() + " - skipping -");
+                    }
+
+                } else {
+                    logger.warn("found incomplete systolic-diastolic pair for readingDate=" + entry.getKey() + " - skipping -");
                 }
             }
         }
 
-        // now process dateObservationsMap, which should only include individual systolic and diastolic readings
+        // finally, strip any item from the list where we can't determine the source
 
-        for (Map.Entry<String, SystolicDiastolicPair> entry : datePairMap.entrySet()) {
-            SystolicDiastolicPair sdp = entry.getValue();
-            if (sdp.isValid()) {
-                Observation systolic = sdp.getSystolicObservation();
-                Observation diastolic = sdp.getDiastolicObservation();
-
-                logger.debug("systolicObservation = " + systolic.getId() + " (effectiveDateTime=" +
-                        systolic.getEffectiveDateTimeType().getValueAsString() + ")");
-                logger.debug("diastolicObservation = " + diastolic.getId() + " (effectiveDateTime=" +
-                        diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
-
-                list.add(buildBloodPressureModel(systolic, diastolic, fcm));
-
-            } else {
-                logger.warn("found incomplete systolic-diastolic pair for readingDate=" + entry.getKey() + " - skipping -");
+        Iterator<BloodPressureModel> iter = list.iterator();
+        while (iter.hasNext()) {
+            BloodPressureModel bpm = iter.next();
+            if (bpm.getSource() == ObservationSource.UNKNOWN) {
+                logger.warn("removing BloodPressureModel " + bpm + " - source is UNKNOWN");
+                iter.remove();
             }
         }
 
@@ -250,11 +498,17 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         return map;
     }
 
+    /**
+     * pops all Observations from the provided Map associated with the specified Encounter.
+     * @param encounter
+     * @param map
+     * @return
+     */
     protected List<Observation> getObservationsFromMap(Encounter encounter, Map<String, List<Observation>> map) {
         List<Observation> list = null;
         for (String key : buildKeys(encounter.getId(), encounter.getIdentifier())) {
-            if (map.containsKey(key)) {     // the same exact list may be represented multiple times for different keys.  we only care about the first
-                if (list == null) {
+            if (map.containsKey(key)) {     // the same exact list may be represented multiple times for different keys.
+                if (list == null) {         // we only care about the first
                     list = map.remove(key);
                 } else {
                     map.remove(key);
@@ -381,5 +635,23 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         }
 
         return list;
+    }
+
+    private String getObservationMatchKey(Observation observation) {
+        String uuid = getUUIDFromNote(observation); // used by Epic, but Default should still understand and use this if it exists
+        return uuid != null ?
+                uuid :
+                observation.getEffectiveDateTimeType().getValueAsString();
+    }
+
+    private String getUUIDFromNote(Observation observation) {
+        if (observation != null && observation.hasNote()) {
+            for (Annotation annotation : observation.getNote()) {
+                if (annotation.hasText() && annotation.getText().startsWith(UUID_NOTE_TAG)) {
+                    return annotation.getText().substring(UUID_NOTE_TAG.length() + 1);
+                }
+            }
+        }
+        return null;
     }
 }

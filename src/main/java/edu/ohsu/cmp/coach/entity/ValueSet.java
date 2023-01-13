@@ -193,21 +193,50 @@ public class ValueSet {
             // we need to do a little work to update concepts that persist; to delete those no longer present; and to
             // add those that are new.
 
-            Map<String, Concept> updatedMap = new LinkedHashMap<>();
+            Map<String, Concept> incomingConceptsMap = new LinkedHashMap<>();
             for (Concept c : concepts) {
-                updatedMap.put(c.getKey(), c);
+                incomingConceptsMap.put(c.getKey(), c);
             }
 
             Iterator<Concept> iter = this.concepts.iterator();
             while (iter.hasNext()) {
                 Concept current = iter.next();
-                if (updatedMap.containsKey(current.getKey())) {
-                    current.update(updatedMap.remove(current.getKey()));
+                if (incomingConceptsMap.containsKey(current.getKey())) {
+                    Concept incoming = incomingConceptsMap.get(current.getKey());
+                    if (current.getId() == null && incoming.getId() != null) {
+
+                        // in this case, the current Concept is from VSAC, while the incoming Concept is logically
+                        // the same, but comes from the local DB.  we need to keep the local DB copy (incoming) and
+                        // update it with the copy from VSAC (current), so as to prevent insertion errors on persist.
+                        // requires removing the current copy, so that the incoming version will not conflict with
+                        // it when they're merged in the next step (below)
+
+                        incoming.update(current);
+                        iter.remove();
+
+                    } else {
+
+                        // in *all other cases* - whether both copies come from VSAC, or both come from the local DB,
+                        // or where the current Concept comes from the local DB and the incoming version comes from
+                        // VSAC - we simply update the current Concept with data from the incoming copy.
+                        // requires removing the incoming copy from the map so that it doesn't conflict with the
+                        // current copy when they're merged in the next step (below)
+
+                        current.update(incoming);
+                        incomingConceptsMap.remove(current.getKey());
+                    }
+
                 } else {
+
+                    // if the Concept isn't represented in the incoming set, remove it
+
                     iter.remove();
                 }
             }
-            this.concepts.addAll(updatedMap.values());
+
+            // now merge everything remaining in the incoming set with the current set
+
+            this.concepts.addAll(incomingConceptsMap.values());
         }
     }
 }

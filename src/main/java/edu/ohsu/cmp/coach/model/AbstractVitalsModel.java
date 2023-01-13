@@ -2,9 +2,9 @@ package edu.ohsu.cmp.coach.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
-import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -23,6 +23,8 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
 //    protected static final String PROTOCOL_NOTE_TAG = "COACH_PROTOCOL::";
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    protected static final String KEY_DELIM = "|";
 
     protected Encounter sourceEncounter;
     protected Observation sourceProtocolObservation;
@@ -126,4 +128,16 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
     public abstract String getReadingType();
     
     public abstract String getValue();
+
+    public boolean logicallyEquals(Object o) {
+        if (o == null) return false;
+        if (this == o) return true;
+        if (o instanceof AbstractVitalsModel) {
+            AbstractVitalsModel avm = (AbstractVitalsModel) o;
+            return StringUtils.equals(getLogicalEqualityKey(), avm.getLogicalEqualityKey());
+        }
+        return false;
+    }
+
+    public abstract String getLogicalEqualityKey();
 }
