@@ -63,6 +63,9 @@ public class CernerVendorTransformer extends BaseVendorTransformer implements Ve
 
     @Override
     public Bundle transformOutgoingBloodPressureReading(BloodPressureModel model) throws DataException {
+
+        // todo : Cerner BP panel Observation resources appear to not contain the LOINC 55284-4 coding (they use
+        //        LOINC 85354-9 instead).  however, the recommendation engine requires 55284-4
         return defaultTransformer.transformOutgoingBloodPressureReading(model);
     }
 

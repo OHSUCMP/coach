@@ -31,13 +31,12 @@
 
     <logger name="edu.ohsu.cmp.coach.workspace.UserWorkspace" level="INFO" />
     <logger name="edu.ohsu.cmp.coach.service.RecommendationService" level="INFO" />
-    <logger name="edu.ohsu.cmp.coach.service.EHRService" level="INFO" />
+    <logger name="edu.ohsu.cmp.coach.service.EHRService" level="DEBUG" />
     <logger name="edu.ohsu.cmp.coach.service.FHIRService" level="INFO" />
-    <logger name="edu.ohsu.cmp.coach.fhir.EncounterMatcher" level="INFO" />
-    <logger name="edu.ohsu.cmp.coach.controller.SessionController" level="INFO" />
+    <logger name="edu.ohsu.cmp.coach.fhir.EncounterMatcher" level="DEBUG" />
+    <logger name="edu.ohsu.cmp.coach.controller.SessionController" level="DEBUG" />
     <logger name="edu.ohsu.cmp.coach.controller.MedicationController" level="INFO" />
     <logger name="edu.ohsu.cmp.coach.service.MedicationService" level="INFO" />
     <logger name="edu.ohsu.cmp.coach.service.BloodPressureService" level="INFO" />
     <logger name="edu.ohsu.cmp.coach.service.PulseService" level="INFO" />
-
 </configuration>

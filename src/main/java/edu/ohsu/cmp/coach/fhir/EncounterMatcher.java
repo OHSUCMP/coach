@@ -9,12 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class EncounterMatcher {
-    private static final String DELIM = "\\s*,\\s*";
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private FhirConfigManager fcm;
@@ -34,10 +31,10 @@ public class EncounterMatcher {
         if (sb != null) sb.append("isAmb?(").append(e.getId()).append("): ");
 
         boolean rval = e != null && encounterMatches(sb, e,
-                fcm.getEncounterAmbClassIn(),
-                fcm.getEncounterAmbClassNotIn(),
-                fcm.getEncounterAmbTypeIn(),
-                fcm.getEncounterAmbTypeNotIn()
+                fcm.getEncounterAmbClassInCodings(),
+                fcm.getEncounterAmbClassNotInCodings(),
+                fcm.getEncounterAmbTypeInCodings(),
+                fcm.getEncounterAmbTypeNotInCodings()
         );
 
         if (sb != null) logger.debug(sb.toString());
@@ -50,10 +47,10 @@ public class EncounterMatcher {
         if (sb != null) sb.append("isHH?(").append(e.getId()).append("): ");
 
         boolean rval = e != null && encounterMatches(sb, e,
-                fcm.getEncounterHHClassIn(),
-                fcm.getEncounterHHClassNotIn(),
-                fcm.getEncounterHHTypeIn(),
-                fcm.getEncounterHHTypeNotIn()
+                fcm.getEncounterHHClassInCodings(),
+                fcm.getEncounterHHClassNotInCodings(),
+                fcm.getEncounterHHTypeInCodings(),
+                fcm.getEncounterHHTypeNotInCodings()
         );
 
         if (sb != null) logger.debug(sb.toString());
@@ -61,20 +58,7 @@ public class EncounterMatcher {
         return rval;
     }
 
-    private boolean encounterMatches(StringBuilder sb, Encounter e, String classInStr, String classNotInStr, String typeInStr, String typeNotInStr) {
-        List<String> classIn = StringUtils.isNotEmpty(classInStr) ?
-                Arrays.asList(classInStr.split(DELIM)) :
-                null;
-        List<String> classNotIn = StringUtils.isNotEmpty(classNotInStr) ?
-                Arrays.asList(classNotInStr.split(DELIM)) :
-                null;
-        List<String> typeIn = StringUtils.isNotEmpty(typeInStr) ?
-                Arrays.asList(typeInStr.split(DELIM)) :
-                null;
-        List<String> typeNotIn = StringUtils.isNotEmpty(typeNotInStr) ?
-                Arrays.asList(typeNotInStr.split(DELIM)) :
-                null;
-
+    private boolean encounterMatches(StringBuilder sb, Encounter e, List<Coding> classIn, List<Coding> classNotIn, List<Coding> typeIn, List<Coding> typeNotIn) {
         if (classIn != null) {
             if (sb != null) sb.append("classInMatch? ");
             boolean match = e.hasClass_() && inClass(sb, e.getClass_(), classIn);
@@ -139,46 +123,25 @@ public class EncounterMatcher {
         return true;
     }
 
-    private boolean inClass(StringBuilder sb, Coding class_, List<String> list) {
-        for (String s : list) {
-            if (codingMatches(sb, class_, s)) {
+    private boolean inClass(StringBuilder sb, Coding class_, List<Coding> list) {
+        for (Coding c : list) {
+            if (FhirUtil.codingMatches(class_, c, sb)) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean inType(StringBuilder sb, List<CodeableConcept> types, List<String> list) {
+    private boolean inType(StringBuilder sb, List<CodeableConcept> types, List<Coding> list) {
         for (CodeableConcept type : types) {
             if (type.hasCoding()) {
                 for (Coding coding : type.getCoding()) {
-                    for (String s : list) {
-                        if (codingMatches(sb, coding, s)) {
+                    for (Coding c : list) {
+                        if (FhirUtil.codingMatches(coding, c, sb)) {
                             return true;
                         }
                     }
                 }
-            }
-        }
-        return false;
-    }
-
-    private boolean codingMatches(StringBuilder sb, Coding coding, String s) {
-        if (s.indexOf('|') > 0) { // system + code
-            String[] arr = s.split("\\|");
-            String system = arr[0];
-            String code = arr[1];
-            if (coding.hasSystem() && coding.getSystem().equals(system) && coding.hasCode() && coding.getCode().equals(code)) {
-                if (sb != null) sb.append("MATCH (codesystem): '").append(s).append("' ");
-                return true;
-            }
-        } else {
-            if (coding.hasCode() && coding.getCode().equals(s)) {
-                if (sb != null) sb.append("MATCH (code): '").append(s).append("' ");
-                return true;
-            } else if (coding.hasDisplay() && coding.getDisplay().equalsIgnoreCase(s)) {
-                if (sb != null) sb.append("MATCH (display): '").append(s).append("' ");
-                return true;
             }
         }
         return false;

@@ -39,5 +39,4 @@
     <logger name="edu.ohsu.cmp.coach.service.MedicationService" level="INFO" />
     <logger name="edu.ohsu.cmp.coach.service.BloodPressureService" level="INFO" />
     <logger name="edu.ohsu.cmp.coach.service.PulseService" level="INFO" />
-
 </configuration>

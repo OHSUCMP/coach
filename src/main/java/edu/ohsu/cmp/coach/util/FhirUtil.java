@@ -475,4 +475,40 @@ public class FhirUtil {
     public static boolean isUUID(String s) {
         return s != null && UUID_REGEX.matcher(s).matches();
     }
+
+    public static boolean codingMatches(Coding c1, Coding c2) {
+        return codingMatches(c1, c2, null);
+    }
+
+    public static boolean codingMatches(Coding c1, Coding c2, StringBuilder sb) {
+        if (c1 == null || c2 == null) return false;
+
+        boolean systemMatches = (c1.hasSystem() && c2.hasSystem() && c1.getSystem().equals(c2.getSystem())) ||
+                (! c1.hasSystem() && ! c2.hasSystem());
+
+        boolean codeMatches = (c1.hasCode() && c2.hasCode() && c1.getCode().equals(c2.getCode())) ||
+                (! c1.hasCode() && ! c2.hasCode());
+
+        boolean displayMatches = (c1.hasDisplay() && c2.hasDisplay() && c1.getDisplay().equalsIgnoreCase(c2.getDisplay())) ||
+                (! c1.hasDisplay() && ! c2.hasDisplay());
+
+        if (c1.hasSystem() && systemMatches && c1.hasCode() && codeMatches) {
+            if (sb != null) sb.append("MATCH (codesystem): '")
+                    .append(c1.getSystem()).append("|")
+                    .append(c1.getCode()).append("' ");
+            return true;
+
+        } else if (c1.hasCode() && codeMatches) {
+            if (sb != null) sb.append("MATCH (code): '")
+                    .append(c1.getCode()).append("' ");
+            return true;
+
+        } else if (c1.hasDisplay() && displayMatches) {
+            if (sb != null) sb.append("MATCH (display): '")
+                    .append(c1.getDisplay()).append("' ");
+            return true;
+        }
+
+        return false;
+    }
 }

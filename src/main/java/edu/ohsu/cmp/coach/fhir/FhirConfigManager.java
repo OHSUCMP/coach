@@ -14,7 +14,6 @@ import java.util.List;
 @Component
 @PropertySource("${fhirconfig.file}")
 public class FhirConfigManager {
-
     private static final String ENCOUNTER_LOOKBACK_PERIOD = "2y";
     private static final Coding BP_CODING = new Coding("http://loinc.org", "55284-4", "Systolic blood pressure");
     private static final Coding BP_SYSTOLIC_CODING = new Coding("http://loinc.org", "8480-6", "Blood pressure systolic and diastolic");
@@ -43,20 +42,32 @@ public class FhirConfigManager {
     @Autowired
     private Environment env;
 
-    @Value("${encounter.class.system}")         private String encounterClassSystem;
-    @Value("${encounter.class.amb.code}")       private String encounterClassAMBCode;
-    @Value("${encounter.class.amb.display}")    private String encounterClassAMBDisplay;
-    @Value("${encounter.class.hh.code}")        private String encounterClassHHCode;
-    @Value("${encounter.class.hh.display}")     private String encounterClassHHDisplay;
+    private Coding encounterClassAmbCoding = null;
+    private Coding encounterClassHHCoding = null;
 
-    @Value("${encounter.amb.class.in}")         private String encounterAmbClassIn;
-    @Value("${encounter.amb.class.not-in}")     private String encounterAmbClassNotIn;
-    @Value("${encounter.amb.type.in}")          private String encounterAmbTypeIn;
-    @Value("${encounter.amb.type.not-in}")      private String encounterAmbTypeNotIn;
-    @Value("${encounter.hh.class.in}")         private String encounterHHClassIn;
-    @Value("${encounter.hh.class.not-in}")     private String encounterHHClassNotIn;
-    @Value("${encounter.hh.type.in}")          private String encounterHHTypeIn;
-    @Value("${encounter.hh.type.not-in}")      private String encounterHHTypeNotIn;
+//    @Value("${encounter.class.system}")         private String encounterClassSystem;
+//    @Value("${encounter.class.amb.code}")       private String encounterClassAMBCode;
+//    @Value("${encounter.class.amb.display}")    private String encounterClassAMBDisplay;
+//    @Value("${encounter.class.hh.code}")        private String encounterClassHHCode;
+//    @Value("${encounter.class.hh.display}")     private String encounterClassHHDisplay;
+
+    private List<Coding> encounterAmbClassInCodings = null;
+    private List<Coding> encounterAmbClassNotInCodings = null;
+    private List<Coding> encounterAmbTypeInCodings = null;
+    private List<Coding> encounterAmbTypeNotInCodings = null;
+    private List<Coding> encounterHHClassInCodings = null;
+    private List<Coding> encounterHHClassNotInCodings = null;
+    private List<Coding> encounterHHTypeInCodings = null;
+    private List<Coding> encounterHHTypeNotInCodings = null;
+
+//    @Value("${encounter.amb.class.in}")         private String encounterAmbClassIn;
+//    @Value("${encounter.amb.class.not-in}")     private String encounterAmbClassNotIn;
+//    @Value("${encounter.amb.type.in}")          private String encounterAmbTypeIn;
+//    @Value("${encounter.amb.type.not-in}")      private String encounterAmbTypeNotIn;
+//    @Value("${encounter.hh.class.in}")         private String encounterHHClassIn;
+//    @Value("${encounter.hh.class.not-in}")     private String encounterHHClassNotIn;
+//    @Value("${encounter.hh.type.in}")          private String encounterHHTypeIn;
+//    @Value("${encounter.hh.type.not-in}")      private String encounterHHTypeNotIn;
 //    @Value("${encounter.lookbackPeriod}")      private String encounterLookbackPeriod;
 
 //    private Coding bpCoding = null;
@@ -91,57 +102,119 @@ public class FhirConfigManager {
 //    private Coding procedureCounselingCoding = null;
 
 
-    public String getEncounterClassSystem() {
-        return encounterClassSystem;
+    public Coding getEncounterClassAmbCoding() {   // ambulatory class to attach to crafted office visit encounters
+        if (encounterClassAmbCoding == null) {
+            encounterClassAmbCoding = buildCoding(env.getProperty("encounter.class.amb.coding"));
+        }
+        return encounterClassAmbCoding;
     }
 
-    public String getEncounterClassAMBCode() {
-        return encounterClassAMBCode;
+    public Coding getEncounterClassHHCoding() {   // ambulatory class to attach to crafted home-health encounters
+        if (encounterClassHHCoding == null) {
+            encounterClassHHCoding = buildCoding(env.getProperty("encounter.class.hh.coding"));
+        }
+        return encounterClassHHCoding;
     }
 
-    public String getEncounterClassAMBDisplay() {
-        return encounterClassAMBDisplay;
-    }
+//    public String getEncounterClassSystem() {
+//        return encounterClassSystem;
+//    }
+//
+//    public String getEncounterClassAMBCode() {
+//        return encounterClassAMBCode;
+//    }
+//
+//    public String getEncounterClassAMBDisplay() {
+//        return encounterClassAMBDisplay;
+//    }
+//
+//    public String getEncounterClassHHCode() {
+//        return encounterClassHHCode;
+//    }
+//
+//    public String getEncounterClassHHDisplay() {
+//        return encounterClassHHDisplay;
+//    }
 
-    public String getEncounterClassHHCode() {
-        return encounterClassHHCode;
+    public List<Coding> getEncounterAmbClassInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterAmbClassInCodings == null) {
+            encounterAmbClassInCodings = buildCodings(env.getProperty("encounter.amb.class.in.codings"));
+        }
+        return encounterAmbClassInCodings;
     }
+//    public String getEncounterAmbClassIn() {
+//        return encounterAmbClassIn;
+//    }
 
-    public String getEncounterClassHHDisplay() {
-        return encounterClassHHDisplay;
+    public List<Coding> getEncounterAmbClassNotInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterAmbClassNotInCodings == null) {
+            encounterAmbClassNotInCodings = buildCodings(env.getProperty("encounter.amb.class.not-in.codings"));
+        }
+        return encounterAmbClassNotInCodings;
     }
+//    public String getEncounterAmbClassNotIn() {
+//        return encounterAmbClassNotIn;
+//    }
 
-    public String getEncounterAmbClassIn() {
-        return encounterAmbClassIn;
+    public List<Coding> getEncounterAmbTypeInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterAmbTypeInCodings == null) {
+            encounterAmbTypeInCodings = buildCodings(env.getProperty("encounter.amb.type.in.codings"));
+        }
+        return encounterAmbTypeInCodings;
     }
+//    public String getEncounterAmbTypeIn() {
+//        return encounterAmbTypeIn;
+//    }
 
-    public String getEncounterAmbClassNotIn() {
-        return encounterAmbClassNotIn;
+    public List<Coding> getEncounterAmbTypeNotInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterAmbTypeNotInCodings == null) {
+            encounterAmbTypeNotInCodings = buildCodings(env.getProperty("encounter.amb.type.not-in.codings"));
+        }
+        return encounterAmbTypeNotInCodings;
     }
+//    public String getEncounterAmbTypeNotIn() {
+//        return encounterAmbTypeNotIn;
+//    }
 
-    public String getEncounterAmbTypeIn() {
-        return encounterAmbTypeIn;
+    public List<Coding> getEncounterHHClassInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHHClassInCodings == null) {
+            encounterHHClassInCodings = buildCodings(env.getProperty("encounter.hh.class.in.codings"));
+        }
+        return encounterHHClassInCodings;
     }
+//    public String getEncounterHHClassIn() {
+//        return encounterHHClassIn;
+//    }
 
-    public String getEncounterAmbTypeNotIn() {
-        return encounterAmbTypeNotIn;
+    public List<Coding> getEncounterHHClassNotInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHHClassNotInCodings == null) {
+            encounterHHClassNotInCodings = buildCodings(env.getProperty("encounter.hh.class.not-in.codings"));
+        }
+        return encounterHHClassNotInCodings;
     }
+//    public String getEncounterHHClassNotIn() {
+//        return encounterHHClassNotIn;
+//    }
 
-    public String getEncounterHHClassIn() {
-        return encounterHHClassIn;
+    public List<Coding> getEncounterHHTypeInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHHTypeInCodings == null) {
+            encounterHHTypeInCodings = buildCodings(env.getProperty("encounter.hh.type.in.codings"));
+        }
+        return encounterHHTypeInCodings;
     }
+//    public String getEncounterHHTypeIn() {
+//        return encounterHHTypeIn;
+//    }
 
-    public String getEncounterHHClassNotIn() {
-        return encounterHHClassNotIn;
+    public List<Coding> getEncounterHHTypeNotInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHHTypeNotInCodings == null) {
+            encounterHHTypeNotInCodings = buildCodings(env.getProperty("encounter.hh.type.not-in.codings"));
+        }
+        return encounterHHTypeNotInCodings;
     }
-
-    public String getEncounterHHTypeIn() {
-        return encounterHHTypeIn;
-    }
-
-    public String getEncounterHHTypeNotIn() {
-        return encounterHHTypeNotIn;
-    }
+//    public String getEncounterHHTypeNotIn() {
+//        return encounterHHTypeNotIn;
+//    }
 
     public String getEncounterLookbackPeriod() {
         return ENCOUNTER_LOOKBACK_PERIOD;
@@ -345,13 +418,24 @@ public class FhirConfigManager {
     /**
      * build a FHIR Coding from a String
      * @param s a string of the form "system|code" or "system|code|display"
+     *          Coding components may be blank; if they are, those components are ignored
+     *          e.g., "system" -> Coding("system", null, null)
+     *                "system|coding" -> Coding("system", "coding", null)
+     *                "system|coding|display" -> Coding("system", "coding", "display")
+     *                "|coding" -> Coding(null, "coding", null)
+     *                "|coding|display" -> Coding(null, "coding", "display")
+     *                "system||display" -> Coding("system", null, "display")
+     *                "||display" -> Coding(null, null, "display")
+     *
      * @return a populated FHIR Coding resource
      */
     private Coding buildCoding(String s) {
-        if (s == null) return null;
-        String[] parts = s.split("\\|");
-        Coding c = new Coding().setSystem(parts[0]).setCode(parts[1]);
-        if (parts.length > 2) c.setDisplay(parts[2]);
+        if (StringUtils.isBlank(s)) return null;
+        String[] parts = s.split("\\s*\\|\\s*");
+        Coding c = new Coding();
+        if (parts.length >= 1 && StringUtils.isNotBlank(parts[0])) c.setSystem(parts[0]);
+        if (parts.length >= 2 && StringUtils.isNotBlank(parts[1])) c.setCode(parts[1]);
+        if (parts.length >= 3 && StringUtils.isNotEmpty(parts[2])) c.setDisplay(parts[2]);
         return c;
     }
 }
