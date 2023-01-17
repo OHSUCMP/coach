@@ -65,6 +65,9 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
     @Override
     public String getEncounterQuery(String patientId, String lookbackPeriod) {
         String encounterQuery = workspace.getFhirQueryManager().getEncounterQuery();
+
+        if (StringUtils.isBlank(encounterQuery)) return null;
+
         String query = lookbackPeriod != null ?
                 addLookbackPeriodParam(encounterQuery, lookbackPeriod) :
                 encounterQuery;

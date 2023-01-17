@@ -84,15 +84,18 @@ public class EHRService extends AbstractService {
                 }
         );
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Encounter bundle = " + FhirUtil.toJson(bundle));
-        }
-
         List<Encounter> list = new ArrayList<>();
-        if (bundle.hasEntry()) {
-            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-                if (entry.hasResource() && entry.getResource() instanceof Encounter) {
-                    list.add((Encounter) entry.getResource());
+
+        if (bundle != null) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Encounter bundle = " + FhirUtil.toJson(bundle));
+            }
+
+            if (bundle.hasEntry()) {
+                for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+                    if (entry.hasResource() && entry.getResource() instanceof Encounter) {
+                        list.add((Encounter) entry.getResource());
+                    }
                 }
             }
         }

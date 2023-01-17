@@ -10,6 +10,7 @@ import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IDomainResource;
 import org.hl7.fhir.r4.model.*;
@@ -128,7 +129,7 @@ public class FHIRService {
     }
 
     public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery, Function<Resource, Boolean> validityFunction) {
-        if (fhirQuery == null || fhirQuery.trim().equals("")) return null;
+        if (StringUtils.isBlank(fhirQuery)) return null;
 
         logger.info("search: executing query: " + fhirQuery);
 
