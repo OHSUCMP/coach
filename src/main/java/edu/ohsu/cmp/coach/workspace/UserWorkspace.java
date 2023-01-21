@@ -15,6 +15,7 @@ import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import org.apache.commons.codec.EncoderException;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Encounter;
@@ -411,6 +412,8 @@ public class UserWorkspace {
             }
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
+        } catch (EncoderException e) {
+            throw new RuntimeException(e);
         }
         return map;
     }

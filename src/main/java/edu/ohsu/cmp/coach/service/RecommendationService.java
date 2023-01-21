@@ -26,6 +26,7 @@ import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import org.apache.commons.codec.EncoderException;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +72,7 @@ public class RecommendationService extends AbstractService {
         this.cdsHookOrder = Arrays.asList(cdsHookOrder.split("\\s*,\\s*"));
     }
 
-    public List<CDSHook> getOrderedCDSHooks() throws IOException {
+    public List<CDSHook> getOrderedCDSHooks() throws IOException, EncoderException {
         Map<String, CDSHook> map = new LinkedHashMap<>();
         for (CDSHook cdsHook : CDSHooksUtil.getCDSHooks(TESTING, cdsHooksEndpointURL)) {
             map.put(cdsHook.getId(), cdsHook);

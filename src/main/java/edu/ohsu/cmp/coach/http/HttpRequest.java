@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.coach.http;
 
+import org.apache.commons.codec.EncoderException;
+import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.CookieSpecs;
@@ -21,17 +23,23 @@ import java.util.List;
 import java.util.Map;
 
 public class HttpRequest {
-    public HttpResponse get(String url) throws IOException {
+    private URLCodec urlCodec;
+
+    public HttpRequest() {
+        this.urlCodec = new URLCodec();
+    }
+
+    public HttpResponse get(String url) throws IOException, EncoderException {
         return get(url, null, null);
     }
 
-    public HttpResponse get(String url, Map<String, String> urlParams) throws IOException {
+    public HttpResponse get(String url, Map<String, String> urlParams) throws IOException, EncoderException {
         return get(url, urlParams, null);
     }
 
-    public HttpResponse get(String url, Map<String, String> urlParams, Map<String, String> requestHeaders) throws IOException {
+    public HttpResponse get(String url, Map<String, String> urlParams, Map<String, String> requestHeaders) throws IOException, EncoderException {
         if (urlParams != null && ! urlParams.isEmpty()) {
-            url += "?" + buildParams(urlParams);
+            url += "?" + buildURLEncodedParams(urlParams);
         }
 
         HttpGet httpget = new HttpGet(url);
@@ -45,21 +53,25 @@ public class HttpRequest {
         return execute(httpget);
     }
 
-    public HttpResponse post(String url) throws IOException {
-        return post(url, null, null, null);
+    public HttpResponse post(String url) throws IOException, EncoderException {
+        return post(url, null, null, (String) null);
     }
 
-    public HttpResponse post(String url, Map<String, String> urlParams) throws IOException {
-        return post(url, urlParams, null, null);
+    public HttpResponse post(String url, Map<String, String> urlParams) throws IOException, EncoderException {
+        return post(url, urlParams, null, (String) null);
     }
 
-    public HttpResponse post(String url, Map<String, String> urlParams, Map<String, String> requestHeaders) throws IOException {
-        return post(url, urlParams, requestHeaders, null);
+    public HttpResponse post(String url, Map<String, String> urlParams, Map<String, String> requestHeaders) throws IOException, EncoderException {
+        return post(url, urlParams, requestHeaders, (String) null);
     }
 
-    public HttpResponse post(String url, Map<String, String> urlParams, Map<String, String> requestHeaders, String body) throws IOException {
+    public HttpResponse post(String url, Map<String, String> urlParams, Map<String, String> requestHeaders, Map<String, String> bodyParams) throws IOException, EncoderException {
+        return post(url, urlParams, requestHeaders, buildURLEncodedParams(bodyParams));
+    }
+
+    public HttpResponse post(String url, Map<String, String> urlParams, Map<String, String> requestHeaders, String body) throws IOException, EncoderException {
         if (urlParams != null && ! urlParams.isEmpty()) {
-            url += "?" + buildParams(urlParams);
+            url += "?" + buildURLEncodedParams(urlParams);
         }
 
         HttpPost httppost = new HttpPost(url);
@@ -124,10 +136,12 @@ public class HttpRequest {
         return new HttpResponse(code, sb.toString());
     }
 
-    private String buildParams(Map<String, String> urlParams) {
+    private String buildURLEncodedParams(Map<String, String> params) throws EncoderException {
+        if (params == null || params.isEmpty()) return null;
+
         List<String> list = new ArrayList<String>();
-        for (Map.Entry<String, String> entry : urlParams.entrySet()) {
-            list.add(String.format("%s=%s", entry.getKey(), entry.getValue()));
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            list.add(String.format("%s=%s", entry.getKey(), urlCodec.encode(entry.getValue())));
         }
         return StringUtils.join(list, '&');
     }

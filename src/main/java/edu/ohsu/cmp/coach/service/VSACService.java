@@ -8,6 +8,7 @@ import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.xml.SimpleXMLDOM;
 import edu.ohsu.cmp.coach.model.xml.SimpleXMLElement;
+import org.apache.commons.codec.EncoderException;
 import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ public class VSACService {
 
     private String serviceTicketURI = null;
 
-    public ValueSet getValueSet(String oid) throws IOException, ParserConfigurationException, SAXException, ParseException, DataException {
+    public ValueSet getValueSet(String oid) throws IOException, ParserConfigurationException, SAXException, ParseException, DataException, EncoderException {
         String xml = getRawValueSet(oid);
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -117,7 +118,7 @@ public class VSACService {
 // private methods
 //
 
-    private String getRawValueSet(String oid) throws IOException, DataException {
+    private String getRawValueSet(String oid) throws IOException, DataException, EncoderException {
         String url = "https://vsac.nlm.nih.gov/vsac/svs/RetrieveMultipleValueSets";
 
         Map<String, String> urlParams = new HashMap<>();
@@ -142,7 +143,7 @@ public class VSACService {
      * @throws IOException
      * @throws HttpException
      */
-    private String getServiceTicket() throws IOException, DataException {
+    private String getServiceTicket() throws IOException, DataException, EncoderException {
         HttpResponse response = doGetServiceTicketRequest();
 
         if (response.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
@@ -159,16 +160,18 @@ public class VSACService {
         }
     }
 
-    private HttpResponse doGetServiceTicketRequest() throws IOException, DataException {
+    private HttpResponse doGetServiceTicketRequest() throws IOException, DataException, EncoderException {
         if (serviceTicketURI == null) {
             serviceTicketURI = getNewServiceTicketURI();
         }
 
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
-        String body = "service=http://umlsks.nlm.nih.gov";
 
-        return new HttpRequest().post(serviceTicketURI, null, requestHeaders, body);
+        Map<String, String> bodyParams = new LinkedHashMap<>();
+        bodyParams.put("service", "http://umlsks.nlm.nih.gov");
+
+        return new HttpRequest().post(serviceTicketURI, null, requestHeaders, bodyParams);
     }
 
     /**
@@ -177,13 +180,14 @@ public class VSACService {
      *
      * @return CAS Ticket
      */
-    private String getNewServiceTicketURI() throws IOException, DataException {
+    private String getNewServiceTicketURI() throws IOException, DataException, EncoderException {
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
-        String body = "apikey=" + apiKey;
+        Map<String, String> bodyParams = new LinkedHashMap<>();
+        bodyParams.put("apikey", apiKey);
 
-        HttpResponse response = new HttpRequest().post(API_KEY_URL, null, requestHeaders, body);
+        HttpResponse response = new HttpRequest().post(API_KEY_URL, null, requestHeaders, bodyParams);
 
         if (response.getResponseCode() >= 200 && response.getResponseCode() < 300) { // some HTTP 2xx code, successful
             Matcher m = SERVICE_TICKET_URI_PATTERN.matcher(response.getResponseBody());

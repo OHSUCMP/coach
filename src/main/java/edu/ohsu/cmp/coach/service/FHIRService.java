@@ -10,6 +10,7 @@ import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import org.apache.commons.codec.EncoderException;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IDomainResource;
 import org.hl7.fhir.r4.model.*;
@@ -184,7 +185,7 @@ public class FHIRService {
         }
     }
 
-    public <T extends IDomainResource> T transact(FHIRCredentialsWithClient fcc, T resource) throws IOException, ConfigurationException, DataException {
+    public <T extends IDomainResource> T transact(FHIRCredentialsWithClient fcc, T resource) throws IOException, ConfigurationException, DataException, EncoderException {
         IGenericClient client;
         if (jwtService.isJWTEnabled()) {
             String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
@@ -216,7 +217,7 @@ public class FHIRService {
         return t;
     }
 
-    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle, boolean stripIfNotInScope) throws IOException, DataException, ConfigurationException, ScopeException {
+    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle, boolean stripIfNotInScope) throws IOException, DataException, ConfigurationException, ScopeException, EncoderException {
         IGenericClient client;
         if (jwtService.isJWTEnabled()) {
             String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());

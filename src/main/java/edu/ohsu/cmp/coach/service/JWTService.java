@@ -12,6 +12,7 @@ import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.CryptoUtil;
+import org.apache.commons.codec.EncoderException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -109,7 +110,7 @@ public class JWTService {
      * @param jwt
      * @return
      */
-    public AccessToken getAccessToken(String tokenAuthUrl, String jwt) throws IOException {
+    public AccessToken getAccessToken(String tokenAuthUrl, String jwt) throws IOException, EncoderException {
         if ( ! isJWTEnabled() ) return null;
 
         logger.debug("requesting JWT access token from tokenAuthUrl=" + tokenAuthUrl + ", jwt=" + jwt);

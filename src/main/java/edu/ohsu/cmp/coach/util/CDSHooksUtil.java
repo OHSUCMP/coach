@@ -7,12 +7,13 @@ import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSServices;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
+import org.apache.commons.codec.EncoderException;
 
 import java.io.IOException;
 import java.util.List;
 
 public class CDSHooksUtil {
-    public static List<CDSHook> getCDSHooks(boolean testing, String cdsHooksEndpointURL) throws IOException {
+    public static List<CDSHook> getCDSHooks(boolean testing, String cdsHooksEndpointURL) throws IOException, EncoderException {
         String json;
         if (testing) {
             json = "{  \"services\": [    {      \"hook\": \"patient-view\",      \"name\": \"TEST\",      \"title\": \"OHSU Test Recommendation\",      \"description\": \"These cards below are hardcoded into the app for testing purposes.\",      \"id\": \"plandefinition-TEST\",      \"prefetch\": { } } ] }\n";
