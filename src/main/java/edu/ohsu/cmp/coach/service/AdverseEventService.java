@@ -71,7 +71,7 @@ public class AdverseEventService extends AbstractService {
         AdverseEvent ae = new AdverseEvent();
         ae.setId(aeid);
 
-        Patient p = workspaceService.get(sessionId).getPatient().getSourcePatient();
+        Patient p = userWorkspaceService.get(sessionId).getPatient().getSourcePatient();
         ae.setSubject(new Reference().setReference(p.getId()));
 
         ae.setEvent(c.getCode().copy());
@@ -151,7 +151,7 @@ public class AdverseEventService extends AbstractService {
     }
 
     private Bundle buildAdverseEventConditions(String sessionId) {
-        Bundle conditions = workspaceService.get(sessionId).getEncounterDiagnosisConditions().copy();
+        Bundle conditions = userWorkspaceService.get(sessionId).getEncounterDiagnosisConditions().copy();
 
         Map<String, List<MyAdverseEvent>> codesWeCareAbout = new HashMap<>();
         for (MyAdverseEvent mae : getAll()) {
@@ -222,7 +222,7 @@ public class AdverseEventService extends AbstractService {
                     iter.remove();
                 }
             } else if (c.hasEncounter()) {
-                Encounter e = workspaceService.get(sessionId).getEncounter(c.getEncounter());
+                Encounter e = userWorkspaceService.get(sessionId).getEncounter(c.getEncounter());
 
                 if (e != null) {
                     if (e.getStatus().equals(Encounter.EncounterStatus.FINISHED)) {

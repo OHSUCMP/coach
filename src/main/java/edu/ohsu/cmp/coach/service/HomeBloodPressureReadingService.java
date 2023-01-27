@@ -16,24 +16,24 @@ public class HomeBloodPressureReadingService extends AbstractService {
     private HomeBloodPressureReadingRepository repository;
 
     public List<HomeBloodPressureReading> getHomeBloodPressureReadings(String sessionId) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         return repository.findAllByPatId(workspace.getInternalPatientId());
     }
 
     public HomeBloodPressureReading create(String sessionId, HomeBloodPressureReading bpreading) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         bpreading.setPatId(workspace.getInternalPatientId());
         bpreading.setCreatedDate(new Date());
         return repository.save(bpreading);
     }
 
     public void delete(String sessionId, Long id) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         repository.deleteByIdForPatient(id, workspace.getInternalPatientId());
     }
 
     public void deleteAll(String sessionId) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         repository.deleteAllByPatId(workspace.getInternalPatientId());
     }
 }

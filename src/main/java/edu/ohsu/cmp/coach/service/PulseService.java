@@ -32,9 +32,9 @@ public class PulseService extends AbstractService {
     public List<PulseModel> buildRemotePulseList(String sessionId) throws DataException {
         CompositeBundle compositeBundle = new CompositeBundle();
         compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getPulseCodings()), fcm.getPulseLookbackPeriod(),null));
-        compositeBundle.consume(workspaceService.get(sessionId).getProtocolObservations());
+        compositeBundle.consume(userWorkspaceService.get(sessionId).getProtocolObservations());
 
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         return workspace.getVendorTransformer().transformIncomingPulseReadings(compositeBundle.getBundle());
     }
 
@@ -49,7 +49,7 @@ public class PulseService extends AbstractService {
     }
 
     public List<PulseModel> getPulseReadings(String sessionId) {
-        List<PulseModel> remoteList = workspaceService.get(sessionId).getRemotePulses();
+        List<PulseModel> remoteList = userWorkspaceService.get(sessionId).getRemotePulses();
         Set<String> remotePulseKeySet = new HashSet<>();
         for (PulseModel pm : remoteList) {
             String key = pm.getLogicalEqualityKey();
@@ -81,7 +81,7 @@ public class PulseService extends AbstractService {
     }
 
     public PulseModel create(String sessionId, PulseModel pm) throws DataException, ConfigurationException, IOException, ScopeException {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         PulseModel pm2 = null;
 

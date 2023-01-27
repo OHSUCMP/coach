@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -50,7 +49,7 @@ public class HomeController extends BaseController {
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model,
                        @RequestParam(name = "bandwidth", required = false) Number bandwidthOverride) {
-        boolean sessionEstablished = workspaceService.exists(session.getId());
+        boolean sessionEstablished = userWorkspaceService.exists(session.getId());
 
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
@@ -59,7 +58,7 @@ public class HomeController extends BaseController {
 
         if (sessionEstablished) {
             logger.info("requesting data for session " + session.getId());
-            UserWorkspace workspace = workspaceService.get(session.getId());
+            UserWorkspace workspace = userWorkspaceService.get(session.getId());
 
             try {
                 model.addAttribute("patient", workspace.getPatient());
@@ -127,7 +126,7 @@ public class HomeController extends BaseController {
         return new Callable<>() {
             public ResponseEntity<List<Card>> call() throws Exception {
                 try {
-                    UserWorkspace workspace = workspaceService.get(session.getId());
+                    UserWorkspace workspace = userWorkspaceService.get(session.getId());
 
                     List<Card> cards = workspace.getCards(hookId);
                     logger.info("got cards for hookId=" + hookId + "!");
@@ -161,7 +160,7 @@ public class HomeController extends BaseController {
         try {
             List<AdverseEventModel> list = new ArrayList<>();
 
-            for (AdverseEventModel ae : workspaceService.get(session.getId()).getAdverseEvents()) {
+            for (AdverseEventModel ae : userWorkspaceService.get(session.getId()).getAdverseEvents()) {
                 if (ae.hasOutcome(Outcome.ONGOING)) {
                     list.add(ae);
                 }

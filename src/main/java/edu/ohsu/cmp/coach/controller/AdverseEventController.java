@@ -25,7 +25,7 @@ public class AdverseEventController extends BaseController {
                                                  @RequestParam("adverseEventId") String adverseEventId,
                                                  @RequestParam("actionTaken") Boolean actionTaken) {
 
-        UserWorkspace workspace = workspaceService.get(session.getId());
+        UserWorkspace workspace = userWorkspaceService.get(session.getId());
 
         HttpStatus status = HttpStatus.OK;
         String message;

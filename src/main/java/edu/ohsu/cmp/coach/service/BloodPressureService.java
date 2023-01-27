@@ -32,9 +32,9 @@ public class BloodPressureService extends AbstractService {
     public List<BloodPressureModel> buildRemoteBloodPressureList(String sessionId) throws DataException {
         CompositeBundle compositeBundle = new CompositeBundle();
         compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getAllBpCodings()), fcm.getBpLookbackPeriod(), null));
-        compositeBundle.consume(workspaceService.get(sessionId).getProtocolObservations());
+        compositeBundle.consume(userWorkspaceService.get(sessionId).getProtocolObservations());
 
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         return workspace.getVendorTransformer().transformIncomingBloodPressureReadings(compositeBundle.getBundle());
     }
 
@@ -49,7 +49,7 @@ public class BloodPressureService extends AbstractService {
     }
 
     public List<BloodPressureModel> getBloodPressureReadings(String sessionId) throws DataException {
-        List<BloodPressureModel> remoteList = workspaceService.get(sessionId).getRemoteBloodPressures();
+        List<BloodPressureModel> remoteList = userWorkspaceService.get(sessionId).getRemoteBloodPressures();
         Set<String> remoteBPKeySet = new HashSet<>();
         for (BloodPressureModel bpm : remoteList) {
             String key = bpm.getLogicalEqualityKey();
@@ -81,7 +81,7 @@ public class BloodPressureService extends AbstractService {
     }
 
     public BloodPressureModel create(String sessionId, BloodPressureModel bpm) throws DataException, ConfigurationException, IOException, ScopeException {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         BloodPressureModel bpm2 = null;
 

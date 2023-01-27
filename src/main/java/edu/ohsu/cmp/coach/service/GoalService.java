@@ -31,7 +31,7 @@ public class GoalService extends AbstractService {
 
     public List<GoalModel> getGoals(String sessionId) {
         List<GoalModel> list = new ArrayList<>();
-        list.addAll(workspaceService.get(sessionId).getGoals());
+        list.addAll(userWorkspaceService.get(sessionId).getGoals());
         list.addAll(buildLocalGoals(sessionId));
         return list;
     }
@@ -54,7 +54,7 @@ public class GoalService extends AbstractService {
      * @throws DataException
      */
     public List<GoalModel> buildCurrentGoals(String sessionId) throws DataException {
-        VendorTransformer transformer = workspaceService.get(sessionId).getVendorTransformer();
+        VendorTransformer transformer = userWorkspaceService.get(sessionId).getVendorTransformer();
         return transformer.transformIncomingGoals(ehrService.getGoals(sessionId));
     }
 
@@ -69,12 +69,12 @@ public class GoalService extends AbstractService {
     }
 
     private List<MyGoal> getLocalGoalList(String sessionId) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         return repository.findAllByPatId(workspace.getInternalPatientId());
     }
 
     public MyGoal getLocalGoal(String sessionId, String extGoalId) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         return repository.findOneByPatIdAndExtGoalId(workspace.getInternalPatientId(), extGoalId);
     }
 
@@ -119,7 +119,7 @@ public class GoalService extends AbstractService {
 
     public MyGoal getCurrentLocalBPGoal(String sessionId) {
         return repository.findCurrentBPGoal(
-                workspaceService.get(sessionId).getInternalPatientId()
+                userWorkspaceService.get(sessionId).getInternalPatientId()
         );
     }
 
@@ -127,7 +127,7 @@ public class GoalService extends AbstractService {
     private GoalModel getCurrentEHRBPGoal(String sessionId) {
         GoalModel currentEHRBPGoal = null;
 
-        List<GoalModel> goals = workspaceService.get(sessionId).getGoals();
+        List<GoalModel> goals = userWorkspaceService.get(sessionId).getGoals();
         for (GoalModel goal : goals) {
             if (goal.isEHRGoal() && goal.isBPGoal()) {
                 if (currentEHRBPGoal == null) {
@@ -164,7 +164,7 @@ public class GoalService extends AbstractService {
     }
 
     public MyGoal create(String sessionId, MyGoal goal) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         // todo : implement remote storage
 
@@ -186,12 +186,12 @@ public class GoalService extends AbstractService {
     }
 
     public void deleteByGoalId(String sessionId, String extGoalId) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         repository.deleteByGoalIdForPatient(extGoalId, workspace.getInternalPatientId());
     }
 
     public void deleteBPGoalIfExists(String sessionId) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         repository.deleteBPGoalForPatient(workspace.getInternalPatientId());
     }
 
@@ -207,7 +207,7 @@ public class GoalService extends AbstractService {
 //                throw new MethodNotImplementedException("remote delete is not implemented");
 //
 //            } else {
-                UserWorkspace workspace = workspaceService.get(sessionId);
+                UserWorkspace workspace = userWorkspaceService.get(sessionId);
                 repository.deleteAllByPatId(workspace.getInternalPatientId());
 //            }
 //        } catch (Exception e) {

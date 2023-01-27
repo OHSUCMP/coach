@@ -66,28 +66,28 @@ public class SessionController extends BaseController {
         Audience audience = Audience.fromTag(audienceStr);
 
         String sessionId = session.getId();
-        workspaceService.init(sessionId, audience, fcc);
-        workspaceService.get(sessionId).populate();
+        userWorkspaceService.init(sessionId, audience, fcc);
+        userWorkspaceService.get(sessionId).populate();
 
         return ResponseEntity.ok("session configured successfully");
     }
 
     @GetMapping("logout")
     public String logout(HttpSession session) {
-        workspaceService.shutdown(session.getId());
+        userWorkspaceService.shutdown(session.getId());
         return "logout";
     }
 
     @PostMapping("clear-session")
     public ResponseEntity<?> clearSession(HttpSession session) {
-        workspaceService.shutdown(session.getId());
+        userWorkspaceService.shutdown(session.getId());
         return ResponseEntity.ok("session cleared");
     }
 
     @PostMapping("refresh")
     public ResponseEntity<?> refresh(HttpSession session) {
         logger.info("refreshing data for session=" + session.getId());
-        UserWorkspace workspace = workspaceService.get(session.getId());
+        UserWorkspace workspace = userWorkspaceService.get(session.getId());
         workspace.clearCaches();
         workspace.populate();
         return ResponseEntity.ok("refreshing");
@@ -96,7 +96,7 @@ public class SessionController extends BaseController {
     @PostMapping("clear-supplemental-data")
     public ResponseEntity<?> clearSupplementalData(HttpSession session) {
         logger.info("clearing supplemental data for session=" + session.getId());
-        UserWorkspace workspace = workspaceService.get(session.getId());
+        UserWorkspace workspace = userWorkspaceService.get(session.getId());
         workspace.clearSupplementalData();
         return ResponseEntity.ok("supplemental data cleared");
     }

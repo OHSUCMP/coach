@@ -21,17 +21,17 @@ public class CounselingService extends AbstractService {
     private CounselingPageRepository pageRepository;
 
     public List<Counseling> getCounselingList(String sessionId) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         return repository.findAllByPatId(workspace.getInternalPatientId());
     }
 
     public Counseling getCounseling(String sessionId, String extCounselingId) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         return repository.findOneByPatIdAndExtCounselingId(workspace.getInternalPatientId(), extCounselingId);
     }
 
     public Counseling create(String sessionId, Counseling counseling) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         counseling.setPatId(workspace.getInternalPatientId());
         counseling.setCreatedDate(new Date());
         return repository.save(counseling);
@@ -42,7 +42,7 @@ public class CounselingService extends AbstractService {
     }
 
     public void deleteAll(String sessionId) {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         repository.deleteAllByPatId(workspace.getInternalPatientId());
     }
 }

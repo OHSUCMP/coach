@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-public class WorkspaceService {
+public class UserWorkspaceService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -36,7 +36,7 @@ public class WorkspaceService {
 
     private final Map<String, UserWorkspace> map;
 
-    public WorkspaceService() {
+    public UserWorkspaceService() {
         map = new ConcurrentHashMap<>();
     }
 

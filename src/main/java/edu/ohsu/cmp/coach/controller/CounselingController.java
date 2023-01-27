@@ -29,7 +29,7 @@ public class CounselingController extends BaseController {
     @GetMapping("{key}")
     public String view(HttpSession session, Model model, @PathVariable(value="key") String key) {
         model.addAttribute("applicationName", applicationName);
-        model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
+        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
 
         CounselingPageModel page = new CounselingPageModel(counselingService.getPage(key));
 

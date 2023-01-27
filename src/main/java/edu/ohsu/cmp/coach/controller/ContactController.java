@@ -35,11 +35,11 @@ public class ContactController extends BaseController {
 
     @GetMapping("contact")
     public String view(HttpSession session, Model model, @RequestParam("token") String token) {
-        if (workspaceService.exists(session.getId())) {
+        if (userWorkspaceService.exists(session.getId())) {
             logger.info("showing contact form for session " + session.getId());
 
             model.addAttribute("applicationName", applicationName);
-            model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
+            model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
 
             String mychartLoginLink = env.getProperty("mychart.login.url");
             String mychartMessageLink = env.getProperty("mychart.askAMedicalQuestion.url");

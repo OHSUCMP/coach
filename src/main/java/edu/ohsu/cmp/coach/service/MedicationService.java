@@ -84,7 +84,7 @@ public class MedicationService extends AbstractService {
 
     private List<MedicationModel> getMedications(String sessionId, boolean includeAntihypertensive) {
         logger.debug("getting Medications for session " + sessionId + ", includeAntihypertensive=" + includeAntihypertensive);
-        return filterByValueSet(workspaceService.get(sessionId).getMedications(),
+        return filterByValueSet(userWorkspaceService.get(sessionId).getMedications(),
                 getAntihypertensiveMedicationValueSetOIDsList(),
                 includeAntihypertensive);
     }

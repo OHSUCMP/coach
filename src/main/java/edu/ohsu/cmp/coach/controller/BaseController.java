@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.workspace.WorkspaceService;
+import edu.ohsu.cmp.coach.workspace.UserWorkspaceService;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +11,7 @@ public abstract class BaseController {
     protected String applicationName;
 
     @Autowired
-    protected WorkspaceService workspaceService;
+    protected UserWorkspaceService userWorkspaceService;
 
     @Autowired
     protected Environment env;

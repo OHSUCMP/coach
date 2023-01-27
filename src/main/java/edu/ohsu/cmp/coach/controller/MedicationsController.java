@@ -32,7 +32,7 @@ public class MedicationsController extends BaseController {
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
         model.addAttribute("applicationName", applicationName);
-        model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
+        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
 
         List<MedicationModel> antihypertensiveMedications = filterDuplicates(medicationService.getAntihypertensiveMedications(session.getId()));
         antihypertensiveMedications.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));

@@ -41,7 +41,7 @@ public class EHRService extends AbstractService {
 
     public Patient getPatient(String sessionId) {
         logger.info("getting Patient for session=" + sessionId);
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.readByReference(fcc, Patient.class,
                 workspace.getVendorTransformer().getPatientLookup(fcc.getCredentials().getPatientId())
@@ -50,7 +50,7 @@ public class EHRService extends AbstractService {
 
     public List<Encounter> getEncounters(String sessionId) {
         logger.info("getting Encounters for session=" + sessionId);
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         Bundle bundle = fhirService.search(fcc,
                 workspace.getVendorTransformer().getEncounterQuery(fcc.getCredentials().getPatientId(), fcm.getEncounterLookbackPeriod()),
@@ -111,7 +111,7 @@ public class EHRService extends AbstractService {
      */
     public Bundle getObservations(String sessionId, String code, String lookbackPeriod, @Nullable Integer limit) {
         logger.info("getting Observations for session=" + sessionId + " having code(s): " + code);
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getObservationCodeQuery(fcc.getCredentials().getPatientId(), code, lookbackPeriod),
@@ -149,7 +149,7 @@ public class EHRService extends AbstractService {
 
     public Bundle getConditions(String sessionId, String category) {
         logger.info("getting " + category + " Conditions for session=" + sessionId);
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getConditionQuery(fcc.getCredentials().getPatientId(), category),
@@ -186,7 +186,7 @@ public class EHRService extends AbstractService {
 
     public Bundle getGoals(String sessionId) {
         logger.info("getting Goals for session=" + sessionId);
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getGoalQuery(fcc.getCredentials().getPatientId()),
@@ -220,7 +220,7 @@ public class EHRService extends AbstractService {
 
     public Bundle getMedicationStatements(String sessionId) {
         logger.info("getting MedicationStatements for session=" + sessionId);
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getMedicationStatementQuery(fcc.getCredentials().getPatientId()),
@@ -242,7 +242,7 @@ public class EHRService extends AbstractService {
 
     public Bundle getMedicationRequests(String sessionId) {
         logger.info("getting MedicationRequests for session=" + sessionId);
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         Bundle bundle = fhirService.search(fcc,
                 workspace.getVendorTransformer().getMedicationRequestQuery(fcc.getCredentials().getPatientId()),
@@ -303,7 +303,7 @@ public class EHRService extends AbstractService {
 
     public Bundle getCounselingProcedures(String sessionId) {
         logger.info("getting Counseling Procedures for session=" + sessionId);
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getProcedureQuery(fcc.getCredentials().getPatientId()),

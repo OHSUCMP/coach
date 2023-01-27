@@ -41,7 +41,7 @@ public class VitalsController extends BaseController {
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) throws DataException {
         model.addAttribute("applicationName", applicationName);
-        model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
+        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
 
         List<AbstractVitalsModel> homeReadings = new ArrayList<>();
         homeReadings.addAll(bpService.getHomeBloodPressureReadings(session.getId()));
@@ -66,7 +66,7 @@ public class VitalsController extends BaseController {
                                                             @RequestParam Boolean followedInstructions) throws DataException, ConfigurationException, IOException, ScopeException {
 
         // get the cache just to make sure it's defined and the user is properly authenticated
-        workspaceService.get(session.getId());
+        userWorkspaceService.get(session.getId());
 
         Date readingDate1 = new Date(readingDateTS);
 
@@ -113,7 +113,7 @@ public class VitalsController extends BaseController {
             list.add(p2);
         }
 
-        workspaceService.get(session.getId()).runRecommendations();
+        userWorkspaceService.get(session.getId()).runRecommendations();
 
         return new ResponseEntity<>(list, HttpStatus.OK);
     }

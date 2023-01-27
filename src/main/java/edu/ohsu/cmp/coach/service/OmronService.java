@@ -145,7 +145,7 @@ public class OmronService extends AbstractService {
     }
 
     public List<OmronBloodPressureModel> getBloodPressureMeasurements(String sessionId) throws EncoderException, IOException {
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         String accessToken = null; // todo : pull this from the user's workspace
 

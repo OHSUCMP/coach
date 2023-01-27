@@ -40,7 +40,7 @@ public class GoalsController extends BaseController {
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
         model.addAttribute("applicationName", applicationName);
-        model.addAttribute("patient", workspaceService.get(session.getId()).getPatient());
+        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
         model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
         model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(session.getId()));
 
@@ -77,7 +77,7 @@ public class GoalsController extends BaseController {
 
             // the goal was created in response to a suggestion.
             // they took the suggestion, so remove it from the list to consider
-            UserWorkspace workspace = workspaceService.get(session.getId());
+            UserWorkspace workspace = userWorkspaceService.get(session.getId());
             workspace.deleteSuggestion(extGoalId);
 
             return new ResponseEntity<>(new GoalModel(myGoal), HttpStatus.OK);

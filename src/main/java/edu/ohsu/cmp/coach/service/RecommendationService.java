@@ -94,7 +94,7 @@ public class RecommendationService extends AbstractService {
     public List<Card> getCards(String sessionId, String hookId) throws IOException {
         logger.debug("BEGIN getting cards for session=" + sessionId + ", hookId=" + hookId);
 
-        UserWorkspace workspace = workspaceService.get(sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         Audience audience = workspace.getAudience();
 
@@ -358,7 +358,7 @@ public class RecommendationService extends AbstractService {
         AdverseEvent ae = new AdverseEvent();
         ae.setId(aeid);
 
-        Patient p = workspaceService.get(sessionId).getPatient().getSourcePatient();
+        Patient p = userWorkspaceService.get(sessionId).getPatient().getSourcePatient();
 
         ae.setSubject(new Reference().setReference(p.getId()));
 
