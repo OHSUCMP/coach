@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.omron.AccessTokenResponse;
 import edu.ohsu.cmp.coach.service.OmronService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -40,7 +41,7 @@ public class OmronController extends BaseController {
                         @RequestParam(required = false) String code,
                         @RequestParam(required = false) String error) {
 
-        UserWorkspace workspace = workspaceService.get(session.getId());
+        UserWorkspace workspace = userWorkspaceService.get(session.getId());
 
         // if code exists, then success; use code to obtain a token
         // else if error, then failure; display error in UI and abort
@@ -48,9 +49,11 @@ public class OmronController extends BaseController {
         if (StringUtils.isNotBlank(code)) {
             try {
                 AccessTokenResponse accessTokenResponse = omronService.requestAccessToken(code);
-                logger.debug("got Omron access token: " + accessTokenResponse.getAccessToken());
 
-                // todo : cache accessTokenResponse datainto the user's workspace
+                if (accessTokenResponse != null) {
+                    logger.debug("got Omron access token: " + accessTokenResponse.getAccessToken());
+                    workspace.setOmronTokenData(new MyOmronTokenData(accessTokenResponse));
+                }
 
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " getting Omron access token - " + e.getMessage(), e);
@@ -69,12 +72,16 @@ public class OmronController extends BaseController {
                                          String id,
                                          String timestamp) {
 
+        // note : this endpoint will be called by Omron when an authenticated user has new data to pull
+        //        as such, this endpoint does not connect to any existing user session.  we need to look up
+        //        the user by their id
+
         logger.info("received notification for session " + session.getId() + ": id=" + id + ", timestamp=" + timestamp);
 
         // id = the id of the user who performed the upload.  received into id_token on initial user authorization
 
         // todo : get recent blood pressure measurements
 
-        return new ResponseEntity<>(id, HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.OK);         // returns only OK status, no body
     }
 }

@@ -2,7 +2,7 @@ package edu.ohsu.cmp.coach.model.omron;
 
 public class RefreshTokenResponse {
     private String accessToken;
-    private Long expiresIn;
+    private Integer expiresIn;
     private String tokenType;
     private String refreshToken;
 
@@ -14,11 +14,11 @@ public class RefreshTokenResponse {
         this.accessToken = accessToken;
     }
 
-    public Long getExpiresIn() {
+    public Integer getExpiresIn() {
         return expiresIn;
     }
 
-    public void setExpiresIn(Long expiresIn) {
+    public void setExpiresIn(Integer expiresIn) {
         this.expiresIn = expiresIn;
     }
 

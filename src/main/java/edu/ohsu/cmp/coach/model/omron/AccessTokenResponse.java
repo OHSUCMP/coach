@@ -3,7 +3,7 @@ package edu.ohsu.cmp.coach.model.omron;
 public class AccessTokenResponse {
     private String idToken;         // id of the user who performed the authorization
     private String accessToken;
-    private Long expiresIn;
+    private Integer expiresIn;
     private String tokenType;
     private String refreshToken;
 
@@ -23,11 +23,11 @@ public class AccessTokenResponse {
         this.accessToken = accessToken;
     }
 
-    public Long getExpiresIn() {
+    public Integer getExpiresIn() {
         return expiresIn;
     }
 
-    public void setExpiresIn(Long expiresIn) {
+    public void setExpiresIn(Integer expiresIn) {
         this.expiresIn = expiresIn;
     }
 

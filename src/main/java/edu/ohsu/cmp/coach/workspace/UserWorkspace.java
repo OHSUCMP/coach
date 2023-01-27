@@ -62,6 +62,8 @@ public class UserWorkspace {
     private final Cache<String, Bundle> bundleCache;
     private final ExecutorService executorService;
 
+    private MyOmronTokenData omronTokenData;
+
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
                             FHIRCredentialsWithClient fhirCredentialsWithClient,
                             FhirQueryManager fqm, FhirConfigManager fcm) {
@@ -494,5 +496,13 @@ public class UserWorkspace {
 
     public void setVendorTransformer(VendorTransformer vendorTransformer) {
         this.vendorTransformer = vendorTransformer;
+    }
+
+    public MyOmronTokenData getOmronTokenData() {
+        return omronTokenData;
+    }
+
+    public void setOmronTokenData(MyOmronTokenData omronTokenData) {
+        this.omronTokenData = omronTokenData;
     }
 }
