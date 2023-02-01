@@ -47,7 +47,7 @@ public class OmronService extends AbstractService {
         try {
             URLCodec urlCodec = new URLCodec();
             return hostUrl + "/connect/authorize?client_id=" + urlCodec.encode(clientId) +
-                    "&response_type=code&scoepe=" + urlCodec.encode(scope) +
+                    "&response_type=code&scope=" + urlCodec.encode(scope) +
                     "&redirect_uri=" + urlCodec.encode(redirectUrl);
 
         } catch (EncoderException e) {

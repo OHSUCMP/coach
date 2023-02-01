@@ -8,6 +8,7 @@ import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.ObservationSource;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
+import edu.ohsu.cmp.coach.service.OmronService;
 import edu.ohsu.cmp.coach.service.PulseService;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Observation;
@@ -38,10 +39,14 @@ public class VitalsController extends BaseController {
     @Autowired
     private PulseService pulseService;
 
+    @Autowired
+    private OmronService omronService;
+
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) throws DataException {
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
+        model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
 
         List<AbstractVitalsModel> homeReadings = new ArrayList<>();
         homeReadings.addAll(bpService.getHomeBloodPressureReadings(session.getId()));
