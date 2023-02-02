@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+{{#permitLoadLocal}}
+    <head>
+        <meta charset="UTF-8">
+        <title>{{applicationName}} - Load Local Patient</title>
+        <script type="text/javascript" src="/node_modules/jquery/dist/jquery.js"></script>
+        <script type="text/javascript">
+            const REDIRECT_URL = "/";
+
+            function prepareSession(bundleName) {
+                let data = {
+                    bundleName: bundleName
+                };
+
+                // alert("useful development breakpoint");
+
+                $.ajax({
+                    method: "POST",
+                    url: "/prepare-detached-session",
+                    data: data
+                }).done(function(cards, textStatus, jqXHR) {
+                    if (jqXHR.status === 200) {
+                        $('body').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
+                        window.location.href = REDIRECT_URL;
+
+                    } else {
+                        $('body').html("Error - received response " + response.status + " status");
+                    }
+                });
+            }
+
+            $(document).on('click', '#launchButton', function() {
+                let bundleName = $('#bundleName').val();
+                prepareSession(bundleName);
+            });
+
+            $(document).on('change', '#bundleName', function() {
+                $('#launchButton').prop('disabled', $(this).val() === '');
+            });
+        </script>
+    </head>
+    <body>
+    Select a local FHIR Resource Bundle:
+    <form action="/prepare-detached-session">
+        <select id="bundleName">
+            <option value="">-- Select a Local Bundle --</option>
+            {{#bundleItems}}
+                <option value="{{.}}">{{.}}</option>
+            {{/bundleItems}}
+        </select>
+        <input id="launchButton" type="button" value="Launch Detached" disabled />
+    </form>
+    </body>
+{{/permitLoadLocal}}
+{{^permitLoadLocal}}
+    <head>
+        <meta charset="UTF-8">
+        <title>{{applicationName}} - Operation Not Supported</title>
+    </head>
+    <body>
+        This operation is not currently supported.
+    </body>
+{{/permitLoadLocal}}
+</html>

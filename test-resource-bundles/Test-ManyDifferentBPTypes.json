@@ -1,0 +1,3642 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "ManyDifferentBPTypesTest",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><div class=\"hapiHeaderText\">Test <b>MANYDIFFERENTBPTYPES </b></div><table class=\"hapiPropertyTable\"><tbody><tr><td>Date of birth</td><td><span>21 May 1963</span></td></tr></tbody></table></div>"
+        },
+        "active": true,
+        "name": [
+          {
+            "text": "Many Different BP Types Test",
+            "family": "ManyDifferentBPTypes",
+            "given": [
+              "Test"
+            ]
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1963-05-21"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/ManyDifferentBPTypesTest"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "observation-ManyDifferentBPTypesTest-homepanel",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood Pressure Home Panel"
+            }
+          ],
+          "text": "Blood Pressure Home Panel"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2021-03-26T15:16:21-05:00",
+        "note": [
+          {
+            "text": "Home Blood Pressure Reading"
+          }
+        ],
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic Blood Pressure"
+                }
+              ],
+              "text": "Diastolic Blood Pressure"
+            },
+            "valueQuantity": {
+              "value": 83.45508952819434,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic Blood Pressure"
+                }
+              ],
+              "text": "Systolic Blood Pressure"
+            },
+            "valueQuantity": {
+              "value": 140.67001870978416,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/observation-ManyDifferentBPTypesTest-homepanel"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "observation-ManyDifferentBPTypesTest-homesystolicbluetooth",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "7585",
+              "display": "Home Systolic Bluetooth"
+            }
+          ],
+          "text": "Home Systolic Bluetooth"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2021-01-26T15:16:21-05:00",
+        "valueQuantity": {
+          "value": 97.9349105113392,
+          "unit": "mm[Hg]",
+          "system": "http://unitsofmeasure.org",
+          "code": "mm[Hg]"
+        },
+        "note": [
+          {
+            "text": "Home Systolic Bluetooth reading"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/observation-ManyDifferentBPTypesTest-homesystolicbluetooth"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "observation-ManyDifferentBPTypesTest-homepanel2",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Blood Pressure Home Panel"
+            }
+          ],
+          "text": "Blood Pressure Home Panel"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2021-03-26T15:16:21-05:00",
+        "note": [
+          {
+            "text": "Home Blood Pressure Reading"
+          }
+        ],
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic Blood Pressure"
+                }
+              ],
+              "text": "Diastolic Blood Pressure"
+            },
+            "valueQuantity": {
+              "value": 85.45508952819434,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic Blood Pressure"
+                }
+              ],
+              "text": "Systolic Blood Pressure"
+            },
+            "valueQuantity": {
+              "value": 143.67001870978416,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/observation-ManyDifferentBPTypesTest-homepanel2"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "observation-ManyDifferentBPTypesTest-basicpanel",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood Pressure"
+            }
+          ],
+          "text": "Blood Pressure"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2021-04-26T15:16:21-05:00",
+        "note": [
+          {
+            "text": "Blood Pressure Reading"
+          }
+        ],
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic Blood Pressure"
+                }
+              ],
+              "text": "Diastolic Blood Pressure"
+            },
+            "valueQuantity": {
+              "value": 82.52660352979804,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic Blood Pressure"
+                }
+              ],
+              "text": "Systolic Blood Pressure"
+            },
+            "valueQuantity": {
+              "value": 162.65064054117963,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/observation-ManyDifferentBPTypesTest-basicpanel"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "observation-ManyDifferentBPTypesTest-homediastlicbluetooth",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "7586",
+              "display": "Home Diastolic Bluetooth"
+            }
+          ],
+          "text": "Home Diastolic Bluetooth"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2021-06-26T15:16:21-05:00",
+        "valueQuantity": {
+          "value": 72.52660352979804,
+          "unit": "mm[Hg]",
+          "system": "http://unitsofmeasure.org",
+          "code": "mm[Hg]"
+        },
+        "note": [
+          {
+            "text": "Home Diastolic Bluetooth"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/observation-ManyDifferentBPTypesTest-homediastlicbluetooth"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "observation-ManyDifferentBPTypesTest-basicdiastolic",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8462-4",
+              "display": "Blood Pressure Diastolic Reading"
+            }
+          ],
+          "text": "Blood Pressure Diastolic Reading"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2021-05-26T15:16:21-05:00",
+        "valueQuantity": {
+          "value": 82.52660352979804,
+          "unit": "mm[Hg]",
+          "system": "http://unitsofmeasure.org",
+          "code": "mm[Hg]"
+        },
+        "note": [
+          {
+            "text": "Blood Pressure Diastolic Reading"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/observation-ManyDifferentBPTypesTest-basicdiastolic"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "observation-ManyDifferentBPTypesTest-officepanel",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "5",
+              "display": "Blood Pressure Office reading"
+            }
+          ],
+          "text": "Blood Pressure Office reading"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2021-02-26T15:16:21-05:00",
+        "note": [
+          {
+            "text": "Blood Pressure Office Reading"
+          }
+        ],
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic Blood Pressure"
+                }
+              ],
+              "text": "Diastolic Blood Pressure"
+            },
+            "valueQuantity": {
+              "value": 88.995226014274,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic Blood Pressure"
+                }
+              ],
+              "text": "Systolic Blood Pressure"
+            },
+            "valueQuantity": {
+              "value": 169.4534388828563,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/observation-ManyDifferentBPTypesTest-officepanel"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "observation-ManyDifferentBPTypesTest-officepanelwithencounter",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "5",
+              "display": "Blood Pressure Office reading"
+            }
+          ],
+          "text": "Blood Pressure Office reading"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/encounter-ManyDifferentBPTypesTest-2"
+        },
+        "effectiveDateTime": "2021-02-26T15:16:21-05:00",
+        "note": [
+          {
+            "text": "Blood Pressure Office Reading"
+          }
+        ],
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic Blood Pressure"
+                }
+              ],
+              "text": "Diastolic Blood Pressure"
+            },
+            "valueQuantity": {
+              "value": 88.995226014274,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic Blood Pressure"
+                }
+              ],
+              "text": "Systolic Blood Pressure"
+            },
+            "valueQuantity": {
+              "value": 169.4534388828563,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/observation-ManyDifferentBPTypesTest-officepanelwithencounter"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "observation-ManyDifferentBPTypesTest-basicsystolic",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8480-6",
+              "display": "Blood Pressure Systolic"
+            }
+          ],
+          "text": "Blood Pressure Systolic"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2021-07-07T15:16:21-05:00",
+        "valueQuantity": {
+          "value": 97.52660352979804,
+          "unit": "mm[Hg]",
+          "system": "http://unitsofmeasure.org",
+          "code": "mm[Hg]"
+        },
+        "note": [
+          {
+            "text": "Blood Pressure Systolic"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/observation-ManyDifferentBPTypesTest-basicsystolic"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1355",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1353"
+        },
+        "effectiveDateTime": "2022-08-14T12:34:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1355"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1354",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood pressure systolic and diastolic"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood pressure home reading"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Patient Reported BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1353"
+        },
+        "effectiveDateTime": "2022-08-14T12:34:00-07:00",
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 123,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 45,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1354"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1358",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1356"
+        },
+        "effectiveDateTime": "2022-08-14T12:34:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1358"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1357",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8867-4",
+              "display": "Heart rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1356"
+        },
+        "effectiveDateTime": "2022-08-14T12:34:00-07:00",
+        "valueQuantity": {
+          "value": 67,
+          "unit": "beats/minute",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1357"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1581",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-10-01T12:00:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1581"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1580",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood pressure systolic and diastolic"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood pressure home reading"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Patient Reported BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-10-01T12:00:00-07:00",
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 120,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 70,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1580"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1583",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-10-01T12:00:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1583"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1582",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8867-4",
+              "display": "Heart rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-10-01T12:00:00-07:00",
+        "valueQuantity": {
+          "value": 60,
+          "unit": "beats/minute",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1582"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1592",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1590"
+        },
+        "effectiveDateTime": "2022-10-15T12:00:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1592"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1591",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood pressure systolic and diastolic"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood pressure home reading"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Patient Reported BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1590"
+        },
+        "effectiveDateTime": "2022-10-15T12:00:00-07:00",
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 120,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 70,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1591"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1594",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8867-4",
+              "display": "Heart rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1593"
+        },
+        "effectiveDateTime": "2022-10-15T12:00:00-07:00",
+        "valueQuantity": {
+          "value": 60,
+          "unit": "beats/minute",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1594"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1595",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1593"
+        },
+        "effectiveDateTime": "2022-10-15T12:00:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1595"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1596",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood pressure systolic and diastolic"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood pressure home reading"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Patient Reported BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-10-16T12:00:00-07:00",
+        "note": [
+          {
+            "text": "COACH_PROTOCOL::Followed BP Protocol"
+          }
+        ],
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 120,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 70,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1596"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1597",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8867-4",
+              "display": "Heart rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-10-16T12:00:00-07:00",
+        "valueQuantity": {
+          "value": 60,
+          "unit": "beats/minute",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        },
+        "note": [
+          {
+            "text": "COACH_PROTOCOL::Followed BP Protocol"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1597"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1600",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1598"
+        },
+        "effectiveDateTime": "2022-10-15T12:01:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1600"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1599",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood pressure systolic and diastolic"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood pressure home reading"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Patient Reported BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1598"
+        },
+        "effectiveDateTime": "2022-10-15T12:01:00-07:00",
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 121,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 71,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1599"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1603",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1601"
+        },
+        "effectiveDateTime": "2022-10-15T12:01:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1603"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1602",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8867-4",
+              "display": "Heart rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1601"
+        },
+        "effectiveDateTime": "2022-10-15T12:01:00-07:00",
+        "valueQuantity": {
+          "value": 61,
+          "unit": "beats/minute",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1602"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1606",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1604"
+        },
+        "effectiveDateTime": "2022-10-15T12:02:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1606"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1605",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood pressure systolic and diastolic"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood pressure home reading"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Patient Reported BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1604"
+        },
+        "effectiveDateTime": "2022-10-15T12:02:00-07:00",
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 122,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 72,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1605"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1609",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1607"
+        },
+        "effectiveDateTime": "2022-10-15T12:02:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1609"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1608",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8867-4",
+              "display": "Heart rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1607"
+        },
+        "effectiveDateTime": "2022-10-15T12:02:00-07:00",
+        "valueQuantity": {
+          "value": 62,
+          "unit": "beats/minute",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1608"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1612",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1610"
+        },
+        "effectiveDateTime": "2022-10-15T12:03:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1612"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1611",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood pressure systolic and diastolic"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood pressure home reading"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Patient Reported BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1610"
+        },
+        "effectiveDateTime": "2022-10-15T12:03:00-07:00",
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 123,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 73,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1611"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1615",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/Encounter/1610"
+        },
+        "effectiveDateTime": "2022-10-15T12:03:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1615"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1614",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8867-4",
+              "display": "Heart rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/Encounter/1610"
+        },
+        "effectiveDateTime": "2022-10-15T12:03:00-07:00",
+        "valueQuantity": {
+          "value": 63,
+          "unit": "beats/minute",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1614"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1617",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood pressure systolic and diastolic"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood pressure home reading"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Patient Reported BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1616"
+        },
+        "effectiveDateTime": "2022-10-15T12:04:00-07:00",
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 124,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 74,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1617"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1618",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1616"
+        },
+        "effectiveDateTime": "2022-10-15T12:04:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1618"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1623",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1621"
+        },
+        "effectiveDateTime": "2022-10-15T12:05:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1623"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1622",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood pressure systolic and diastolic"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood pressure home reading"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Patient Reported BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1621"
+        },
+        "effectiveDateTime": "2022-10-15T12:05:00-07:00",
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 125,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 75,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1622"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1625",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/Encounter/1621"
+        },
+        "effectiveDateTime": "2022-10-15T12:05:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1625"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1624",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8867-4",
+              "display": "Heart rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/Encounter/1621"
+        },
+        "effectiveDateTime": "2022-10-15T12:05:00-07:00",
+        "valueQuantity": {
+          "value": 65,
+          "unit": "beats/minute",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1624"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1629",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood pressure systolic and diastolic"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood pressure home reading"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Patient Reported BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1628"
+        },
+        "effectiveDateTime": "2022-10-15T12:06:00-07:00",
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 126,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 76,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1629"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1630",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9855-8",
+              "display": "Blood pressure special circumstances"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/1628"
+        },
+        "effectiveDateTime": "2022-10-15T12:06:00-07:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA46-8",
+              "display": "Other, Specify:"
+            }
+          ],
+          "text": "Followed BP Protocol"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1630"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1631",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8867-4",
+              "display": "Heart rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "encounter": {
+          "reference": "Encounter/Encounter/1628"
+        },
+        "effectiveDateTime": "2022-10-15T12:06:00-07:00",
+        "valueQuantity": {
+          "value": 66,
+          "unit": "beats/minute",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1631"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1633",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "55284-4",
+              "display": "Blood pressure systolic and diastolic"
+            },
+            {
+              "system": "http://loinc.org",
+              "code": "72076-3",
+              "display": "Blood pressure home reading"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "343214",
+              "display": "Patient Reported BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-10-15T12:07:00-07:00",
+        "note": [
+          {
+            "text": "COACH_PROTOCOL::Followed BP Protocol"
+          }
+        ],
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 127,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic blood pressure"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 77,
+              "unit": "mmHg",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1633"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1634",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8867-4",
+              "display": "Heart rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-10-15T12:07:00-07:00",
+        "valueQuantity": {
+          "value": 67,
+          "unit": "beats/minute",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        },
+        "note": [
+          {
+            "text": "COACH_PROTOCOL::Followed BP Protocol"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1634"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1636",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8462-4",
+              "display": "Diastolic blood pressure"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "7586",
+              "display": "R MYCHART DIASTOLIC BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-11-01T12:00:00-07:00",
+        "valueQuantity": {
+          "value": 70,
+          "unit": "mmHg",
+          "system": "http://unitsofmeasure.org",
+          "code": "mm[Hg]"
+        },
+        "note": [
+          {
+            "text": "COACH_PROTOCOL::Followed BP Protocol"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1636"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1635",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8480-6",
+              "display": "Systolic blood pressure"
+            },
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "7585",
+              "display": "R MYCHART SYSTOLIC"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-11-01T12:00:00-07:00",
+        "valueQuantity": {
+          "value": 120,
+          "unit": "mmHg",
+          "system": "http://unitsofmeasure.org",
+          "code": "mm[Hg]"
+        },
+        "note": [
+          {
+            "text": "COACH_PROTOCOL::Followed BP Protocol"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1635"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1638",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "7586",
+              "display": "R MYCHART DIASTOLIC BP"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-11-01T12:01:00-07:00",
+        "valueQuantity": {
+          "value": 71,
+          "unit": "mmHg",
+          "system": "http://unitsofmeasure.org",
+          "code": "mm[Hg]"
+        },
+        "note": [
+          {
+            "text": "COACH_PROTOCOL::Followed BP Protocol"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1638"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "1637",
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "264362003",
+              "display": "Home (environment)"
+            }
+          }
+        ],
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "vital-signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "urn:oid:1.2.840.114350.1.13.135.3.7.2.707679",
+              "code": "7585",
+              "display": "R MYCHART SYSTOLIC"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "effectiveDateTime": "2022-11-01T12:01:00-07:00",
+        "valueQuantity": {
+          "value": 121,
+          "unit": "mmHg",
+          "system": "http://unitsofmeasure.org",
+          "code": "mm[Hg]"
+        },
+        "note": [
+          {
+            "text": "COACH_PROTOCOL::Followed BP Protocol"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/1637"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "encounter-ManyDifferentBPTypesTest-1",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "AMB"
+        },
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "162673000",
+                "display": "General examination of patient (procedure)"
+              }
+            ],
+            "text": "General examination of patient (procedure)"
+          }
+        ],
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2021-01-26T00:00:00-04:00",
+          "end": "2021-01-26T23:59:59-04:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/encounter-ManyDifferentBPTypesTest-1"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "encounter-ManyDifferentBPTypesTest-2",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "AMB"
+        },
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "162673000",
+                "display": "General examination of patient (procedure)"
+              }
+            ],
+            "text": "General examination of patient (procedure)"
+          }
+        ],
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2021-02-26T00:00:00-04:00",
+          "end": "2021-02-26T23:59:59-04:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/encounter-ManyDifferentBPTypesTest-2"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1353",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-08-14T12:33:00-07:00",
+          "end": "2022-08-14T12:35:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1353"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1356",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-08-14T12:33:00-07:00",
+          "end": "2022-08-14T12:35:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1356"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1590",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-10-15T11:59:00-07:00",
+          "end": "2022-10-15T12:01:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1590"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1593",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-10-15T11:59:00-07:00",
+          "end": "2022-10-15T12:01:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1593"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1598",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-10-15T12:00:00-07:00",
+          "end": "2022-10-15T12:02:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1598"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1601",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-10-15T12:00:00-07:00",
+          "end": "2022-10-15T12:02:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1601"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1604",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-10-15T12:01:00-07:00",
+          "end": "2022-10-15T12:03:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1604"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1607",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-10-15T12:01:00-07:00",
+          "end": "2022-10-15T12:03:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1607"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1610",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-10-15T12:02:00-07:00",
+          "end": "2022-10-15T12:04:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1610"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1613",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-10-15T12:02:00-07:00",
+          "end": "2022-10-15T12:04:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1613"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1616",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-10-15T12:03:00-07:00",
+          "end": "2022-10-15T12:05:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1616"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1621",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-10-15T12:04:00-07:00",
+          "end": "2022-10-15T12:06:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1621"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1628",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-10-15T12:05:00-07:00",
+          "end": "2022-10-15T12:07:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1628"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1815",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-11-01T12:33:00-07:00",
+          "end": "2022-11-01T12:35:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1815"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1818",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-11-01T12:33:00-07:00",
+          "end": "2022-11-01T12:35:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1818"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Encounter",
+        "id": "1821",
+        "status": "finished",
+        "class": {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          "code": "HH",
+          "display": "home health"
+        },
+        "subject": {
+          "reference": "Patient/ManyDifferentBPTypesTest"
+        },
+        "period": {
+          "start": "2022-11-01T16:59:00-07:00",
+          "end": "2022-11-01T17:01:00-07:00"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Encounter/1821"
+      }
+    }
+  ]
+}

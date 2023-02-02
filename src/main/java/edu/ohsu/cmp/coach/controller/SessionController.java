@@ -6,6 +6,7 @@ import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import edu.ohsu.cmp.coach.util.FileUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.util.List;
 
 @Controller
 public class SessionController extends BaseController {
@@ -25,6 +28,23 @@ public class SessionController extends BaseController {
 
     @Value("${socket.timeout:300000}")
     private Integer socketTimeout;
+
+    @Value("${security.permit-load-local}")
+    private Boolean permitLoadLocal;
+
+    @Value("${local-test-resources-path}")
+    private String localTestResourcesPath;
+
+    @GetMapping("launch-local")
+    public String launchLocal(Model model) throws IOException {
+        model.addAttribute("applicationName", applicationName);
+        if (permitLoadLocal) {
+            model.addAttribute("permitLoadLocal", true);
+            List<String> bundleItems = FileUtil.getFilenameList(localTestResourcesPath);
+            model.addAttribute("bundleItems", bundleItems);
+        }
+        return "launch-local";
+    }
 
     @GetMapping("launch-ehr")
     public String launchEHR(Model model) {
@@ -43,6 +63,15 @@ public class SessionController extends BaseController {
         model.addAttribute("redirectUri", env.getProperty("smart.patient.redirectUri"));
         model.addAttribute("iss", env.getProperty("smart.patient.iss"));
         return "launch-patient";
+    }
+
+    @PostMapping("prepare-detached-session")
+    public ResponseEntity<?> prepareDetachedSession(HttpSession session,
+                                                    @RequestParam("bundleName") String bundleName) {
+
+        logger.info("preparing local detached session for bundle=" + bundleName);
+
+        return ResponseEntity.ok("session configured successfully");
     }
 
     @PostMapping("prepare-session")
