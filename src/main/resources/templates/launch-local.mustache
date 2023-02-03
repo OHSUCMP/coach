@@ -8,9 +8,10 @@
         <script type="text/javascript">
             const REDIRECT_URL = "/";
 
-            function prepareSession(bundleName) {
+            function prepareSession(bundleName, audience) {
                 let data = {
-                    bundleName: bundleName
+                    bundleName: bundleName,
+                    audience: audience
                 };
 
                 // alert("useful development breakpoint");
@@ -32,7 +33,8 @@
 
             $(document).on('click', '#launchButton', function() {
                 let bundleName = $('#bundleName').val();
-                prepareSession(bundleName);
+                let audience = $('#audience').val();
+                prepareSession(bundleName, audience);
             });
 
             $(document).on('change', '#bundleName', function() {
@@ -41,13 +43,19 @@
         </script>
     </head>
     <body>
-    Select a local FHIR Resource Bundle:
+    <h1>Configure your local launch scenario</h1>
     <form action="/prepare-detached-session">
+        Bundle:
         <select id="bundleName">
             <option value="">-- Select a Local Bundle --</option>
             {{#bundleItems}}
                 <option value="{{.}}">{{.}}</option>
             {{/bundleItems}}
+        </select>
+        Audience:
+        <select id="audience">
+            <option value="patient" selected>Patient</option>
+            <option value="careTeam">Care Team</option>
         </select>
         <input id="launchButton" type="button" value="Launch Detached" disabled />
     </form>

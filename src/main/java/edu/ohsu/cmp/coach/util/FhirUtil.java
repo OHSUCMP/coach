@@ -5,14 +5,13 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
-import edu.ohsu.cmp.coach.model.FHIRCompatible;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -28,6 +27,12 @@ public class FhirUtil {
 
     private static final String EXTENSION_OAUTH_URIS_URL = "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris";
     private static final String EXTENSION_TOKEN_URL = "token";
+
+    public static Bundle readLocalBundle(String path) throws IOException {
+        FhirContext ctx = FhirContext.forR4();
+        String json = FileUtil.readFile(path);
+        return ctx.newJsonParser().parseResource(Bundle.class, json);
+    }
 
     public static IGenericClient buildClient(String serverUrl, String bearerToken, int socketTimeout) {
         logger.debug("building FHIR R4 client for serverUrl=" + serverUrl + ", bearerToken=" + bearerToken +

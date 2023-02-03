@@ -8,6 +8,7 @@ import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.util.FileUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import org.hl7.fhir.r4.model.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.util.List;
 
 @Controller
@@ -67,11 +69,21 @@ public class SessionController extends BaseController {
 
     @PostMapping("prepare-detached-session")
     public ResponseEntity<?> prepareDetachedSession(HttpSession session,
-                                                    @RequestParam("bundleName") String bundleName) {
+                                                    @RequestParam("bundleName") String bundleName,
+                                                    @RequestParam("audience") String audience) throws IOException {
 
-        logger.info("preparing local detached session for bundle=" + bundleName);
+        logger.info("preparing local detached session for bundle=" + bundleName + ", audience=" + audience);
+
+        Bundle bundle = readLocalBundle(bundleName);
 
         return ResponseEntity.ok("session configured successfully");
+    }
+
+    private Bundle readLocalBundle(String bundleName) throws IOException {
+        String fileSeparator = FileSystems.getDefault().getSeparator();
+        String path = localTestResourcesPath.endsWith(fileSeparator) ?
+                localTestResourcesPath.substring(0, localTestResourcesPath.length() - 1) : localTestResourcesPath;
+        return FhirUtil.readLocalBundle(path + fileSeparator + bundleName);
     }
 
     @PostMapping("prepare-session")
