@@ -5,7 +5,7 @@ import edu.ohsu.cmp.coach.exception.SessionMissingException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
-import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.model.fhir.IFHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class WorkspaceService {
         return map.containsKey(sessionId);
     }
 
-    public void init(String sessionId, Audience audience, FHIRCredentialsWithClient fcc) throws ConfigurationException {
+    public void init(String sessionId, Audience audience, IFHIRCredentialsWithClient fcc) throws ConfigurationException {
         try {
             UserWorkspace workspace = new UserWorkspace(ctx, sessionId, audience, fcc, fqm, fcm);
             workspace.setVendorTransformer(buildVendorTransformer(workspace));

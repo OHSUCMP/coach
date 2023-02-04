@@ -2,7 +2,7 @@ package edu.ohsu.cmp.coach.model.cqfruler;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
+import edu.ohsu.cmp.coach.model.fhir.IFHIRCredentials;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
@@ -27,15 +27,15 @@ public class HookRequest {
 
     private boolean prefetchModified = false;
 
-    public HookRequest(FHIRCredentials credentials) {
+    public HookRequest(IFHIRCredentials credentials) {
         this(credentials, (List<IBaseResource>) null);
     }
 
-    public HookRequest(FHIRCredentials credentials, IBaseResource resource) {
+    public HookRequest(IFHIRCredentials credentials, IBaseResource resource) {
         this(credentials, Collections.singletonList(resource));
     }
 
-    public HookRequest(FHIRCredentials credentials, List<IBaseResource> prefetchList) {
+    public HookRequest(IFHIRCredentials credentials, List<IBaseResource> prefetchList) {
         this.hookInstanceUUID = UUID.randomUUID().toString();
         this.fhirServerURL = credentials.getServerURL();
         this.bearerToken = credentials.getBearerToken();

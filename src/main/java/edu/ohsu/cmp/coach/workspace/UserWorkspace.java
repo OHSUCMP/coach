@@ -9,7 +9,7 @@ import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
-import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.model.fhir.IFHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
@@ -50,7 +50,7 @@ public class UserWorkspace {
     private final ApplicationContext ctx;
     private final String sessionId;
     private final Audience audience;
-    private final FHIRCredentialsWithClient fhirCredentialsWithClient;
+    private final IFHIRCredentialsWithClient fhirCredentialsWithClient;
     private final FhirQueryManager fqm;
     private final FhirConfigManager fcm;
     private final Long internalPatientId;
@@ -62,7 +62,7 @@ public class UserWorkspace {
     private final ExecutorService executorService;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
-                            FHIRCredentialsWithClient fhirCredentialsWithClient,
+                            IFHIRCredentialsWithClient fhirCredentialsWithClient,
                             FhirQueryManager fqm, FhirConfigManager fcm) {
         this.ctx = ctx;
         this.sessionId = sessionId;
@@ -95,7 +95,7 @@ public class UserWorkspace {
         return audience;
     }
 
-    public FHIRCredentialsWithClient getFhirCredentialsWithClient() {
+    public IFHIRCredentialsWithClient getFhirCredentialsWithClient() {
         return fhirCredentialsWithClient;
     }
 

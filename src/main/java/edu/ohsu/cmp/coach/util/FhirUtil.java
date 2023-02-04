@@ -1,10 +1,12 @@
 package edu.ohsu.cmp.coach.util;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.jpa.searchparam.matcher.SearchParamMatcher;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
@@ -286,16 +288,75 @@ public class FhirUtil {
         return false;
     }
 
+    public static <T extends IBaseResource> T getFirstResourceFromBundle(Bundle bundle, Class<T> aClass) {
+        List<T> list = getResourceListFromBundle(bundle, aClass);
+        return list != null && list.size() > 0 ?
+                list.get(0) :
+                null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends IBaseResource> List<T> getResourceListFromBundle(Bundle bundle, Class<T> aClass) {
+        if (bundle == null) return null;
+
+        List<T> list = new ArrayList<>();
+
+        if (bundle.hasEntry()) {
+            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+                if (entry.hasResource()) {
+                    Resource r = entry.getResource();
+                    if (aClass.isInstance(r)) {
+                        list.add((T) r);
+                    }
+                }
+            }
+        }
+
+        return list;
+    }
+
+    public static <T extends IBaseResource> T getResourceFromBundleById(Bundle b, Class<T> aClass, String id) {
+        for (Bundle.BundleEntryComponent entry : b.getEntry()) {
+            Resource r = entry.getResource();
+            if (aClass.isInstance(r)) {
+//            if (r.getClass().isAssignableFrom(aClass)) {
+                if (r.hasId() && r.getId().equals(id)) {
+                    return aClass.cast(r);
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Bundle getResourceListMatchingCriteria(final Bundle sourceBundle, String searchCriteria) {
+        if (sourceBundle != null) {
+            CompositeBundle compositeBundle = new CompositeBundle();
+
+            if (sourceBundle.hasEntry()) {
+                SearchParamMatcher matcher = new SearchParamMatcher();
+                for (Bundle.BundleEntryComponent entry : sourceBundle.getEntry()) {
+                    if (matcher.match(searchCriteria, entry.getResource(), null).matched()) {
+                        compositeBundle.consume(entry.getResource());
+                    }
+                }
+            }
+
+            return compositeBundle.getBundle();
+        }
+        return null;
+    }
+
     public static <T extends IBaseResource> T getResourceFromBundleByReference(Bundle b, Class<T> aClass, String reference) {
         String referenceId = extractIdFromReference(reference);
 
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             Resource r = entry.getResource();
-            if (r.getClass().isAssignableFrom(aClass)) {
+            if (aClass.isInstance(r)) {
+//            if (r.getClass().isAssignableFrom(aClass)) {
                 if (r.hasId()) {
                     try {
                         if (Pattern.matches("(.*\\/)?" + referenceId + "(\\/.*)?", r.getId())) {
-                            return aClass.cast(entry.getResource());
+                            return aClass.cast(r);
                         }
                     } catch (NullPointerException npe) {
                         logger.error("caught " + npe.getClass().getName() + " matching reference '" + reference +
@@ -312,7 +373,8 @@ public class FhirUtil {
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (entry.hasResource()) {
                 Resource r = entry.getResource();
-                if (r.getClass().isAssignableFrom(aClass)) {
+                if (aClass.isInstance(r)) {
+//                if (r.getClass().isAssignableFrom(aClass)) {
                     try {
                         Method m = r.getClass().getMethod("getIdentifier");
                         List<Identifier> idList = (List<Identifier>) m.invoke(r);

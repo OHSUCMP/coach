@@ -1,8 +1,8 @@
 package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.model.GoalModel;
-import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.fhir.EncounterMatcher;
+import edu.ohsu.cmp.coach.model.fhir.IFHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
@@ -42,7 +42,7 @@ public class EHRService extends AbstractService {
     public Patient getPatient(String sessionId) {
         logger.info("getting Patient for session=" + sessionId);
         UserWorkspace workspace = workspaceService.get(sessionId);
-        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        IFHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.readByReference(fcc, Patient.class,
                 workspace.getVendorTransformer().getPatientLookup(fcc.getCredentials().getPatientId())
         );
@@ -51,7 +51,7 @@ public class EHRService extends AbstractService {
     public List<Encounter> getEncounters(String sessionId) {
         logger.info("getting Encounters for session=" + sessionId);
         UserWorkspace workspace = workspaceService.get(sessionId);
-        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        IFHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         Bundle bundle = fhirService.search(fcc,
                 workspace.getVendorTransformer().getEncounterQuery(fcc.getCredentials().getPatientId(), fcm.getEncounterLookbackPeriod()),
                 new Function<Resource, Boolean>() {
@@ -112,7 +112,7 @@ public class EHRService extends AbstractService {
     public Bundle getObservations(String sessionId, String code, String lookbackPeriod, @Nullable Integer limit) {
         logger.info("getting Observations for session=" + sessionId + " having code(s): " + code);
         UserWorkspace workspace = workspaceService.get(sessionId);
-        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        IFHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getObservationCodeQuery(fcc.getCredentials().getPatientId(), code, lookbackPeriod),
                 new Function<Resource, Boolean>() {
@@ -150,7 +150,7 @@ public class EHRService extends AbstractService {
     public Bundle getConditions(String sessionId, String category) {
         logger.info("getting " + category + " Conditions for session=" + sessionId);
         UserWorkspace workspace = workspaceService.get(sessionId);
-        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        IFHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getConditionQuery(fcc.getCredentials().getPatientId(), category),
                 new Function<Resource, Boolean>() {
@@ -187,7 +187,7 @@ public class EHRService extends AbstractService {
     public Bundle getGoals(String sessionId) {
         logger.info("getting Goals for session=" + sessionId);
         UserWorkspace workspace = workspaceService.get(sessionId);
-        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        IFHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getGoalQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {
@@ -221,7 +221,7 @@ public class EHRService extends AbstractService {
     public Bundle getMedicationStatements(String sessionId) {
         logger.info("getting MedicationStatements for session=" + sessionId);
         UserWorkspace workspace = workspaceService.get(sessionId);
-        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        IFHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getMedicationStatementQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {
@@ -243,7 +243,7 @@ public class EHRService extends AbstractService {
     public Bundle getMedicationRequests(String sessionId) {
         logger.info("getting MedicationRequests for session=" + sessionId);
         UserWorkspace workspace = workspaceService.get(sessionId);
-        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        IFHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         Bundle bundle = fhirService.search(fcc,
                 workspace.getVendorTransformer().getMedicationRequestQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {
@@ -304,7 +304,7 @@ public class EHRService extends AbstractService {
     public Bundle getCounselingProcedures(String sessionId) {
         logger.info("getting Counseling Procedures for session=" + sessionId);
         UserWorkspace workspace = workspaceService.get(sessionId);
-        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        IFHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getProcedureQuery(fcc.getCredentials().getPatientId()),
                 new Function<Resource, Boolean>() {

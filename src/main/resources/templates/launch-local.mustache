@@ -18,7 +18,7 @@
 
                 $.ajax({
                     method: "POST",
-                    url: "/prepare-detached-session",
+                    url: "/prepare-local-session",
                     data: data
                 }).done(function(cards, textStatus, jqXHR) {
                     if (jqXHR.status === 200) {
@@ -44,21 +44,19 @@
     </head>
     <body>
     <h1>Configure your local launch scenario</h1>
-    <form action="/prepare-detached-session">
-        Bundle:
-        <select id="bundleName">
-            <option value="">-- Select a Local Bundle --</option>
-            {{#bundleItems}}
-                <option value="{{.}}">{{.}}</option>
-            {{/bundleItems}}
-        </select>
-        Audience:
-        <select id="audience">
-            <option value="patient" selected>Patient</option>
-            <option value="careTeam">Care Team</option>
-        </select>
-        <input id="launchButton" type="button" value="Launch Detached" disabled />
-    </form>
+    Bundle:
+    <select id="bundleName">
+        <option value="">-- Select a Local Bundle --</option>
+        {{#bundleItems}}
+            <option value="{{.}}">{{.}}</option>
+        {{/bundleItems}}
+    </select>
+    Audience:
+    <select id="audience">
+        <option value="patient" selected>Patient</option>
+        <option value="careTeam">Care Team</option>
+    </select>
+    <input id="launchButton" type="button" value="Launch Detached" disabled />
     </body>
 {{/permitLoadLocal}}
 {{^permitLoadLocal}}

@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.model.fhir;
 
-public class FHIRCredentials {
+public class FHIRCredentials implements IFHIRCredentials {
     private String clientId;
     private String serverURL;
     private String bearerToken;
@@ -26,22 +26,27 @@ public class FHIRCredentials {
                 '}';
     }
 
+    @Override
     public String getClientId() {
         return clientId;
     }
 
+    @Override
     public String getServerURL() {
         return serverURL;
     }
 
+    @Override
     public String getBearerToken() {
         return bearerToken;
     }
 
+    @Override
     public String getPatientId() {
         return patientId;
     }
 
+    @Override
     public String getUserId() {
         return userId;
     }

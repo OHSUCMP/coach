@@ -19,7 +19,7 @@ import edu.ohsu.cmp.coach.model.cqfruler.CDSCard;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHookResponse;
 import edu.ohsu.cmp.coach.model.cqfruler.HookRequest;
-import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.model.fhir.IFHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
@@ -94,7 +94,7 @@ public class RecommendationService extends AbstractService {
         logger.debug("BEGIN getting cards for session=" + sessionId + ", hookId=" + hookId);
 
         UserWorkspace workspace = workspaceService.get(sessionId);
-        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        IFHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         Audience audience = workspace.getAudience();
 
         // force Default context when preparing resources for transmission to CQF-Ruler

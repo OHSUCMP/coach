@@ -6,7 +6,7 @@ import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.*;
-import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.model.fhir.IFHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.service.FHIRService;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -35,7 +35,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
         // in Epic, we need to post resources to flowsheets one at a time
 
-        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        IFHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
 
         Bundle responseBundle = new Bundle();
         responseBundle.setType(Bundle.BundleType.COLLECTION);

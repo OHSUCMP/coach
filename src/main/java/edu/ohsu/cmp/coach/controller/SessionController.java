@@ -2,13 +2,14 @@ package edu.ohsu.cmp.coach.controller;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
-import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
-import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.model.fhir.*;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.util.FileUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Patient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,14 +68,32 @@ public class SessionController extends BaseController {
         return "launch-patient";
     }
 
-    @PostMapping("prepare-detached-session")
-    public ResponseEntity<?> prepareDetachedSession(HttpSession session,
-                                                    @RequestParam("bundleName") String bundleName,
-                                                    @RequestParam("audience") String audience) throws IOException {
+    @PostMapping("prepare-local-session")
+    public ResponseEntity<?> prepareLocalSession(HttpSession session,
+                                                 @RequestParam("bundleName") String bundleName,
+                                                 @RequestParam("audience") String audienceStr) throws IOException, DataException, ConfigurationException {
 
-        logger.info("preparing local detached session for bundle=" + bundleName + ", audience=" + audience);
+        if ( ! permitLoadLocal ) {
+            throw new ConfigurationException("This operation is not currently supported.");
+        }
+
+        logger.info("preparing detached local session for bundle=" + bundleName + ", audience=" + audienceStr);
 
         Bundle bundle = readLocalBundle(bundleName);
+        Patient p = FhirUtil.getFirstResourceFromBundle(bundle, Patient.class);
+        if (p == null) {
+            throw new DataException("Bundle " + bundleName + " does not contain a Patient resource");
+        }
+        String patientId = p.getId();
+
+        LocalFHIRCredentials credentials = new LocalFHIRCredentials(patientId);
+        IFHIRCredentialsWithClient fcc = new LocalFHIRCredentialsWithClient(credentials, bundle);
+
+        Audience audience = Audience.fromTag(audienceStr);
+
+        String sessionId = session.getId();
+        workspaceService.init(sessionId, audience, fcc);
+        workspaceService.get(sessionId).populate();
 
         return ResponseEntity.ok("session configured successfully");
     }
