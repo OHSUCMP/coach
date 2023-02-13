@@ -5,24 +5,24 @@ import org.hl7.fhir.r4.model.Quantity;
 import java.math.BigDecimal;
 
 public class QuantityModel {
-    private BigDecimal value;
+    private Integer value;
     private String unit;
 
     public QuantityModel(Quantity q, String unit) {
-        this.value = q.getValue();
+        this.value = (int) Math.round(q.getValue().doubleValue());
         this.unit = q.hasUnit() ? q.getUnit() : unit;
     }
 
     public QuantityModel(Integer value, String unit) {
-        this.value = new BigDecimal(value);
+        this.value = value;
         this.unit = unit;
     }
 
-    public BigDecimal getValue() {
+    public Integer getValue() {
         return value;
     }
 
-    public void setValue(BigDecimal value) {
+    public void setValue(Integer value) {
         this.value = value;
     }
 
@@ -36,6 +36,6 @@ public class QuantityModel {
 
     @Override
     public String toString() {
-        return value.toPlainString() + unit;
+        return value + unit;
     }
 }

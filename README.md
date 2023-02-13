@@ -48,4 +48,15 @@ As described above, you can override the application's configuration by making a
 
 ### Logging
 
-In addition to being sent to the console, logs from the COACH container are persisted to `./docker_data/coach/logs`. If this isn't desirable, you can override the logging configuration by mounting a `logback.xml` file into the container at `/opt/app/config/logback.xml`. You can find example configuration in [logback-console-only.xml](./docker-image-files/logback-console-only.xml) and comments in [docker-compose.override.yml](./docker-compose.override.yml).
+Logs from the COACH container are sent to the console and are also persisted to `./docker_data/coach/logs`. On Linux, you will need to ensure that this directory can be written to by the container's UID and GID.
+
+```
+mkdir -p ./docker_data/coach/logs
+chown 9999:9999 ./docker_data/coach/logs
+chmod -R 755 ./docker_data/coach/logs
+```
+
+If for some reason you cannot allow the container user to write to the file system, you can create a custom container image that overrides the user ID and group ID used to run the application.
+
+If you prefer not to log to files, you can override the logging configuration by mounting a `logback.xml` file into the container at `/opt/app/config/logback.xml`. You can find example configuration in [logback-console-only.xml](./docker-image-files/logback-console-only.xml) and comments in [docker-compose.override.yml](./docker-compose.override.yml).
+
