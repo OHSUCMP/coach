@@ -260,12 +260,13 @@ public class EHRService extends AbstractService {
                                 return false;
                             }
 
-                            if (mr.getIntent() != MedicationRequest.MedicationRequestIntent.ORDER) {
+                            if (mr.getIntent() != MedicationRequest.MedicationRequestIntent.ORDER &&
+                                    mr.getIntent() != MedicationRequest.MedicationRequestIntent.PLAN) {
                                 logger.debug("removing MedicationRequest " + mr.getId() + " - invalid intent");
                                 return false;
                             }
 
-                            if (mr.hasDoNotPerform() && !mr.getDoNotPerform()) {
+                            if (mr.hasDoNotPerform() && mr.getDoNotPerform()) {
                                 logger.debug("removing MedicationRequest " + mr.getId() + " - doNotPerform");
                                 return false;
                             }
