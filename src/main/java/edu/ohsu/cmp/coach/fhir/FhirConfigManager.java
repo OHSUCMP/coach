@@ -15,8 +15,8 @@ import java.util.List;
 @PropertySource("${fhirconfig.file}")
 public class FhirConfigManager {
     private static final String ENCOUNTER_LOOKBACK_PERIOD = "2y";
-    private static final Coding BP_CODING = new Coding("http://loinc.org", "55284-4", "Systolic blood pressure");
-    private static final Coding BP_SYSTOLIC_CODING = new Coding("http://loinc.org", "8480-6", "Blood pressure systolic and diastolic");
+    private static final Coding BP_CODING = new Coding("http://loinc.org", "55284-4", "Blood pressure systolic and diastolic");
+    private static final Coding BP_SYSTOLIC_CODING = new Coding("http://loinc.org", "8480-6", "Systolic blood pressure");
     private static final Coding BP_DIASTOLIC_CODING = new Coding("http://loinc.org", "8462-4", "Diastolic blood pressure");
     private static final String BP_VALUE_CODE = "mm[Hg]";
     private static final String BP_VALUE_SYSTEM = "http://unitsofmeasure.org";
