@@ -110,7 +110,7 @@ public class GoalService extends AbstractService {
             return bpGoal;
 
         } else {
-            return new GoalModel(create(sessionId, new MyGoal(fcm.getBpCoding(),
+            return new GoalModel(create(sessionId, new MyGoal(fcm.getBpPanelCommonCoding(),
                     GoalModel.BP_GOAL_DEFAULT_SYSTOLIC,
                     GoalModel.BP_GOAL_DEFAULT_DIASTOLIC
             )));

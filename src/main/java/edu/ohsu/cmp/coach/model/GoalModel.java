@@ -60,7 +60,7 @@ public class GoalModel implements Comparable<GoalModel> {
 //        this.patId = null; // EHR-based
         this.extGoalId = g.getId();
 
-        Coding bpCoding = fcm.getBpCoding();
+        Coding bpCoding = fcm.getBpPanelCommonCoding();
         this.referenceSystem = bpCoding.getSystem();
         this.referenceCode = bpCoding.getCode();
         this.referenceDisplay = bpCoding.getDisplay();
@@ -68,10 +68,10 @@ public class GoalModel implements Comparable<GoalModel> {
         this.goalText = g.getDescription().getText();
 
         for (Goal.GoalTargetComponent gtc : g.getTarget()) {
-            if (FhirUtil.hasCoding(gtc.getMeasure(), fcm.getBpSystolicCoding())) {
+            if (FhirUtil.hasCoding(gtc.getMeasure(), fcm.getBpSystolicCommonCoding())) {
                 this.systolicTarget = gtc.getDetailQuantity().getValue().intValue();
 
-            } else if (FhirUtil.hasCoding(gtc.getMeasure(), fcm.getBpDiastolicCoding())) {
+            } else if (FhirUtil.hasCoding(gtc.getMeasure(), fcm.getBpDiastolicCommonCoding())) {
                 this.diastolicTarget = gtc.getDetailQuantity().getValue().intValue();
             }
         }

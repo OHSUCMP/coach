@@ -115,11 +115,11 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             // where LOINC codes are prohibited
 
             Observation systolicObservation = model.getSourceSystolicObservation().copy();
-            appendIfMissing(systolicObservation, fcm.getBpSystolicCoding());
+            appendIfMissing(systolicObservation, fcm.getBpSystolicCommonCoding());
             FhirUtil.appendResourceToBundle(bundle,systolicObservation);
 
             Observation diastolicObservation = model.getSourceDiastolicObservation().copy();
-            appendIfMissing(diastolicObservation, fcm.getBpDiastolicCoding());
+            appendIfMissing(diastolicObservation, fcm.getBpDiastolicCommonCoding());
             FhirUtil.appendResourceToBundle(bundle, diastolicObservation);
 
             if (model.getSourceEncounter() != null) {
@@ -381,29 +381,29 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         FhirUtil.addHomeSettingExtension(o);
 
         if (model.getSystolic() != null && model.getDiastolic() == null) {            // systolic only
-            o.getCode().addCoding(fcm.getBpSystolicCoding());
+            o.getCode().addCoding(fcm.getBpSystolicCommonCoding());
             o.setValue(new Quantity());
             setBPValue(o.getValueQuantity(), model.getSystolic(), fcm);
 
         } else if (model.getSystolic() == null && model.getDiastolic() != null) {     // diastolic only
-            o.getCode().addCoding(fcm.getBpDiastolicCoding());
+            o.getCode().addCoding(fcm.getBpDiastolicCommonCoding());
             o.setValue(new Quantity());
             setBPValue(o.getValueQuantity(), model.getDiastolic(), fcm);
 
         } else if (model.getSystolic() != null && model.getDiastolic() != null) {     // both systolic and diastolic
-            o.getCode().addCoding(fcm.getBpCoding());
+            o.getCode().addCoding(fcm.getBpPanelCommonCoding());
             for (Coding c : fcm.getBpHomeCodings()) {
                 o.getCode().addCoding(c);
             }
 
             Observation.ObservationComponentComponent occSystolic = new Observation.ObservationComponentComponent();
-            occSystolic.getCode().addCoding(fcm.getBpSystolicCoding());
+            occSystolic.getCode().addCoding(fcm.getBpSystolicCommonCoding());
             occSystolic.setValue(new Quantity());
             setBPValue(occSystolic.getValueQuantity(), model.getSystolic(), fcm);
             o.getComponent().add(occSystolic);
 
             Observation.ObservationComponentComponent occDiastolic = new Observation.ObservationComponentComponent();
-            occDiastolic.getCode().addCoding(fcm.getBpDiastolicCoding());
+            occDiastolic.getCode().addCoding(fcm.getBpDiastolicCommonCoding());
             occDiastolic.setValue(new Quantity());
             setBPValue(occDiastolic.getValueQuantity(), model.getDiastolic(), fcm);
             o.getComponent().add(occDiastolic);
@@ -454,7 +454,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
-        o.getCode().addCoding(fcm.getPulseCoding());
+        o.getCode().addCoding(fcm.getPulseCommonCoding());
 
         FhirUtil.addHomeSettingExtension(o);
 

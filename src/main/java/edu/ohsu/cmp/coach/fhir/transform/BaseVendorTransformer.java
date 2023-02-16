@@ -242,8 +242,8 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         FhirConfigManager fcm = workspace.getFhirConfigManager();
 
         List<Coding> bpPanelCodings = fcm.getBpPanelCodings();
-        List<Coding> systolicCodings = fcm.getSystolicCodings();
-        List<Coding> diastolicCodings = fcm.getDiastolicCodings();
+        List<Coding> systolicCodings = fcm.getBpSystolicCodings();
+        List<Coding> diastolicCodings = fcm.getBpDiastolicCodings();
 
         List<BloodPressureModel> list = new ArrayList<>();
 
@@ -599,7 +599,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 
         if (model.isBPGoal()) {
             Goal.GoalTargetComponent systolic = new Goal.GoalTargetComponent();
-            systolic.getMeasure().addCoding(fcm.getBpSystolicCoding());
+            systolic.getMeasure().addCoding(fcm.getBpSystolicCommonCoding());
             systolic.setDetail(new Quantity());
             systolic.getDetailQuantity().setCode(fcm.getBpValueCode());
             systolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
@@ -608,7 +608,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
             g.getTarget().add(systolic);
 
             Goal.GoalTargetComponent diastolic = new Goal.GoalTargetComponent();
-            diastolic.getMeasure().addCoding(fcm.getBpDiastolicCoding());
+            diastolic.getMeasure().addCoding(fcm.getBpDiastolicCommonCoding());
             diastolic.setDetail(new Quantity());
             diastolic.getDetailQuantity().setCode(fcm.getBpValueCode());
             diastolic.getDetailQuantity().setSystem(fcm.getBpValueSystem());
