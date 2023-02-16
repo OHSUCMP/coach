@@ -338,7 +338,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
 
         e.setStatus(Encounter.EncounterStatus.FINISHED);
 
-        e.setClass_(fcm.getEncounterClassHHCoding());
+        e.setClass_(fcm.getEncounterClassHomeCoding());
 //        e.getClass_().setSystem(fcm.getEncounterClassSystem())
 //                .setCode(fcm.getEncounterClassHHCode())
 //                .setDisplay(fcm.getEncounterClassHHDisplay());

@@ -42,16 +42,16 @@ public class FhirConfigManager {
     @Autowired
     private Environment env;
 
-    private Coding encounterClassAmbCoding = null;
-    private Coding encounterClassHHCoding = null;
-    private List<Coding> encounterAmbClassInCodings = null;
-    private List<Coding> encounterAmbClassNotInCodings = null;
-    private List<Coding> encounterAmbTypeInCodings = null;
-    private List<Coding> encounterAmbTypeNotInCodings = null;
-    private List<Coding> encounterHHClassInCodings = null;
-    private List<Coding> encounterHHClassNotInCodings = null;
-    private List<Coding> encounterHHTypeInCodings = null;
-    private List<Coding> encounterHHTypeNotInCodings = null;
+    private Coding encounterClassOfficeCoding = null;
+    private Coding encounterClassHomeCoding = null;
+    private List<Coding> encounterOfficeClassInCodings = null;
+    private List<Coding> encounterOfficeClassNotInCodings = null;
+    private List<Coding> encounterOfficeTypeInCodings = null;
+    private List<Coding> encounterOfficeTypeNotInCodings = null;
+    private List<Coding> encounterHomeClassInCodings = null;
+    private List<Coding> encounterHomeClassNotInCodings = null;
+    private List<Coding> encounterHomeTypeInCodings = null;
+    private List<Coding> encounterHomeTypeNotInCodings = null;
 
     private List<Coding> bpOfficeCodings = null;
     private List<Coding> bpHomeCodings = null;
@@ -67,74 +67,74 @@ public class FhirConfigManager {
     @Value("${protocol.answer.no}")         private String protocolAnswerNo;
 
 
-    public Coding getEncounterClassAmbCoding() {   // ambulatory class to attach to crafted office visit encounters
-        if (encounterClassAmbCoding == null) {
-            encounterClassAmbCoding = buildCoding(env.getProperty("encounter.class.amb.coding"));
+    public Coding getEncounterClassOfficeCoding() {   // ambulatory class to attach to crafted office visit encounters
+        if (encounterClassOfficeCoding == null) {
+            encounterClassOfficeCoding = buildCoding(env.getProperty("encounter.class.office.coding"));
         }
-        return encounterClassAmbCoding;
+        return encounterClassOfficeCoding;
     }
 
-    public Coding getEncounterClassHHCoding() {   // ambulatory class to attach to crafted home-health encounters
-        if (encounterClassHHCoding == null) {
-            encounterClassHHCoding = buildCoding(env.getProperty("encounter.class.hh.coding"));
+    public Coding getEncounterClassHomeCoding() {   // ambulatory class to attach to crafted home encounters
+        if (encounterClassHomeCoding == null) {
+            encounterClassHomeCoding = buildCoding(env.getProperty("encounter.class.home.coding"));
         }
-        return encounterClassHHCoding;
+        return encounterClassHomeCoding;
     }
 
-    public List<Coding> getEncounterAmbClassInCodings() {  // for matching incoming ambulatory Encounters
-        if (encounterAmbClassInCodings == null) {
-            encounterAmbClassInCodings = buildCodings(env.getProperty("encounter.amb.class.in.codings"));
+    public List<Coding> getEncounterOfficeClassInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterOfficeClassInCodings == null) {
+            encounterOfficeClassInCodings = buildCodings(env.getProperty("encounter.office.class.in.codings"));
         }
-        return encounterAmbClassInCodings;
+        return encounterOfficeClassInCodings;
     }
 
-    public List<Coding> getEncounterAmbClassNotInCodings() {  // for matching incoming ambulatory Encounters
-        if (encounterAmbClassNotInCodings == null) {
-            encounterAmbClassNotInCodings = buildCodings(env.getProperty("encounter.amb.class.not-in.codings"));
+    public List<Coding> getEncounterOfficeClassNotInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterOfficeClassNotInCodings == null) {
+            encounterOfficeClassNotInCodings = buildCodings(env.getProperty("encounter.office.class.not-in.codings"));
         }
-        return encounterAmbClassNotInCodings;
+        return encounterOfficeClassNotInCodings;
     }
 
-    public List<Coding> getEncounterAmbTypeInCodings() {  // for matching incoming ambulatory Encounters
-        if (encounterAmbTypeInCodings == null) {
-            encounterAmbTypeInCodings = buildCodings(env.getProperty("encounter.amb.type.in.codings"));
+    public List<Coding> getEncounterOfficeTypeInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterOfficeTypeInCodings == null) {
+            encounterOfficeTypeInCodings = buildCodings(env.getProperty("encounter.office.type.in.codings"));
         }
-        return encounterAmbTypeInCodings;
+        return encounterOfficeTypeInCodings;
     }
 
-    public List<Coding> getEncounterAmbTypeNotInCodings() {  // for matching incoming ambulatory Encounters
-        if (encounterAmbTypeNotInCodings == null) {
-            encounterAmbTypeNotInCodings = buildCodings(env.getProperty("encounter.amb.type.not-in.codings"));
+    public List<Coding> getEncounterOfficeTypeNotInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterOfficeTypeNotInCodings == null) {
+            encounterOfficeTypeNotInCodings = buildCodings(env.getProperty("encounter.office.type.not-in.codings"));
         }
-        return encounterAmbTypeNotInCodings;
+        return encounterOfficeTypeNotInCodings;
     }
 
-    public List<Coding> getEncounterHHClassInCodings() {  // for matching incoming home-health Encounters
-        if (encounterHHClassInCodings == null) {
-            encounterHHClassInCodings = buildCodings(env.getProperty("encounter.hh.class.in.codings"));
+    public List<Coding> getEncounterHomeClassInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHomeClassInCodings == null) {
+            encounterHomeClassInCodings = buildCodings(env.getProperty("encounter.home.class.in.codings"));
         }
-        return encounterHHClassInCodings;
+        return encounterHomeClassInCodings;
     }
 
-    public List<Coding> getEncounterHHClassNotInCodings() {  // for matching incoming home-health Encounters
-        if (encounterHHClassNotInCodings == null) {
-            encounterHHClassNotInCodings = buildCodings(env.getProperty("encounter.hh.class.not-in.codings"));
+    public List<Coding> getEncounterHomeClassNotInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHomeClassNotInCodings == null) {
+            encounterHomeClassNotInCodings = buildCodings(env.getProperty("encounter.home.class.not-in.codings"));
         }
-        return encounterHHClassNotInCodings;
+        return encounterHomeClassNotInCodings;
     }
 
-    public List<Coding> getEncounterHHTypeInCodings() {  // for matching incoming home-health Encounters
-        if (encounterHHTypeInCodings == null) {
-            encounterHHTypeInCodings = buildCodings(env.getProperty("encounter.hh.type.in.codings"));
+    public List<Coding> getEncounterHomeTypeInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHomeTypeInCodings == null) {
+            encounterHomeTypeInCodings = buildCodings(env.getProperty("encounter.home.type.in.codings"));
         }
-        return encounterHHTypeInCodings;
+        return encounterHomeTypeInCodings;
     }
 
-    public List<Coding> getEncounterHHTypeNotInCodings() {  // for matching incoming home-health Encounters
-        if (encounterHHTypeNotInCodings == null) {
-            encounterHHTypeNotInCodings = buildCodings(env.getProperty("encounter.hh.type.not-in.codings"));
+    public List<Coding> getEncounterHomeTypeNotInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHomeTypeNotInCodings == null) {
+            encounterHomeTypeNotInCodings = buildCodings(env.getProperty("encounter.home.type.not-in.codings"));
         }
-        return encounterHHTypeNotInCodings;
+        return encounterHomeTypeNotInCodings;
     }
 
     public String getEncounterLookbackPeriod() {

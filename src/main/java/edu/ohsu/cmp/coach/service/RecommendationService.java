@@ -324,7 +324,7 @@ public class RecommendationService extends AbstractService {
 
         e.setId("encounter-" + uuid);
         e.setStatus(Encounter.EncounterStatus.FINISHED);
-        e.setClass_(fcm.getEncounterClassAmbCoding());
+        e.setClass_(fcm.getEncounterClassOfficeCoding());
 //        e.getClass_().setSystem(fcm.getEncounterClassSystem())
 //                .setCode(fcm.getEncounterClassAMBCode())
 //                .setDisplay(fcm.getEncounterClassAMBDisplay());

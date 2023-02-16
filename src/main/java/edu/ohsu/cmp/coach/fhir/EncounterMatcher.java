@@ -26,15 +26,15 @@ public class EncounterMatcher {
         this.doLogging = doLogging;
     }
 
-    public boolean isAmbEncounter(Encounter e) {
+    public boolean isOfficeEncounter(Encounter e) {
         StringBuilder sb = doLogging && logger.isDebugEnabled() ? new StringBuilder() : null;
-        if (sb != null) sb.append("isAmb?(").append(e.getId()).append("): ");
+        if (sb != null) sb.append("isOffice?(").append(e.getId()).append("): ");
 
         boolean rval = e != null && encounterMatches(sb, e,
-                fcm.getEncounterAmbClassInCodings(),
-                fcm.getEncounterAmbClassNotInCodings(),
-                fcm.getEncounterAmbTypeInCodings(),
-                fcm.getEncounterAmbTypeNotInCodings()
+                fcm.getEncounterOfficeClassInCodings(),
+                fcm.getEncounterOfficeClassNotInCodings(),
+                fcm.getEncounterOfficeTypeInCodings(),
+                fcm.getEncounterOfficeTypeNotInCodings()
         );
 
         if (sb != null) logger.debug(sb.toString());
@@ -42,15 +42,15 @@ public class EncounterMatcher {
         return rval;
     }
 
-    public boolean isHomeHealthEncounter(Encounter e) {
+    public boolean isHomeEncounter(Encounter e) {
         StringBuilder sb = doLogging && logger.isDebugEnabled() ? new StringBuilder() : null;
-        if (sb != null) sb.append("isHH?(").append(e.getId()).append("): ");
+        if (sb != null) sb.append("isHome?(").append(e.getId()).append("): ");
 
         boolean rval = e != null && encounterMatches(sb, e,
-                fcm.getEncounterHHClassInCodings(),
-                fcm.getEncounterHHClassNotInCodings(),
-                fcm.getEncounterHHTypeInCodings(),
-                fcm.getEncounterHHTypeNotInCodings()
+                fcm.getEncounterHomeClassInCodings(),
+                fcm.getEncounterHomeClassNotInCodings(),
+                fcm.getEncounterHomeTypeInCodings(),
+                fcm.getEncounterHomeTypeNotInCodings()
         );
 
         if (sb != null) logger.debug(sb.toString());

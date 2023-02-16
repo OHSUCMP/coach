@@ -16,8 +16,8 @@ public class ObservationUtil {
         ObservationSource source = null;
 
         EncounterMatcher matcher = new EncounterMatcher(fcm);
-        if (matcher.isAmbEncounter(encounter))              source = ObservationSource.OFFICE;
-        else if (matcher.isHomeHealthEncounter(encounter))  source = ObservationSource.HOME;
+        if      (matcher.isOfficeEncounter(encounter))  source = ObservationSource.OFFICE;
+        else if (matcher.isHomeEncounter(encounter))    source = ObservationSource.HOME;
 
         return source != null ?
                 source :
