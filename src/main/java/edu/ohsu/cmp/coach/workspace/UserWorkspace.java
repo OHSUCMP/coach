@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.workspace;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
@@ -224,7 +225,12 @@ public class UserWorkspace {
                 logger.info("BEGIN build Protocol Observations for session=" + sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
-                Bundle bundle = svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getProtocolCoding()), fcm.getProtocolLookbackPeriod(),null);
+                Bundle bundle = null;
+                try {
+                    bundle = svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getProtocolCoding()), fcm.getProtocolLookbackPeriod(),null);
+                } catch (ConfigurationException e) {
+                    throw new RuntimeException(e);
+                }
 
                 int size = bundle.hasEntry() ? bundle.getEntry().size() : 0;
                 logger.info("DONE building Protocol Observations for session=" + sessionId +
@@ -253,6 +259,8 @@ public class UserWorkspace {
 
                 } catch (DataException e) {
                     throw new RuntimeException(e);
+                } catch (ConfigurationException e) {
+                    throw new RuntimeException(e);
                 }
             }
         });
@@ -275,6 +283,8 @@ public class UserWorkspace {
                     return list;
 
                 } catch (DataException e) {
+                    throw new RuntimeException(e);
+                } catch (ConfigurationException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -385,7 +395,11 @@ public class UserWorkspace {
                 codings.add(fcm.getBmiCoding());
                 codings.add(fcm.getSmokingCoding());
                 codings.add(fcm.getDrinksCoding());
-                compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(codings), fcm.getBmiLookbackPeriod(),null));
+                try {
+                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(codings), fcm.getBmiLookbackPeriod(),null));
+                } catch (ConfigurationException e) {
+                    throw new RuntimeException(e);
+                }
 
                 compositeBundle.consume(svc.getCounselingProcedures(sessionId));
 

@@ -2,12 +2,14 @@ package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.entity.Concept;
 import edu.ohsu.cmp.coach.entity.ValueSet;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.MyHttpException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.xml.SimpleXMLDOM;
 import edu.ohsu.cmp.coach.model.xml.SimpleXMLElement;
+import edu.ohsu.cmp.coach.util.UUIDUtil;
 import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +50,15 @@ public class VSACService {
 
     private String serviceTicketURI = null;
 
-    public ValueSet getValueSet(String oid) throws IOException, ParserConfigurationException, SAXException, ParseException, DataException {
+    public boolean isEnabled() {
+        return UUIDUtil.isUUID(apiKey);
+    }
+
+    public ValueSet getValueSet(String oid) throws IOException, ParserConfigurationException, SAXException, ParseException, DataException, ConfigurationException {
+        if ( ! isEnabled() ) {
+            throw new ConfigurationException("VSAC API key is not a valid UUID");
+        }
+
         String xml = getRawValueSet(oid);
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

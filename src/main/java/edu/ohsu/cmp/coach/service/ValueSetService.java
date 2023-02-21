@@ -30,6 +30,11 @@ public class ValueSetService extends AbstractService {
     }
 
     public void refresh(String oid) {
+        if ( ! vsacService.isEnabled() ) {
+            logger.warn("VSAC Service is currently disabled - not refreshing oid=" + oid);
+            return;
+        }
+
         try {
             logger.info("acquiring ValueSet with oid=" + oid + " from VSAC");
             ValueSet fresh = vsacService.getValueSet(oid);

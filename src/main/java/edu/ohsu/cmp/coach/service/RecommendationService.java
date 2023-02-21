@@ -25,6 +25,7 @@ import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
+import edu.ohsu.cmp.coach.util.UUIDUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
@@ -264,7 +265,7 @@ public class RecommendationService extends AbstractService {
 
         List<Counseling> counselingList = counselingService.getCounselingList(sessionId);
         for (Counseling c : counselingList) {
-            String uuid = UUID.randomUUID().toString();
+            String uuid = UUIDUtil.getRandomUUID();
 
             Encounter e = buildEncounter(uuid, patientId, c.getCreatedDate());
             bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);

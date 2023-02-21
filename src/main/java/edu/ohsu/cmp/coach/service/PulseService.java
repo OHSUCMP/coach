@@ -29,7 +29,7 @@ public class PulseService extends AbstractService {
     @Autowired
     private HomePulseReadingService hprService;
 
-    public List<PulseModel> buildRemotePulseList(String sessionId) throws DataException {
+    public List<PulseModel> buildRemotePulseList(String sessionId) throws DataException, ConfigurationException {
         CompositeBundle compositeBundle = new CompositeBundle();
         compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getPulseCodings()), fcm.getPulseLookbackPeriod(),null));
         compositeBundle.consume(workspaceService.get(sessionId).getProtocolObservations());

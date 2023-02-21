@@ -29,7 +29,7 @@ public class BloodPressureService extends AbstractService {
     @Autowired
     private HomeBloodPressureReadingService hbprService;
 
-    public List<BloodPressureModel> buildRemoteBloodPressureList(String sessionId) throws DataException {
+    public List<BloodPressureModel> buildRemoteBloodPressureList(String sessionId) throws DataException, ConfigurationException {
         CompositeBundle compositeBundle = new CompositeBundle();
 
         List<Coding> codings = new ArrayList<>();

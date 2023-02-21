@@ -142,7 +142,8 @@ public class FHIRService {
                     .returnBundle(Bundle.class)
                     .execute();
 
-            logger.info("search: got " + bundle.getTotal() + " records for query: " + fhirQuery);
+            // bundle.getTotal() may be null and if so it will return 0, even if there are many entries.  Cerner does this
+            logger.info("search: got Bundle with total=" + bundle.getTotal() + ", entries=" + bundle.getEntry().size() + " for query: " + fhirQuery);
             if (logger.isDebugEnabled()) {
                 logger.debug("bundle = " + FhirUtil.toJson(bundle));
             }
