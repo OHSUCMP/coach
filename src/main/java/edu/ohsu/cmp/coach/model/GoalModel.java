@@ -77,9 +77,13 @@ public class GoalModel implements Comparable<GoalModel> {
         }
 
         this.targetDate = null; // EHR-based
-        this.createdDate = g.hasStartDateType() ?
-                g.getStartDateType().getValue() :
-                null;
+        // Fall back on status date if start date doesn't exist. If neither exist, return null
+        this.createdDate = null;
+        if (g.hasStartDateType()) {
+            this.createdDate = g.getStartDateType().getValue();
+        } else if (g.getStatusDate() != null) {
+            this.createdDate = g.getStatusDate();
+        }
 
         history = new TreeSet<>();
     }
@@ -153,7 +157,7 @@ public class GoalModel implements Comparable<GoalModel> {
             Date d1 = getCreatedDate();
             Date d2 = o.getCreatedDate();
             if      (d1 == null && d2 == null)  return 0;
-            else if (d1 != null && d2 != null)  return d1.compareTo(d2);
+            else if (d1 != null && d2 != null)  return d2.compareTo(d1);
             else if (d1 != null)                return -1;
             else                                return 1;
         }
@@ -195,6 +199,10 @@ public class GoalModel implements Comparable<GoalModel> {
         return status != null ?
                 status.getLabel() :
                 null;
+    }
+
+    public Date getStartDate() {
+        return getCreatedDate();
     }
 
     public Date getStatusDate() {
