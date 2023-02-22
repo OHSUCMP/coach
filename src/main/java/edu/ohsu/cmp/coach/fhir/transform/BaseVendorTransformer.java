@@ -590,6 +590,8 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 .setSystem("http://terminology.hl7.org/CodeSystem/goal-achievement");
         g.getCategoryFirstRep().addCoding().setCode(model.getReferenceCode()).setSystem(model.getReferenceSystem());
         g.getDescription().setText(model.getGoalText());
+        DateType x = new DateType(model.getStartDate());
+        g.setStart(x);
         g.setStatusDate(model.getStatusDate());
         g.getTarget().add(new Goal.GoalTargetComponent()
                 .setDue(new DateType().setValue(model.getTargetDate())));
