@@ -113,7 +113,7 @@ function getBPSet(bps) {
         }
         acc.bpset.push(bp);
         if (bp.source === BPSource.Home /* || bp.source === BPSource.HomeBluetooth */ ) {
-            acc.score += 0.667;
+            acc.score += 0.334;
         } else {
             // Anything explicitly not home is considered OFFICE and given 1 point
             acc.score += 1.0;
@@ -308,9 +308,9 @@ function toLOESSData2(data, type) {
         bandwidth = 0.4;
     }
 
-    console.log("Starting bandwidth: " + bandwidth);
-    console.log("Original points: ");
-    console.log(map);
+    // console.log("Starting bandwidth: " + bandwidth);
+    // console.log("Original points: ");
+    // console.log(map);
     const vals = map.map(m => m[1])
     const minVal = Math.min(...vals)
     const maxVal = Math.max(...vals)
@@ -338,9 +338,9 @@ function toLOESSData2(data, type) {
             if (filtered.length < loess_points.length) {
                 bandwidth = bandwidth + 0.1;
             } else {
-                console.log("Final bandwidth: " + bandwidth);
-                console.log("Regression line: ");
-                console.log(loess_points);
+                // console.log("Final bandwidth: " + bandwidth);
+                // console.log("Regression line: ");
+                // console.log(loess_points);
                 return filtered;
             }
         } catch (error) {
@@ -350,7 +350,7 @@ function toLOESSData2(data, type) {
 
 
     // Fall back on a direct plot
-    console.log("Regression failed. Falling back on direct plot.")
+    // console.log("Regression failed. Falling back on direct plot.")
     return map;
 
 }
