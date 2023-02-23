@@ -1,13 +1,10 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.exception.ConfigurationException;
-import edu.ohsu.cmp.coach.exception.ScopeException;
+import edu.ohsu.cmp.coach.exception.*;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.entity.HomeBloodPressureReading;
-import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.exception.MethodNotImplementedException;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
@@ -49,7 +46,10 @@ public class BloodPressureService extends AbstractService {
     }
 
     public List<BloodPressureModel> getBloodPressureReadings(String sessionId) throws DataException {
-        List<BloodPressureModel> remoteList = userWorkspaceService.get(sessionId).getRemoteBloodPressures();
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+
+        // add remote BPs first
+        List<BloodPressureModel> remoteList = workspace.getRemoteBloodPressures();
         Set<String> remoteBPKeySet = new HashSet<>();
         for (BloodPressureModel bpm : remoteList) {
             String key = bpm.getLogicalEqualityKey();
@@ -57,6 +57,7 @@ public class BloodPressureService extends AbstractService {
             remoteBPKeySet.add(key);
         }
 
+        // now add any locally-stored BPs that do *not* logically match a BP already retrieved remotely
         List<BloodPressureModel> list = new ArrayList<>();
         list.addAll(remoteList);
         for (BloodPressureModel bpm : buildLocalBloodPressureReadings(sessionId)) {
@@ -68,6 +69,14 @@ public class BloodPressureService extends AbstractService {
                 logger.debug("adding local BP with key: " + key);
                 list.add(bpm);
             }
+        }
+
+        // finally, integrate any Omron BPs (if the user has authenticated)
+        try {
+            list.addAll(workspace.getOmronBloodPressures());
+
+        } catch (NotAuthenticatedException nae) {
+            logger.warn("caught " + nae.getClass().getName() + " - " + nae.getMessage());
         }
 
         Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1);

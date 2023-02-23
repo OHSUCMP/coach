@@ -565,14 +565,16 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 
         o.setEffective(new DateTimeType(model.getReadingDate()));
 
-        String answerValue = model.getFollowedProtocol() ?
-                fcm.getProtocolAnswerYes() :
-                fcm.getProtocolAnswerNo();
+        if (model.getFollowedProtocol() != null) {
+            String answerValue = model.getFollowedProtocol() ?
+                    fcm.getProtocolAnswerYes() :
+                    fcm.getProtocolAnswerNo();
 
-        o.setValue(new CodeableConcept());
-        o.getValueCodeableConcept()
-                .setText(answerValue)
-                .addCoding(fcm.getProtocolAnswerCoding());
+            o.setValue(new CodeableConcept());
+            o.getValueCodeableConcept()
+                    .setText(answerValue)
+                    .addCoding(fcm.getProtocolAnswerCoding());
+        }
 
         return o;
     }

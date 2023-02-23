@@ -10,6 +10,7 @@ import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.model.omron.OmronVitals;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
@@ -40,6 +41,7 @@ public class UserWorkspace {
     private static final String CACHE_ENCOUNTER = "Encounter";
     private static final String CACHE_PROTOCOL = "Protocol";
     private static final String CACHE_BP = "BP";
+    private static final String CACHE_OMRON_VITALS = "OmronVitals";
     private static final String CACHE_PULSE = "Pulse";
     private static final String CACHE_ADVERSE_EVENT = "AdverseEvent";
     private static final String CACHE_GOAL = "Goal";
@@ -58,11 +60,12 @@ public class UserWorkspace {
     private VendorTransformer vendorTransformer = null;
 
     private final Cache cache;
+    private final Cache omronCache;
     private final Cache cardCache;
     private final Cache<String, Bundle> bundleCache;
     private final ExecutorService executorService;
 
-    private MyOmronTokenData omronTokenData;
+    private MyOmronTokenData omronTokenData = null;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
                             FHIRCredentialsWithClient fhirCredentialsWithClient,
@@ -80,6 +83,10 @@ public class UserWorkspace {
         );
 
         cache = Caffeine.newBuilder()
+                .expireAfterWrite(6, TimeUnit.HOURS)
+                .build();
+
+        omronCache = Caffeine.newBuilder()
                 .expireAfterWrite(6, TimeUnit.HOURS)
                 .build();
 
@@ -151,6 +158,7 @@ public class UserWorkspace {
 
     public void clearCaches() {
         cache.invalidateAll();
+        omronCache.invalidateAll();
         cardCache.invalidateAll();
         bundleCache.invalidateAll();
     }
@@ -158,6 +166,7 @@ public class UserWorkspace {
     public void shutdown() {
         clearCaches();
         cache.cleanUp();
+        omronCache.cleanUp();
         cardCache.cleanUp();
         bundleCache.cleanUp();
     }
@@ -504,5 +513,50 @@ public class UserWorkspace {
 
     public void setOmronTokenData(MyOmronTokenData omronTokenData) {
         this.omronTokenData = omronTokenData;
+    }
+
+    public List<OmronVitals> getOmronVitals() {
+        return (List<OmronVitals>) omronCache.get(CACHE_OMRON_VITALS, new Function<String, List<OmronVitals>>() {
+            @Override
+            public List<OmronVitals> apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Omron Vitals for session=" + sessionId);
+
+                OmronService svc = ctx.getBean(OmronService.class);
+                try {
+                    List<OmronVitals> list = svc.buildVitals(sessionId);
+
+                    logger.info("DONE building Omron Vitals for session=" + sessionId +
+                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                    return list;
+
+                } catch (EncoderException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+    }
+
+    public void clearOmronCache() {
+        omronCache.invalidateAll();
+    }
+
+    public List<BloodPressureModel> getOmronBloodPressures() {
+        List<BloodPressureModel> list = new ArrayList<>();
+        for (OmronVitals vitals : getOmronVitals()) {
+            list.add(vitals.getBloodPressureModel());
+        }
+        return list;
+    }
+
+    public List<PulseModel> getOmronPulses() {
+        List<PulseModel> list = new ArrayList<>();
+        for (OmronVitals vitals : getOmronVitals()) {
+            list.add(vitals.getPulseModel());
+        }
+        return list;
     }
 }

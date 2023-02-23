@@ -150,7 +150,6 @@ table.data td {
 .link {
     color: #004d99;
     text-decoration: none;
-    display: block;
 }
 
 a, a:link, a:visited, a:active, .anchor {

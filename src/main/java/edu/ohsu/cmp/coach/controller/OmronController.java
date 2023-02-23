@@ -53,6 +53,7 @@ public class OmronController extends BaseController {
                 if (accessTokenResponse != null) {
                     logger.debug("got Omron access token: " + accessTokenResponse.getAccessToken());
                     workspace.setOmronTokenData(new MyOmronTokenData(accessTokenResponse));
+                    workspace.clearOmronCache();
                 }
 
             } catch (Exception e) {
@@ -64,7 +65,7 @@ public class OmronController extends BaseController {
             logger.error("caught error during Omron authorization: " + error);
         }
 
-        return "omron-oauth";
+        return "redirect:/vitals";
     }
 
     @PostMapping("notify")

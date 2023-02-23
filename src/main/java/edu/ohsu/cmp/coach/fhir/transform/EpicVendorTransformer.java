@@ -472,8 +472,10 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                 }
 
             } else if (model.getFollowedProtocol() != null) {
-                String s = model.getFollowedProtocol() ? fcm.getProtocolAnswerYes() : fcm.getProtocolAnswerNo();
-                appendNote(observation, PROTOCOL_NOTE_TAG + s);
+                String answerValue = model.getFollowedProtocol() ?
+                        fcm.getProtocolAnswerYes() :
+                        fcm.getProtocolAnswerNo();
+                appendNote(observation, PROTOCOL_NOTE_TAG + answerValue);
             }
         }
     }

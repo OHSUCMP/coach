@@ -4,11 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.entity.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.model.omron.OmronBloodPressureModel;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.util.ObservationUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Observation;
 
+import java.text.ParseException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -19,6 +23,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
     private Observation sourceBPObservation = null;
     private Observation sourceSystolicObservation = null;
     private Observation sourceDiastolicObservation = null;
+    private OmronBloodPressureModel sourceOmronBloodPressureModel = null;
 
     private QuantityModel systolic = null;
     private QuantityModel diastolic = null;
@@ -114,6 +119,18 @@ public class BloodPressureModel extends AbstractVitalsModel {
         buildFromSystolicDiastolicObservations(systolicObservation, diastolicObservation, fcm);
     }
 
+    public BloodPressureModel(OmronBloodPressureModel model, FhirConfigManager fcm) throws ParseException {
+        super(ObservationSource.HOME, null, OMRON_DATETIME_FORMAT.parse(model.getDateTimeLocal() + model.getDateTimeUtcOffset()), fcm);
+
+        buildFromOmronModel(model);
+    }
+
+    private void buildFromOmronModel(OmronBloodPressureModel model) {
+        this.sourceOmronBloodPressureModel = model;
+        systolic = new QuantityModel(model.getSystolic(), model.getBloodPressureUnits());
+        diastolic = new QuantityModel(model.getDiastolic(), model.getBloodPressureUnits());
+    }
+
     private void buildFromSystolicDiastolicObservations(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
         this.sourceSystolicObservation = systolicObservation;
         this.sourceDiastolicObservation = diastolicObservation;
@@ -151,9 +168,11 @@ public class BloodPressureModel extends AbstractVitalsModel {
     @Override
     public String toString() {
         if (sourceBPObservation != null) {
-            return sourceBPObservation.getId();
+            return "remote-panel-" + sourceBPObservation.getId();
         } else if (sourceSystolicObservation != null) {
-            return sourceSystolicObservation.getId();
+            return "remote-systolic-" + sourceSystolicObservation.getId();
+        } else if (sourceOmronBloodPressureModel != null) {
+            return "omron-" + sourceOmronBloodPressureModel.getId();
         } else if (localDatabaseId != null) {
             return "local-" + localDatabaseId;
         } else {

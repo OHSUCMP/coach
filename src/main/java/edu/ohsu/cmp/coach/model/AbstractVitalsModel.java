@@ -18,6 +18,8 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
 //    public static final String OBSERVATION_CATEGORY_SYSTEM = "http://terminology.hl7.org/CodeSystem/observation-category";
 //    public static final String OBSERVATION_CATEGORY_CODE = "vital-signs";
 
+    protected static final DateFormat OMRON_DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy h:mm a");
 
 //    protected static final String PROTOCOL_NOTE_TAG = "COACH_PROTOCOL::";

@@ -4,11 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.exception.NotAuthenticatedException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
-import edu.ohsu.cmp.coach.model.omron.AccessTokenResponse;
-import edu.ohsu.cmp.coach.model.omron.OmronBloodPressureModel;
-import edu.ohsu.cmp.coach.model.omron.RefreshTokenResponse;
+import edu.ohsu.cmp.coach.model.BloodPressureModel;
+import edu.ohsu.cmp.coach.model.MyOmronTokenData;
+import edu.ohsu.cmp.coach.model.PulseModel;
+import edu.ohsu.cmp.coach.model.omron.*;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
@@ -18,12 +20,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 public class OmronService extends AbstractService {
+    private static final DateFormat OMRON_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     // todo : build out services for retrieving vitals data from Omron here
@@ -37,8 +41,11 @@ public class OmronService extends AbstractService {
     @Value("${omron.scope}")
     private String scope;
 
-    @Value("${omron.host.url}")
-    private String hostUrl;
+    @Value("${omron.oauth-host.url}")
+    private String oauthHostUrl;
+
+    @Value("${omron.api-host.url}")
+    private String apiHostUrl;
 
     @Value("${omron.redirect.url}")
     private String redirectUrl;
@@ -46,7 +53,7 @@ public class OmronService extends AbstractService {
     public String getAuthorizationRequestUrl() throws DataException {
         try {
             URLCodec urlCodec = new URLCodec();
-            return hostUrl + "/connect/authorize?client_id=" + urlCodec.encode(clientId) +
+            return oauthHostUrl + "/connect/authorize?client_id=" + urlCodec.encode(clientId) +
                     "&response_type=code&scope=" + urlCodec.encode(scope) +
                     "&redirect_uri=" + urlCodec.encode(redirectUrl);
 
@@ -70,7 +77,7 @@ public class OmronService extends AbstractService {
         headers.put("Content-Type", "application/x-www-form-urlencoded");
         headers.put("Cache-Control", "no-cache");
 
-        HttpResponse httpResponse = new HttpRequest().post(hostUrl + "/connect/token", null, headers, bodyParams);
+        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/token", null, headers, bodyParams);
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
@@ -101,7 +108,7 @@ public class OmronService extends AbstractService {
         headers.put("Content-Type", "application/x-www-form-urlencoded");
         headers.put("Cache-Control", "no-cache");
 
-        HttpResponse httpResponse = new HttpRequest().post(hostUrl + "/connect/token", null, headers, bodyParams);
+        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/token", null, headers, bodyParams);
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
@@ -131,7 +138,7 @@ public class OmronService extends AbstractService {
         headers.put("Content-Type", "application/x-www-form-urlencoded");
         headers.put("Cache-Control", "no-cache");
 
-        HttpResponse httpResponse = new HttpRequest().post(hostUrl + "/connect/revocation", null, headers, bodyParams);
+        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/revocation", null, headers, bodyParams);
         int code = httpResponse.getResponseCode();
 
         logger.debug("got response code=" + code);
@@ -144,23 +151,31 @@ public class OmronService extends AbstractService {
         }
     }
 
-    public List<OmronBloodPressureModel> getBloodPressureMeasurements(String sessionId) throws EncoderException, IOException {
+    public List<OmronVitals> buildVitals(String sessionId) throws EncoderException, IOException {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
-        String accessToken = null; // todo : pull this from the user's workspace
+        MyOmronTokenData tokenData = workspace.getOmronTokenData();
+        if (tokenData == null) {
+            throw new NotAuthenticatedException("No Omron authentication token data found");
+        }
 
         Map<String, String> bodyParams = new LinkedHashMap<>();
-//        bodyParams.put("since", sinceTimestamp);  // todo : implement this.  Values: Valid JSON Date (12-01-2015, 12/01/2015, 2015-12-01)
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.add(Calendar.YEAR, -2);
+        bodyParams.put("since", OMRON_DATE_FORMAT.format(calendar.getTime()));
+
 //        bodyParams.put("limit", limit);           // optional
         bodyParams.put("type", "bloodpressure");
         bodyParams.put("includeHourlyActivity", "false");
 //        bodyParams.put("sortOrder", "desc");        // optional
 
         Map<String, String> headers = new LinkedHashMap<>();
-        headers.put("Authorization", "Bearer " + accessToken);
+        headers.put("Authorization", "Bearer " + tokenData.getBearerToken());
         headers.put("Content-Type", "application/x-www-form-urlencoded");
 
-        HttpResponse httpResponse = new HttpRequest().post(hostUrl + "/connect/revocation", null, headers, bodyParams);
+        HttpResponse httpResponse = new HttpRequest().post(apiHostUrl + "/api/measurement", null, headers, bodyParams);
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
@@ -170,10 +185,40 @@ public class OmronService extends AbstractService {
 
         } else {
             logger.debug("got body (PARSE THIS WITH GSON): " + body);
-//            Gson gson = new GsonBuilder().create();
-//            RefreshTokenResponse refreshTokenResponse = gson.fromJson(body, new TypeToken<RefreshTokenResponse>() {}.getType());
-//            return refreshTokenResponse;
-            return null;
+            Gson gson = new GsonBuilder().create();
+            MeasurementResponse response = gson.fromJson(body, new TypeToken<MeasurementResponse>() {}.getType());
+
+            List<OmronVitals> list = new ArrayList<>();
+
+            MeasurementResult result = response.getResult();
+            if (result.hasBloodPressures()) {
+                for (OmronBloodPressureModel model : result.getBloodPressure()) {
+                    BloodPressureModel bp = null;
+                    PulseModel pulse = null;
+
+                    try {
+                        bp = new BloodPressureModel(model, fcm);
+
+                    } catch (Exception e) {
+                        logger.error("caught " + e.getClass().getName() + " building BloodPressureModel from OmronBloodPressureModel - " +
+                                e.getMessage(), e);
+                        continue;
+                    }
+
+                    try {
+                        pulse = new PulseModel(model, fcm);
+
+                    } catch (Exception e) {
+                        logger.error("caught " + e.getClass().getName() + " building PulseModel from OmronBloodPressureModel - " +
+                                e.getMessage(), e);
+                        continue;
+                    }
+
+                    list.add(new OmronVitals(bp, pulse));
+                }
+            }
+
+            return list;
         }
     }
 }

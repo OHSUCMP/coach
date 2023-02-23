@@ -4,17 +4,22 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.entity.HomePulseReading;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.model.omron.OmronBloodPressureModel;
 import edu.ohsu.cmp.coach.util.ObservationUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Observation;
 
+import java.text.ParseException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class PulseModel extends AbstractVitalsModel {
-    private Observation sourcePulseObservation;
+    private Observation sourcePulseObservation = null;
+
+    private OmronBloodPressureModel sourceOmronBloodPressureModel = null;
 
     private QuantityModel pulse;
 
@@ -62,6 +67,17 @@ public class PulseModel extends AbstractVitalsModel {
         if (StringUtils.isEmpty(pulse.getUnit())) { // Epic doesn't use units so this will be null for Epic flowsheet-based data
             pulse.setUnit(fcm.getPulseValueUnit());
         }
+    }
+
+    public PulseModel(OmronBloodPressureModel model, FhirConfigManager fcm) throws ParseException {
+        super(ObservationSource.HOME, null, OMRON_DATETIME_FORMAT.parse(model.getDateTimeLocal() + model.getDateTimeUtcOffset()), fcm);
+
+        buildFromOmronModel(model);
+    }
+
+    private void buildFromOmronModel(OmronBloodPressureModel model) {
+        this.sourceOmronBloodPressureModel = model;
+        pulse = new QuantityModel(model.getPulse(), model.getPulseUnits());
     }
 
     @Override

@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.service;
 import edu.ohsu.cmp.coach.entity.HomePulseReading;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.exception.NotAuthenticatedException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
@@ -49,7 +50,10 @@ public class PulseService extends AbstractService {
     }
 
     public List<PulseModel> getPulseReadings(String sessionId) {
-        List<PulseModel> remoteList = userWorkspaceService.get(sessionId).getRemotePulses();
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+
+        // add remote pulses first
+        List<PulseModel> remoteList = workspace.getRemotePulses();
         Set<String> remotePulseKeySet = new HashSet<>();
         for (PulseModel pm : remoteList) {
             String key = pm.getLogicalEqualityKey();
@@ -57,6 +61,7 @@ public class PulseService extends AbstractService {
             remotePulseKeySet.add(key);
         }
 
+        // now add any locally-stored pulses that do *not* logically match a pulse already retrieved remotely
         List<PulseModel> list = new ArrayList<>();
         list.addAll(remoteList);
         for (PulseModel pm : buildLocalPulseReadings(sessionId)) {
@@ -68,6 +73,14 @@ public class PulseService extends AbstractService {
                 logger.debug("adding local Pulse with key: " + key);
                 list.add(pm);
             }
+        }
+
+        // finally, integrate any Omron BPs (if the user has authenticated)
+        try {
+            list.addAll(workspace.getOmronPulses());
+
+        } catch (NotAuthenticatedException nae) {
+            logger.warn("caught " + nae.getClass().getName() + " - " + nae.getMessage());
         }
 
         Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1);

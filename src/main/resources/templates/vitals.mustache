@@ -86,6 +86,11 @@
                     $(this).html('Show Protocol');
                 }
             });
+
+            $(document).on('click', '#omronAuthLink', function() {
+                let target = $('#omronAuthLink').attr('data-target');
+                window.open(target, "_self");
+            });
         </script>
     {{/head}}
     {{#menuItems}}
@@ -277,7 +282,7 @@
                 </tr>
                 <tr>
                     <td>
-                        Click <a href="{{omronAuthRequestUrl}}">this link</a> to authenticate against Omron.
+                        Click <span id="omronAuthLink" class="link" data-target="{{omronAuthRequestUrl}}">this link</span> to authenticate against Omron.
                     </td>
                 </tr>
             </table>
