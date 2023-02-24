@@ -102,6 +102,7 @@ public class GoalsController extends BaseController {
 
         MyGoal goal = goalService.getCurrentLocalBPGoal(session.getId());
         if (goal != null) {
+            goal.setGoalText("Target BP: " + systolicTarget + "/" + diastolicTarget);
             goal.setSystolicTarget(systolicTarget);
             goal.setDiastolicTarget(diastolicTarget);
             goal = goalService.update(goal);
