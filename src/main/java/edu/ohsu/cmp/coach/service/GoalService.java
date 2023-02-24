@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class GoalService extends AbstractService {
@@ -127,18 +128,18 @@ public class GoalService extends AbstractService {
     private GoalModel getCurrentEHRBPGoal(String sessionId) {
         GoalModel currentEHRBPGoal = null;
 
-        List<GoalModel> goals = workspaceService.get(sessionId).getGoals();
+        // Remove goals without a createdDate since they can't accurately be compared to others
+        List<GoalModel> goals = workspaceService.get(sessionId).getGoals().
+            stream().filter(g -> g.getCreatedDate() != null).collect(Collectors.toList());
         for (GoalModel goal : goals) {
             if (goal.isEHRGoal() && goal.isBPGoal()) {
                 if (currentEHRBPGoal == null) {
                     currentEHRBPGoal = goal;
-
                 } else if (goal.compareTo(currentEHRBPGoal) < 0) {
                     currentEHRBPGoal = goal;
                 }
             }
         }
-
         return currentEHRBPGoal;
     }
 
