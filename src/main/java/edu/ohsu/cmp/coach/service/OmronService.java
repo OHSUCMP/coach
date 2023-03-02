@@ -14,14 +14,19 @@ import edu.ohsu.cmp.coach.model.omron.*;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
+import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.*;
 
 @Service
@@ -49,6 +54,12 @@ public class OmronService extends AbstractService {
 
     @Value("${omron.redirect.url}")
     private String redirectUrl;
+
+    @Autowired
+    private ApplicationContext ctx;
+
+    @Autowired
+    private Scheduler scheduler;
 
     public String getAuthorizationRequestUrl() throws DataException {
         try {
@@ -217,6 +228,47 @@ public class OmronService extends AbstractService {
             }
 
             return list;
+        }
+    }
+
+    public void scheduleAccessTokenRefresh(String sessionId, String refreshToken, Date startAtTimestamp) {
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put(RefreshTokenJob.JOBDATA_APPLICATIONCONTEXT, ctx);
+        jobDataMap.put(RefreshTokenJob.JOBDATA_SESSIONID, sessionId);
+        jobDataMap.put(RefreshTokenJob.JOBDATA_REFRESHTOKEN, refreshToken);
+
+        String id = UUID.randomUUID().toString();
+
+        JobDetail job = JobBuilder.newJob(RefreshTokenJob.class)
+                .storeDurably()
+                .withIdentity("refreshTokenJob-" + id, sessionId)
+                .withDescription("Refreshes Omron token for session " + sessionId)
+                .usingJobData(jobDataMap)
+                .build();
+
+        JobDetailFactoryBean jobDetailFactory = new JobDetailFactoryBean();
+        jobDetailFactory.setJobClass(RefreshTokenJob.class);
+        jobDetailFactory.setDescription("Invoke Omron Refresh Token Job service...");
+        jobDetailFactory.setDurability(true);
+
+        Trigger trigger = TriggerBuilder.newTrigger().forJob(job)
+                .withIdentity("refreshTokenTrigger-" + id, sessionId)
+                .withDescription("Refresh Token trigger")
+                .startAt(startAtTimestamp)
+                .build();
+
+        try {
+            if ( ! scheduler.isStarted() ) {
+                logger.info("starting Quartz Scheduler for session {}", sessionId);
+                scheduler.start();
+            }
+
+            logger.info("scheduling Omron token refresh for session {} at {}", sessionId, startAtTimestamp);
+
+            scheduler.scheduleJob(job, trigger);
+
+        } catch (SchedulerException e) {
+            throw new RuntimeException(e);
         }
     }
 }

@@ -11,7 +11,6 @@ import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.omron.OmronVitals;
-import edu.ohsu.cmp.coach.model.omron.RefreshTokenJob;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
@@ -22,14 +21,12 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Reference;
-import org.quartz.*;
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -68,7 +65,6 @@ public class UserWorkspace {
     private final Cache cardCache;
     private final Cache<String, Bundle> bundleCache;
     private final ExecutorService executorService;
-    private final Scheduler scheduler;
     private MyOmronTokenData omronTokenData = null;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
@@ -103,8 +99,6 @@ public class UserWorkspace {
                 .build();
 
         executorService = Executors.newFixedThreadPool(POOL_SIZE);
-
-        scheduler = ctx.getBean(Scheduler.class);
     }
 
     public Audience getAudience() {
@@ -171,12 +165,6 @@ public class UserWorkspace {
 
     public void shutdown() {
         executorService.shutdown();
-
-        try {
-            scheduler.shutdown(true); // true --> wait for currently running jobs to complete
-        } catch (SchedulerException e) {
-            logger.warn("caught " + e.getClass().getName() + " shutting down Quartz Scheduler - " + e.getMessage(), e);
-        }
 
         clearCaches();
 
@@ -531,51 +519,15 @@ public class UserWorkspace {
 
         this.omronTokenData = omronTokenData;
 
-        JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put(RefreshTokenJob.JOBDATA_APPLICATIONCONTEXT, ctx);
-        jobDataMap.put(RefreshTokenJob.JOBDATA_SESSIONID, sessionId);
-        jobDataMap.put(RefreshTokenJob.JOBDATA_REFRESHTOKEN, omronTokenData.getRefreshToken());
-
-        String id = UUID.randomUUID().toString();
-
-        JobDetail job = JobBuilder.newJob(RefreshTokenJob.class)
-                .storeDurably()
-                .withIdentity("refreshTokenJob-" + id, sessionId)
-                .withDescription("Refreshes Omron token for session " + sessionId)
-                .usingJobData(jobDataMap)
-                .build();
-
-        JobDetailFactoryBean jobDetailFactory = new JobDetailFactoryBean();
-        jobDetailFactory.setJobClass(RefreshTokenJob.class);
-        jobDetailFactory.setDescription("Invoke Omron Refresh Token Job service...");
-        jobDetailFactory.setDurability(true);
-
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(omronTokenData.getExpirationTimestamp());
         calendar.add(Calendar.SECOND, -10);
-//        calendar.setTime(new Date());
+//        calendar.setTime(new Date());                         // one minute refresh for debugging
 //        calendar.add(Calendar.MINUTE, 1);
         Date startAtTimestamp = calendar.getTime();
 
-        Trigger trigger = TriggerBuilder.newTrigger().forJob(job)
-                .withIdentity("refreshTokenTrigger-" + id, sessionId)
-                .withDescription("Refresh Token trigger")
-                .startAt(startAtTimestamp)
-                .build();
-
-        try {
-            if ( ! scheduler.isStarted() ) {
-                logger.info("starting Quartz Scheduler for session {}", sessionId);
-                scheduler.start();
-            }
-
-            logger.info("scheduling Omron token refresh for session {} at {}", sessionId, startAtTimestamp);
-
-            scheduler.scheduleJob(job, trigger);
-
-        } catch (SchedulerException e) {
-            throw new RuntimeException(e);
-        }
+        OmronService omronService = ctx.getBean(OmronService.class);
+        omronService.scheduleAccessTokenRefresh(sessionId, omronTokenData.getRefreshToken(), startAtTimestamp);
     }
 
     public List<OmronVitals> getOmronVitals() {
