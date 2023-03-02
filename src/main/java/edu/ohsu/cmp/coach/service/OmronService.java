@@ -89,8 +89,7 @@ public class OmronService extends AbstractService {
 
         } else {
             Gson gson = new GsonBuilder().create();
-            AccessTokenResponse accessTokenResponse = gson.fromJson(body, new TypeToken<AccessTokenResponse>() {}.getType());
-            return accessTokenResponse;
+            return gson.fromJson(body, new TypeToken<AccessTokenResponse>() {}.getType());
         }
     }
 
@@ -120,8 +119,7 @@ public class OmronService extends AbstractService {
 
         } else {
             Gson gson = new GsonBuilder().create();
-            RefreshTokenResponse refreshTokenResponse = gson.fromJson(body, new TypeToken<RefreshTokenResponse>() {}.getType());
-            return refreshTokenResponse;
+            return gson.fromJson(body, new TypeToken<RefreshTokenResponse>() {}.getType());
         }
     }
 

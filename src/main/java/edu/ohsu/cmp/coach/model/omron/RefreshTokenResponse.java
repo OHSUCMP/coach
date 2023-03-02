@@ -1,9 +1,18 @@
 package edu.ohsu.cmp.coach.model.omron;
 
+import com.google.gson.annotations.SerializedName;
+
 public class RefreshTokenResponse {
+    @SerializedName("access_token")
     private String accessToken;
+
+    @SerializedName("expires_in")
     private Integer expiresIn;
+
+    @SerializedName("token_type")
     private String tokenType;
+
+    @SerializedName("refresh_token")
     private String refreshToken;
 
     public String getAccessToken() {
