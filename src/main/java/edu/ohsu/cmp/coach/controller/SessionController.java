@@ -26,6 +26,11 @@ public class SessionController extends BaseController {
     @Value("${socket.timeout:300000}")
     private Integer socketTimeout;
 
+    @GetMapping("health")
+    public String health() {
+        return "health";
+    }
+
     @GetMapping("launch-ehr")
     public String launchEHR(Model model) {
         model.addAttribute("applicationName", applicationName);
