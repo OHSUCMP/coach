@@ -1,6 +1,5 @@
 package edu.ohsu.cmp.coach.model.omron;
 
-import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.service.OmronService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.workspace.UserWorkspaceService;
@@ -38,9 +37,8 @@ public class RefreshTokenJob implements Job {
         try {
             RefreshTokenResponse response = omronService.refreshAccessToken(refreshToken);
             UserWorkspace workspace = userWorkspaceService.get(sessionId);
-            MyOmronTokenData tokenData = workspace.getOmronTokenData();
-            tokenData.update(response);
-            workspace.setOmronTokenData(tokenData);
+            workspace.getOmronTokenData().update(response);
+            omronService.scheduleAccessTokenRefresh(sessionId);
 
         } catch (Exception e) {
             throw new JobExecutionException("caught " + e.getClass().getName() + " executing job for session=" +

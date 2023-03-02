@@ -5,8 +5,10 @@ import edu.ohsu.cmp.coach.exception.SessionMissingException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
+import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +64,16 @@ public class UserWorkspaceService {
         } else {
             throw new SessionMissingException(sessionId);
         }
+    }
+
+    public UserWorkspace getByOmronUserId(String omronUserId) throws SessionMissingException {
+        for (UserWorkspace workspace : map.values()) {
+            MyOmronTokenData tokenData = workspace.getOmronTokenData();
+            if (tokenData != null && StringUtils.equals(tokenData.getUserIdToken(), omronUserId)) {
+                return workspace;
+            }
+        }
+        throw new SessionMissingException("no session found for Omron User with id=" + omronUserId);
     }
 
     public boolean shutdown(String sessionId) {

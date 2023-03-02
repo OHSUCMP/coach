@@ -161,6 +161,13 @@ public class OmronService extends AbstractService {
     }
 
     public List<OmronVitals> buildVitals(String sessionId) throws EncoderException, IOException {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.add(Calendar.YEAR, -2);
+        return buildVitals(sessionId, calendar.getTime());
+    }
+
+    public List<OmronVitals> buildVitals(String sessionId, Date sinceTimestamp) throws EncoderException, IOException {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         MyOmronTokenData tokenData = workspace.getOmronTokenData();
@@ -173,7 +180,7 @@ public class OmronService extends AbstractService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         calendar.add(Calendar.YEAR, -2);
-        bodyParams.put("since", OMRON_DATE_FORMAT.format(calendar.getTime()));
+        bodyParams.put("since", OMRON_DATE_FORMAT.format(sinceTimestamp));
 
 //        bodyParams.put("limit", limit);           // optional
         bodyParams.put("type", "bloodpressure");
@@ -231,11 +238,14 @@ public class OmronService extends AbstractService {
         }
     }
 
-    public void scheduleAccessTokenRefresh(String sessionId, String refreshToken, Date startAtTimestamp) {
+    public void scheduleAccessTokenRefresh(String sessionId) {
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        MyOmronTokenData omronTokenData = workspace.getOmronTokenData();
+
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put(RefreshTokenJob.JOBDATA_APPLICATIONCONTEXT, ctx);
         jobDataMap.put(RefreshTokenJob.JOBDATA_SESSIONID, sessionId);
-        jobDataMap.put(RefreshTokenJob.JOBDATA_REFRESHTOKEN, refreshToken);
+        jobDataMap.put(RefreshTokenJob.JOBDATA_REFRESHTOKEN, omronTokenData.getRefreshToken());
 
         String id = UUID.randomUUID().toString();
 
@@ -250,6 +260,13 @@ public class OmronService extends AbstractService {
         jobDetailFactory.setJobClass(RefreshTokenJob.class);
         jobDetailFactory.setDescription("Invoke Omron Refresh Token Job service...");
         jobDetailFactory.setDurability(true);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(omronTokenData.getExpirationTimestamp());
+        calendar.add(Calendar.SECOND, -10);
+//        calendar.setTime(new Date());                         // one minute refresh for debugging
+//        calendar.add(Calendar.MINUTE, 1);
+        Date startAtTimestamp = calendar.getTime();
 
         Trigger trigger = TriggerBuilder.newTrigger().forJob(job)
                 .withIdentity("refreshTokenTrigger-" + id, sessionId)

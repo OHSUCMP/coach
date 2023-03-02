@@ -101,6 +101,10 @@ public class UserWorkspace {
         executorService = Executors.newFixedThreadPool(POOL_SIZE);
     }
 
+    public String getSessionId() {
+        return sessionId;
+    }
+
     public Audience getAudience() {
         return audience;
     }
@@ -515,19 +519,7 @@ public class UserWorkspace {
     }
 
     public void setOmronTokenData(MyOmronTokenData omronTokenData) {
-        logger.info("setting Omron token data for session {}", sessionId);
-
         this.omronTokenData = omronTokenData;
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(omronTokenData.getExpirationTimestamp());
-        calendar.add(Calendar.SECOND, -10);
-//        calendar.setTime(new Date());                         // one minute refresh for debugging
-//        calendar.add(Calendar.MINUTE, 1);
-        Date startAtTimestamp = calendar.getTime();
-
-        OmronService omronService = ctx.getBean(OmronService.class);
-        omronService.scheduleAccessTokenRefresh(sessionId, omronTokenData.getRefreshToken(), startAtTimestamp);
     }
 
     public List<OmronVitals> getOmronVitals() {
