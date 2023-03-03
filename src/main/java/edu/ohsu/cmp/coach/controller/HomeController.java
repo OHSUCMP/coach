@@ -1,17 +1,20 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.model.*;
-import edu.ohsu.cmp.coach.service.*;
-import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.entity.Outcome;
+import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.model.AdverseEventModel;
+import edu.ohsu.cmp.coach.model.BloodPressureModel;
+import edu.ohsu.cmp.coach.model.MedicationModel;
+import edu.ohsu.cmp.coach.model.PulseModel;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
+import edu.ohsu.cmp.coach.service.*;
+import edu.ohsu.cmp.coach.util.FhirUtil;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -196,5 +199,11 @@ public class HomeController extends BaseController {
         }
 
         return new ArrayList<>(map.values());
+    }
+
+    @GetMapping("metadata")
+    public ResponseEntity<String> getMetadata(HttpSession session) {
+        UserWorkspace workspace = workspaceService.get(session.getId());
+        return new ResponseEntity<>(FhirUtil.toJson(workspace.getFhirCredentialsWithClient().getMetadata()), HttpStatus.OK);
     }
 }
