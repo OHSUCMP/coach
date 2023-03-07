@@ -3,14 +3,17 @@ package edu.ohsu.cmp.coach.service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import edu.ohsu.cmp.coach.entity.MyOmronVitals;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.NotAuthenticatedException;
+import edu.ohsu.cmp.coach.exception.OmronException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.model.omron.*;
+import edu.ohsu.cmp.coach.repository.OmronVitalsCacheRepository;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.*;
@@ -36,6 +40,12 @@ public class OmronService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     // todo : build out services for retrieving vitals data from Omron here
+
+    @Autowired
+    private OmronVitalsCacheRepository repository;
+
+    @Autowired
+    private PatientService patientService;
 
     @Value("${omron.application-id}")
     private String clientId;
@@ -160,14 +170,7 @@ public class OmronService extends AbstractService {
         }
     }
 
-    public List<OmronVitals> buildVitals(String sessionId) throws EncoderException, IOException {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        calendar.add(Calendar.YEAR, -2);
-        return buildVitals(sessionId, calendar.getTime());
-    }
-
-    public List<OmronVitals> buildVitals(String sessionId, Date sinceTimestamp) throws EncoderException, IOException {
+    private MeasurementResult requestMeasurements(String sessionId, Date sinceTimestamp) throws EncoderException, IOException, NotAuthenticatedException, OmronException {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         MyOmronTokenData tokenData = workspace.getOmronTokenData();
@@ -177,9 +180,12 @@ public class OmronService extends AbstractService {
 
         Map<String, String> bodyParams = new LinkedHashMap<>();
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        calendar.add(Calendar.YEAR, -2);
+        if (sinceTimestamp == null) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(new Date());
+            calendar.add(Calendar.YEAR, -2);
+            sinceTimestamp = calendar.getTime();
+        }
         bodyParams.put("since", OMRON_DATE_FORMAT.format(sinceTimestamp));
 
 //        bodyParams.put("limit", limit);           // optional
@@ -196,45 +202,17 @@ public class OmronService extends AbstractService {
         String body = httpResponse.getResponseBody();
 
         if (code < 200 || code > 299) {
-            logger.error("Omron access token refresh error: " + body);
-            return null;
+            logger.error("Omron measurement request error: " + body);
+            throw new OmronException("received HTTP " + code + " building vitals for session " + sessionId);
 
         } else {
             logger.debug("got body (PARSE THIS WITH GSON): " + body);
             Gson gson = new GsonBuilder().create();
             MeasurementResponse response = gson.fromJson(body, new TypeToken<MeasurementResponse>() {}.getType());
 
-            List<OmronVitals> list = new ArrayList<>();
+            // todo : do something with response.getStatus()?
 
-            MeasurementResult result = response.getResult();
-            if (result.hasBloodPressures()) {
-                for (OmronBloodPressureModel model : result.getBloodPressure()) {
-                    BloodPressureModel bp = null;
-                    PulseModel pulse = null;
-
-                    try {
-                        bp = new BloodPressureModel(model, fcm);
-
-                    } catch (Exception e) {
-                        logger.error("caught " + e.getClass().getName() + " building BloodPressureModel from OmronBloodPressureModel - " +
-                                e.getMessage(), e);
-                        continue;
-                    }
-
-                    try {
-                        pulse = new PulseModel(model, fcm);
-
-                    } catch (Exception e) {
-                        logger.error("caught " + e.getClass().getName() + " building PulseModel from OmronBloodPressureModel - " +
-                                e.getMessage(), e);
-                        continue;
-                    }
-
-                    list.add(new OmronVitals(bp, pulse));
-                }
-            }
-
-            return list;
+            return response.getResult();
         }
     }
 
@@ -287,5 +265,68 @@ public class OmronService extends AbstractService {
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void synchronize(String sessionId) {
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        try {
+            MeasurementResult result = requestMeasurements(sessionId, workspace.getOmronLastUpdated());
+            if (result.hasBloodPressures()) {
+                for (OmronBloodPressureModel model : result.getBloodPressure()) {
+                    writeToPersistentCache(workspace.getInternalPatientId(), model);
+                }
+            }
+
+            Date lastUpdated = new Date();
+            patientService.setOmronLastUpdated(workspace.getInternalPatientId(), lastUpdated);
+            workspace.setOmronLastUpdated(lastUpdated);
+
+            workspace.clearOmronCache();
+
+        } catch (OmronException e) {
+            logger.error("caught " + e.getClass().getName() + " updating vitals cache - " + e.getMessage(), e);
+        } catch (NotAuthenticatedException nae) {
+            // handle silently
+        } catch (EncoderException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void writeToPersistentCache(Long internalPatientId, OmronBloodPressureModel model) {
+        if ( ! repository.existsByOmronId(model.getId()) ) {
+            logger.info("caching Omron vitals with id=" + model.getId() + " for patient with id=" + internalPatientId);
+            MyOmronVitals vitals = new MyOmronVitals(internalPatientId, model);
+            repository.save(vitals);
+        } else {
+            logger.debug("not caching Omron vitals with id=" + model.getId() + " - already exists!");
+        }
+    }
+
+    public List<OmronVitals> readFromPersistentCache(String sessionId) {
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        List<OmronVitals> list = new ArrayList<>();
+        for (MyOmronVitals vitals : repository.findAllByPatId(workspace.getInternalPatientId())) {
+            try {
+                BloodPressureModel bpModel = new BloodPressureModel(vitals, fcm);
+                PulseModel pulseModel = new PulseModel(vitals, fcm);
+                list.add(new OmronVitals(bpModel, pulseModel));
+
+            } catch (ParseException e) {
+                logger.error("parse error processing Omron vitals with id=" + vitals.getId() + " - skipping -");
+            }
+        }
+        return list;
+    }
+
+    public void deleteAll(String sessionId) {
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        repository.deleteAllByPatId(workspace.getInternalPatientId());
+    }
+
+    public void resetLastUpdated(String sessionId) {
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        patientService.setOmronLastUpdated(workspace.getInternalPatientId(), null);
     }
 }

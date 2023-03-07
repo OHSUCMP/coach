@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.entity.HomePulseReading;
+import edu.ohsu.cmp.coach.entity.MyOmronVitals;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.omron.OmronBloodPressureModel;
@@ -17,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class PulseModel extends AbstractVitalsModel {
+    private Long localDatabaseId = null;
     private Observation sourcePulseObservation = null;
 
     private OmronBloodPressureModel sourceOmronBloodPressureModel = null;
@@ -41,6 +43,7 @@ public class PulseModel extends AbstractVitalsModel {
     public PulseModel(HomePulseReading reading, FhirConfigManager fcm) {
         super(ObservationSource.HOME, reading.getFollowedInstructions(), reading.getReadingDate());
 
+        localDatabaseId = reading.getId();
         pulse = new QuantityModel(reading.getPulse(), fcm.getPulseValueUnit());
         readingDate = reading.getReadingDate(); //.getTime();
     }
@@ -71,13 +74,15 @@ public class PulseModel extends AbstractVitalsModel {
 
     public PulseModel(OmronBloodPressureModel model, FhirConfigManager fcm) throws ParseException {
         super(ObservationSource.HOME, null, OMRON_DATETIME_FORMAT.parse(model.getDateTimeLocal() + model.getDateTimeUtcOffset()), fcm);
-
-        buildFromOmronModel(model);
+        sourceOmronBloodPressureModel = model;
+        pulse = new QuantityModel(model.getPulse(), model.getPulseUnits());
     }
 
-    private void buildFromOmronModel(OmronBloodPressureModel model) {
-        this.sourceOmronBloodPressureModel = model;
-        pulse = new QuantityModel(model.getPulse(), model.getPulseUnits());
+    public PulseModel(MyOmronVitals vitals, FhirConfigManager fcm) throws ParseException {
+        super(ObservationSource.HOME, null, OMRON_DATETIME_FORMAT.parse(vitals.getDateTimeLocal() + vitals.getDateTimeUtcOffset()), fcm);
+        sourceOmronBloodPressureModel = new OmronBloodPressureModel(vitals);
+        localDatabaseId = vitals.getId();
+        pulse = new QuantityModel(vitals.getPulse(), vitals.getPulseUnits());
     }
 
     @Override
@@ -106,5 +111,18 @@ public class PulseModel extends AbstractVitalsModel {
 
     public QuantityModel getPulse() {
         return pulse;
+    }
+
+    @Override
+    public String toString() {
+        if (sourcePulseObservation != null) {
+            return "remote-" + sourcePulseObservation.getId();
+        } else if (sourceOmronBloodPressureModel != null) {
+            return "omron-" + sourceOmronBloodPressureModel.getId();
+        } else if (localDatabaseId != null) {
+            return "local-" + localDatabaseId;
+        } else {
+            return pulse + " (id unknown)";
+        }
     }
 }

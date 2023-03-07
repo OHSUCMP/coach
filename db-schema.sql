@@ -282,3 +282,26 @@ create table vsac_valueset_concept (
 # this column is vestigial and should be removed
 
 alter table home_bp_reading drop column source;
+
+# 2023-03-03 - Omron updates
+
+alter table patient add omronLastUpdated datetime;
+
+drop table if exists omron_vitals_cache;
+create table omron_vitals_cache (
+    id int not null auto_increment primary key,
+    patId int not null,
+    omronId bigint unique not null,
+    dateTime varchar(30) not null,
+    dateTimeLocal varchar(30) not null,
+    dateTimeUtcOffset varchar(15) not null,
+    systolic int not null,
+    diastolic int not null,
+    bloodPressureUnits varchar(10) not null,
+    pulse int not null,
+    pulseUnits varchar(10) not null,
+    deviceType varchar(10) not null,
+    createdDate datetime not null default current_timestamp
+);
+
+create index idxPatId on omron_vitals_cache (patId);

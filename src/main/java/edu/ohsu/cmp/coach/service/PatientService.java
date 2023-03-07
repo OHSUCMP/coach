@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+import java.util.Optional;
+
 @Service
 public class PatientService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -27,7 +30,7 @@ public class PatientService extends AbstractService {
         return new PatientModel(ehrService.getPatient(sessionId));
     }
 
-    public Long getInternalPatientId(String fhirPatientId) {
+    public MyPatient getMyPatient(String fhirPatientId) {
         String patIdHash = buildPatIdHash(fhirPatientId);
 
         MyPatient p;
@@ -39,9 +42,17 @@ public class PatientService extends AbstractService {
             p = repository.save(p);
         }
 
-        return p.getId();
+        return p;
     }
 
+    public void setOmronLastUpdated(Long internalPatientId, Date omronLastUpdated) {
+        Optional<MyPatient> p = repository.findById(internalPatientId);
+        if (p.isPresent()) {
+            MyPatient myPatient = p.get();
+            myPatient.setOmronLastUpdated(omronLastUpdated);
+            repository.save(myPatient);
+        }
+    }
 
 ///////////////////////////////////////////////////////////////////////
 // private methods

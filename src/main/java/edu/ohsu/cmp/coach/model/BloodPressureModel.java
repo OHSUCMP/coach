@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.entity.HomeBloodPressureReading;
+import edu.ohsu.cmp.coach.entity.MyOmronVitals;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.model.omron.OmronBloodPressureModel;
@@ -88,7 +89,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
     }
 
     private void buildFromBPObservation(Observation bpObservation, FhirConfigManager fcm) throws DataException {
-        this.sourceBPObservation = bpObservation;
+        sourceBPObservation = bpObservation;
 
         CodeableConcept code = bpObservation.getCode();
         if (FhirUtil.hasCoding(code, fcm.getBpPanelCodings())) {
@@ -119,21 +120,17 @@ public class BloodPressureModel extends AbstractVitalsModel {
         buildFromSystolicDiastolicObservations(systolicObservation, diastolicObservation, fcm);
     }
 
-    public BloodPressureModel(OmronBloodPressureModel model, FhirConfigManager fcm) throws ParseException {
-        super(ObservationSource.HOME, null, OMRON_DATETIME_FORMAT.parse(model.getDateTimeLocal() + model.getDateTimeUtcOffset()), fcm);
-
-        buildFromOmronModel(model);
-    }
-
-    private void buildFromOmronModel(OmronBloodPressureModel model) {
-        this.sourceOmronBloodPressureModel = model;
-        systolic = new QuantityModel(model.getSystolic(), model.getBloodPressureUnits());
-        diastolic = new QuantityModel(model.getDiastolic(), model.getBloodPressureUnits());
+    public BloodPressureModel(MyOmronVitals vitals, FhirConfigManager fcm) throws ParseException {
+        super(ObservationSource.HOME, null, OMRON_DATETIME_FORMAT.parse(vitals.getDateTimeLocal() + vitals.getDateTimeUtcOffset()), fcm);
+        sourceOmronBloodPressureModel = new OmronBloodPressureModel(vitals);
+        localDatabaseId = vitals.getId();
+        systolic = new QuantityModel(vitals.getSystolic(), vitals.getBloodPressureUnits());
+        diastolic = new QuantityModel(vitals.getDiastolic(), vitals.getBloodPressureUnits());
     }
 
     private void buildFromSystolicDiastolicObservations(Observation systolicObservation, Observation diastolicObservation, FhirConfigManager fcm) throws DataException {
-        this.sourceSystolicObservation = systolicObservation;
-        this.sourceDiastolicObservation = diastolicObservation;
+        sourceSystolicObservation = systolicObservation;
+        sourceDiastolicObservation = diastolicObservation;
 
         if (systolicObservation == null || diastolicObservation == null) {
             throw new DataException("both systolic and diastolic Observations are required");

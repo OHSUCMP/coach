@@ -72,12 +72,7 @@ public class BloodPressureService extends AbstractService {
         }
 
         // finally, integrate any Omron BPs (if the user has authenticated)
-        try {
-            list.addAll(workspace.getOmronBloodPressures());
-
-        } catch (NotAuthenticatedException nae) {
-            logger.warn("caught " + nae.getClass().getName() + " - " + nae.getMessage());
-        }
+        list.addAll(workspace.getOmronBloodPressures());
 
         Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1);
 

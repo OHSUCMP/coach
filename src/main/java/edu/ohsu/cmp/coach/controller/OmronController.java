@@ -3,7 +3,6 @@ package edu.ohsu.cmp.coach.controller;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.omron.AccessTokenResponse;
-import edu.ohsu.cmp.coach.model.omron.OmronVitals;
 import edu.ohsu.cmp.coach.service.OmronService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.lang3.StringUtils;
@@ -22,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import javax.servlet.http.HttpSession;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
 
 @Controller
 @RequestMapping("/omron")
@@ -88,18 +85,8 @@ public class OmronController extends BaseController {
 
         // id = the id of the user who performed the upload.  received into id_token on initial user authorization
 
-        try {
-            Date sinceTimestamp = OMRON_DATETIME_FORMAT.parse(timestamp);
-            List<OmronVitals> vitals = omronService.buildVitals(workspace.getSessionId(), sinceTimestamp);
+        omronService.synchronize(workspace.getSessionId());
 
-            return new ResponseEntity<>(HttpStatus.OK);         // returns only OK status, no body
-
-        } catch (Exception e) {
-            if (e instanceof RuntimeException) {
-                throw (RuntimeException) e;
-            } else {
-                throw new RuntimeException(e);
-            }
-        }
+        return new ResponseEntity<>(HttpStatus.OK);         // returns only OK status, no body
     }
 }

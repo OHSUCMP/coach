@@ -1,9 +1,20 @@
-package edu.ohsu.cmp.coach.model.omron;
+package edu.ohsu.cmp.coach.entity;
 
-import edu.ohsu.cmp.coach.entity.MyOmronVitals;
+import edu.ohsu.cmp.coach.model.omron.OmronBloodPressureModel;
 
-public class OmronBloodPressureModel {
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import java.util.Date;
+
+@Entity
+@Table(name = "omron_vitals_cache")
+public class MyOmronVitals {
+    @Id
     private Long id;
+
+    private Long patId;
+    private Long omronId;
     private String dateTime;
     private String dateTimeLocal;
     private String dateTimeUtcOffset;
@@ -13,29 +24,49 @@ public class OmronBloodPressureModel {
     private Integer pulse;
     private String pulseUnits;
     private String deviceType;
+    private Date createdDate;
 
-    public OmronBloodPressureModel() {
+    public MyOmronVitals() {
     }
 
-    public OmronBloodPressureModel(MyOmronVitals vitals) {
-        id = vitals.getId();
-        dateTime = vitals.getDateTime();
-        dateTimeLocal = vitals.getDateTimeLocal();
-        dateTimeUtcOffset = vitals.getDateTimeUtcOffset();
-        systolic = vitals.getSystolic();
-        diastolic = vitals.getDiastolic();
-        bloodPressureUnits = vitals.getBloodPressureUnits();
-        pulse = vitals.getPulse();
-        pulseUnits = vitals.getPulseUnits();
-        deviceType = vitals.getDeviceType();
+    public MyOmronVitals(Long internalPatientId, OmronBloodPressureModel model) {
+        // do not set id
+        patId = internalPatientId;
+        omronId = model.getId();
+        dateTime = model.getDateTime();
+        dateTimeLocal = model.getDateTimeLocal();
+        dateTimeUtcOffset = model.getDateTimeUtcOffset();
+        systolic = model.getSystolic();
+        diastolic = model.getDiastolic();
+        bloodPressureUnits = model.getBloodPressureUnits();
+        pulse = model.getPulse();
+        pulseUnits = model.getPulseUnits();
+        deviceType = model.getDeviceType();
+        // do not set createdDate
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Long getPatId() {
+        return patId;
+    }
+
+    public void setPatId(Long patId) {
+        this.patId = patId;
+    }
+
+    public Long getOmronId() {
+        return omronId;
+    }
+
+    public void setOmronId(Long omronId) {
+        this.omronId = omronId;
     }
 
     public String getDateTime() {
@@ -108,5 +139,13 @@ public class OmronBloodPressureModel {
 
     public void setDeviceType(String deviceType) {
         this.deviceType = deviceType;
+    }
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
     }
 }

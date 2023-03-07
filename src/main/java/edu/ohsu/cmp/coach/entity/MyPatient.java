@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.coach.entity;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(name = "patient")
@@ -10,6 +11,8 @@ public class MyPatient {
     private Long id;
 
     private String patIdHash;
+
+    private Date omronLastUpdated;
 
     protected MyPatient() {
     }
@@ -32,5 +35,13 @@ public class MyPatient {
 
     public void setPatIdHash(String patIdHash) {
         this.patIdHash = patIdHash;
+    }
+
+    public Date getOmronLastUpdated() {
+        return omronLastUpdated;
+    }
+
+    public void setOmronLastUpdated(Date omronLastUpdated) {
+        this.omronLastUpdated = omronLastUpdated;
     }
 }

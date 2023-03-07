@@ -3,7 +3,6 @@ package edu.ohsu.cmp.coach.service;
 import edu.ohsu.cmp.coach.entity.HomePulseReading;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.exception.NotAuthenticatedException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
@@ -76,12 +75,7 @@ public class PulseService extends AbstractService {
         }
 
         // finally, integrate any Omron BPs (if the user has authenticated)
-        try {
-            list.addAll(workspace.getOmronPulses());
-
-        } catch (NotAuthenticatedException nae) {
-            logger.warn("caught " + nae.getClass().getName() + " - " + nae.getMessage());
-        }
+        list.addAll(workspace.getOmronPulses());
 
         Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1);
 

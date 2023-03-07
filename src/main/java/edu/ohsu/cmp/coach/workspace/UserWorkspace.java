@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.workspace;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import edu.ohsu.cmp.coach.entity.MyPatient;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
@@ -59,13 +60,15 @@ public class UserWorkspace {
     private final FhirConfigManager fcm;
     private final Long internalPatientId;
     private VendorTransformer vendorTransformer = null;
-
     private final Cache cache;
-    private final Cache omronCache;
     private final Cache cardCache;
     private final Cache<String, Bundle> bundleCache;
     private final ExecutorService executorService;
+
+    // Omron stuff
     private MyOmronTokenData omronTokenData = null;
+    private Date omronLastUpdated = null;
+    private final Cache omronCache;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
                             FHIRCredentialsWithClient fhirCredentialsWithClient,
@@ -78,9 +81,11 @@ public class UserWorkspace {
         this.fcm = fcm;
 
         PatientService patientService = ctx.getBean(PatientService.class);
-        this.internalPatientId = patientService.getInternalPatientId(
+        MyPatient myPatient = patientService.getMyPatient(
                 fhirCredentialsWithClient.getCredentials().getPatientId()
         );
+        this.internalPatientId = myPatient.getId();
+        this.omronLastUpdated = myPatient.getOmronLastUpdated();
 
         cache = Caffeine.newBuilder()
                 .expireAfterWrite(6, TimeUnit.HOURS)
@@ -123,6 +128,14 @@ public class UserWorkspace {
 
     public Long getInternalPatientId() {
         return internalPatientId;
+    }
+
+    public Date getOmronLastUpdated() {
+        return omronLastUpdated;
+    }
+
+    public void setOmronLastUpdated(Date omronLastUpdated) {
+        this.omronLastUpdated = omronLastUpdated;
     }
 
     public void populate() {
@@ -504,6 +517,11 @@ public class UserWorkspace {
 
         CounselingService cService = ctx.getBean(CounselingService.class);
         cService.deleteAll(sessionId);
+
+        OmronService omronService = ctx.getBean(OmronService.class);
+        omronService.deleteAll(sessionId);
+        omronService.resetLastUpdated(sessionId);
+        omronLastUpdated = null;
     }
 
     public VendorTransformer getVendorTransformer() {
@@ -530,19 +548,12 @@ public class UserWorkspace {
                 logger.info("BEGIN build Omron Vitals for session=" + sessionId);
 
                 OmronService svc = ctx.getBean(OmronService.class);
-                try {
-                    List<OmronVitals> list = svc.buildVitals(sessionId);
+                List<OmronVitals> list = svc.readFromPersistentCache(sessionId);
 
-                    logger.info("DONE building Omron Vitals for session=" + sessionId +
-                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building Omron Vitals for session=" + sessionId +
+                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
-                    return list;
-
-                } catch (EncoderException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                return list;
             }
         });
     }
