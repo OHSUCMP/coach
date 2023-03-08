@@ -61,12 +61,12 @@ public class GoalsController extends BaseController {
 
     @PostMapping("create")
     public ResponseEntity<GoalModel> create(HttpSession session,
-                                            @RequestParam("extGoalId") String extGoalId,
-                                            @RequestParam("referenceSystem") String referenceSystem,
-                                            @RequestParam("referenceCode") String referenceCode,
-                                            @RequestParam("referenceDisplay") String referenceDisplay,
-                                            @RequestParam("goalText") String goalText,
-                                            @RequestParam("targetDateTS") Long targetDateTS) {
+                                            @RequestParam String extGoalId,
+                                            @RequestParam String referenceSystem,
+                                            @RequestParam String referenceCode,
+                                            @RequestParam String referenceDisplay,
+                                            @RequestParam String goalText,
+                                            @RequestParam Long targetDateTS) {
 
         Date targetDate = new Date(targetDateTS);
 
@@ -92,8 +92,8 @@ public class GoalsController extends BaseController {
 //                                              @RequestParam("extGoalId") String extGoalId,
 //                                              @RequestParam("referenceSystem") String referenceSystem,
 //                                              @RequestParam("referenceCode") String referenceCode,
-                                              @RequestParam("systolicTarget") Integer systolicTarget,
-                                              @RequestParam("diastolicTarget") Integer diastolicTarget) {
+                                              @RequestParam Integer systolicTarget,
+                                              @RequestParam Integer diastolicTarget) {
 
         // THERE CAN BE ONLY ONE!!!
         // (blood pressure goal, that is)
@@ -117,7 +117,7 @@ public class GoalsController extends BaseController {
 
     @PostMapping("update-status")
     public ResponseEntity<GoalHistoryModel> updateStatus(HttpSession session,
-                                                         @RequestParam("extGoalId") String extGoalId,
+                                                         @RequestParam String extGoalId,
                                                          @RequestParam("achievementStatus") String achievementStatusStr) {
 
         // todo : this may need to be adjusted to handle a case where there is no persisted Goal

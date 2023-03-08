@@ -22,8 +22,8 @@ public class AdverseEventController extends BaseController {
 
     @PostMapping("register-action")
     public ResponseEntity<String> registerAction(HttpSession session,
-                                                 @RequestParam("adverseEventId") String adverseEventId,
-                                                 @RequestParam("actionTaken") Boolean actionTaken) {
+                                                 @RequestParam String adverseEventId,
+                                                 @RequestParam Boolean actionTaken) {
 
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
 

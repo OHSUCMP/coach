@@ -47,11 +47,11 @@ public class SessionController extends BaseController {
 
     @PostMapping("prepare-session")
     public ResponseEntity<?> prepareSession(HttpSession session,
-                                            @RequestParam("clientId") String clientId,
-                                            @RequestParam("serverUrl") String serverUrl,
-                                            @RequestParam("bearerToken") String bearerToken,
-                                            @RequestParam("patientId") String patientId,
-                                            @RequestParam("userId") String userId,
+                                            @RequestParam String clientId,
+                                            @RequestParam String serverUrl,
+                                            @RequestParam String bearerToken,
+                                            @RequestParam String patientId,
+                                            @RequestParam String userId,
                                             @RequestParam("audience") String audienceStr) throws ConfigurationException {
 
         FHIRCredentials credentials = new FHIRCredentials(clientId, serverUrl, bearerToken, patientId, userId);

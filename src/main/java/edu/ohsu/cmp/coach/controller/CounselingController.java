@@ -40,10 +40,10 @@ public class CounselingController extends BaseController {
 
     @PostMapping("create")
     public ResponseEntity<Counseling> create(HttpSession session,
-                                             @RequestParam("extCounselingId") String extCounselingId,
-                                             @RequestParam("referenceSystem") String referenceSystem,
-                                             @RequestParam("referenceCode") String referenceCode,
-                                             @RequestParam("counselingText") String counselingText) {
+                                             @RequestParam String extCounselingId,
+                                             @RequestParam String referenceSystem,
+                                             @RequestParam String referenceCode,
+                                             @RequestParam String counselingText) {
 
         Counseling c = counselingService.getCounseling(session.getId(), extCounselingId);
 
