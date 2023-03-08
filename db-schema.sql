@@ -294,13 +294,13 @@ create table omron_vitals_cache (
     omronId bigint unique not null,
     dateTime varchar(30) not null,
     dateTimeLocal varchar(30) not null,
-    dateTimeUtcOffset varchar(15) not null,
+    dateTimeUtcOffset varchar(20) not null,
     systolic int not null,
     diastolic int not null,
-    bloodPressureUnits varchar(10) not null,
+    bloodPressureUnits varchar(20) not null,
     pulse int not null,
-    pulseUnits varchar(10) not null,
-    deviceType varchar(10) not null,
+    pulseUnits varchar(20) not null,
+    deviceType varchar(50) not null,
     createdDate datetime not null default current_timestamp
 );
 
