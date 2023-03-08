@@ -135,7 +135,7 @@ div.chartKeyItem {
     top: 25px;
 }
 
-#currentBPGoal, #currentMedications, #adverseEvents {
+#currentBPGoal, #currentMedications, #adverseEvents, #omron {
     /*text-align: center;*/
     margin: 10px;
 }

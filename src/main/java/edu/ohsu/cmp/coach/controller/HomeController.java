@@ -1,12 +1,15 @@
 package edu.ohsu.cmp.coach.controller;
 
+import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.model.*;
+import edu.ohsu.cmp.coach.model.AdverseEventModel;
+import edu.ohsu.cmp.coach.model.BloodPressureModel;
+import edu.ohsu.cmp.coach.model.MedicationModel;
+import edu.ohsu.cmp.coach.model.PulseModel;
+import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
+import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
-import edu.ohsu.cmp.coach.entity.Outcome;
-import edu.ohsu.cmp.coach.model.recommendation.Card;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,14 +24,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 @Controller
 public class HomeController extends BaseController {
+    private static final DateFormat OMRON_LAST_UPDATED = new SimpleDateFormat("EEEE, MMMM d, YYYY 'at' h:mm a");
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -45,6 +49,9 @@ public class HomeController extends BaseController {
 
     @Autowired
     private MedicationService medicationService;
+
+    @Autowired
+    private OmronService omronService;
 
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model,
@@ -66,6 +73,12 @@ public class HomeController extends BaseController {
 
                 Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
                 model.addAttribute("showClearSupplementalData", showClearSupplementalData);
+
+                model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
+
+                if (workspace.getOmronLastUpdated() != null) {
+                    model.addAttribute("omronLastUpdated", OMRON_LAST_UPDATED.format(workspace.getOmronLastUpdated()));
+                }
 
                 List<CDSHook> list = recommendationService.getOrderedCDSHooks();
                 model.addAttribute("cdshooks", list);

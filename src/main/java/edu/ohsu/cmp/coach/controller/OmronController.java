@@ -75,7 +75,7 @@ public class OmronController extends BaseController {
             logger.error("caught error during Omron authorization: " + error);
         }
 
-        return "redirect:/vitals";
+        return "redirect:/";
     }
 
     @PostMapping(value = "notify", consumes = MediaType.APPLICATION_JSON_VALUE)

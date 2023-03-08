@@ -154,6 +154,11 @@
                     }
                 });
             });
+
+            $(document).on('click', '#omronAuthLink', function() {
+                let target = $('#omronAuthLink').attr('data-target');
+                window.open(target, "_self");
+            });
         </script>
     {{/head}}
     {{#menuItems}}
@@ -275,6 +280,12 @@
                             </td>
                         </tr>
                     </table>
+                    <div id="omron">
+                        Click <span id="omronAuthLink" class="link" data-target="{{omronAuthRequestUrl}}">this link</span> to authenticate against Omron.
+                        {{#omronLastUpdated}}
+                            (<em>Last updated {{omronLastUpdated}}</em>)
+                        {{/omronLastUpdated}}
+                    </div>
                     <div id="currentBPGoal" data-systolic="{{bpGoal.systolicTarget}}" data-diastolic="{{bpGoal.diastolicTarget}}">
                         Your Current Blood Pressure Goal: <em><strong>Below {{bpGoal.systolicTarget}} /
                         {{bpGoal.diastolicTarget}}</strong></em> (<a href="/goals">update</a>)

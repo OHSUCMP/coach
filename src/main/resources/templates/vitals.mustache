@@ -86,11 +86,6 @@
                     $(this).html('Show Protocol');
                 }
             });
-
-            $(document).on('click', '#omronAuthLink', function() {
-                let target = $('#omronAuthLink').attr('data-target');
-                window.open(target, "_self");
-            });
         </script>
     {{/head}}
     {{#menuItems}}
@@ -268,21 +263,6 @@
                                 </tr>
                             {{/homeReadings}}
                         </table>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <div id="omronIntegrationContainer" class="tabData hidden" data-label="Omron Integration">
-            <table class="content">
-                <tr>
-                    <td class="heading">
-                        Omron Wellness Integration
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        Click <span id="omronAuthLink" class="link" data-target="{{omronAuthRequestUrl}}">this link</span> to authenticate against Omron.
                     </td>
                 </tr>
             </table>
