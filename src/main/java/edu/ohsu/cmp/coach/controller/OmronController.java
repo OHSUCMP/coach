@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.controller;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.omron.AccessTokenResponse;
+import edu.ohsu.cmp.coach.model.omron.OmronNotifyModel;
 import edu.ohsu.cmp.coach.service.OmronService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.lang3.StringUtils;
@@ -10,13 +11,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
 import java.text.DateFormat;
@@ -51,16 +50,24 @@ public class OmronController extends BaseController {
         if (StringUtils.isNotBlank(code)) {
             try {
                 AccessTokenResponse accessTokenResponse = omronService.requestAccessToken(code);
-
-                if (accessTokenResponse != null) {
-                    logger.debug("got Omron access token: " + accessTokenResponse.getAccessToken());
-                    workspace.setOmronTokenData(new MyOmronTokenData(accessTokenResponse));
-                    workspace.clearOmronCache();
-                    omronService.scheduleAccessTokenRefresh(session.getId());
-                }
-
+                logger.debug("got Omron access token: " + accessTokenResponse.getAccessToken());
+                workspace.setOmronTokenData(new MyOmronTokenData(accessTokenResponse));
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " getting Omron access token - " + e.getMessage(), e);
+                throw new RuntimeException(e);
+            }
+
+            try {
+                omronService.scheduleAccessTokenRefresh(session.getId());
+            } catch (Exception e) {
+                logger.error("caught " + e.getClass().getName() + " scheduling Omron access token refresh - " + e.getMessage(), e);
+                throw new RuntimeException(e);
+            }
+
+            try {
+                omronService.synchronize(session.getId());
+            } catch (Exception e) {
+                logger.error("caught " + e.getClass().getName() + " synchronizing with Omron - " + e.getMessage(), e);
                 throw new RuntimeException(e);
             }
 
@@ -71,17 +78,16 @@ public class OmronController extends BaseController {
         return "redirect:/vitals";
     }
 
-    @PostMapping("notify")
-    public ResponseEntity<String> notify(String id,
-                                         String timestamp) {
+    @PostMapping(value = "notify", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> notify(@RequestBody OmronNotifyModel notification) {
 
-        UserWorkspace workspace = userWorkspaceService.getByOmronUserId(id);
+        UserWorkspace workspace = userWorkspaceService.getByOmronUserId(notification.getId());
 
         // note : this endpoint will be called by Omron when an authenticated user has new data to pull
         //        as such, this endpoint does not connect to any existing user session.  we need to look up
         //        the user by their id
 
-        logger.info("received notification for Omron User with id={}, timestamp={}", id, timestamp);
+        logger.info("received Omron notification: {}", notification);
 
         // id = the id of the user who performed the upload.  received into id_token on initial user authorization
 

@@ -2,15 +2,14 @@ package edu.ohsu.cmp.coach.entity;
 
 import edu.ohsu.cmp.coach.model.omron.OmronBloodPressureModel;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Date;
 
 @Entity
 @Table(name = "omron_vitals_cache")
 public class MyOmronVitals {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private Long patId;
@@ -29,9 +28,7 @@ public class MyOmronVitals {
     public MyOmronVitals() {
     }
 
-    public MyOmronVitals(Long internalPatientId, OmronBloodPressureModel model) {
-        // do not set id
-        patId = internalPatientId;
+    public MyOmronVitals(OmronBloodPressureModel model) {
         omronId = model.getId();
         dateTime = model.getDateTime();
         dateTimeLocal = model.getDateTimeLocal();
@@ -42,7 +39,6 @@ public class MyOmronVitals {
         pulse = model.getPulse();
         pulseUnits = model.getPulseUnits();
         deviceType = model.getDeviceType();
-        // do not set createdDate
     }
 
     public void setId(Long id) {

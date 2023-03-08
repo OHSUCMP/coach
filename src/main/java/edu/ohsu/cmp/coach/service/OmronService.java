@@ -83,7 +83,7 @@ public class OmronService extends AbstractService {
         }
     }
 
-    public AccessTokenResponse requestAccessToken(String authorizationCode) throws IOException, EncoderException {
+    public AccessTokenResponse requestAccessToken(String authorizationCode) throws IOException, EncoderException, OmronException {
         logger.debug("requesting access token for authorizationCode=" + authorizationCode);
 
         Map<String, String> bodyParams = new LinkedHashMap<>();
@@ -106,7 +106,7 @@ public class OmronService extends AbstractService {
 
         if (code < 200 || code > 299) {
             logger.error("Omron access token request error: " + body);
-            return null;
+            throw new OmronException("received code " + code + " getting Omron access token");
 
         } else {
             Gson gson = new GsonBuilder().create();
@@ -297,7 +297,9 @@ public class OmronService extends AbstractService {
     private void writeToPersistentCache(Long internalPatientId, OmronBloodPressureModel model) {
         if ( ! repository.existsByOmronId(model.getId()) ) {
             logger.info("caching Omron vitals with id=" + model.getId() + " for patient with id=" + internalPatientId);
-            MyOmronVitals vitals = new MyOmronVitals(internalPatientId, model);
+            MyOmronVitals vitals = new MyOmronVitals(model);
+            vitals.setPatId(internalPatientId);
+            vitals.setCreatedDate(new Date());
             repository.save(vitals);
         } else {
             logger.debug("not caching Omron vitals with id=" + model.getId() + " - already exists!");
