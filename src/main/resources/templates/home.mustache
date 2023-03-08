@@ -15,7 +15,7 @@
 <!--        <script type="text/javascript" src="/js/loess/loess.js"></script>-->
         <script src="/js/science.js/science.v1.js"></script>
         <script src="/js/science.js/lib/d3/d3.js"></script>
-        <link rel="stylesheet" href="/css/home.css?v=3"/>
+        <link rel="stylesheet" href="/css/home.css?v=4"/>
         <script type="text/javascript" src="/js/home.js?v=2"></script>
 
         <link rel="stylesheet" href="/css/recommendations.css?v=1"/>
@@ -281,9 +281,15 @@
                         </tr>
                     </table>
                     <div id="omron">
-                        Click <span id="omronAuthLink" class="link" data-target="{{omronAuthRequestUrl}}">this link</span> to authenticate against Omron.
+                        {{#omronAuthRequestUrl}}
+                            <div>
+                                Click <span id="omronAuthLink" class="link" data-target="{{omronAuthRequestUrl}}">this link</span> to authenticate and synchronize with Omron.
+                            </div>
+                        {{/omronAuthRequestUrl}}
                         {{#omronLastUpdated}}
-                            (<em>Last updated {{omronLastUpdated}}</em>)
+                            <div>
+                                Omron data last synchronized <em>{{omronLastUpdated}}</em>
+                            </div>
                         {{/omronLastUpdated}}
                     </div>
                     <div id="currentBPGoal" data-systolic="{{bpGoal.systolicTarget}}" data-diastolic="{{bpGoal.diastolicTarget}}">
