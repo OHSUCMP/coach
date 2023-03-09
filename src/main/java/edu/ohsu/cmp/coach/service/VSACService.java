@@ -8,6 +8,7 @@ import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.xml.SimpleXMLDOM;
 import edu.ohsu.cmp.coach.model.xml.SimpleXMLElement;
+import edu.ohsu.cmp.coach.util.UUIDUtil;
 import org.apache.commons.codec.EncoderException;
 import org.apache.http.HttpException;
 import org.slf4j.Logger;
@@ -49,7 +50,16 @@ public class VSACService {
 
     private String serviceTicketURI = null;
 
+    public boolean isVSACEnabled() {
+        return UUIDUtil.isUUID(apiKey);
+    }
+
     public ValueSet getValueSet(String oid) throws IOException, ParserConfigurationException, SAXException, ParseException, DataException, EncoderException {
+        if ( ! isVSACEnabled() ) {
+            logger.warn("VSAC is not enabled - not getting ValueSet with oid=" + oid);
+            return null;
+        }
+
         String xml = getRawValueSet(oid);
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

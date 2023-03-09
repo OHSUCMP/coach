@@ -33,6 +33,7 @@ public class ValueSetService extends AbstractService {
         try {
             logger.info("acquiring ValueSet with oid=" + oid + " from VSAC");
             ValueSet fresh = vsacService.getValueSet(oid);
+            if (fresh == null) return;
 
             // update incoming ValueSet concepts to reference existing persistence records if they exist
             Set<Concept> concepts = new LinkedHashSet<>();
