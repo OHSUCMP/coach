@@ -9,6 +9,7 @@ import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.service.*;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -209,5 +210,11 @@ public class HomeController extends BaseController {
         }
 
         return new ArrayList<>(map.values());
+    }
+
+    @GetMapping("metadata")
+    public ResponseEntity<String> getMetadata(HttpSession session) {
+        UserWorkspace workspace = userWorkspaceService.get(session.getId());
+        return new ResponseEntity<>(FhirUtil.toJson(workspace.getFhirCredentialsWithClient().getMetadata()), HttpStatus.OK);
     }
 }
