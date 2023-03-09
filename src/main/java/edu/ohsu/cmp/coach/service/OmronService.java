@@ -236,7 +236,6 @@ public class OmronService extends AbstractService {
 
         try {
             if ( ! scheduler.isStarted() ) {
-                logger.info("starting Quartz Scheduler for session {}", sessionId);
                 scheduler.start();
             }
 
