@@ -14,6 +14,7 @@ import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.model.omron.*;
 import edu.ohsu.cmp.coach.repository.OmronVitalsCacheRepository;
+import edu.ohsu.cmp.coach.util.UUIDUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
@@ -71,7 +72,16 @@ public class OmronService extends AbstractService {
     @Autowired
     private Scheduler scheduler;
 
+    public boolean isOmronEnabled() {
+        return UUIDUtil.isUUID(secretKey);
+    }
+
     public String getAuthorizationRequestUrl() throws DataException {
+        if ( ! isOmronEnabled() ) {
+            logger.warn("Omron is not enabled - not generating authorization request URL");
+            return null;
+        }
+
         try {
             URLCodec urlCodec = new URLCodec();
             return oauthHostUrl + "/connect/authorize?client_id=" + urlCodec.encode(clientId) +
@@ -84,6 +94,11 @@ public class OmronService extends AbstractService {
     }
 
     public AccessTokenResponse requestAccessToken(String authorizationCode) throws IOException, EncoderException, OmronException {
+        if ( ! isOmronEnabled() ) {
+            logger.warn("Omron is not enabled - not requesting access token");
+            return null;
+        }
+
         logger.debug("requesting access token for authorizationCode=" + authorizationCode);
 
         Map<String, String> bodyParams = new LinkedHashMap<>();
@@ -114,7 +129,12 @@ public class OmronService extends AbstractService {
         }
     }
 
-    public RefreshTokenResponse refreshAccessToken(String refreshToken) throws IOException, EncoderException {
+    public RefreshTokenResponse refreshAccessToken(String refreshToken) throws IOException, EncoderException, OmronException {
+        if ( ! isOmronEnabled() ) {
+            logger.warn("Omron is not enabled - not refreshing access token");
+            return null;
+        }
+
         logger.debug("refreshing access token for refreshToken=" + refreshToken);
 
         Map<String, String> bodyParams = new LinkedHashMap<>();
@@ -136,7 +156,7 @@ public class OmronService extends AbstractService {
 
         if (code < 200 || code > 299) {
             logger.error("Omron access token refresh error: " + body);
-            return null;
+            throw new OmronException("received HTTP " + code + " refreshing access token");
 
         } else {
             Gson gson = new GsonBuilder().create();
@@ -144,7 +164,12 @@ public class OmronService extends AbstractService {
         }
     }
 
-    public boolean revokeAccessToken(String accessToken) throws EncoderException, IOException {
+    public void revokeAccessToken(String accessToken) throws EncoderException, IOException, OmronException {
+        if ( ! isOmronEnabled() ) {
+            logger.warn("Omron is not enabled - not revoking access token");
+            return;
+        }
+
         logger.debug("revoking accessToken=" + accessToken);
 
         Map<String, String> bodyParams = new LinkedHashMap<>();
@@ -162,61 +187,18 @@ public class OmronService extends AbstractService {
 
         logger.debug("got response code=" + code);
 
-        if (code == 200) {
-            return true;
-        } else {
-            logger.error("Omron access token revocation error: " + code);
-            return false;
-        }
-    }
-
-    private MeasurementResult requestMeasurements(String sessionId, Date sinceTimestamp) throws EncoderException, IOException, NotAuthenticatedException, OmronException {
-        UserWorkspace workspace = userWorkspaceService.get(sessionId);
-
-        MyOmronTokenData tokenData = workspace.getOmronTokenData();
-        if (tokenData == null) {
-            throw new NotAuthenticatedException("No Omron authentication token data found");
-        }
-
-        Map<String, String> bodyParams = new LinkedHashMap<>();
-
-        if (sinceTimestamp == null) {
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(new Date());
-            calendar.add(Calendar.YEAR, -2);
-            sinceTimestamp = calendar.getTime();
-        }
-        bodyParams.put("since", OMRON_DATE_FORMAT.format(sinceTimestamp));
-
-//        bodyParams.put("limit", limit);           // optional
-        bodyParams.put("type", "bloodpressure");
-        bodyParams.put("includeHourlyActivity", "false");
-//        bodyParams.put("sortOrder", "desc");        // optional
-
-        Map<String, String> headers = new LinkedHashMap<>();
-        headers.put("Authorization", "Bearer " + tokenData.getBearerToken());
-        headers.put("Content-Type", "application/x-www-form-urlencoded");
-
-        HttpResponse httpResponse = new HttpRequest().post(apiHostUrl + "/api/measurement", null, headers, bodyParams);
-        int code = httpResponse.getResponseCode();
-        String body = httpResponse.getResponseBody();
-
         if (code < 200 || code > 299) {
-            logger.error("Omron measurement request error: " + body);
-            throw new OmronException("received HTTP " + code + " building vitals for session " + sessionId);
-
-        } else {
-            logger.debug("got body (PARSE THIS WITH GSON): " + body);
-            Gson gson = new GsonBuilder().create();
-            MeasurementResponse response = gson.fromJson(body, new TypeToken<MeasurementResponse>() {}.getType());
-
-            // todo : do something with response.getStatus()?
-
-            return response.getResult();
+            logger.error("Omron access token revocation error: " + code);
+            throw new OmronException("received HTTP " + code + " revoking access token");
         }
     }
 
     public void scheduleAccessTokenRefresh(String sessionId) {
+        if ( ! isOmronEnabled() ) {
+            logger.warn("Omron is not enabled - not scheduling access token refresh");
+            return;
+        }
+
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         MyOmronTokenData omronTokenData = workspace.getOmronTokenData();
 
@@ -268,6 +250,11 @@ public class OmronService extends AbstractService {
     }
 
     public void synchronize(String sessionId) {
+        if ( ! isOmronEnabled() ) {
+            logger.warn("Omron is not enabled - not synchronizing");
+            return;
+        }
+        
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         try {
             MeasurementResult result = requestMeasurements(sessionId, workspace.getOmronLastUpdated());
@@ -294,19 +281,8 @@ public class OmronService extends AbstractService {
         }
     }
 
-    private void writeToPersistentCache(Long internalPatientId, OmronBloodPressureModel model) {
-        if ( ! repository.existsByOmronId(model.getId()) ) {
-            logger.info("caching Omron vitals with id=" + model.getId() + " for patient with id=" + internalPatientId);
-            MyOmronVitals vitals = new MyOmronVitals(model);
-            vitals.setPatId(internalPatientId);
-            vitals.setCreatedDate(new Date());
-            repository.save(vitals);
-        } else {
-            logger.debug("not caching Omron vitals with id=" + model.getId() + " - already exists!");
-        }
-    }
-
     public List<OmronVitals> readFromPersistentCache(String sessionId) {
+        // local operation only - permit even if Omron is disabled
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         List<OmronVitals> list = new ArrayList<>();
         for (MyOmronVitals vitals : repository.findAllByPatId(workspace.getInternalPatientId())) {
@@ -323,12 +299,77 @@ public class OmronService extends AbstractService {
     }
 
     public void deleteAll(String sessionId) {
+        // local operation only - permit even if Omron is disabled
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         repository.deleteAllByPatId(workspace.getInternalPatientId());
     }
 
     public void resetLastUpdated(String sessionId) {
+        // local operation only - permit even if Omron is disabled
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         patientService.setOmronLastUpdated(workspace.getInternalPatientId(), null);
+    }
+
+
+//////////////////////////////////////////////////////////////////////////////
+// private methods
+//
+
+    private MeasurementResult requestMeasurements(String sessionId, Date sinceTimestamp) throws EncoderException, IOException, NotAuthenticatedException, OmronException {
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+
+        MyOmronTokenData tokenData = workspace.getOmronTokenData();
+        if (tokenData == null) {
+            throw new NotAuthenticatedException("No Omron authentication token data found");
+        }
+
+        Map<String, String> bodyParams = new LinkedHashMap<>();
+
+        if (sinceTimestamp == null) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(new Date());
+            calendar.add(Calendar.YEAR, -2);
+            sinceTimestamp = calendar.getTime();
+        }
+        bodyParams.put("since", OMRON_DATE_FORMAT.format(sinceTimestamp));
+
+//        bodyParams.put("limit", limit);           // optional
+        bodyParams.put("type", "bloodpressure");
+        bodyParams.put("includeHourlyActivity", "false");
+//        bodyParams.put("sortOrder", "desc");        // optional
+
+        Map<String, String> headers = new LinkedHashMap<>();
+        headers.put("Authorization", "Bearer " + tokenData.getBearerToken());
+        headers.put("Content-Type", "application/x-www-form-urlencoded");
+
+        HttpResponse httpResponse = new HttpRequest().post(apiHostUrl + "/api/measurement", null, headers, bodyParams);
+        int code = httpResponse.getResponseCode();
+        String body = httpResponse.getResponseBody();
+
+        if (code < 200 || code > 299) {
+            logger.error("Omron measurement request error: " + body);
+            throw new OmronException("received HTTP " + code + " building vitals for session " + sessionId);
+
+        } else {
+            logger.debug("got body (PARSE THIS WITH GSON): " + body);
+            Gson gson = new GsonBuilder().create();
+            MeasurementResponse response = gson.fromJson(body, new TypeToken<MeasurementResponse>() {}.getType());
+
+            // todo : do something with response.getStatus()?
+
+            return response.getResult();
+        }
+    }
+
+    private void writeToPersistentCache(Long internalPatientId, OmronBloodPressureModel model) {
+        if ( ! repository.existsByOmronId(model.getId()) ) {
+            logger.info("caching Omron vitals with id=" + model.getId() + " for patient with id=" + internalPatientId);
+            MyOmronVitals vitals = new MyOmronVitals(model);
+            vitals.setPatId(internalPatientId);
+            vitals.setCreatedDate(new Date());
+            repository.save(vitals);
+        } else {
+            logger.debug("not caching Omron vitals with id=" + model.getId() + " - already exists!");
+        }
     }
 }

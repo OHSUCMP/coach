@@ -36,9 +36,11 @@ public class RefreshTokenJob implements Job {
 
         try {
             RefreshTokenResponse response = omronService.refreshAccessToken(refreshToken);
-            UserWorkspace workspace = userWorkspaceService.get(sessionId);
-            workspace.getOmronTokenData().update(response);
-            omronService.scheduleAccessTokenRefresh(sessionId);
+            if (response != null) {
+                UserWorkspace workspace = userWorkspaceService.get(sessionId);
+                workspace.getOmronTokenData().update(response);
+                omronService.scheduleAccessTokenRefresh(sessionId);
+            }
 
         } catch (Exception e) {
             throw new JobExecutionException("caught " + e.getClass().getName() + " executing job for session=" +
