@@ -278,12 +278,12 @@ create table vsac_valueset_concept (
 );
 
 
-# update 2022-12-08 to remove source column from home BP readings; no longer using HOME_BLUETOOTH, so
-# this column is vestigial and should be removed
+-- update 2022-12-08 to remove source column from home BP readings; no longer using HOME_BLUETOOTH, so
+-- this column is vestigial and should be removed
 
 alter table home_bp_reading drop column source;
 
-# 2023-03-03 - Omron updates
+-- 2023-03-03 - Omron updates
 
 alter table patient add omronLastUpdated datetime;
 
@@ -305,3 +305,9 @@ create table omron_vitals_cache (
 );
 
 create index idxPatId on omron_vitals_cache (patId);
+
+-- intervention / control updates 2023-03-09
+
+alter table patient add studyClass varchar(20);
+
+update patient set studyClass=if(floor(rand() * 2) = 0, 'control', 'intervention') where studyClass is null;

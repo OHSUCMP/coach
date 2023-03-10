@@ -70,6 +70,8 @@ public class UserWorkspace {
     private Date omronLastUpdated = null;
     private final Cache omronCache;
 
+    private final StudyClass studyClass;
+
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
                             FHIRCredentialsWithClient fhirCredentialsWithClient,
                             FhirQueryManager fqm, FhirConfigManager fcm) throws SchedulerException {
@@ -86,6 +88,7 @@ public class UserWorkspace {
         );
         this.internalPatientId = myPatient.getId();
         this.omronLastUpdated = myPatient.getOmronLastUpdated();
+        this.studyClass = StudyClass.fromString(myPatient.getStudyClass());
 
         cache = Caffeine.newBuilder()
                 .expireAfterWrite(6, TimeUnit.HOURS)
@@ -136,6 +139,10 @@ public class UserWorkspace {
 
     public void setOmronLastUpdated(Date omronLastUpdated) {
         this.omronLastUpdated = omronLastUpdated;
+    }
+
+    public StudyClass getStudyClass() {
+        return studyClass;
     }
 
     public void populate() {

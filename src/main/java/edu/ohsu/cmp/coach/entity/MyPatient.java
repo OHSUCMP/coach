@@ -14,6 +14,8 @@ public class MyPatient {
 
     private Date omronLastUpdated;
 
+    private String studyClass;
+
     protected MyPatient() {
     }
 
@@ -43,5 +45,13 @@ public class MyPatient {
 
     public void setOmronLastUpdated(Date omronLastUpdated) {
         this.omronLastUpdated = omronLastUpdated;
+    }
+
+    public String getStudyClass() {
+        return studyClass;
+    }
+
+    public void setStudyClass(String studyClass) {
+        this.studyClass = studyClass;
     }
 }
