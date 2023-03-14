@@ -96,25 +96,26 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
     public Bundle transformOutgoingBloodPressureReading(BloodPressureModel model) throws DataException {
         if (model == null) return null;
 
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
+
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
-        // if the observation came from the EHR, just package it up and send it along
         if (model.getSourceBPObservation() != null) {
-            FhirUtil.appendResourceToBundle(bundle, model.getSourceBPObservation());
+            // ensure BP panel Observations are tagged with the common panel coding
+            Observation sourceBPObservation = model.getSourceBPObservation().copy();
+            appendIfMissing(sourceBPObservation, fcm.getBpPanelCommonCoding());
+            FhirUtil.appendResourceToBundle(bundle, sourceBPObservation);
+
             if (model.getSourceEncounter() != null) {
-                FhirUtil.appendResourceToBundle(bundle, model.getSourceEncounter());
+                FhirUtil.appendResourceToBundle(bundle, model.getSourceEncounter().copy());
             }
             if (model.getSourceProtocolObservation() != null) {
-                FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation());
+                FhirUtil.appendResourceToBundle(bundle, model.getSourceProtocolObservation().copy());
             }
 
         } else if (model.getSourceSystolicObservation() != null && model.getSourceDiastolicObservation() != null) {
-            FhirConfigManager fcm = workspace.getFhirConfigManager();
-
-            // enforce presence of LOINC codes, as this block of logic really only comes from Epic source
-            // where LOINC codes are prohibited
-
+            // ensure BP systolic and diastolic Observations are tagged with the common systolic and diastolic codings
             Observation systolicObservation = model.getSourceSystolicObservation().copy();
             appendIfMissing(systolicObservation, fcm.getBpSystolicCommonCoding());
             FhirUtil.appendResourceToBundle(bundle,systolicObservation);
@@ -133,7 +134,6 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         } else {
             String patientId = workspace.getPatient().getSourcePatient().getId(); //workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
-            FhirConfigManager fcm = workspace.getFhirConfigManager();
 
             // the BP observation didn't come from the EHR, so it necessarily came from COACH, and is
             // thereby necessarily a HOME based observation.
@@ -257,11 +257,19 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
      */
     @Override
     public Bundle transformOutgoingPulseReading(PulseModel model) throws DataException {
+        if (model == null) return null;
+
+        FhirConfigManager fcm = workspace.getFhirConfigManager();
+
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
 
         if (model.getSourcePulseObservation() != null) {
-            FhirUtil.appendResourceToBundle(bundle, model.getSourcePulseObservation());
+            // ensure pulse Observations are tagged with the common coding
+            Observation sourcePulseObservation = model.getSourcePulseObservation().copy();
+            appendIfMissing(sourcePulseObservation, fcm.getPulseCommonCoding());
+            FhirUtil.appendResourceToBundle(bundle, sourcePulseObservation);
+
             if (model.getSourceEncounter() != null) {
                 FhirUtil.appendResourceToBundle(bundle, model.getSourceEncounter());
             }
@@ -272,7 +280,6 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         } else {
             String patientId = workspace.getPatient().getSourcePatient().getId(); //workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
-            FhirConfigManager fcm = workspace.getFhirConfigManager();
 
             // in the default scenario, Pulse observations should have an associated Encounter to tie it to
             // associated resources
@@ -432,7 +439,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
     private void appendIfMissing(Observation observation, Coding coding) {
         if (observation == null) return;
 
-        if (observation.hasCode() && observation.getCode().hasCoding(coding.getSystem(), coding.getCode())) {
+        if (observation.hasCode() && FhirUtil.hasCoding(observation.getCode(), coding)) { //observation.getCode().hasCoding(coding.getSystem(), coding.getCode())) {
             return;
         }
 
