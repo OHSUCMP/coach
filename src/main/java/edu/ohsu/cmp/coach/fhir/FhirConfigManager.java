@@ -333,7 +333,7 @@ public class FhirConfigManager {
 
     private List<Coding> buildCodings(String s) {
         List<Coding> list = new ArrayList<>();
-        if (s != null) {
+        if (StringUtils.isNotBlank(s)) {
             for (String s2 : s.split("\\s*(?<!\\\\),\\s*")) { // this will match "," so long it's not escaped ("\,")
                 Coding c = buildCoding(s2);
                 if (c != null) list.add(c);
@@ -348,7 +348,7 @@ public class FhirConfigManager {
      * @return a populated FHIR Coding resource
      */
     private Coding buildCoding(String s) {
-        if (s == null) return null;
+        if (StringUtils.isBlank(s)) return null;
         String[] parts = s.split("\\|");
         Coding c = new Coding().setSystem(parts[0]).setCode(parts[1]);
         if (parts.length > 2) c.setDisplay(parts[2]);

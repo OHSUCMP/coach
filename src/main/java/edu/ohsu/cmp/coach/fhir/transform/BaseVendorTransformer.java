@@ -25,7 +25,9 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
     private static final String TOKEN_RELATIVE_DATE = "\\{now([-+])([mMdDyY0-9]+)}"; // "\\{now[-+][mMdDyY0-9]+}";
     private static final Pattern PATTERN_RELATIVE_DATE = Pattern.compile("now([-+])([mMdDyY0-9]+)");
     private static final Pattern PATTERN_RELATIVE_DATE_PART = Pattern.compile("([0-9]+)([mMdDyY])");
-    private static final DateFormat FHIR_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
+//    private static final DateFormat FHIR_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    private static final DateFormat FHIR_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
     protected static final String NO_ENCOUNTERS_KEY = null; // intentionally instantiated with null value
 
@@ -205,15 +207,15 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 }
             }
 
-            return getFhirDateFormat().format(cal.getTime());
+            return FHIR_DATE_FORMAT.format(cal.getTime());
         }
 
         return "";
     }
 
-    protected DateFormat getFhirDateFormat() {
-        return FHIR_DATE_FORMAT;
-    }
+//    protected DateFormat getFhirDateFormat() {
+//        return FHIR_DATE_FORMAT;
+//    }
 
     private String extract(String token, String s) {
         Pattern p = Pattern.compile(".*(" + token + ").*");

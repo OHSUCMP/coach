@@ -16,12 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.List;
 
+@Deprecated
 public class CernerVendorTransformer extends BaseVendorTransformer implements VendorTransformer {
-    private static final DateFormat CERNER_FHIR_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+//    private static final DateFormat CERNER_FHIR_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -32,10 +31,10 @@ public class CernerVendorTransformer extends BaseVendorTransformer implements Ve
         this.defaultTransformer = new DefaultVendorTransformer(workspace);
     }
 
-    @Override
-    protected DateFormat getFhirDateFormat() {
-        return CERNER_FHIR_DATE_FORMAT;
-    }
+//    @Override
+//    protected DateFormat getFhirDateFormat() {
+//        return CERNER_FHIR_DATE_FORMAT;
+//    }
 
     @Override
     protected BloodPressureModel buildBloodPressureModel(Encounter encounter, Observation bpObservation, Observation protocolObservation) throws DataException {

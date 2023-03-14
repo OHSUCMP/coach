@@ -207,7 +207,13 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
                 }
 
                 for (Observation pulseObservation : pulseObservationList) {
-                    list.add(new PulseModel(encounter, pulseObservation, protocolObservation, fcm));
+                    try {
+                        list.add(new PulseModel(encounter, pulseObservation, protocolObservation, fcm));
+                    } catch (DataException e) {
+                        logger.warn("caught " + e.getClass().getName() +
+                                " building Pulse from Observation with id=" + pulseObservation.getId() + " - " +
+                                e.getMessage() + " - skipping -");
+                    }
                 }
 
                 pulseObservationList.clear();
@@ -225,8 +231,13 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
                 for (Observation o : entry.getValue()) {
                     if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getPulseCodings())) {
                         logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        list.add(new PulseModel(o, fcm));
-
+                        try {
+                            list.add(new PulseModel(o, fcm));
+                        } catch (DataException e) {
+                            logger.warn("caught " + e.getClass().getName() +
+                                    " building Pulse from Observation with id=" + o.getId() + " - " +
+                                    e.getMessage() + " - skipping -");
+                        }
                     } else {
                         logger.debug("did not process Observation " + o.getId());
                     }

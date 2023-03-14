@@ -1,14 +1,14 @@
 package edu.ohsu.cmp.coach.model;
 
+import edu.ohsu.cmp.coach.exception.DataException;
 import org.hl7.fhir.r4.model.Quantity;
-
-import java.math.BigDecimal;
 
 public class QuantityModel {
     private Integer value;
     private String unit;
 
-    public QuantityModel(Quantity q, String unit) {
+    public QuantityModel(Quantity q, String unit) throws DataException {
+        if (q.getValue() == null) throw new DataException("quantity value is null");
         this.value = (int) Math.round(q.getValue().doubleValue());
         this.unit = q.hasUnit() ? q.getUnit() : unit;
     }
