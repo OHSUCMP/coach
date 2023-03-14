@@ -4,9 +4,8 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
-import edu.ohsu.cmp.coach.model.FHIRCompatible;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
@@ -380,7 +379,7 @@ public class FhirUtil {
         return parser.encodeResourceToString(r);
     }
 
-    public static String toCodeParamString(List<Coding> codings) {
+    public static String toCodeParamString(List<Coding> codings) throws ConfigurationException {
         if (codings == null) return null;
 
         List<String> list = new ArrayList<>();
@@ -394,22 +393,38 @@ public class FhirUtil {
         return StringUtils.join(list, ",");
     }
 
-    public static String toCodeParamString(Coding c) {
+    public static String toCodeParamString(Coding c) throws ConfigurationException {
         if (c == null) return null;
 
-        List<String> parts = new ArrayList<>();
-        if (c.hasSystem()) parts.add(c.getSystem());
-        if (c.hasCode()) parts.add(c.getCode());
+        // adheres to http://hl7.org/fhir/R4/search.html#token
 
-        return StringUtils.join(parts, "|");
+        if (c.hasSystem() && c.hasCode()) {             // system+code : force match on system and code
+            return c.getSystem() + "|" + c.getCode();
+
+        } else if (c.hasSystem()) {                     // system only : match on system with any code
+            return c.getSystem() + "|";
+
+        } else if (c.hasCode()) {                       // code only : match on code with any system
+            return c.getCode();
+        }
+
+        throw new ConfigurationException("Coding has no system or code specified");
     }
 
-    public static boolean hasCoding(CodeableConcept cc, List<Coding> list) {
-        if (cc == null) return false;
-        if (list == null || list.isEmpty()) return false;
+    // todo : consolidate hasCoding with codingMatches below
 
-        for (Coding c : list) {
-            if (hasCoding(cc, c)) {
+    /**
+     * identifies whether a CodeableConcept's list of Codings matches a specification, or not.
+     * @param cc a CodeableConcept object that contains one or more Codings
+     * @param specificationCodings a List of one or more Codings, where each item is a Coding that contains a pattern
+     *                             to match against.
+     * @return true if a Coding represented in cc can be matched against a Coding pattern / specification.
+     */
+    public static boolean hasCoding(CodeableConcept cc, List<Coding> specificationCodings) {
+        if (specificationCodings == null) return false;
+
+        for (Coding spec : specificationCodings) {
+            if (hasCoding(cc, spec)) {
                 return true;
             }
         }
@@ -417,9 +432,87 @@ public class FhirUtil {
         return false;
     }
 
-    public static boolean hasCoding(CodeableConcept cc, Coding c) {
-        if (cc == null || c == null) return false;
-        return cc.hasCoding(c.getSystem(), c.getCode());
+    /**
+     * identifies whether a CodeableConcept's list of Codings matches a specification, or not.
+     * @param cc a CodeableConcept object that contains one or more Codings
+     * @param specificationCoding a Coding object that contains a pattern to match against.
+     * @return true if a Coding represented in cc can be matched against the Coding pattern specification.
+     */
+    public static boolean hasCoding(CodeableConcept cc, Coding specificationCoding) {
+        if (cc == null || specificationCoding == null) return false;
+
+        for (Coding c : cc.getCoding()) {
+            if (codingMatches(c, specificationCoding)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * identifies whether a Coding c matches a particular specification represented by spec
+     * @param c a Coding object to test
+     * @param spec a Coding specification to test against
+     * @return true if c matches the specification represented by spec
+     */
+    public static boolean codingMatches(Coding c, Coding spec) {
+        return codingMatches(c, spec, null);
+    }
+
+    /**
+     * identifies whether a Coding c matches a particular specification represented by spec
+     * @param c a Coding object to test
+     * @param spec a Coding specification to test against.  it may contain system, code, and display elements.  if any
+     *             element is not specified, then any provided corresponding element in c will match it
+     * @param sb a StringBuilder object to which, if provided, match details will be written (useful for debugging)
+     * @return true if c matches the specification represented by spec
+     */
+    public static boolean codingMatches(Coding c, Coding spec, StringBuilder sb) {
+        if (c == null || spec == null) return false;
+
+        if ( ! spec.hasSystem() && ! spec.hasCode() && ! spec.hasDisplay() ) {
+            logger.warn("encountered empty Coding specification!  this is weird, this shouldn't ever happen");
+        }
+
+        // if system is specified, c must have a system that matches it
+        if (spec.hasSystem()) {
+            boolean systemMatches = c.hasSystem() && c.getSystem().equals(spec.getSystem());
+            if (systemMatches) {
+                if (sb != null) sb.append("MATCH system='").append(spec.getSystem()).append("' ");
+            } else {
+                if (sb != null) sb.append("DOES NOT MATCH system='").append(spec.getSystem()).append("' ");
+                return false;
+            }
+        }
+
+        // if code is specified, c must have a code that matches it
+        if (spec.hasCode()) {
+            boolean codeMatches = c.hasCode() && c.getCode().equals(spec.getCode());
+            if (codeMatches) {
+                if (sb != null) sb.append("MATCH code='").append(spec.getSystem()).append("' ");
+            } else {
+                if (sb != null) sb.append("DOES NOT MATCH code='").append(spec.getSystem()).append("' ");
+                return false;
+            }
+        }
+
+        // display is unreliable (but sometimes it's all we have), so it's only considered when either system
+        // or code, or both, are missing
+        if ( ! spec.hasSystem() || ! spec.hasCode() ) {
+            // if display is specified, c must have a display that matches it
+            if (spec.hasDisplay()) {
+                boolean displayMatches = c.hasDisplay() && c.getDisplay().equals(spec.getDisplay());
+                if (displayMatches) {
+                    if (sb != null) sb.append("MATCH display='").append(spec.getSystem()).append("' ");
+                } else {
+                    if (sb != null) sb.append("DOES NOT MATCH display='").append(spec.getSystem()).append("' ");
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     public static boolean hasHomeSettingExtension(DomainResource domainResource) {

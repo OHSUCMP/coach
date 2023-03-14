@@ -26,9 +26,15 @@ public class BloodPressureService extends AbstractService {
     @Autowired
     private HomeBloodPressureReadingService hbprService;
 
-    public List<BloodPressureModel> buildRemoteBloodPressureList(String sessionId) throws DataException {
+    public List<BloodPressureModel> buildRemoteBloodPressureList(String sessionId) throws DataException, ConfigurationException {
         CompositeBundle compositeBundle = new CompositeBundle();
-        compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getAllBpCodings()), fcm.getBpLookbackPeriod(), null));
+
+        List<Coding> codings = new ArrayList<>();
+        codings.addAll(fcm.getBpPanelCodings());
+        codings.addAll(fcm.getBpSystolicCodings());
+        codings.addAll(fcm.getBpDiastolicCodings());
+
+        compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(codings), fcm.getBpLookbackPeriod(), null));
         compositeBundle.consume(userWorkspaceService.get(sessionId).getProtocolObservations());
 
         UserWorkspace workspace = userWorkspaceService.get(sessionId);

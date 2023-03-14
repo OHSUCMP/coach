@@ -16,8 +16,8 @@ public class ObservationUtil {
         ObservationSource source = null;
 
         EncounterMatcher matcher = new EncounterMatcher(fcm);
-        if (matcher.isAmbEncounter(encounter))              source = ObservationSource.OFFICE;
-        else if (matcher.isHomeHealthEncounter(encounter))  source = ObservationSource.HOME;
+        if      (matcher.isOfficeEncounter(encounter))  source = ObservationSource.OFFICE;
+        else if (matcher.isHomeEncounter(encounter))    source = ObservationSource.HOME;
 
         return source != null ?
                 source :
@@ -38,11 +38,7 @@ public class ObservationUtil {
         if (bpObservation.hasCode()) {
             CodeableConcept code = bpObservation.getCode();
 
-            if (FhirUtil.hasCoding(code, fcm.getBpEpicSystolicCoding()) ||
-                    FhirUtil.hasCoding(code, fcm.getBpEpicDiastolicCoding())) {
-                source = ObservationSource.HOME; // HOME_BLUETOOTH; // These Epic codings don't necessarily reflect Bluetooth origin
-
-            } else if (FhirUtil.hasCoding(code, fcm.getBpHomeCodings()) || FhirUtil.hasHomeSettingExtension(bpObservation)) {
+            if (FhirUtil.hasCoding(code, fcm.getBpHomeCodings()) || FhirUtil.hasHomeSettingExtension(bpObservation)) {
                 source = ObservationSource.HOME;
 
             } else if (FhirUtil.hasCoding(code, fcm.getBpOfficeCodings())) {

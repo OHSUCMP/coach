@@ -1,8 +1,8 @@
 package edu.ohsu.cmp.coach.service;
 
+import edu.ohsu.cmp.coach.fhir.EncounterMatcher;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
-import edu.ohsu.cmp.coach.fhir.EncounterMatcher;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
@@ -68,14 +68,14 @@ public class EHRService extends AbstractService {
                             }
 
                             EncounterMatcher matcher = new EncounterMatcher(fcm, true);
-                            boolean amb = matcher.isAmbEncounter(encounter);
-                            boolean hh = matcher.isHomeHealthEncounter(encounter);
-                            if ( ! amb && ! hh ) {
-                                logger.debug("removing Encounter " + encounter.getId() + " - not AMB or HH");
+                            boolean isOffice = matcher.isOfficeEncounter(encounter);
+                            boolean isHome = matcher.isHomeEncounter(encounter);
+                            if ( ! isOffice && ! isHome ) {
+                                logger.debug("removing Encounter " + encounter.getId() + " - not Office or Home");
                                 return false;
 
                             } else {
-                                logger.debug("keeping Encounter " + encounter.getId() + " (AMB=" + amb + ", HH=" + hh + ")");
+                                logger.debug("keeping Encounter " + encounter.getId() + " (Office=" + isOffice + ", Home=" + isHome + ")");
                             }
                         }
 
@@ -84,15 +84,18 @@ public class EHRService extends AbstractService {
                 }
         );
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Encounter bundle = " + FhirUtil.toJson(bundle));
-        }
-
         List<Encounter> list = new ArrayList<>();
-        if (bundle.hasEntry()) {
-            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-                if (entry.hasResource() && entry.getResource() instanceof Encounter) {
-                    list.add((Encounter) entry.getResource());
+
+        if (bundle != null) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Encounter bundle = " + FhirUtil.toJson(bundle));
+            }
+
+            if (bundle.hasEntry()) {
+                for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+                    if (entry.hasResource() && entry.getResource() instanceof Encounter) {
+                        list.add((Encounter) entry.getResource());
+                    }
                 }
             }
         }

@@ -25,6 +25,7 @@ import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
+import edu.ohsu.cmp.coach.util.UUIDUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.codec.EncoderException;
 import org.hl7.fhir.r4.model.*;
@@ -265,7 +266,7 @@ public class RecommendationService extends AbstractService {
 
         List<Counseling> counselingList = counselingService.getCounselingList(sessionId);
         for (Counseling c : counselingList) {
-            String uuid = UUID.randomUUID().toString();
+            String uuid = UUIDUtil.getRandomUUID();
 
             Encounter e = buildEncounter(uuid, patientId, c.getCreatedDate());
             bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
@@ -325,9 +326,10 @@ public class RecommendationService extends AbstractService {
 
         e.setId("encounter-" + uuid);
         e.setStatus(Encounter.EncounterStatus.FINISHED);
-        e.getClass_().setSystem(fcm.getEncounterClassSystem())
-                .setCode(fcm.getEncounterClassAMBCode())
-                .setDisplay(fcm.getEncounterClassAMBDisplay());
+        e.setClass_(fcm.getEncounterClassOfficeCoding());
+//        e.getClass_().setSystem(fcm.getEncounterClassSystem())
+//                .setCode(fcm.getEncounterClassAMBCode())
+//                .setDisplay(fcm.getEncounterClassAMBDisplay());
 
         e.setSubject(new Reference().setReference(patientId));
 

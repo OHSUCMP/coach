@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.util;
 
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 public class UUIDUtil {
@@ -7,5 +8,9 @@ public class UUIDUtil {
 
     public static boolean isUUID(String s) {
         return s != null && UUID_PATTERN.matcher(s).matches();
+    }
+
+    public static String getRandomUUID() {
+        return UUID.randomUUID().toString();
     }
 }

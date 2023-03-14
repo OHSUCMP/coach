@@ -13,6 +13,7 @@ import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.CryptoUtil;
 import org.apache.commons.codec.EncoderException;
+import edu.ohsu.cmp.coach.util.UUIDUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -72,7 +73,7 @@ public class JWTService {
                     .withIssuer(clientId)
                     .withSubject(clientId)
                     .withAudience(tokenAuthUrl)
-                    .withJWTId(UUID.randomUUID().toString())
+                    .withJWTId(UUIDUtil.getRandomUUID())
                     .withExpiresAt(buildExpiresAt())
                     .sign(algorithm);
 

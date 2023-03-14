@@ -10,6 +10,7 @@ import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.codec.EncoderException;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IDomainResource;
@@ -129,7 +130,7 @@ public class FHIRService {
     }
 
     public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery, Function<Resource, Boolean> validityFunction) {
-        if (fhirQuery == null || fhirQuery.trim().equals("")) return null;
+        if (StringUtils.isBlank(fhirQuery)) return null;
 
         logger.info("search: executing query: " + fhirQuery);
 
@@ -142,7 +143,8 @@ public class FHIRService {
                     .returnBundle(Bundle.class)
                     .execute();
 
-            logger.info("search: got " + bundle.getTotal() + " records for query: " + fhirQuery);
+            // bundle.getTotal() may be null and if so it will return 0, even if there are many entries.  Cerner does this
+            logger.info("search: got Bundle with total=" + bundle.getTotal() + ", entries=" + bundle.getEntry().size() + " for query: " + fhirQuery);
             if (logger.isDebugEnabled()) {
                 logger.debug("bundle = " + FhirUtil.toJson(bundle));
             }

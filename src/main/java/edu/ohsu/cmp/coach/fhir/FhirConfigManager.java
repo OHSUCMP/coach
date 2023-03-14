@@ -14,16 +14,15 @@ import java.util.List;
 @Component
 @PropertySource("${fhirconfig.file}")
 public class FhirConfigManager {
-
     private static final String ENCOUNTER_LOOKBACK_PERIOD = "2y";
-    private static final Coding BP_CODING = new Coding("http://loinc.org", "55284-4", "Blood pressure systolic and diastolic");
-    private static final Coding BP_SYSTOLIC_CODING = new Coding("http://loinc.org", "8480-6", "Systolic blood pressure");
-    private static final Coding BP_DIASTOLIC_CODING = new Coding("http://loinc.org", "8462-4", "Diastolic blood pressure");
+    private static final Coding BP_PANEL_COMMON_CODING = new Coding("http://loinc.org", "55284-4", "Blood pressure systolic and diastolic");
+    private static final Coding BP_SYSTOLIC_COMMON_CODING = new Coding("http://loinc.org", "8480-6", "Systolic blood pressure");
+    private static final Coding BP_DIASTOLIC_COMMON_CODING = new Coding("http://loinc.org", "8462-4", "Diastolic blood pressure");
     private static final String BP_VALUE_CODE = "mm[Hg]";
     private static final String BP_VALUE_SYSTEM = "http://unitsofmeasure.org";
     private static final String BP_VALUE_UNIT = "mmHg";
     private static final String BP_LOOKBACK_PERIOD = "2y";
-    private static final Coding PULSE_CODING = new Coding("http://loinc.org", "8867-4", "Heart rate");
+    private static final Coding PULSE_COMMON_CODING = new Coding("http://loinc.org", "8867-4", "Heart rate");
     private static final String PULSE_VALUE_CODE = "/min";
     private static final String PULSE_VALUE_SYSTEM = "http://unitsofmeasure.org";
     private static final String PULSE_VALUE_UNIT = "beats/minute";
@@ -43,152 +42,182 @@ public class FhirConfigManager {
     @Autowired
     private Environment env;
 
-    @Value("${encounter.class.system}")         private String encounterClassSystem;
-    @Value("${encounter.class.amb.code}")       private String encounterClassAMBCode;
-    @Value("${encounter.class.amb.display}")    private String encounterClassAMBDisplay;
-    @Value("${encounter.class.hh.code}")        private String encounterClassHHCode;
-    @Value("${encounter.class.hh.display}")     private String encounterClassHHDisplay;
+    private Coding encounterClassOfficeCoding = null;
+    private Coding encounterClassHomeCoding = null;
+    private List<Coding> encounterOfficeClassInCodings = null;
+    private List<Coding> encounterOfficeClassNotInCodings = null;
+    private List<Coding> encounterOfficeTypeInCodings = null;
+    private List<Coding> encounterOfficeTypeNotInCodings = null;
+    private List<Coding> encounterHomeClassInCodings = null;
+    private List<Coding> encounterHomeClassNotInCodings = null;
+    private List<Coding> encounterHomeTypeInCodings = null;
+    private List<Coding> encounterHomeTypeNotInCodings = null;
 
-    @Value("${encounter.amb.class.in}")         private String encounterAmbClassIn;
-    @Value("${encounter.amb.class.not-in}")     private String encounterAmbClassNotIn;
-    @Value("${encounter.amb.type.in}")          private String encounterAmbTypeIn;
-    @Value("${encounter.amb.type.not-in}")      private String encounterAmbTypeNotIn;
-    @Value("${encounter.hh.class.in}")         private String encounterHHClassIn;
-    @Value("${encounter.hh.class.not-in}")     private String encounterHHClassNotIn;
-    @Value("${encounter.hh.type.in}")          private String encounterHHTypeIn;
-    @Value("${encounter.hh.type.not-in}")      private String encounterHHTypeNotIn;
-//    @Value("${encounter.lookbackPeriod}")      private String encounterLookbackPeriod;
-
-//    private Coding bpCoding = null;
-//    private Coding bpSystolicCoding = null;
-//    private Coding bpDiastolicCoding = null;
     private List<Coding> bpOfficeCodings = null;
     private List<Coding> bpHomeCodings = null;
-    private Coding bpEpicSystolicCoding = null;
-    private Coding bpEpicDiastolicCoding = null;
-//    @Value("${bp.value.code}")      private String bpValueCode;
-//    @Value("${bp.value.system}")    private String bpValueSystem;
-//    @Value("${bp.value.unit}")      private String bpValueUnit;
+    private List<Coding> bpPanelCustomCodings = null;
+    private List<Coding> bpSystolicCustomCodings = null;
+    private List<Coding> bpDiastolicCustomCodings = null;
+
     @Value("${bp.limit}")           private String bpLimit;
-//    @Value("${bp.lookbackPeriod}")  private String bpLookbackPeriod;
-//    private Coding pulseCoding = null;
-    private Coding pulseEpicCoding = null;
-//    @Value("${pulse.value.code}")   private String pulseValueCode;
-//    @Value("${pulse.value.system}") private String pulseValueSystem;
-//    @Value("${pulse.value.unit}")   private String pulseValueUnit;
-//    @Value("${pulse.lookbackPeriod}")       private String pulseLookbackPeriod;
-//    private Coding protocolCoding = null;
-//    private Coding protocolAnswerCoding = null;
+
+    private List<Coding> pulseCustomCodings = null;
+
     @Value("${protocol.answer.yes}")        private String protocolAnswerYes;
     @Value("${protocol.answer.no}")         private String protocolAnswerNo;
-//    @Value("${protocol.lookbackPeriod}")    private String protocolLookbackPeriod;
-//    private Coding bmiCoding = null;
-//    @Value("${bmi.lookbackPeriod}")         private String bmiLookbackPeriod;
-//    private Coding smokingCoding = null;
-//    @Value("${smoking.lookbackPeriod}")     private String smokingLookbackPeriod;
-//    private Coding drinksCoding = null;
-//    @Value("${drinks.lookbackPeriod}")      private String drinksLookbackPeriod;
-//    private Coding procedureCounselingCoding = null;
 
 
-    public String getEncounterClassSystem() {
-        return encounterClassSystem;
+    public Coding getEncounterClassOfficeCoding() {   // ambulatory class to attach to crafted office visit encounters
+        if (encounterClassOfficeCoding == null) {
+            encounterClassOfficeCoding = buildCoding(env.getProperty("encounter.class.office.coding"));
+        }
+        return encounterClassOfficeCoding;
     }
 
-    public String getEncounterClassAMBCode() {
-        return encounterClassAMBCode;
+    public Coding getEncounterClassHomeCoding() {   // ambulatory class to attach to crafted home encounters
+        if (encounterClassHomeCoding == null) {
+            encounterClassHomeCoding = buildCoding(env.getProperty("encounter.class.home.coding"));
+        }
+        return encounterClassHomeCoding;
     }
 
-    public String getEncounterClassAMBDisplay() {
-        return encounterClassAMBDisplay;
+    public List<Coding> getEncounterOfficeClassInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterOfficeClassInCodings == null) {
+            encounterOfficeClassInCodings = buildCodings(env.getProperty("encounter.office.class.in.codings"));
+        }
+        return encounterOfficeClassInCodings;
     }
 
-    public String getEncounterClassHHCode() {
-        return encounterClassHHCode;
+    public List<Coding> getEncounterOfficeClassNotInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterOfficeClassNotInCodings == null) {
+            encounterOfficeClassNotInCodings = buildCodings(env.getProperty("encounter.office.class.not-in.codings"));
+        }
+        return encounterOfficeClassNotInCodings;
     }
 
-    public String getEncounterClassHHDisplay() {
-        return encounterClassHHDisplay;
+    public List<Coding> getEncounterOfficeTypeInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterOfficeTypeInCodings == null) {
+            encounterOfficeTypeInCodings = buildCodings(env.getProperty("encounter.office.type.in.codings"));
+        }
+        return encounterOfficeTypeInCodings;
     }
 
-    public String getEncounterAmbClassIn() {
-        return encounterAmbClassIn;
+    public List<Coding> getEncounterOfficeTypeNotInCodings() {  // for matching incoming ambulatory Encounters
+        if (encounterOfficeTypeNotInCodings == null) {
+            encounterOfficeTypeNotInCodings = buildCodings(env.getProperty("encounter.office.type.not-in.codings"));
+        }
+        return encounterOfficeTypeNotInCodings;
     }
 
-    public String getEncounterAmbClassNotIn() {
-        return encounterAmbClassNotIn;
+    public List<Coding> getEncounterHomeClassInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHomeClassInCodings == null) {
+            encounterHomeClassInCodings = buildCodings(env.getProperty("encounter.home.class.in.codings"));
+        }
+        return encounterHomeClassInCodings;
     }
 
-    public String getEncounterAmbTypeIn() {
-        return encounterAmbTypeIn;
+    public List<Coding> getEncounterHomeClassNotInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHomeClassNotInCodings == null) {
+            encounterHomeClassNotInCodings = buildCodings(env.getProperty("encounter.home.class.not-in.codings"));
+        }
+        return encounterHomeClassNotInCodings;
     }
 
-    public String getEncounterAmbTypeNotIn() {
-        return encounterAmbTypeNotIn;
+    public List<Coding> getEncounterHomeTypeInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHomeTypeInCodings == null) {
+            encounterHomeTypeInCodings = buildCodings(env.getProperty("encounter.home.type.in.codings"));
+        }
+        return encounterHomeTypeInCodings;
     }
 
-    public String getEncounterHHClassIn() {
-        return encounterHHClassIn;
-    }
-
-    public String getEncounterHHClassNotIn() {
-        return encounterHHClassNotIn;
-    }
-
-    public String getEncounterHHTypeIn() {
-        return encounterHHTypeIn;
-    }
-
-    public String getEncounterHHTypeNotIn() {
-        return encounterHHTypeNotIn;
+    public List<Coding> getEncounterHomeTypeNotInCodings() {  // for matching incoming home-health Encounters
+        if (encounterHomeTypeNotInCodings == null) {
+            encounterHomeTypeNotInCodings = buildCodings(env.getProperty("encounter.home.type.not-in.codings"));
+        }
+        return encounterHomeTypeNotInCodings;
     }
 
     public String getEncounterLookbackPeriod() {
         return ENCOUNTER_LOOKBACK_PERIOD;
     }
 
-    public Coding getBpCoding() {       // ANY source, may be home, office, inpatient, etc.
-        return BP_CODING;
-    }
-
-    public Coding getBpSystolicCoding() {   // ANY source, may be home, office, inpatient, etc.
-        return BP_SYSTOLIC_CODING;
-    }
-
-    public Coding getBpDiastolicCoding() {  // ANY source, may be home, office, inpatient, etc.
-        return BP_DIASTOLIC_CODING;
-    }
-
-    public List<Coding> getBpOfficeCodings() {  // specifically office
+    /**
+     * @return a List of Codings that are used to positively identify a Resource as being in the Office context
+     */
+    public List<Coding> getBpOfficeCodings() {
         if (bpOfficeCodings == null) {
             bpOfficeCodings = buildCodings(env.getProperty("bp.office.codings"));
         }
         return bpOfficeCodings;
     }
 
-    public boolean hasBpHomeCodings() {
-        return StringUtils.isNotEmpty(env.getProperty("bp.home.codings"));
-    }
-
-    public List<Coding> getBpHomeCodings() {    // specifically home
+    /**
+     * @return a List of Codings that are used to positively identify a Resource as being in the Home context
+     */
+    public List<Coding> getBpHomeCodings() {
         if (bpHomeCodings == null) {
             bpHomeCodings = buildCodings(env.getProperty("bp.home.codings"));
         }
         return bpHomeCodings;
     }
 
-    public Coding getBpEpicSystolicCoding() {   // specifically home
-        if (bpEpicSystolicCoding == null) {
-            bpEpicSystolicCoding = buildCoding(env.getProperty("bp.epic.systolic.coding"));
-        }
-        return bpEpicSystolicCoding;
+    /**
+     * @return a List of Codings that are used to positively identify a Resource as being a Panel (contains *both*
+     *         systolic and diastolic components).
+     */
+    public List<Coding> getBpPanelCodings() {
+        List<Coding> list = new ArrayList<>();
+        list.add(getBpPanelCommonCoding());             // generic panel coding
+        list.addAll(getBpPanelCustomCodings());         // any other panel codings specified by the user
+        return list;
     }
 
-    public Coding getBpEpicDiastolicCoding() {  // specifically home
-        if (bpEpicDiastolicCoding == null) {
-            bpEpicDiastolicCoding = buildCoding(env.getProperty("bp.epic.diastolic.coding"));
+    public Coding getBpPanelCommonCoding() {    // ANY source, may be home, office, inpatient, etc.
+        return BP_PANEL_COMMON_CODING;
+    }
+
+    public List<Coding> getBpPanelCustomCodings() {
+        if (bpPanelCustomCodings == null) {
+            bpPanelCustomCodings = buildCodings(env.getProperty("bp.panel.custom-codings"));
         }
-        return bpEpicDiastolicCoding;
+        return bpPanelCustomCodings;
+    }
+
+    public List<Coding> getBpSystolicCodings() {
+        List<Coding> list = new ArrayList<>();
+        list.add(getBpSystolicCommonCoding());          // generic systolic coding
+        list.addAll(getBpSystolicCustomCodings());      // any other systolic codings specified by the user
+        return list;
+    }
+
+    public Coding getBpSystolicCommonCoding() {     // ANY source, may be home, office, inpatient, etc.
+        return BP_SYSTOLIC_COMMON_CODING;
+    }
+
+    public List<Coding> getBpSystolicCustomCodings() {
+        if (bpSystolicCustomCodings == null) {
+            bpSystolicCustomCodings = buildCodings(env.getProperty("bp.systolic.custom-codings"));
+        }
+        return bpSystolicCustomCodings;
+    }
+
+    public List<Coding> getBpDiastolicCodings() {
+        List<Coding> list = new ArrayList<>();
+        list.add(getBpDiastolicCommonCoding());         // generic diastolic coding
+        list.addAll(getBpDiastolicCustomCodings());     // any other diastolic codings specified by the user
+        return list;
+    }
+
+    public Coding getBpDiastolicCommonCoding() {    // ANY source, may be home, office, inpatient, etc.
+        return BP_DIASTOLIC_COMMON_CODING;
+    }
+
+
+    public List<Coding> getBpDiastolicCustomCodings() {
+        if (bpDiastolicCustomCodings == null) {
+            bpDiastolicCustomCodings = buildCodings(env.getProperty("bp.diastolic.custom-codings"));
+        }
+        return bpDiastolicCustomCodings;
     }
 
     public String getBpValueCode() {
@@ -209,57 +238,27 @@ public class FhirConfigManager {
                 Integer.parseInt(bpLimit);
     }
 
-    public List<Coding> getAllBpCodings() {
-        List<Coding> list = new ArrayList<>();
-        list.addAll(getBpPanelCodings());
-        list.addAll(getBpHomeCodings());
-        list.addAll(getSystolicCodings());
-        list.addAll(getDiastolicCodings());
-        return list;
-    }
-
-    public List<Coding> getBpPanelCodings() {
-        List<Coding> list = new ArrayList<>();
-        list.add(getBpCoding());            // generic panel
-        list.addAll(getBpOfficeCodings());  // office panel
-//        list.addAll(getBpHomeCodings());    // values are also appended to individual systolic and diastolic readings
-        return list;
-    }
-
-    public List<Coding> getSystolicCodings() {
-        List<Coding> list = new ArrayList<>();
-        list.add(getBpSystolicCoding());        // generic
-        list.add(getBpEpicSystolicCoding());    // epic home reading flowsheet
-        return list;
-    }
-
-    public List<Coding> getDiastolicCodings() {
-        List<Coding> list = new ArrayList<>();
-        list.add(getBpDiastolicCoding());       // generic
-        list.add(getBpEpicDiastolicCoding());   // epic home reading flowsheet
-        return list;
-    }
 
     public String getBpLookbackPeriod() {
         return BP_LOOKBACK_PERIOD;
     }
 
-    public Coding getPulseCoding() {
-        return PULSE_CODING;
-    }
-
-    public Coding getPulseEpicCoding() {
-        if (pulseEpicCoding == null) {
-            pulseEpicCoding = buildCoding(env.getProperty("pulse.epic.coding"));
-        }
-        return pulseEpicCoding;
-    }
-
     public List<Coding> getPulseCodings() {
         List<Coding> list = new ArrayList<>();
-        list.add(getPulseCoding());
-        list.add(getPulseEpicCoding());
+        list.add(getPulseCommonCoding());               // generic pulse coding
+        list.addAll(getPulseCustomCodings());           // any other pulse codings specified by the user
         return list;
+    }
+
+    public Coding getPulseCommonCoding() {
+        return PULSE_COMMON_CODING;
+    }
+
+    public List<Coding> getPulseCustomCodings() {
+        if (pulseCustomCodings == null) {
+            pulseCustomCodings = buildCodings(env.getProperty("pulse.custom-codings"));
+        }
+        return pulseCustomCodings;
     }
 
     public String getPulseValueCode() {
@@ -345,13 +344,24 @@ public class FhirConfigManager {
     /**
      * build a FHIR Coding from a String
      * @param s a string of the form "system|code" or "system|code|display"
+     *          Coding components may be blank; if they are, those components are ignored
+     *          e.g., "system" -> Coding("system", null, null)
+     *                "system|coding" -> Coding("system", "coding", null)
+     *                "system|coding|display" -> Coding("system", "coding", "display")
+     *                "|coding" -> Coding(null, "coding", null)
+     *                "|coding|display" -> Coding(null, "coding", "display")
+     *                "system||display" -> Coding("system", null, "display")
+     *                "||display" -> Coding(null, null, "display")
+     *
      * @return a populated FHIR Coding resource
      */
     private Coding buildCoding(String s) {
         if (StringUtils.isBlank(s)) return null;
-        String[] parts = s.split("\\|");
-        Coding c = new Coding().setSystem(parts[0]).setCode(parts[1]);
-        if (parts.length > 2) c.setDisplay(parts[2]);
+        String[] parts = s.split("\\s*\\|\\s*");
+        Coding c = new Coding();
+        if (parts.length >= 1 && StringUtils.isNotBlank(parts[0])) c.setSystem(parts[0]);
+        if (parts.length >= 2 && StringUtils.isNotBlank(parts[1])) c.setCode(parts[1]);
+        if (parts.length >= 3 && StringUtils.isNotEmpty(parts[2])) c.setDisplay(parts[2]);
         return c;
     }
 }

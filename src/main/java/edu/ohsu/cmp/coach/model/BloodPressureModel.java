@@ -95,10 +95,10 @@ public class BloodPressureModel extends AbstractVitalsModel {
         if (FhirUtil.hasCoding(code, fcm.getBpPanelCodings())) {
             for (Observation.ObservationComponentComponent occ : bpObservation.getComponent()) {
                 CodeableConcept cc = occ.getCode();
-                if (FhirUtil.hasCoding(cc, fcm.getSystolicCodings())) {
+                if (FhirUtil.hasCoding(cc, fcm.getBpSystolicCodings())) {
                     systolic = new QuantityModel(occ.getValueQuantity(), fcm.getBpValueUnit());
 
-                } else if (FhirUtil.hasCoding(cc, fcm.getDiastolicCodings())) {
+                } else if (FhirUtil.hasCoding(cc, fcm.getBpDiastolicCodings())) {
                     diastolic = new QuantityModel(occ.getValueQuantity(), fcm.getBpValueUnit());
                 }
             }
@@ -139,7 +139,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
         // todo : set id.  but to what?  first Observation's id?  what about the others?  how is id used?  do we need
         //        to retain the ids for the Encounter and other Observations?
 
-        if (systolicObservation.hasCode() && FhirUtil.hasCoding(systolicObservation.getCode(), fcm.getSystolicCodings())) {
+        if (systolicObservation.hasCode() && FhirUtil.hasCoding(systolicObservation.getCode(), fcm.getBpSystolicCodings())) {
             systolic = new QuantityModel(systolicObservation.getValueQuantity(), fcm.getBpValueUnit());
             if (StringUtils.isEmpty(systolic.getUnit())) {
                 systolic.setUnit(fcm.getBpValueUnit());
@@ -148,7 +148,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
             throw new DataException("systolic observation : invalid coding (Observation.id=" + systolicObservation.getId() + ")");
         }
 
-        if (diastolicObservation.hasCode() && FhirUtil.hasCoding(diastolicObservation.getCode(), fcm.getDiastolicCodings())) {
+        if (diastolicObservation.hasCode() && FhirUtil.hasCoding(diastolicObservation.getCode(), fcm.getBpDiastolicCodings())) {
             diastolic = new QuantityModel(diastolicObservation.getValueQuantity(), fcm.getBpValueUnit());
             if (StringUtils.isEmpty(diastolic.getUnit())) {
                 diastolic.setUnit(fcm.getBpValueUnit());

@@ -22,6 +22,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static final String PROTOCOL_NOTE_TAG = "COACH_PROTOCOL::";
+    private static final String URN_OID_PREFIX = "urn:oid:";
 
     private final DefaultVendorTransformer defaultTransformer;
 
@@ -357,24 +358,30 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
         if (bpObservation.hasCode()) {
             CodeableConcept code = bpObservation.getCode();
-            if (type == ResourceType.SYSTOLIC && FhirUtil.hasCoding(code, fcm.getSystolicCodings())) {
-//                o.getCode().addCoding(fcm.getBpSystolicCoding());     // do not include LOINC codes in Epic-destined observations
-                o.getCode().addCoding(fcm.getBpEpicSystolicCoding());
+            if (type == ResourceType.SYSTOLIC && FhirUtil.hasCoding(code, fcm.getBpSystolicCodings())) {
+                for (Coding c : fcm.getBpSystolicCustomCodings()) {
+                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // include only urn:oid Codings in Epic-destined Observations
+                        o.getCode().addCoding(c);
+                    }
+                }
                 o.setValue(bpObservation.getValueQuantity());
 
-            } else if (type == ResourceType.DIASTOLIC && FhirUtil.hasCoding(code, fcm.getDiastolicCodings())) {
-//                o.getCode().addCoding(fcm.getBpDiastolicCoding());    // do not include LOINC codes in Epic-destined observations
-                o.getCode().addCoding(fcm.getBpEpicDiastolicCoding());
+            } else if (type == ResourceType.DIASTOLIC && FhirUtil.hasCoding(code, fcm.getBpDiastolicCodings())) {
+                for (Coding c : fcm.getBpDiastolicCustomCodings()) {
+                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // include only urn:oid Codings in Epic-destined Observations
+                        o.getCode().addCoding(c);
+                    }
+                }
                 o.setValue(bpObservation.getValueQuantity());
 
             } else if (FhirUtil.hasCoding(code, fcm.getBpPanelCodings())) {
                 if (bpObservation.hasComponent()) {
                     if (type == ResourceType.SYSTOLIC) {
-                        Observation.ObservationComponentComponent component = getComponentHavingCoding(bpObservation, fcm.getSystolicCodings());
+                        Observation.ObservationComponentComponent component = getComponentHavingCoding(bpObservation, fcm.getBpSystolicCodings());
                         o.setValue(component.getValueQuantity());
 
                     } else if (type == ResourceType.DIASTOLIC) {
-                        Observation.ObservationComponentComponent component = getComponentHavingCoding(bpObservation, fcm.getDiastolicCodings());
+                        Observation.ObservationComponentComponent component = getComponentHavingCoding(bpObservation, fcm.getBpDiastolicCodings());
                         o.setValue(component.getValueQuantity());
 
                     } else {
@@ -414,8 +421,11 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
         if (type == ResourceType.SYSTOLIC) {
             if (model.getSystolic() != null) {
-//                o.getCode().addCoding(fcm.getBpSystolicCoding()); // Epic flowsheet observations should not have LOINC code
-                o.getCode().addCoding(fcm.getBpEpicSystolicCoding());
+                for (Coding c : fcm.getBpSystolicCustomCodings()) {
+                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // Epic flowsheet observations may only include urn:oid Codings
+                        o.getCode().addCoding(c);
+                    }
+                }
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getSystolic(), fcm);
 
@@ -425,8 +435,11 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
         } else if (type == ResourceType.DIASTOLIC) {
             if (model.getDiastolic() != null) {
-//                o.getCode().addCoding(fcm.getBpDiastolicCoding()); // Epic flowsheet observations should not have LOINC code
-                o.getCode().addCoding(fcm.getBpEpicDiastolicCoding());
+                for (Coding c : fcm.getBpDiastolicCustomCodings()) {
+                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // Epic flowsheet observations may only include urn:oid Codings
+                        o.getCode().addCoding(c);
+                    }
+                }
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getDiastolic(), fcm);
 
@@ -541,7 +554,11 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
-        o.getCode().addCoding(fcm.getPulseEpicCoding());
+        for (Coding c : fcm.getPulseCustomCodings()) {
+            if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // Epic flowsheet observations may only include urn:oid Codings
+                o.getCode().addCoding(c);
+            }
+        }
 
         FhirUtil.addHomeSettingExtension(o);
 

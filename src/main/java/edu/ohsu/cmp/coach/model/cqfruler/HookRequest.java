@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.model.cqfruler;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
+import edu.ohsu.cmp.coach.util.UUIDUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
@@ -36,7 +37,7 @@ public class HookRequest {
     }
 
     public HookRequest(FHIRCredentials credentials, List<IBaseResource> prefetchList) {
-        this.hookInstanceUUID = UUID.randomUUID().toString();
+        this.hookInstanceUUID = UUIDUtil.getRandomUUID();
         this.fhirServerURL = credentials.getServerURL();
         this.bearerToken = credentials.getBearerToken();
         this.userId = credentials.getUserId();
