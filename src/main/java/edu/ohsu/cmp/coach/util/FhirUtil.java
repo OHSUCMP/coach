@@ -411,8 +411,6 @@ public class FhirUtil {
         throw new ConfigurationException("Coding has no system or code specified");
     }
 
-    // todo : consolidate hasCoding with codingMatches below
-
     /**
      * identifies whether a CodeableConcept's list of Codings matches a specification, or not.
      * @param cc a CodeableConcept object that contains one or more Codings

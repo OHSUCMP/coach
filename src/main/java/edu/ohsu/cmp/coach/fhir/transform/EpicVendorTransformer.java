@@ -144,7 +144,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
 
         FhirConfigManager fcm = workspace.getFhirConfigManager();
 
-        // if the observation came from the EHR, just package it up and send it along
+        // if a source Observation exists as a panel, split it into two, one for systolic and another for diastolic
         if (model.getSourceBPObservation() != null) {
             // note : do not include Encounter for Epic
             //        also, combine protocol info into the bp observation if it exists
