@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
+import edu.ohsu.cmp.coach.entity.MyPatient;
 import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.AdverseEventModel;
@@ -9,12 +10,15 @@ import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.service.*;
+import edu.ohsu.cmp.coach.session.ProvisionalSessionCacheData;
+import edu.ohsu.cmp.coach.session.SessionService;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -27,7 +31,10 @@ import org.springframework.web.client.HttpServerErrorException;
 import javax.servlet.http.HttpSession;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 @Controller
@@ -35,6 +42,9 @@ public class HomeController extends BaseController {
     private static final DateFormat OMRON_LAST_UPDATED = new SimpleDateFormat("EEEE, MMMM d, YYYY 'at' h:mm a");
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    private SessionService sessionService;
 
     @Autowired
     private RecommendationService recommendationService;
@@ -54,23 +64,30 @@ public class HomeController extends BaseController {
     @Autowired
     private OmronService omronService;
 
+    @Autowired
+    private PatientService patientService;
+
+    @Value("${redcap.consent-form.url}")
+    private String redcapConsentFormURL;
+
+    @Value("#{new Boolean('${security.browser.cache-credentials}')}")
+    Boolean cacheCredentials;
+
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model,
                        @RequestParam(name = "bandwidth", required = false) Number bandwidthOverride) {
-        boolean sessionEstablished = userWorkspaceService.exists(session.getId());
 
-        model.addAttribute("applicationName", applicationName);
-        model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
-
-        model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
-
-        if (sessionEstablished) {
-            logger.info("requesting data for session " + session.getId());
-            UserWorkspace workspace = userWorkspaceService.get(session.getId());
+        String sessionId = session.getId();
+        if (sessionService.exists(sessionId)) {
+            logger.info("requesting data for session " + sessionId);
+            UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
             try {
+                model.addAttribute("applicationName", applicationName);
+                model.addAttribute("sessionEstablished", true);
+                model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
                 model.addAttribute("patient", workspace.getPatient());
-                model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
+                model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
 
                 Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
                 model.addAttribute("showClearSupplementalData", showClearSupplementalData);
@@ -91,11 +108,23 @@ public class HomeController extends BaseController {
 
             return "home";
 
+        } else if (sessionService.existsProvisional(sessionId)) {
+            // we only get here if the user hasn't yet consented, so redirect them to REDCap
+            ProvisionalSessionCacheData cacheData = sessionService.getProvisionalSessionData(sessionId);
+            MyPatient patient = patientService.getMyPatient(cacheData.getCredentials().getPatientId());
+            return "redirect:" + buildConsentFormURL(patient.getRedcapId());
+
         } else {
-            Boolean cacheCredentials = StringUtils.equalsIgnoreCase(env.getProperty("security.browser.cache-credentials"), "true");
+            model.addAttribute("applicationName", applicationName);
+//            Boolean cacheCredentials = StringUtils.equalsIgnoreCase(env.getProperty("security.browser.cache-credentials"), "true");
             model.addAttribute("cacheCredentials", cacheCredentials);
             return "fhir-complete-handshake";
         }
+    }
+
+    private String buildConsentFormURL(String redcapId) {
+        String joinChar = redcapConsentFormURL.contains("?") ? "&" : "?";
+        return redcapConsentFormURL + joinChar + "guid=" + redcapId;
     }
 
     @PostMapping("blood-pressure-observations-list")

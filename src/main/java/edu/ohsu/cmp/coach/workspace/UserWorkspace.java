@@ -23,7 +23,6 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Reference;
-import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -76,7 +75,7 @@ public class UserWorkspace {
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
                             FHIRCredentialsWithClient fhirCredentialsWithClient,
-                            FhirQueryManager fqm, FhirConfigManager fcm) throws SchedulerException {
+                            FhirQueryManager fqm, FhirConfigManager fcm) {
         this.ctx = ctx;
         this.sessionId = sessionId;
         this.audience = audience;
@@ -544,6 +543,9 @@ public class UserWorkspace {
         omronService.deleteAll(sessionId);
         omronService.resetLastUpdated(sessionId);
         omronLastUpdated = null;
+
+        // todo : clear Omron token data
+        // todo : cancel any scheduled tasks that may exist for refreshing Omron token data
     }
 
     public VendorTransformer getVendorTransformer() {

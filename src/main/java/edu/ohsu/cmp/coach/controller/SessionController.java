@@ -1,15 +1,15 @@
 package edu.ohsu.cmp.coach.controller;
 
-import ca.uhn.fhir.rest.client.api.IGenericClient;
+import edu.ohsu.cmp.coach.entity.MyPatient;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
-import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
-import edu.ohsu.cmp.coach.util.FhirUtil;
+import edu.ohsu.cmp.coach.service.PatientService;
+import edu.ohsu.cmp.coach.session.SessionService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,8 +23,11 @@ import javax.servlet.http.HttpSession;
 public class SessionController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("${socket.timeout:300000}")
-    private Integer socketTimeout;
+    @Autowired
+    private SessionService sessionService;
+
+    @Autowired
+    private PatientService patientService;
 
     @GetMapping("health")
     public String health() {
@@ -60,21 +63,23 @@ public class SessionController extends BaseController {
                                             @RequestParam("audience") String audienceStr) throws ConfigurationException {
 
         FHIRCredentials credentials = new FHIRCredentials(clientId, serverUrl, bearerToken, patientId, userId);
-        logger.debug("preparing session " + session.getId() + " with credentials=" + credentials);
-        IGenericClient client = FhirUtil.buildClient(
-                credentials.getServerURL(),
-                credentials.getBearerToken(),
-                socketTimeout
-        );
-        FHIRCredentialsWithClient fcc = new FHIRCredentialsWithClient(credentials, client);
-
         Audience audience = Audience.fromTag(audienceStr);
 
-        String sessionId = session.getId();
-        userWorkspaceService.init(sessionId, audience, fcc);
-        userWorkspaceService.get(sessionId).populate();
+        MyPatient myPatient = patientService.getMyPatient(patientId);
 
-        return ResponseEntity.ok("session configured successfully");
+        if (myPatient.getConsentGranted()) {
+            sessionService.prepareSession(session.getId(), credentials, audience);
+
+            return ResponseEntity.ok("session configured successfully");
+
+        } else {
+            // consent hasn't been granted yet.  cache session data somewhere well-segregated from
+            // the UserWorkspace, a UserWorkspace must only be set up for authorized users.
+            // HomeController.view will handle the next step of this workflow
+            sessionService.prepareProvisionalSession(session.getId(), credentials, audience);
+
+            return ResponseEntity.ok("session provisionally established - CONSENT REQUIRED");
+        }
     }
 
     @GetMapping("logout")

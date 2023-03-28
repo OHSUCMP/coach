@@ -11,10 +11,10 @@ public class MyPatient {
     private Long id;
 
     private String patIdHash;
-
     private Date omronLastUpdated;
-
     private String studyClass;
+    private String redcapId;
+    private Boolean consentGranted;
 
     protected MyPatient() {
     }
@@ -53,5 +53,21 @@ public class MyPatient {
 
     public void setStudyClass(String studyClass) {
         this.studyClass = studyClass;
+    }
+
+    public String getRedcapId() {
+        return redcapId;
+    }
+
+    public void setRedcapId(String redcapId) {
+        this.redcapId = redcapId;
+    }
+
+    public Boolean getConsentGranted() {
+        return consentGranted;
+    }
+
+    public void setConsentGranted(Boolean consentGranted) {
+        this.consentGranted = consentGranted;
     }
 }

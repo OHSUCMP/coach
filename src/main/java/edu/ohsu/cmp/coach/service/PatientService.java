@@ -5,7 +5,9 @@ import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.model.PatientModel;
 import edu.ohsu.cmp.coach.model.StudyClass;
 import edu.ohsu.cmp.coach.repository.PatientRepository;
+import edu.ohsu.cmp.coach.util.UUIDUtil;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,9 +40,16 @@ public class PatientService extends AbstractService {
         MyPatient p;
         if (repository.existsPatientByPatIdHash(patIdHash)) {
             p = repository.findOneByPatIdHash(patIdHash);
+            if (StringUtils.isBlank(p.getRedcapId())) {
+                p.setRedcapId(UUIDUtil.getRandomUUID());
+                p.setConsentGranted(false);
+                p = repository.save(p);
+            }
 
         } else {
             p = new MyPatient(patIdHash);
+            p.setRedcapId(UUIDUtil.getRandomUUID());
+            p.setConsentGranted(false);
             setRandomStudyClass(p);
             p = repository.save(p);
         }
@@ -55,6 +64,10 @@ public class PatientService extends AbstractService {
             myPatient.setOmronLastUpdated(omronLastUpdated);
             repository.save(myPatient);
         }
+    }
+
+    public MyPatient update(MyPatient myPatient) {
+        return repository.save(myPatient);
     }
 
 ///////////////////////////////////////////////////////////////////////

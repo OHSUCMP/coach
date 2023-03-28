@@ -311,3 +311,8 @@ create index idxPatId on omron_vitals_cache (patId);
 alter table patient add studyClass varchar(20);
 
 update patient set studyClass=if(floor(rand() * 2) = 0, 'control', 'intervention') where studyClass is null;
+
+-- REDCap integration / consent gathering stuff 2023-03-28
+
+alter table patient add redcapId varchar(36);
+alter table patient add consentGranted tinyint(1) not null default 0;
