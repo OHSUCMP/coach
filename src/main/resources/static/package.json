@@ -17,7 +17,7 @@
     "@types/hapi": "^18.0.6",
     "chart.js": "^3.5.1",
     "chartjs-adapter-date-fns": "^2.0.0",
-    "chartjs-plugin-annotation": "^1.0.2",
+    "chartjs-plugin-annotation": "^1.2.2",
     "date-fns": "^2.21.1",
     "fhirclient": "^2.4.0",
     "grunt": "^1.5.2",

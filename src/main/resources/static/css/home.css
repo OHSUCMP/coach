@@ -59,6 +59,14 @@ div.chartKeyItem {
     background-color: #996124;
 }
 
+#chartKeyRecent {
+    width: 25px;
+    height: 10px;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #5B6B68;
+}
+
 #chartKeySystolicGoal {
     width: 25px;
     height: 10px;
@@ -72,11 +80,9 @@ div.chartKeyItem {
 }
 
 #chartTimelineContainer {
-    position: absolute;
-    right: 10px;
     display: block;
-    text-align: right;
-    margin-top: 4px;
+    margin-top: 1.5em;
+    margin-left: 25px;
 }
 
 #chartTimelineContainer * {
@@ -133,6 +139,7 @@ div.chartKeyItem {
 #chart {
     position: relative;
     top: 25px;
+    padding-bottom: 1.5em;
 }
 
 #currentBPGoal, #currentMedications, #adverseEvents, #omron {
