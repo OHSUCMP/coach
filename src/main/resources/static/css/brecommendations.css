@@ -1,0 +1,156 @@
+.recommendation {
+    display: block;
+    margin: 0;
+}
+
+.recommendation > .heading {
+    background-color: #b3d9ff;
+    padding: 0.1em 0.3em 0.1em 0.3em;
+}
+
+.recommendation > .description {
+    font-style: italic;
+    font-size: small;
+    margin-bottom: 2em;
+}
+
+.cardsContainer {
+    display: block;
+}
+
+.card {
+    display: block;
+    background-color: #ffffff;
+    padding: 0.3em;
+    margin: 0.3em 0 0.3em 0;
+    font-size: small;
+    min-width: 700px;
+}
+
+.card .icon {
+    margin-right: 1.5em;
+}
+
+.card .content {
+    display: inline-block;
+}
+
+.card.info .circle {
+    background-color: #ccffcc;
+}
+
+.card.warning .circle {
+    background-color: #ffcc99;
+}
+
+.card.critical .circle {
+    background-color: #ffaaaa;
+}
+
+.card .summary {
+    display: block;
+    font-weight: bold;
+    font-size: medium;
+}
+
+.card .rationale {
+    display: inline-block;
+}
+
+.card .source {
+    display: inline-block;
+}
+
+.card table td {
+    vertical-align: top;
+}
+
+.card .selectionBehavior {
+    display: block;
+}
+
+.card .slink {
+    display: block;
+}
+
+.card.critical > .error {
+    max-height: 100px;
+    max-width: 850px;
+    overflow: scroll;
+    border: 1px solid red;
+    padding: 10px;
+}
+
+.counselingContainer ul.actions {
+    margin-top: 0;
+}
+
+/* keep synced with goals.css */
+.goal, .linksContainer .slink, .bpGoal {
+    background-color: #eff5ff;
+}
+
+span.adverseEvent {
+    font-weight: bold;
+    font-style: italic;
+}
+
+.adverseEventsContainer {
+    border: 1px solid red;
+    background-color: #ffeeee;
+    padding: 2px 4px 2px 4px;
+}
+
+div.adverseEvent {
+    background-color: #ffff99;
+    padding: 5px;
+    margin-bottom: 5px;
+    width: 390px;
+}
+
+.goalsContainer *, .linksContainer *, .counselingContainer *, .adverseEventsContainer * {
+    font-size: small;
+}
+
+.goalsContainer .action ul, .linksContainer .action ul, .adverseEventsContainer .action ul {
+    margin-top: 0;
+}
+
+/* keep synced with goals.css */
+.commitToGoal, .updateGoal, .registerAdverseEventAction {
+    width: 120px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 5px 10px 5px 10px;
+    border: 1px solid black;
+    color: #fff;
+    background-color: #2e6e9e;
+}
+
+/* keep synced with goals.css */
+.commitToGoal.hover, .updateGoal.hover, .registerAdverseEventAction.hover {
+    cursor: pointer;
+    background-color: #2f96b4;
+}
+
+/* keep synced with goals.css */
+.commitToGoal *, .updateGoal *, .registerAdverseEventAction * {
+    font-size: medium;
+}
+
+/*.goal div.action {*/
+/*    margin-top: 5px;*/
+/*}*/
+
+.bpGoal input.systolic {
+    width: 50px
+}
+
+.bpGoal input.diastolic {
+    width: 55px
+}
+
+.bpGoal .action {
+    white-space: nowrap;
+}

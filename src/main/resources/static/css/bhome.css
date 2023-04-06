@@ -1,17 +1,3 @@
-/*#highBPSummary {*/
-/*    !*position: absolute;*!*/
-/*    !*top: 80px;*!*/
-/*    !*left: 150px;*!*/
-/*    display: inline-block;*/
-/*    width: 200px;*/
-/*}*/
-
-#clearSupplementalDataContainer {
-    position: absolute;
-    top: 44px;
-    left: 580px;
-    z-index: 9;
-}
 
 #clearSupplementalData {
     color: red;
@@ -28,7 +14,7 @@
 }
 
 div.chartKeyItem {
-    font-size: 9pt;
+    font-size: .9em;
 }
 
 #chartKeyHomeBP {
@@ -64,18 +50,6 @@ div.chartKeyItem {
     border-color: #5B6B68;
 }
 
-#chartKeySystolicGoal {
-    width: 25px;
-    height: 10px;
-    background-color: #ff0000;
-}
-
-#chartKeyDiastolicGoal {
-    width: 25px;
-    height: 10px;
-    background-color: #ff00ff;
-}
-
 #chartTimelineContainer {
     display: block;
     margin-top: 1.5em;
@@ -87,7 +61,6 @@ div.chartKeyItem {
 
 #chartTimelineContainer .button {
     font-size: 9pt;
-    padding: 2px;
     background-color: #ccc;
     border: 1px solid #555;
 }
@@ -104,9 +77,6 @@ div.chartKeyItem {
 }
 
 #chartContainer {
-    /*position: absolute;*/
-    /*top: 80px;*/
-    /*left: 200px;*/
     display: inline-block;
 }
 
@@ -130,8 +100,7 @@ div.chartKeyItem {
 }
 
 #currentBPGoal, #currentMedications, #adverseEvents, #omron {
-    /*text-align: center;*/
-    margin: 10px;
+    margin: 0.7em 0 0.7em 0;
 }
 
 .medication, .adverseEvent {
@@ -141,7 +110,7 @@ div.chartKeyItem {
 
 #recommendationsContainer {
     padding: 0;
-    width: 600px;
+    width: 100%;
 }
 
 #avgPlaceholder {

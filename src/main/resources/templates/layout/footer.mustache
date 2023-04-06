@@ -7,5 +7,22 @@
 			<script type="text/javascript" src="{{req.contextPath}}/webjars/{{.}}"></script>
 		{{/pageWebjars}}
 
+        <script type="text/javascript">
+            function doRefresh(_callback) {
+                $.ajax({
+                    method: "POST",
+                    url: "/refresh"
+                }).done(function(msg, textStatus, jqXHR) {
+                    _callback(msg);
+                });
+            }
+            $(document).on('click', '#refresh', function() {
+                doRefresh(function(msg) {
+                    // Direct to home
+                    window.location.href = "/";
+                });
+            });
+        </script>
+
 	</body>
 </html>

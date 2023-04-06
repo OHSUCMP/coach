@@ -4,11 +4,23 @@ main.container {
 }
 
 .color-primary {
+    color: #004466;
+}
+
+.bgd-primary {
     background-color: #004466;
 }
 
 .color-secondary {
+    color: #b3fff0;
+}
+
+.bgd-secondary {
     background-color: #b3fff0;
+}
+
+.bgd-tertiary {
+    background-color: #b3d9ff;
 }
 
 .hidden, .hidden * {
