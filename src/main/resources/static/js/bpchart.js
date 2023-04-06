@@ -21,9 +21,9 @@ function buildChart() {
     showRecentAnnotation = true;
     if (bpSetStartDate === undefined) {
         // On first call, get the BPSetStartDate for chartjs annotation
-        bpSetStartDate = getBPSetStartDate(window.bpdata);  
+        bpSetStartDate = getBPSetStartDate(window.bpdata);
     }
-    if (!bpSetStartDate || (window.bpchart.startDate !== undefined && window.bpchart.startDate == bpSetStartDate)) {
+    if (!bpSetStartDate) {//|| (window.bpchart.startDate !== undefined && window.bpchart.startDate == bpSetStartDate)) {
         // Don't shade recent BPs if no set exists or if "Recent" is selected in chart options
         showRecentAnnotation = false;
     }
@@ -142,13 +142,14 @@ function buildChart() {
                             borderWidth: 0
                         },
                         recent: {
-                            drawTime: 'beforeDatasetsDraw',
+                            drawTime: 'afterDatasetsDraw',
                             id: 'recent',
                             type: 'box',
                             xScaleID: 'x',
                             xMin: bpSetStartDate,
-                            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                            borderWidth: 0,
+                            backgroundColor: 'transparent',
+                            borderColor: 'rgba(91, 107, 104, 1)',
+                            borderWidth: 5,
                             display: showRecentAnnotation
                         }
                     }
