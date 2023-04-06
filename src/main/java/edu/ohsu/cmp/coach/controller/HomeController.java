@@ -98,6 +98,53 @@ public class HomeController extends BaseController {
         }
     }
 
+    @GetMapping(value = {"", "/bhome"})
+    public String viewBHome(HttpSession session, Model model,
+                       @RequestParam(name = "bandwidth", required = false) Number bandwidthOverride) {
+        boolean sessionEstablished = userWorkspaceService.exists(session.getId());
+
+        model.addAttribute("applicationName", applicationName);
+        model.addAttribute("sessionEstablished", String.valueOf(sessionEstablished));
+
+        model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
+
+        model.addAttribute("pageStyles", new String[] { "bhome.css?v=4", "recommendations.css?v=1" });
+        model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
+        model.addAttribute("pageScripts", new String[] { "science.js/science.v1.js", "science.js/lib/d3/d3.js", "bhome.js?v=2", "recommendations.js?v=1" });
+        if (sessionEstablished) {
+            logger.info("requesting data for session " + session.getId());
+            UserWorkspace workspace = userWorkspaceService.get(session.getId());
+
+            try {
+                model.addAttribute("patient", workspace.getPatient());
+                model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
+
+                Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
+                model.addAttribute("showClearSupplementalData", showClearSupplementalData);
+
+                if (workspace.getOmronTokenData() == null) {
+                    model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
+                }
+                if (workspace.getOmronLastUpdated() != null) {
+                    model.addAttribute("omronLastUpdated", OMRON_LAST_UPDATED.format(workspace.getOmronLastUpdated()));
+                }
+
+                List<CDSHook> list = recommendationService.getOrderedCDSHooks();
+                model.addAttribute("cdshooks", list);
+
+            } catch (Exception e) {
+                logger.error("caught " + e.getClass().getName() + " building home page", e);
+            }
+
+            return "bhome";
+
+        } else {
+            Boolean cacheCredentials = StringUtils.equalsIgnoreCase(env.getProperty("security.browser.cache-credentials"), "true");
+            model.addAttribute("cacheCredentials", cacheCredentials);
+            return "fhir-complete-handshake";
+        }
+    }
+
     @PostMapping("blood-pressure-observations-list")
     public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) throws DataException {
         List<BloodPressureModel> list = bpService.getBloodPressureReadings(session.getId());

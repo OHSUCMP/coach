@@ -1,3 +1,16 @@
+main.container {
+	/* pad top to account for the navbar */
+	padding: 80px 10px 0;
+}
+
+.color-primary {
+    background-color: #004466;
+}
+
+.color-secondary {
+    background-color: #b3fff0;
+}
+
 .hidden, .hidden * {
     height: 0;
     width: 0;
@@ -152,10 +165,10 @@ table.data td {
     text-decoration: none;
 }
 
-a, a:link, a:visited, a:active, .anchor {
+/* a, a:link, a:visited, a:active, .anchor {
     color: #004d99;
     text-decoration: none;
-}
+} */
 
 .link.hover, a:hover, .anchor.hover {
     text-decoration: underline;

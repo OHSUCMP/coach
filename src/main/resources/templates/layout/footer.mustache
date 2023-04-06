@@ -1,0 +1,11 @@
+		</main>
+
+		{{>fragments/assets}}
+
+		{{#pageWebjars}}
+			{{! Webjars needed by page-specific scripts can be specified in the view model }}
+			<script type="text/javascript" src="{{req.contextPath}}/webjars/{{.}}"></script>
+		{{/pageWebjars}}
+
+	</body>
+</html>

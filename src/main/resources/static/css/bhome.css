@@ -1,0 +1,185 @@
+/*#highBPSummary {*/
+/*    !*position: absolute;*!*/
+/*    !*top: 80px;*!*/
+/*    !*left: 150px;*!*/
+/*    display: inline-block;*/
+/*    width: 200px;*/
+/*}*/
+
+#clearSupplementalDataContainer {
+    position: absolute;
+    top: 44px;
+    left: 580px;
+    z-index: 9;
+}
+
+#clearSupplementalData {
+    color: red;
+}
+
+#legend {
+    position: absolute;
+    font-size: smaller;
+}
+
+#legend * {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+div.chartKeyItem {
+    font-size: 9pt;
+}
+
+#chartKeyHomeBP {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: black;
+}
+
+#chartKeyOfficeBP {
+    width: 10px;
+    height: 10px;
+    background-color: black;
+}
+
+#chartKeySystolic {
+    width: 25px;
+    height: 10px;
+    background-color: #007f6d;
+}
+
+#chartKeyDiastolic {
+    width: 25px;
+    height: 10px;
+    background-color: #996124;
+}
+
+#chartKeyRecent {
+    width: 25px;
+    height: 10px;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #5B6B68;
+}
+
+#chartKeySystolicGoal {
+    width: 25px;
+    height: 10px;
+    background-color: #ff0000;
+}
+
+#chartKeyDiastolicGoal {
+    width: 25px;
+    height: 10px;
+    background-color: #ff00ff;
+}
+
+#chartTimelineContainer {
+    display: block;
+    margin-top: 1.5em;
+}
+
+#chartTimelineContainer * {
+    display: inline-block !important;
+}
+
+#chartTimelineContainer .button {
+    font-size: 9pt;
+    padding: 2px;
+    background-color: #ccc;
+    border: 1px solid #555;
+}
+
+#chartTimelineContainer .button:not(.selected).hover {
+    cursor: pointer;
+    background-color: #ddd;
+    border: 1px solid #00f;
+}
+
+#chartTimelineContainer .button.selected {
+    background-color: #004466;
+    color: white;
+}
+
+#chartContainer {
+    /*position: absolute;*/
+    /*top: 80px;*/
+    /*left: 200px;*/
+    display: inline-block;
+}
+
+#chartContainer .heading {
+    font-size: medium;
+}
+
+#noChartData {
+    position: relative;
+}
+
+#noChartData > div {
+    font-size: x-large;
+    font-weight: bold;
+    color: lightgray;
+}
+
+#chart {
+    position: relative;
+    padding-bottom: 1.5em;
+}
+
+#currentBPGoal, #currentMedications, #adverseEvents, #omron {
+    /*text-align: center;*/
+    margin: 10px;
+}
+
+.medication, .adverseEvent {
+    font-weight: bold;
+    font-style: italic;
+}
+
+#recommendationsContainer {
+    padding: 0;
+    width: 600px;
+}
+
+#avgPlaceholder {
+    color:#b3d9ff;
+}
+
+#avgSystolic, #avgDiastolic {
+    font-size: large;
+    font-weight: bold;
+}
+
+#bpLabel, #bpGoalMetLabel {
+    font-size: small;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+#medicationsContainer {
+    width: 200px;
+    padding: 0 0 10px 10px;
+    vertical-align: top;
+    background-color: #f5f5f5;
+}
+
+#medicationsContainer .heading {
+    background-color: #555;
+    color: #fff;
+    padding: 5px;
+}
+
+div.medication {
+    max-width: 200px;
+}
+
+#prefetchModifiedInfo {
+    display: block;
+    background-color: #ffffcc;
+    padding: 5px;
+    font-size: small;
+    font-style: italic;
+}
