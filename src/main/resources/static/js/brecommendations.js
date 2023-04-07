@@ -144,7 +144,7 @@ function buildAdverseEvents(suggestions) {
                 html += "</div>";
 
                 html += "</td>";
-                html += "<td class='shrink'><div class='registerAdverseEventAction'><span>Register Action</span></div></td>";
+                html += "<td class='shrink'><div><button class='btn btn-sm registerAdverseEventAction'>Register Action</button></div></td>";
                 html += "</tr>";
 
                 html += "</tr></table>";
@@ -254,7 +254,7 @@ function buildGoalsHTML(suggestions) {
                     }
                 }
                 html += "</td>";
-                html += "<td class='shrink'><div class='commitToGoal'><span>Commit to Goal</span></div></td>";
+                html += "<td class='shrink'><div><button class='btn btn-sm commitToGoal'>Commit to Goal</button></div></td>";
                 html += "</tr>";
 
                 if (s.type === 'goal') {
@@ -293,7 +293,7 @@ function buildGoalsHTML(suggestions) {
                 });
                 html += "</select></div>";
                 html += "</td>";
-                html += "<td class='shrink'><div class='updateGoal'><span>Record Progress</span></div></td>";
+                html += "<td class='shrink'><div><button class='btn btn-sm updateGoal'>Record Progress</button></div></td>";
                 html += "</td>";
                 html += "</tr><tr>";
 

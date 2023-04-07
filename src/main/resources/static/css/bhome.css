@@ -42,19 +42,21 @@ div.chartKeyItem {
     display: inline-block !important;
 }
 
-#chartTimelineContainer .button {
-    font-size: 9pt;
+#chartTimelineContainer .btn {
     background-color: #ccc;
     border: 1px solid #555;
+    color: black;
+    margin-left: 0.5em;
 }
 
-#chartTimelineContainer .button:not(.selected).hover {
+#chartTimelineContainer .btn:not(.selected).hover {
     cursor: pointer;
     background-color: #ddd;
     border: 1px solid #00f;
+    color: black;
 }
 
-#chartTimelineContainer .button.selected {
+#chartTimelineContainer .btn.selected {
     background-color: #004466;
     color: white;
 }

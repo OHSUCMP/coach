@@ -17,7 +17,7 @@
         </h4>
         <div class="container">
             <div class="row">
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-3 align-self-center">
                     <div class="text-center" style="font-weight: bold;">Your blood pressure:</div>
                     <table class="table table-borderless mt-4 mx-auto w-auto">
                         <tr>
@@ -65,34 +65,35 @@
                                 <div id="loadingChart">Loading Chart ...</div>
                             </div>
                         </div>
-                        <div id="chartKeyContainer" class="row justify-content-center hidden" style="font-size:0.8em;">
-                            <div class="col-md-1 col-lg-1">
-                                <span class="heading">Key</span>
+                        <div id="chartKeyContainer" class="row justify-content-center hidden" style="font-size:0.85em;">
+                            <div class="col-md-0 col-lg-1"></div>
+                            <div class="col-md-1 col-lg-auto">
+                                <span class="fw-bold">Key</span>
                             </div>
-                            <div class="col-md-3 col-lg-2">
+                            <div class="col-md-auto">
                                 <i class="fas fa-square chartKeyBP"></i> Home BP
                              </div>
-                            <div class="col-md-3 col-lg-2">
+                            <div class="col-md-auto">
                                 <i class="fas fa-circle chartKeyBP"></i> Office BP
-                             </div>
-                            <div class="col-md-3 col-lg-2">
-                                <i class="fas fa-square chartKeySystolic"></i> Systolic BP
-                             </div>
-                            <div class="col-md-3 col-lg-2">
-                                <i class="fas fa-square chartKeyDiastolic"></i> Diastolic BP
-                             </div>
-                            <div class="col-md-4 col-lg-3">
-                                <i class="far fa-square chartKeyRecent"></i> Used in BP Avg
-                             </div>
                             </div>
+                            <div class="col-md-auto">
+                                <i class="fas fa-square chartKeySystolic"></i> Systolic BP
+                            </div>
+                            <div class="col-md-auto">
+                                <i class="fas fa-square chartKeyDiastolic"></i> Diastolic BP
+                            </div>
+                            <div class="col-md-auto">
+                                <i class="far fa-square chartKeyRecent"></i> Used in BP Avg
+                            </div>
+                            <div class="col-md-0 col-lg-1"></div>
                         </div>
                         <div class="row mt-1">
-                            <div class="col offset-sm-3 offset-md-4">
+                            <div class="col offset-sm-3 offset-md-4" style="font-size:0.85em;">
                                 <div id="chartTimelineContainer" class="hidden">
-                                    <span class="heading">Timeline</span>
-                                    <span class="button" data-window="mr">Recent</span>
-                                    <span class="button" data-window="1y">1 year</span>
-                                    <span class="button selected" data-window="all">All</span>
+                                    <span>Timeline</span>
+                                    <button class="btn btn-secondary btn-sm" data-window="mr">Recent</span>
+                                    <button class="btn btn-secondary btn-sm" data-window="1y">1 year</span>
+                                    <button class="btn btn-secondary btn-sm selected" data-window="all">All</span>
                                 </div>
                             </div>
                         </div>
@@ -153,7 +154,7 @@
             });
         }
 
-        $(document).on('click', '#chartTimelineContainer > .button:not(.selected)', function() {
+        $(document).on('click', '#chartTimelineContainer > .btn:not(.selected)', function() {
             window.bpchart = {};
 
             let type = $(this).attr('data-window');
@@ -189,7 +190,7 @@
             populateSummaryDiv();
             updateChart();
 
-            $('#chartTimelineContainer').find('.button').each(function() {
+            $('#chartTimelineContainer').find('.btn').each(function() {
                 if ($(this).attr('data-window') === type) {
                     $(this).addClass('selected');
                 } else {
@@ -204,7 +205,7 @@
                 return;
             }
 
-            enableHover('#chartTimelineContainer .button');
+            enableHover('#chartTimelineContainer .btn');
 
             if (isInternetExplorer()) {
                 loadScript("/js/ie/chart.js-2.9.3/Chart.js", function() {
