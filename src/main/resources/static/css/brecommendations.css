@@ -115,27 +115,6 @@ div.adverseEvent {
     margin-top: 0;
 }
 
-/* keep synced with goals.css */
-.commitToGoal, .updateGoal, .registerAdverseEventAction {
-    background-color: #2e6e9e;
-    color: white;
-}
-
-/* keep synced with goals.css */
-.commitToGoal.hover, .updateGoal.hover, .registerAdverseEventAction.hover {
-    cursor: pointer;
-    background-color: #2f96b4;
-}
-
-/* keep synced with goals.css */
-.commitToGoal *, .updateGoal *, .registerAdverseEventAction * {
-    font-size: medium;
-}
-
-/*.goal div.action {*/
-/*    margin-top: 5px;*/
-/*}*/
-
 .bpGoal input.systolic {
     width: 50px
 }

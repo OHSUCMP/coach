@@ -1,0 +1,57 @@
+{{>layout/header}}
+
+<script type="text/javascript">
+    $(document).on('click', '#copyAndPaste', function() {
+        setClipboard($('#message').val());
+        $('#myChartInstructionsContainer').show();
+    });
+
+    $(document).on('click', '#closeInstructions', function() {
+        $('#myChartInstructionsContainer').hide();
+    })
+</script>
+
+<div class="container">
+    <div class="px-2 fs-4">
+        <i class="fas fa-user color-primary"></i></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
+    </div>
+
+    <div class="mt-3">
+        <h4 class="p-2 bgd-secondary">
+            <i class="fas fa-envelope color-primary"></i> Contact
+        </h4>
+    </div>
+
+    <div class="heading">Pre-Populated Note Based on Recommendations</div>
+    <div id="messageContainer" class="card mt-3">
+        <div class="card-header">
+            <strong>Subject: </strong><span id="subject">{{subject}}</span>
+        </div>
+        <textarea id="message" class="m-3 p-2">{{message}}</textarea>
+        <div class="buttonContainer p-3">
+            <button id="sendToEpic" class="btn btn-sm button-primary" disabled>Send to Epic</button>
+            <button id="copyAndPaste" class="btn btn-sm button-primary">Copy and Paste</button>
+        </div>
+    </div>
+
+    <div id="myChartInstructionsContainer" class="modal">
+        <div id="myChartInstructions" class="modalContent">
+            <div class="heading">Message Copied!  Next Steps:</div>
+            <ol>
+                <li>Log into MyChart (<a href="{{mychartLoginLink}}" target="_blank">direct link</a>)</li>
+                <li>Go to the Messages activity, click "Ask a Question," then select "Contact my Doctor's Office" (<a href="{{mychartMessageLink}}" target="_blank">direct link</a>)</li>
+                <li>Select the Care Team member that gave you access to this Application</li>
+                <li>Specify an appropriate Subject</li>
+                <li>Paste (Ctrl-V, or right-click and select "Paste") this message into the MyChart message text-area</li>
+                <li>Review the message, and edit as desired</li>
+                <li>When everything looks complete and correct, click "Send"</li>
+            </ol>
+            <div class="buttonContainer">
+                <button id="closeInstructions" class="btn btn-sm button-primary">Close</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{{>layout/footer}}
