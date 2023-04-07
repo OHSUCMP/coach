@@ -172,6 +172,16 @@ table.data td {
     width: 100%;
 }
 
+.button-primary {
+    background-color: #2e6e9e;
+    color: white;
+}
+
+.button-primary:hover {
+    background-color: #7698a1;
+    color: black;
+}
+
 .link {
     color: #004d99;
     text-decoration: none;

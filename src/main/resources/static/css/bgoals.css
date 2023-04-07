@@ -1,0 +1,17 @@
+input.systolic, input.diastolic {
+    width: 40px;
+}
+
+span.active {
+    color: green;
+    font-weight: bold;
+}
+
+span.completed {
+    color: gray;
+    font-weight: bold;
+}
+
+#noOtherGoals {
+    margin-top: 2em;
+}

@@ -47,6 +47,18 @@ public class GoalsController extends BaseController {
         return "goals";
     }
 
+    @GetMapping(value={"/bgoals"})
+    public String bgoals(HttpSession session, Model model) {
+        model.addAttribute("applicationName", applicationName);
+        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
+        model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
+        model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(session.getId()));
+        model.addAttribute("pageStyles", new String[] { "bgoals.css" });
+        model.addAttribute("pageScripts", new String[] { "bgoals.js" });
+
+        return "bgoals";
+    }
+
     @PostMapping("other-goals")
     public ResponseEntity<List<GoalModel>> getOtherGoalsList(HttpSession session) {
         List<GoalModel> list = new ArrayList<GoalModel>();

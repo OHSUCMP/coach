@@ -144,7 +144,7 @@ function buildAdverseEvents(suggestions) {
                 html += "</div>";
 
                 html += "</td>";
-                html += "<td class='shrink'><div><button class='btn btn-sm registerAdverseEventAction'>Register Action</button></div></td>";
+                html += "<td class='shrink'><div><button class='btn btn-sm button-primary registerAdverseEventAction'>Register Action</button></div></td>";
                 html += "</tr>";
 
                 html += "</tr></table>";
@@ -254,7 +254,7 @@ function buildGoalsHTML(suggestions) {
                     }
                 }
                 html += "</td>";
-                html += "<td class='shrink'><div><button class='btn btn-sm commitToGoal'>Commit to Goal</button></div></td>";
+                html += "<td class='shrink'><div><button class='btn btn-sm button-primary commitToGoal'>Commit to Goal</button></div></td>";
                 html += "</tr>";
 
                 if (s.type === 'goal') {
@@ -279,7 +279,6 @@ function buildGoalsHTML(suggestions) {
 
                 let a_arr = ['IN_PROGRESS', 'ACHIEVED', 'NOT_ACHIEVED'];
 
-                // let a_status = s.goal.achievementStatus;
                 let a_status = s.goal ?
                     s.goal.achievementStatus :
                     'UNKNOWN';
@@ -293,7 +292,7 @@ function buildGoalsHTML(suggestions) {
                 });
                 html += "</select></div>";
                 html += "</td>";
-                html += "<td class='shrink'><div><button class='btn btn-sm updateGoal'>Record Progress</button></div></td>";
+                html += "<td class='shrink'><div><button class='btn btn-sm button-primary updateGoal'>Record Progress</button></div></td>";
                 html += "</td>";
                 html += "</tr><tr>";
 
@@ -308,7 +307,6 @@ function buildGoalsHTML(suggestions) {
 }
 
 function toLabel(string) {
-    // let words = string.replaceAll("_", " ").toLowerCase().split(" ");
     let words = string.replace(/_/g, ' ').toLowerCase().split(" ");
 
     let label = words.map(function(word) {
@@ -333,13 +331,6 @@ function buildGoalInputData(s) {
             }
             while (c !== ']' && chars.length > 0) {
                 c = chars.shift();
-                // if (c === ':') {
-                //     label = buf.join('').trim();
-                //     buf = [];
-                // } else if (c === ']') {
-                //     defaultValue = buf.join('').trim();
-                //     buf = [];
-                // } else {
                 if (c !== ']') {
                     buf.push(c);
                 }
@@ -570,12 +561,6 @@ function hide(el, _complete) {
     }
 //    $(el).fadeOut(400, _complete(el));
 }
-
-$(document).ready(function() {
-    enableHover('.commitToGoal');
-    enableHover('.updateGoal');
-    enableHover('.registerAdverseEventAction');
-});
 
 $(document).on('click', '.goal .commitToGoal', function() {
     let container = $(this).closest('.goal');

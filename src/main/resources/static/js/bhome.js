@@ -246,7 +246,7 @@ function buildPointStyleArray(data) {
 
 function updateChart() {
     // calling buildChart() without first replacing the DOM element creates wonkiness
-    $('#chart').replaceWith('<canvas id="chart" class="w-100 h-auto"></canvas>');
+    $('#chart').replaceWith('<canvas id="chart"></canvas>');
     buildChart();
 }
 

@@ -1,0 +1,48 @@
+{{>layout/header}}
+
+<div class="container">
+    <div class="px-2 fs-4">
+        <i class="fas fa-user color-primary"></i></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
+    </div>
+
+    {{#bpGoal}}
+    <div class="mt-3">
+        <h4 class="p-2 bgd-secondary">
+            <i class="fas fa-bullseye color-primary"></i> My Blood Pressure Goal
+        </h4>
+    </div>
+    <div id="bpContent">
+        <div class="bpGoal" data-systolic="{{systolicTarget}}" data-diastolic="{{diastolicTarget}}">
+            <span class="me-2">My current Blood Pressure goal is:</span>
+            <span class="d-inline-block me-3">
+                <input type='text' class='systolic' placeholder='Systolic' value="{{systolicTarget}}" />
+                /
+                <input type='text' class='diastolic' placeholder='Diastolic' value="{{diastolicTarget}}" />
+            </span>
+            <button id="updateBPGoal" class="me-3 btn btn-sm button-primary" disabled>Update</button>
+            <span id="updateNote" class="d-inline-block"></span>
+        </div>
+    </div>
+    {{/bpGoal}}
+
+    <div class="mt-3">
+        <h4 class="p-2 bgd-secondary">
+            <i class="fas fa-trophy color-primary"></i> My Other Goals
+        </h4>
+    </div>
+    {{#hasOtherGoals}}
+        <!-- blue boxes on the left, histories on the right -->
+        <div class="container">
+            <div id="otherGoalsContainer" class="row">
+            </div>
+        </div>
+    {{/hasOtherGoals}}
+    {{^hasOtherGoals}}
+        <div id="noOtherGoals">
+            You have no other goals defined at this time.
+        </div>
+    {{/hasOtherGoals}}
+
+</div>
+
+{{>layout/footer}}
