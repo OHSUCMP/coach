@@ -1,0 +1,19 @@
+{{>layout/header}}
+
+<div class="container">
+    <div class="px-2 fs-4">
+        <i class="fas fa-user color-primary"></i></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
+    </div>
+    {{#page}}
+    <div class="mt-3">
+        <h4 class="p-2 bgd-secondary">
+            <i class="fas fa-hands-helping color-primary"></i> Counseling: {{title}}
+        </h4>
+    </div>
+    <div>
+         {{{body}}}
+    </div>
+    {{/page}}
+</div>
+
+{{>layout/footer}}

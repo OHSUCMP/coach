@@ -38,6 +38,18 @@ public class CounselingController extends BaseController {
         return "counseling";
     }
 
+    @GetMapping("{key}/b")
+    public String viewB(HttpSession session, Model model, @PathVariable(value="key") String key) {
+        model.addAttribute("applicationName", applicationName);
+        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
+
+        CounselingPageModel page = new CounselingPageModel(counselingService.getPage(key));
+
+        model.addAttribute("page", page);
+
+        return "bcounseling";
+    }
+
     @PostMapping("create")
     public ResponseEntity<Counseling> create(HttpSession session,
                                              @RequestParam String extCounselingId,

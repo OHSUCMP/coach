@@ -269,7 +269,7 @@ function buildGoalsHTML(suggestions) {
                 html += "</div>";
 
             } else if (s.type === 'update-goal') {
-                html += "<div class='goal' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
+                html += "<div class='goal p-2' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tr><td>";
 
@@ -292,7 +292,7 @@ function buildGoalsHTML(suggestions) {
                 });
                 html += "</select></div>";
                 html += "</td>";
-                html += "<td class='shrink'><div><button class='btn btn-sm button-primary updateGoal'>Record Progress</button></div></td>";
+                html += "<td class='shrink'><div class='mb-3 me-3'><button class='btn btn-sm button-primary updateGoal'>Record Progress</button></div></td>";
                 html += "</td>";
                 html += "</tr><tr>";
 
