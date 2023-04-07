@@ -60,10 +60,9 @@ function renderCards(cards) {
             html += "<div class='error'>" + card.errorMessage + "</div>";
 
         } else {
-            html += "<table style='width:100%'><tr><td class='shrink'>";
-            html += "<img src='/images/" + card.indicator + "-icon.png' class='icon' alt='" + card.indicator + "' />";
-            html += "</td><td class='expand'>";
-            html += "<div class='content'>";
+            html += "<div class='container'><div class='row'>";
+            html += "<div class='col-1 p-0 pl-1 pt-1' style='min-width:40px;'><img src='/images/" + card.indicator + "-icon.png' class='icon' alt='" + card.indicator + "' /></div>";
+            html += "<div class='col-11 col-md-4 content p-1'>";
             html += "<span class='summary heading'>" + card.summary + "</span>";
 
             if (card.rationale !== null) {
@@ -87,16 +86,13 @@ function renderCards(cards) {
 
             html += buildCounselingHTML(card.suggestions);
 
-            html += "</td><td class='px-3' style='min-width:500px;'>";
+            html += "</div><div class='col-12 col-md-7 p-1'>"
 
             html += buildAdverseEvents(card.suggestions);
-
             html += buildGoalsHTML(card.suggestions);
-            console.log(buildLinksHTML(card.suggestions));
-
             html += buildLinksHTML(card.suggestions);
 
-            html += "</td></tr></table>";
+            html += "</div></div></div>"
         }
         html += "</div>";
     });
