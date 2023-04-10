@@ -118,9 +118,9 @@ public class HttpRequest {
                 try {
                     isr = new InputStreamReader(is);
                     br = new BufferedReader(isr);
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        sb.append(line);
+                    int c = 0;
+                    while ((c = br.read()) != -1) {
+                        sb.append((char) c);
                     }
 
                 } finally {
