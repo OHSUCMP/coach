@@ -1,0 +1,260 @@
+{{>layout/header}}
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        enableHover('#showHideProtocol');
+        enableDatePicker('#readingDate');
+
+        // todo: readingDate blur occurs before selected date gets set in the input, so
+        //       thinks there's an error.  minor bug
+
+        $('#readingTime').inputmask({
+            regex: "(0[1-9]|1[012]):[0-5][0-9] [aApP]m",
+            casing: "lower"
+        });
+        $('#systolic1, #systolic2').inputmask({
+            regex: "[12]?[0-9]{2}"
+        });
+        $('#diastolic1, #diastolic2').inputmask({
+            regex: "1?[0-9]{2}"
+        });
+        $('#pulse1, #pulse2').inputmask({
+            regex: "1?[0-9]{2}"
+        });
+    });
+
+    $(document).on('click', '#createButton', function(e) {
+        e.preventDefault();
+        if (validateForm('#vitalsEntryContainer form', '#saveMessage')) {
+            let vitalsData = buildVitalsData();
+            createVitals(vitalsData, function(status, list) {
+                let el = $('#saveMessage');
+                if (status === 200) {
+                    $(list).each(function() {
+                        appendReadingToTable(this);
+                    });
+                    resetForm('#vitalsEntryContainer form');
+
+                    $(el).removeClass();
+                    $(el).addClass('success ms-3');
+                    $(el).html("Record created successfully.");
+
+                } else {
+                    $(el).removeClass();
+                    $(el).addClass('error');
+                    $(el).html("Error saving BP reading(s) - status " + status);
+                }
+            });
+        }
+    });
+
+    $(document).on('blur', '.field', function() {
+        let group = $(this).closest('.validationGroup');
+        validateGroup(group);
+    });
+
+    $(document).on('click', '#showHideProtocol', function() {
+        let el = $('#protocol');
+        if ($(el).hasClass('hidden')) {
+            $(el).removeClass('hidden');
+            $(this).html('Hide Protocol');
+
+        } else {
+            $(el).addClass('hidden');
+            $(this).html('Show Protocol');
+        }
+    });
+</script>
+
+<div class="container">
+    <div class="px-2 fs-4">
+        <i class="fas fa-user color-primary"></i></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
+    </div>
+    <ul class="nav nav-tabs mt-3" id="bp-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="entry-tab" data-bs-toggle="tab" data-bs-target="#entry" type="button" role="tab" aria-controls="entry" aria-selected="true">Home Blood Pressure Entry</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="historical-tab" data-bs-toggle="tab" data-bs-target="#historical" type="button" role="tab" aria-controls="historical" aria-selected="false">Historical Readings</button>
+        </li>
+    </ul>
+    <div class="tab-content" id="tab-content">
+        <div class="tab-pane fade show active" id="entry" role="tabpanel" aria-labelledby="entry-tab">
+            <div id="vitalsEntryContainer" class="mt-3">
+                <h4 class="p-2 bgd-secondary">
+                    <i class="fas fa-clipboard-list color-primary"></i> Home Blood Pressure Readings
+                </h4>
+                <form>
+                    <div class="row mb-3">
+                        <div class="col">
+                        Please enter your blood pressure measurements below. If your blood pressure device also measures
+                        your pulse rate, please enter those measurements as well.
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div id="firstMeasurementContainer" class="col-md-6 validationGroup required">
+                            <span class="heading">First Measurement</span>
+                            <div class="field input-group mt-3 mb-3 required">
+                                <input id="systolic1" type="text" class="form-control" placeholder="Systolic" aria-label="Systolic" aria-describedby="sbp-unit-addon1">
+                                <span class="input-group-text" id="sbp-unit-addon1">mm Hg</span>
+                            </div>
+                            <div class="field input-group mb-3 required">
+                                <input id="diastolic1" type="text" class="form-control" placeholder="Diastolic" aria-label="Diastolic" aria-describedby="dbp-unit-addon1">
+                                <span class="input-group-text" id="dbp-unit-addon1">mm Hg</span>
+                            </div>
+                            <div class="field input-group mb-3">
+                                <input id="pulse1" type="text" class="form-control" placeholder="Pulse" aria-label="Pulse" aria-describedby="pulse-unit-addon1">
+                                <span class="input-group-text" id="pulse-unit-addon1">bpm</span>
+                            </div>
+                        </div>
+                        <div id="secondMeasurementContainer" class="col-md-6 validationGroup">
+                            <span class="heading">Second Measurement</span>
+                            <div class="field input-group mt-3 mb-3 required">
+                                <input id="systolic2" type="text" class="form-control" placeholder="Systolic" aria-label="Systolic" aria-describedby="sbp-unit-addon2">
+                                <span class="input-group-text" id="sbp-unit-addon2">mm Hg</span>
+                            </div>
+                            <div class="field input-group mb-3 required">
+                                <input id="diastolic2" type="text" class="form-control" placeholder="Diastolic" aria-label="Diastolic" aria-describedby="dbp-unit-addon2">
+                                <span class="input-group-text" id="dbp-unit-addon2">mm Hg</span>
+                            </div>
+                            <div class="field input-group mb-3">
+                                <input id="pulse2" type="text" class="form-control" placeholder="Pulse" aria-label="Pulse" aria-describedby="pulse-unit-addon2">
+                                <span class="input-group-text" id="pulse-unit-addon2">bpm</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <span class="label">
+                                Please enter the date and approximate time of these measurements:
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="validationGroup required">
+                                <div class="field input-group mt-3 mb-3 required">
+                                    <span class="input-group-text" id="date-addon">Date:</span>
+                                    <input id="readingDate" type="text" class="form-control" placeholder="--Select Date--" aria-label="Reading Date" aria-describedby="date-addon" readonly>
+                                </div>
+                                <div class="field input-group mt-3 mb-3 required">
+                                    <span class="input-group-text" id="time-addon">Time:</span>
+                                    <input id="readingTime" type="text" class="form-control" aria-label="Time" aria-describedby="time-addon">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <span class="label">
+                                Did you follow the below instructions when measuring your blood pressure?
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div id="confirmContainer" class="validationGroup required">
+                                <div class="field required">
+                                    <div class="form-check form-check-inline">
+                                        <input id="confirmYes" class="form-check-input" type="radio" name="confirm" id="inlineRadioYes" value="yes" required>
+                                        <label class="form-check-label" for="inlineRadioYes">Yes</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input id="confirmNo" class="form-check-input" type="radio" name="confirm" id="inlineRadioNo" value="yes" required>
+                                        <label class="form-check-label" for="inlineRadioNo">No</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <button id="createButton" class="btn btn-sm button-primary">Save</button>
+                            <span id="saveMessage" class="hidden"></span>
+                        </div>
+                    </div>
+                </form>
+                <div class="row mb-3">
+                    <div class="col">
+                        <hr/>
+                        <span id="showHideProtocol">Hide Protocol</span>
+                    </div>
+                </div>
+                <div id="protocol" class="mb-3">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <span class="heading">Recommended Home Blood Pressure Measurement Protocol</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div id="protocolBeforeMeasurement">
+                                <span class="fw-bold">30 minutes before measurement:</span>
+                                <ul>
+                                    <li>Do not smoke</li>
+                                    <li>Do not drink alcohol</li>
+                                    <li>Do not drink caffeine</li>
+                                    <li>Do not exercise</li>
+                                    <li>Try to use the bathroom</li>
+                                </ul>
+                            </div>
+                            <div id="protocolCuffUse">
+                                <span class="fw-bold">Proper cuff use:</span>
+                                <ul>
+                                    <li>Above the elbow</li>
+                                    <li>Level with your heart</li>
+                                    <li>On bare skin, <span style="text-decoration: underline;">not over clothing</span></li>
+                                    <li>Snug, but allow 2 fingers inside</li>
+                                </ul>
+                            </div>
+                            <div id="protocolMeasurements">
+                                <span class="fw-bold">Measurements:</span>
+                                <ul>
+                                    <li>Rest for 5 minutes<br/>
+                                        <span style="text-decoration: underline;">Do not talk or look at the phone</span>
+                                    </li>
+                                    <li>Record your measurement</li>
+                                    <li>Wait 1 minute</li>
+                                    <li>Repeat the measurement</li>
+                                    <li>If measurements are inconsistent, consider a third</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <img src="{{req.contextPath}}/images/bp-reading-protocol2.png" alt="BP Reading Protocol" class="img-fluid"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="historical" role="tabpanel" aria-labelledby="historical-tab">
+            <div class="mt-3">
+                <h4 class="p-2 bgd-secondary">
+                    <i class="fas fa-clipboard-list color-primary"></i> Historical Readings
+                </h4>
+            </div>
+            <table id="vitalsTable" class="table table-bordered table-condensed table-striped table-responsive">
+                <thead class="bgd-primary text-white">  
+                    <tr id="vitalsTableHeader">
+                        <th>Reading Timestamp</th>
+                        <th>Reading Type</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{! note : keep this section synced with vitals.js:appendReadingToTable(obj) }}
+                    {{#homeReadings}}
+                    <tr class='data' data-timestamp='{{readingDateTimestamp}}'>
+                        <td>{{readingDateString}}</td>
+                        <td>{{readingType}}</td>
+                        <td>{{value}}</td>
+                    </tr>
+                    {{/homeReadings}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{{>layout/footer}}

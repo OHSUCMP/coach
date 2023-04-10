@@ -51,7 +51,26 @@ public class VitalsController extends BaseController {
 
         model.addAttribute("homeReadings", homeReadings);
 
-        return "vitals";
+        return "old/vitals";
+    }
+
+    @GetMapping(value={"/bvitals"})
+    public String bview(HttpSession session, Model model) throws DataException {
+        model.addAttribute("applicationName", applicationName);
+        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
+
+        List<AbstractVitalsModel> homeReadings = new ArrayList<>();
+        homeReadings.addAll(bpService.getHomeBloodPressureReadings(session.getId()));
+        homeReadings.addAll(pulseService.getHomePulseReadings(session.getId()));
+
+        Collections.sort(homeReadings);
+
+        model.addAttribute("homeReadings", homeReadings);
+        model.addAttribute("pageStyles", new String[] { "bvitals.css", "bform.css" });
+        model.addAttribute("pageScripts", new String[] { "bvitals.js", "bform.js" });
+        model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
+
+        return "bvitals";
     }
 
     @PostMapping("create")
@@ -118,21 +137,4 @@ public class VitalsController extends BaseController {
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
-//    @PostMapping("delete")
-//    public ResponseEntity<String> delete(HttpSession session,
-//                                         @RequestParam("id") String id) {
-//
-//        // get the cache just to make sure it's defined and the user is properly authenticated
-//        workspaceService.get(session.getId());
-//
-//        try {
-//            bpService.delete(session.getId(), id);
-//            workspaceService.get(session.getId()).runRecommendations();
-//
-//            return new ResponseEntity<>("OK", HttpStatus.OK);
-//
-//        } catch (Exception e) {
-//            return new ResponseEntity<>("Caught " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
 }

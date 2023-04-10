@@ -47,7 +47,7 @@
             });
 
             $(document).on('click', '#createButton', function() {
-                if (validateForm('#bpEntryContainer form', '#saveMessage')) {
+                if (validateForm('#vitalsEntryContainer form', '#saveMessage')) {
                     let vitalsData = buildVitalsData();
                     createVitals(vitalsData, function(status, list) {
                         let el = $('#saveMessage');
