@@ -89,7 +89,7 @@ public class HomeController extends BaseController {
                 logger.error("caught " + e.getClass().getName() + " building home page", e);
             }
 
-            return "home";
+            return "old/home";
 
         } else {
             Boolean cacheCredentials = StringUtils.equalsIgnoreCase(env.getProperty("security.browser.cache-credentials"), "true");

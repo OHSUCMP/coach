@@ -35,7 +35,7 @@ public class CounselingController extends BaseController {
 
         model.addAttribute("page", page);
 
-        return "counseling";
+        return "old/counseling";
     }
 
     @GetMapping("{key}/b")

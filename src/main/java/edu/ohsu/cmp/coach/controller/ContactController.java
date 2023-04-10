@@ -66,7 +66,7 @@ public class ContactController extends BaseController {
             model.addAttribute("mychartMessageLink", mychartMessageLink);
         }
 
-        return "contact";
+        return "old/contact";
     }
 
     @GetMapping("bcontact")

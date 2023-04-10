@@ -44,7 +44,7 @@ public class GoalsController extends BaseController {
         model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
         model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(session.getId()));
 
-        return "goals";
+        return "old/goals";
     }
 
     @GetMapping(value={"/bgoals"})

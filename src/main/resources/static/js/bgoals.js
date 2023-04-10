@@ -15,7 +15,7 @@ function populateOtherGoals() {
     let html = '';
 
     if (Array.isArray(data) && data.length > 0) {
-        data.forEach(function(g) {
+        data.forEach(function(g, index) {
             let inProgress = g.achievementStatus === 'IN_PROGRESS';
             let c = inProgress ? 'active' : 'completed';
 
@@ -35,7 +35,13 @@ function populateOtherGoals() {
                 html += "<button class='btn button-primary markInProgress'>Mark In Progress</button>";
             }
             html += "</div>"
-            html += "<div class='mt-4'><em>Goal History</em><table class='table table-striped'>";
+            html += "<div class='accordion mt-4' id='goalHistory'><div class='accordion-item'>";
+            html += "<h2 class='accordion-header' id='flush-heading" + index + "'></h2>";
+            html += "<button class='accordion-button collapsed' type='button' data-bs-toggle='collapse' data-bs-target='#flush-collapse" + index + "' aria-expanded='false' aria-controls='flush-collapse" + index + "'>Goal History</button>";
+            html += "</h2>";
+            html += "<div id='flush-collapse" + index + "' class='accordion-collapse collapse' aria-labelledby='flush-heading" + index + "'>";
+            html += "<div class='accordion-body'>";
+            html += "<table class='table table-striped'>";
             html += "<thead><tr><th>Status</th><th>Date</th></tr></thead>";
             html += "<tbody>";
             if (g.history) {
@@ -47,10 +53,7 @@ function populateOtherGoals() {
                 });
             }
             html += "</tbody></table>";
-            html += "</div></div></div></div>";
-            // html += "<tr class='goal' data-extGoalId='" + g.extGoalId + "'><td>";
-            // html += "<div class='goal " + c + "'>";
-
+            html += "</div></div></div></div></div></div></div>";
         });
     }
 

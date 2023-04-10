@@ -43,7 +43,7 @@ public class MedicationsController extends BaseController {
         model.addAttribute("antihypertensiveMedications", antihypertensiveMedications);
         model.addAttribute("otherMedications", otherMedications);
 
-        return "medications";
+        return "old/medications";
     }
 
     @GetMapping(value={"", "/bmedications"})
