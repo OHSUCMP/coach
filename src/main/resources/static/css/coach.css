@@ -19,10 +19,6 @@ main.container {
     background-color: #b3fff0;
 }
 
-.bgd-tertiary {
-    background-color: #b3d9ff;
-}
-
 .hidden, .hidden * {
     height: 0;
     width: 0;
@@ -44,44 +40,8 @@ body {
     font-weight: bold;
 }
 
-span.circle, div.circle {
-    display: inline-block;
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    vertical-align: middle;
-    text-align: center;
-    font-size: large;
-    font-weight: bold;
-}
-
 img.icon {
     width: 40px;
-}
-
-#patientInfo {
-    display: block;
-    font-weight: bold;
-    margin: 10px 0 5px 0;
-    height: 63px;
-    /*border-bottom: 1px solid black;*/
-}
-
-table.content, table.no-spacing {
-    border-spacing: 0;
-    border-collapse: collapse;
-    width: 100%;
-}
-
-table.content > tbody > tr > td.heading {
-    background-color: #b3fff0;
-    font-size: x-large;
-    padding: 5px;
-    width: 900px;
-}
-
-select {
-    margin-bottom: 5px;
 }
 
 .success {
@@ -90,33 +50,6 @@ select {
 
 .error {
     color: red;
-}
-
-table.data {
-    border: 1px solid black;
-    border-spacing: 0;
-    margin: 4px;
-    width: 900px;
-}
-
-table.data th {
-    background-color: #1d5987;
-    color: #ffffff;
-    font-weight: bold;
-    padding: 5px;
-}
-
-table.data tr:nth-child(even) {
-    background-color: #e6f7ff;
-}
-
-table.data tr:nth-child(odd) {
-    background-color: #ccefff;
-}
-
-table.data td {
-    border: 1px solid black;
-    padding: 5px;
 }
 
 .hover {

@@ -50,7 +50,7 @@ public class VitalsController extends BaseController {
         Collections.sort(homeReadings);
 
         model.addAttribute("homeReadings", homeReadings);
-        model.addAttribute("pageStyles", new String[] { "vitals.css", "form.css" });
+        model.addAttribute("pageStyles", new String[] { "vitals.css" });
         model.addAttribute("pageScripts", new String[] { "vitals.js", "form.js" });
         model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
 
