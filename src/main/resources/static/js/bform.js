@@ -53,16 +53,12 @@ function validateGroup(group) {
         // the only circumstance where this should be reversed is if all fields are blank,
         // i.e. not answered.
         // if the user provided answers to any of the fields, then the group must pass validation
-
-        if ($(group).find('input .answered').length === 0) {
-            pass = true;
+        if ($(group).find('input.answered').length === 0) {
+            $(group).find('.field input').each(function() {
+                $(this).removeClass('is-invalid');    
+            }); 
+            pass = true;   
         }
-    }
-
-    if ( ! pass ) {
-        $(group).addClass('failsValidation');
-    } else {
-        $(group).removeClass('failsValidation');
     }
 
     return pass;
