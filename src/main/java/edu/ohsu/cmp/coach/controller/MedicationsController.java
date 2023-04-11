@@ -24,9 +24,6 @@ public class MedicationsController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private EHRService ehrService;
-
-    @Autowired
     private MedicationService medicationService;
 
     @GetMapping(value={"", "/medications"})
@@ -43,25 +40,9 @@ public class MedicationsController extends BaseController {
         model.addAttribute("antihypertensiveMedications", antihypertensiveMedications);
         model.addAttribute("otherMedications", otherMedications);
 
-        return "old/medications";
+        return "medications";
     }
-
-    @GetMapping(value={"", "/bmedications"})
-    public String viewBootstrap(HttpSession session, Model model) {
-        model.addAttribute("applicationName", applicationName);
-        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
-
-        List<MedicationModel> antihypertensiveMedications = filterDuplicates(medicationService.getAntihypertensiveMedications(session.getId()));
-        antihypertensiveMedications.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));
-
-        List<MedicationModel> otherMedications = filterDuplicates(medicationService.getOtherMedications(session.getId()));
-        otherMedications.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));
-
-        model.addAttribute("antihypertensiveMedications", antihypertensiveMedications);
-        model.addAttribute("otherMedications", otherMedications);
-
-        return "bmedications";
-    }
+    
     private List<MedicationModel> filterDuplicates(List<MedicationModel> modelList) {
         Map<String, MedicationModel> map = new LinkedHashMap<String, MedicationModel>();
 

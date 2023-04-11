@@ -28,9 +28,6 @@ public class ContactController extends BaseController {
     private Environment env;
 
     @Autowired
-    private EHRService ehrService;
-
-    @Autowired
     private ContactMessageService contactMessageService;
 
     @GetMapping("contact")
@@ -64,46 +61,10 @@ public class ContactController extends BaseController {
 
             model.addAttribute("mychartLoginLink", mychartLoginLink);
             model.addAttribute("mychartMessageLink", mychartMessageLink);
+            model.addAttribute("pageStyles", new String[] { "contact.css" });
         }
 
-        return "old/contact";
-    }
-
-    @GetMapping("bcontact")
-    public String bview(HttpSession session, Model model, @RequestParam("token") String token) {
-        if (userWorkspaceService.exists(session.getId())) {
-            logger.info("showing contact form for session " + session.getId());
-
-            model.addAttribute("applicationName", applicationName);
-            model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
-
-            String mychartLoginLink = env.getProperty("mychart.login.url");
-            String mychartMessageLink = env.getProperty("mychart.askAMedicalQuestion.url");
-
-            ContactMessage contactMessage = contactMessageService.getMessage(token);
-            String message = "";
-            String subject = "";
-            if (contactMessage != null) {
-                message = contactMessage.getBody();
-                subject = contactMessage.getSubject();
-                try {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("subject", URLEncoder.encode(subject, StandardCharsets.UTF_8));
-                    mychartMessageLink = MustacheUtil.compileMustache(mychartMessageLink, map);
-
-                } catch (IOException e) {
-                    logger.error("caught " + e.getClass().getName() + " compiling MyChart Message Link template: " + e.getMessage(), e);
-                }
-            }
-            model.addAttribute("subject", subject);
-            model.addAttribute("message", message);
-
-            model.addAttribute("mychartLoginLink", mychartLoginLink);
-            model.addAttribute("mychartMessageLink", mychartMessageLink);
-            model.addAttribute("pageStyles", new String[] { "bcontact.css" });
-        }
-
-        return "bcontact";
+        return "contact";
     }
 
 }

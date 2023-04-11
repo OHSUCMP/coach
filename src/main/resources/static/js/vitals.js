@@ -1,6 +1,4 @@
 function enableDatePicker(sel) {
-//    let currentYear = new Date().getFullYear();
-
     let minDate = new Date();
     if (minDate.getMonth() === 0) { // January
         minDate.setMonth(11);
@@ -65,7 +63,7 @@ function createVitals(vitalsData, _callback) {
 }
 
 function appendReadingToTable(obj) {
-    let container = $('#vitalsTable');
+    let container = $('#vitalsTable tbody');
     let unsortedData = $(container).find('tr');
 
     // note : keep this section synced with vitals.mustache

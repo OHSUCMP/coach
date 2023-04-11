@@ -21,9 +21,6 @@ public class CounselingController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private EHRService ehrService;
-
-    @Autowired
     private CounselingService counselingService;
 
     @GetMapping("{key}")
@@ -35,19 +32,7 @@ public class CounselingController extends BaseController {
 
         model.addAttribute("page", page);
 
-        return "old/counseling";
-    }
-
-    @GetMapping("{key}/b")
-    public String viewB(HttpSession session, Model model, @PathVariable(value="key") String key) {
-        model.addAttribute("applicationName", applicationName);
-        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
-
-        CounselingPageModel page = new CounselingPageModel(counselingService.getPage(key));
-
-        model.addAttribute("page", page);
-
-        return "bcounseling";
+        return "counseling";
     }
 
     @PostMapping("create")

@@ -50,27 +50,11 @@ public class VitalsController extends BaseController {
         Collections.sort(homeReadings);
 
         model.addAttribute("homeReadings", homeReadings);
-
-        return "old/vitals";
-    }
-
-    @GetMapping(value={"/bvitals"})
-    public String bview(HttpSession session, Model model) throws DataException {
-        model.addAttribute("applicationName", applicationName);
-        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
-
-        List<AbstractVitalsModel> homeReadings = new ArrayList<>();
-        homeReadings.addAll(bpService.getHomeBloodPressureReadings(session.getId()));
-        homeReadings.addAll(pulseService.getHomePulseReadings(session.getId()));
-
-        Collections.sort(homeReadings);
-
-        model.addAttribute("homeReadings", homeReadings);
-        model.addAttribute("pageStyles", new String[] { "bvitals.css", "bform.css" });
-        model.addAttribute("pageScripts", new String[] { "bvitals.js", "bform.js" });
+        model.addAttribute("pageStyles", new String[] { "vitals.css", "form.css" });
+        model.addAttribute("pageScripts", new String[] { "vitals.js", "form.js" });
         model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
 
-        return "bvitals";
+        return "vitals";
     }
 
     @PostMapping("create")
