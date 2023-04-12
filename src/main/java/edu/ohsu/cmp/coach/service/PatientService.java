@@ -1,9 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.entity.MyPatient;
-import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.model.PatientModel;
-import edu.ohsu.cmp.coach.model.StudyClass;
 import edu.ohsu.cmp.coach.repository.PatientRepository;
 import edu.ohsu.cmp.coach.util.UUIDUtil;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -50,7 +48,6 @@ public class PatientService extends AbstractService {
             p = new MyPatient(patIdHash);
             p.setRedcapId(UUIDUtil.getRandomUUID());
             p.setConsentGranted(false);
-            setRandomStudyClass(p);
             p = repository.save(p);
         }
 
@@ -76,15 +73,5 @@ public class PatientService extends AbstractService {
 
     private String buildPatIdHash(String patientId) {
         return DigestUtils.sha256Hex(patientId + salt);
-    }
-
-    private void setRandomStudyClass(MyPatient p) {
-        // randomly sort patient into either Study or Intervention bucket
-        int x = (int) (Math.random() * 2); // 0 or 1
-        switch (x) {
-            case 0: p.setStudyClass(StudyClass.CONTROL.getLabel()); break;
-            case 1: p.setStudyClass(StudyClass.INTERVENTION.getLabel()); break;
-            default: throw new CaseNotHandledException("couldn't handle case where x=" + x);
-        }
     }
 }

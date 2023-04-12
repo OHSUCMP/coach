@@ -67,8 +67,8 @@ public class HomeController extends BaseController {
     @Autowired
     private PatientService patientService;
 
-    @Value("${redcap.consent-form.url}")
-    private String redcapConsentFormURL;
+    @Autowired
+    private REDCapService redCapService;
 
     @Value("#{new Boolean('${security.browser.cache-credentials}')}")
     Boolean cacheCredentials;
@@ -112,19 +112,24 @@ public class HomeController extends BaseController {
             // we only get here if the user hasn't yet consented, so redirect them to REDCap
             ProvisionalSessionCacheData cacheData = sessionService.getProvisionalSessionData(sessionId);
             MyPatient patient = patientService.getMyPatient(cacheData.getCredentials().getPatientId());
-            return "redirect:" + buildConsentFormURL(patient.getRedcapId());
+
+            try {
+                if ( ! redCapService.hasSubjectInfoRecord(patient.getRedcapId()) ) {
+                    redCapService.createSubjectInfoRecord(patient.getRedcapId());
+                }
+                String surveyLink = redCapService.getSurveyLink(patient.getRedcapId());
+                return "redirect:" + surveyLink;
+
+            } catch (Exception e) {
+                logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+                return "error";
+            }
 
         } else {
             model.addAttribute("applicationName", applicationName);
-//            Boolean cacheCredentials = StringUtils.equalsIgnoreCase(env.getProperty("security.browser.cache-credentials"), "true");
             model.addAttribute("cacheCredentials", cacheCredentials);
             return "fhir-complete-handshake";
         }
-    }
-
-    private String buildConsentFormURL(String redcapId) {
-        String joinChar = redcapConsentFormURL.contains("?") ? "&" : "?";
-        return redcapConsentFormURL + joinChar + "guid=" + redcapId;
     }
 
     @PostMapping("blood-pressure-observations-list")
