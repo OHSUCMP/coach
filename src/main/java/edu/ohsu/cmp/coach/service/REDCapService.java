@@ -25,44 +25,42 @@ public class REDCapService extends AbstractService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    public static final String YES = "1";
+    public static final String NO = "0";
+
+    public static final String FORM_INCOMPLETE = "0";
+    public static final String FORM_UNVERIFIED = "1";
+    public static final String FORM_COMPLETE = "2";
+
     @Value("${redcap.api.url}")
     private String redcapApiUrl;
 
     @Value("${redcap.api.token}")
     private String redcapApiToken;
 
-    @Value("${redcap.subject-info.form-name}")
+    @Value("${redcap.subject-info-form.name}")
     private String subjectInfoForm;
 
-    @Value("${redcap.subject-info.field-name}")
-    private String subjectInfoField;
-
-    @Value("${redcap.subject-info.completed-value}")
-    private String subjectInfoCompletedValue;
-
-    @Value("${redcap.consent.form-name}")
+    @Value("${redcap.consent-form.name}")
     private String consentForm;
 
-    @Value("${redcap.consent.field-name}")
+    @Value("${redcap.consent-form.consent-field-yn}")
     private String consentField;
-
-    @Value("${redcap.consent.granted-value}")
-    private String consentGrantedValue;
 
     public boolean isRedcapEnabled() {
         return REDCAP_TOKEN_PATTERN.matcher(redcapApiToken).matches();
     }
 
     public boolean hasSubjectInfoRecord(String redcapId) throws EncoderException, REDCapException, IOException {
-        String val = getValue(subjectInfoForm, redcapId, subjectInfoField);
-        return StringUtils.equals(val, subjectInfoCompletedValue);
+        String val = getValue(subjectInfoForm, redcapId, subjectInfoForm + "_complete");
+        return StringUtils.equals(val, FORM_COMPLETE);
     }
 
     public boolean createSubjectInfoRecord(String redcapId) throws EncoderException, IOException, REDCapException {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("record_id", redcapId);
         map.put("redcap_event_name", subjectInfoForm);
-        map.put(subjectInfoField, subjectInfoCompletedValue);
+        map.put(subjectInfoForm + "_complete", FORM_COMPLETE);
 
         List<Map<String, String>> list = new ArrayList<>();
         list.add(map);
@@ -128,9 +126,14 @@ public class REDCapService extends AbstractService {
         }
     }
 
+    public boolean hasConsentRecord(String redcapId) throws EncoderException, REDCapException, IOException {
+        String val = getValue(consentForm, redcapId, consentForm + "_complete");
+        return StringUtils.equals(val, FORM_COMPLETE);
+    }
+
     public boolean isConsentGranted(String redcapId) throws EncoderException, REDCapException, IOException {
         String icfConsent = getValue(consentForm, redcapId, consentField);
-        return StringUtils.equals(icfConsent, consentGrantedValue);
+        return StringUtils.equals(icfConsent, YES);
     }
 
     public String getValue(String form, String recordId, String field) throws EncoderException, IOException, REDCapException {
