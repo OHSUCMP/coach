@@ -1,7 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.model.MedicationModel;
-import edu.ohsu.cmp.coach.service.EHRService;
 import edu.ohsu.cmp.coach.service.MedicationService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -19,14 +18,14 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-@RequestMapping("/")
+@RequestMapping("/medications")
 public class MedicationsController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private MedicationService medicationService;
 
-    @GetMapping(value={"", "/medications"})
+    @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());

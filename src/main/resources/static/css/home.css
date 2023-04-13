@@ -3,16 +3,6 @@
     color: red;
 }
 
-.legend {
-    position: absolute;
-    font-size: smaller;
-}
-
-.legend * {
-    display: inline-block;
-    vertical-align: middle;
-}
-
 div.chartKeyItem {
     font-size: .9em;
 }
