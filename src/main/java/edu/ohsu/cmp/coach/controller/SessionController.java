@@ -5,8 +5,10 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.service.PatientService;
+import edu.ohsu.cmp.coach.service.REDCapService;
 import edu.ohsu.cmp.coach.session.SessionService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,13 +31,17 @@ public class SessionController extends BaseController {
     @Autowired
     private PatientService patientService;
 
+    @Autowired
+    private REDCapService redCapService;
+
     @GetMapping("health")
     public String health() {
         return "health";
     }
 
     @GetMapping("launch-ehr")
-    public String launchEHR(Model model) {
+    public String launchEHR(HttpSession session, Model model) {
+        sessionService.expireAll(session.getId());
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("clientId", env.getProperty("smart.ehr.clientId"));
         model.addAttribute("scope", env.getProperty("smart.ehr.scope"));
@@ -44,7 +50,8 @@ public class SessionController extends BaseController {
     }
 
     @GetMapping("launch-patient")
-    public String launchPatient(Model model) {
+    public String launchPatient(HttpSession session, Model model) {
+        sessionService.expireAll(session.getId());
         model.addAttribute("applicationName", applicationName);
         model.addAttribute("clientId", env.getProperty("smart.patient.clientId"));
         model.addAttribute("scope", env.getProperty("smart.patient.scope"));
@@ -67,30 +74,33 @@ public class SessionController extends BaseController {
 
         MyPatient myPatient = patientService.getMyPatient(patientId);
 
-        if (myPatient.getConsentGranted()) {
+        boolean skipConsent = ! redCapService.isRedcapEnabled();
+
+        if (skipConsent || StringUtils.equals(myPatient.getConsentGranted(), MyPatient.CONSENT_GRANTED_YES)) {
             sessionService.prepareSession(session.getId(), credentials, audience);
 
             return ResponseEntity.ok("session configured successfully");
 
         } else {
-            // consent hasn't been granted yet.  cache session data somewhere well-segregated from
-            // the UserWorkspace, a UserWorkspace must only be set up for authorized users.
+            // consent has either not been granted yet OR has been denied.
+            // cache session data somewhere well-segregated from the UserWorkspace, as a UserWorkspace must only be
+            // set up for authorized users.
             // HomeController.view will handle the next step of this workflow
             sessionService.prepareProvisionalSession(session.getId(), credentials, audience);
 
-            return ResponseEntity.ok("session provisionally established - CONSENT REQUIRED");
+            return ResponseEntity.ok("session provisionally established");
         }
     }
 
     @GetMapping("logout")
     public String logout(HttpSession session) {
-        userWorkspaceService.shutdown(session.getId());
+        sessionService.expireAll(session.getId());
         return "logout";
     }
 
     @PostMapping("clear-session")
     public ResponseEntity<?> clearSession(HttpSession session) {
-        userWorkspaceService.shutdown(session.getId());
+        sessionService.expireAll(session.getId());
         return ResponseEntity.ok("session cleared");
     }
 

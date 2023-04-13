@@ -98,7 +98,7 @@ public class REDCapService extends AbstractService {
         }
     }
 
-    public String getSurveyLink(String redcapId) throws REDCapException, EncoderException, IOException {
+    public String getConsentSurveyLink(String redcapId) throws REDCapException, EncoderException, IOException {
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
@@ -136,7 +136,7 @@ public class REDCapService extends AbstractService {
         return StringUtils.equals(icfConsent, YES);
     }
 
-    public String getValue(String form, String recordId, String field) throws EncoderException, IOException, REDCapException {
+    private String getValue(String form, String redcapId, String field) throws EncoderException, IOException, REDCapException {
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
@@ -147,7 +147,7 @@ public class REDCapService extends AbstractService {
         bodyParams.put("type", "flat");
         bodyParams.put("rawOrLabel", "raw");
         bodyParams.put("forms", form);
-        bodyParams.put("records", recordId);
+        bodyParams.put("records", redcapId);
 
         HttpResponse response = new HttpRequest().post(
                 redcapApiUrl,
@@ -171,7 +171,7 @@ public class REDCapService extends AbstractService {
             } else if (records.size() == 1) {
                 return records.get(0).get(field);
             } else {
-                throw new REDCapException("found too many records for (" + form + ", " + recordId + ") - expected 1, found " + records.size());
+                throw new REDCapException("found too many records for (" + form + ", " + redcapId + ") - expected 1, found " + records.size());
             }
         }
     }

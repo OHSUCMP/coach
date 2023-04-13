@@ -6,6 +6,9 @@ import java.util.Date;
 @Entity
 @Table(name = "patient")
 public class MyPatient {
+    public static final String CONSENT_GRANTED_YES = "Y";
+    public static final String CONSENT_GRANTED_NO = "N";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -14,7 +17,7 @@ public class MyPatient {
     private Date omronLastUpdated;
     private String studyClass;
     private String redcapId;
-    private Boolean consentGranted;
+    private String consentGranted;
 
     protected MyPatient() {
     }
@@ -63,11 +66,11 @@ public class MyPatient {
         this.redcapId = redcapId;
     }
 
-    public Boolean getConsentGranted() {
+    public String getConsentGranted() {
         return consentGranted;
     }
 
-    public void setConsentGranted(Boolean consentGranted) {
+    public void setConsentGranted(String consentGranted) {
         this.consentGranted = consentGranted;
     }
 }

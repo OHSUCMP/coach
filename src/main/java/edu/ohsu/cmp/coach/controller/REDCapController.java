@@ -39,34 +39,23 @@ public class REDCapController extends BaseController {
         String sessionId = session.getId();
 
         ProvisionalSessionCacheData cacheData = sessionService.getProvisionalSessionData(sessionId);
-        if (cacheData == null) {
-            // evidently the person waited too long to return and their provisional session expired?
+        if (cacheData != null) {
+            MyPatient patient = patientService.getMyPatient(cacheData.getCredentials().getPatientId());
+            if (isConsentGranted(patient.getRedcapId())) {
+                patient.setConsentGranted(MyPatient.CONSENT_GRANTED_YES);
+                setRandomStudyClass(patient);
+                patientService.update(patient);
+                sessionService.expireProvisional(sessionId);
+                sessionService.prepareSession(sessionId, cacheData.getCredentials(), cacheData.getAudience());
 
-            // todo : how should we handle this?  display an error message?  kick off the workflow again?
-            // todo : redirecting home is probably not what we want, it'll try to complete the handshake again
-
-            return "redirect:/";
+            } else {
+                patient.setConsentGranted(MyPatient.CONSENT_GRANTED_NO);
+                patientService.update(patient);
+                sessionService.expireProvisional(sessionId);
+            }
         }
 
-        MyPatient patient = patientService.getMyPatient(cacheData.getCredentials().getPatientId());
-
-        if (patient.getConsentGranted()) {
-
-            // if they already have consent granted on their local record, why are they here?  redirect home
-            return "redirect:/";
-
-        } else if (isConsentGranted(patient.getRedcapId())) {
-            patient.setConsentGranted(true);
-            setRandomStudyClass(patient);
-            patientService.update(patient);
-            sessionService.expireProvisional(sessionId);
-            sessionService.prepareSession(sessionId, cacheData.getCredentials(), cacheData.getAudience());
-            return "redirect:/";
-
-        } else {
-            sessionService.expireProvisional(sessionId);
-            return "no-consent";
-        }
+        return "redirect:/";
     }
 
     private void setRandomStudyClass(MyPatient p) {

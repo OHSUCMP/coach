@@ -40,14 +40,12 @@ public class PatientService extends AbstractService {
             p = repository.findOneByPatIdHash(patIdHash);
             if (StringUtils.isBlank(p.getRedcapId())) {
                 p.setRedcapId(UUIDUtil.getRandomUUID());
-                p.setConsentGranted(false);
                 p = repository.save(p);
             }
 
         } else {
             p = new MyPatient(patIdHash);
             p.setRedcapId(UUIDUtil.getRandomUUID());
-            p.setConsentGranted(false);
             p = repository.save(p);
         }
 

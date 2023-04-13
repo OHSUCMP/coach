@@ -69,6 +69,12 @@ public class SessionService extends AbstractService {
         provisionalCache.remove(sessionId);
     }
 
+    public void expireAll(String sessionId) {
+        logger.info("expiring credentials for session " + sessionId);
+        provisionalCache.remove(sessionId);
+        userWorkspaceService.shutdown(sessionId);
+    }
+
 /////////////////////////////////////////////////////////////
 // private stuff
 //

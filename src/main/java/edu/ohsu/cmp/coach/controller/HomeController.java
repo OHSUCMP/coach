@@ -109,20 +109,32 @@ public class HomeController extends BaseController {
             return "home";
 
         } else if (sessionService.existsProvisional(sessionId)) {
-            // we only get here if the user hasn't yet consented, so redirect them to REDCap
+            // we only get here if the user hasn't yet consented OR if they denied consent.
             ProvisionalSessionCacheData cacheData = sessionService.getProvisionalSessionData(sessionId);
             MyPatient patient = patientService.getMyPatient(cacheData.getCredentials().getPatientId());
 
-            try {
-                if ( ! redCapService.hasSubjectInfoRecord(patient.getRedcapId()) ) {
-                    redCapService.createSubjectInfoRecord(patient.getRedcapId());
-                }
-                String surveyLink = redCapService.getSurveyLink(patient.getRedcapId());
-                return "redirect:" + surveyLink;
+            if (StringUtils.equals(patient.getConsentGranted(), MyPatient.CONSENT_GRANTED_NO)) {
+                sessionService.expireProvisional(sessionId);
+                model.addAttribute("applicationName", applicationName);
+                return "no-consent";
 
-            } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
-                return "error";
+            } else {
+                try {
+                    if ( ! redCapService.hasSubjectInfoRecord(patient.getRedcapId()) ) {
+                        redCapService.createSubjectInfoRecord(patient.getRedcapId());
+                    }
+
+                    if (redCapService.hasConsentRecord(patient.getRedcapId())) {
+                        return "redirect:/redcap/process-consent";
+
+                    } else {
+                        String consentSurveyLink = redCapService.getConsentSurveyLink(patient.getRedcapId());
+                        return "redirect:" + consentSurveyLink;
+                    }
+                } catch (Exception e) {
+                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+                    return "error";
+                }
             }
 
         } else {
