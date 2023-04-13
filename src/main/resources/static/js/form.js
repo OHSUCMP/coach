@@ -31,7 +31,7 @@ function validateForm(form, outputContainer) {
         $(el).html('');
 
     } else {
-        $(el).addClass('error');
+        $(el).addClass('error ms-3');
         $(el).html("Please fill missing fields and try again.");
     }
 
@@ -53,16 +53,12 @@ function validateGroup(group) {
         // the only circumstance where this should be reversed is if all fields are blank,
         // i.e. not answered.
         // if the user provided answers to any of the fields, then the group must pass validation
-
-        if ($(group).find('.field.answered').length === 0) {
-            pass = true;
+        if ($(group).find('input.answered').length === 0) {
+            $(group).find('.field input').each(function() {
+                $(this).removeClass('is-invalid');    
+            }); 
+            pass = true;   
         }
-    }
-
-    if ( ! pass ) {
-        $(group).addClass('failsValidation');
-    } else {
-        $(group).removeClass('failsValidation');
     }
 
     return pass;
@@ -86,11 +82,6 @@ function validateField(field) {
         pass = notAnswered ? ! required : true;
     });
 
-    $(field).find('select').each(function() {
-        notAnswered = $(this).prop('selectedIndex') === 0;
-        pass = notAnswered ? ! required : true;
-    });
-
     // NOTE : this radio validator probably won't work correctly if there are multiple different radio
     //        groups in the same form, since it's not filtering by name or anything.  should be fine
     //        being simple like this for now, but if we make the forms more complex, this will probably
@@ -101,19 +92,22 @@ function validateField(field) {
         pass = notAnswered ? ! required : true;
     }
 
-    if (pass) {
-        $(field).removeClass('failsValidation');
-    } else {
-        $(field).addClass('failsValidation');
-    }
-
-    let answered = ! notAnswered;   // just because I hate double negatives
-
-    if (answered) {
-        $(field).addClass('answered');
-    } else {
-        $(field).removeClass('answered');
-    }
+    $(field).find('input').each(function() {
+        if (pass) {
+            $(this).removeClass('is-invalid');
+        } else {
+            $(this).addClass('is-invalid');
+        }
+    
+        let answered = ! notAnswered;   // just because I hate double negatives
+    
+        if (answered) {
+            $(this).addClass('answered');
+        } else {
+            $(this).removeClass('answered');
+        }
+    
+    });
 
     return pass;
 }

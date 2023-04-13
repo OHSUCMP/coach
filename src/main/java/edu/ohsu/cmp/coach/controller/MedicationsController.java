@@ -1,7 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.model.MedicationModel;
-import edu.ohsu.cmp.coach.service.EHRService;
 import edu.ohsu.cmp.coach.service.MedicationService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -24,9 +23,6 @@ public class MedicationsController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private EHRService ehrService;
-
-    @Autowired
     private MedicationService medicationService;
 
     @GetMapping(value={"", "/"})
@@ -45,7 +41,7 @@ public class MedicationsController extends BaseController {
 
         return "medications";
     }
-
+    
     private List<MedicationModel> filterDuplicates(List<MedicationModel> modelList) {
         Map<String, MedicationModel> map = new LinkedHashMap<String, MedicationModel>();
 

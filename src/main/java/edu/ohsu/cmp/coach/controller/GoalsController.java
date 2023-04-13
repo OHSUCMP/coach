@@ -32,9 +32,6 @@ public class GoalsController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private EHRService ehrService;
-
-    @Autowired
     private GoalService goalService;
 
     @GetMapping(value={"", "/"})
@@ -43,6 +40,8 @@ public class GoalsController extends BaseController {
         model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
         model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
         model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(session.getId()));
+        model.addAttribute("pageStyles", new String[] { "goals.css" });
+        model.addAttribute("pageScripts", new String[] { "goals.js" });
 
         return "goals";
     }

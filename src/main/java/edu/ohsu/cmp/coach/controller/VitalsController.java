@@ -50,6 +50,9 @@ public class VitalsController extends BaseController {
         Collections.sort(homeReadings);
 
         model.addAttribute("homeReadings", homeReadings);
+        model.addAttribute("pageStyles", new String[] { "vitals.css" });
+        model.addAttribute("pageScripts", new String[] { "vitals.js", "form.js" });
+        model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
 
         return "vitals";
     }
@@ -118,21 +121,4 @@ public class VitalsController extends BaseController {
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
-//    @PostMapping("delete")
-//    public ResponseEntity<String> delete(HttpSession session,
-//                                         @RequestParam("id") String id) {
-//
-//        // get the cache just to make sure it's defined and the user is properly authenticated
-//        workspaceService.get(session.getId());
-//
-//        try {
-//            bpService.delete(session.getId(), id);
-//            workspaceService.get(session.getId()).runRecommendations();
-//
-//            return new ResponseEntity<>("OK", HttpStatus.OK);
-//
-//        } catch (Exception e) {
-//            return new ResponseEntity<>("Caught " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
 }

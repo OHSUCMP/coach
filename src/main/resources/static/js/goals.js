@@ -12,38 +12,38 @@ function loadOtherGoals(_callback) {
 function populateOtherGoals() {
     let data = window.otherGoals;
 
-    let html = '<table id="goalsTable" class="no-spacing">';
+    let html = '';
 
     if (Array.isArray(data) && data.length > 0) {
-        data.forEach(function(g) {
+        data.forEach(function(g, index) {
             let inProgress = g.achievementStatus === 'IN_PROGRESS';
             let c = inProgress ? 'active' : 'completed';
 
             // goal info and actions
-            html += "<tr class='goal' data-extGoalId='" + g.extGoalId + "'><td>";
-            html += "<div class='goal " + c + "'>";
-            html += "<span class='heading'>" + g.referenceDisplay + "</span>";
-            html += "<table><tr><td class='expand'>";
-            html += "<div>Your goal:<span class='goalText'>" + g.goalText + "</span></div>";
-            html += "<div>Target completion date:<span class='targetDate'>" + toDateString(g.targetDate) + "</span></div>";
-            html += "<div>Current status:<span class='" + c + "'>" + g.achievementStatusLabel + "</span></div>";
-            html += "</td><td class='shrink'>";
+            html += "<div class='col-lg-6 mt-2'>";
+            html += "<div class='card h-100 goal' data-extGoalId='" + g.extGoalId + "'>";
+            html += "<div class='card-header fw-bold'>" + g.referenceDisplay + "</div>";
+            html += "<div class='card-body'>";
+            html += "<p class='mb-0'><strong>Your goal:</strong> " + g.goalText + "</p>";
+            html += "<p class='mb-0'><strong>Target completion date:</strong> " + toDateString(g.targetDate) + "</p>";
+            html += "<p class='mb-0'><strong>Current status:</strong> <span class='" + c + "'>" + g.achievementStatusLabel + "</span></p>";
+            html += "<div class='mt-4 d-flex justify-content-evenly'>";
             if (inProgress) {
-                html += "<div class='markAchieved button'>Mark Achieved</div>";
-                html += "<div class='markNotAchieved button'>Mark Not Achieved</div>";
+                html += "<button class='btn button-primary markAchieved'>Mark Achieved</button>";
+                html += "<button class='btn button-primary markNotAchieved'>Mark Not Achieved</button>";
             } else {
-                html += "<div class='markInProgress button'>Mark In Progress</div>";
+                html += "<button class='btn button-primary markInProgress'>Mark In Progress</button>";
             }
-            html += "</td></tr></table>";
-            html += "</div>";
-            html += "</td>";
-
-            // goal history
-            html += "<td><table class='goalHistory'>";
-            html += "<tr class='goalHistoryHeader'>";
-            html += "<th>Achievement Status</th>";
-            html += "<th>Date</th>";
-            html += "</tr>";
+            html += "</div>"
+            html += "<div class='accordion mt-4' id='goalHistory'><div class='accordion-item'>";
+            html += "<h2 class='accordion-header' id='flush-heading" + index + "'></h2>";
+            html += "<button class='accordion-button collapsed' type='button' data-bs-toggle='collapse' data-bs-target='#flush-collapse" + index + "' aria-expanded='false' aria-controls='flush-collapse" + index + "'>Goal History</button>";
+            html += "</h2>";
+            html += "<div id='flush-collapse" + index + "' class='accordion-collapse collapse' aria-labelledby='flush-heading" + index + "'>";
+            html += "<div class='accordion-body'>";
+            html += "<table class='table table-striped'>";
+            html += "<thead><tr><th>Status</th><th>Date</th></tr></thead>";
+            html += "<tbody>";
             if (g.history) {
                 g.history.forEach(function(item) {
                     html += "<tr>";
@@ -52,16 +52,16 @@ function populateOtherGoals() {
                     html += "</tr>";
                 });
             }
-            html += "</table></td></tr>";
+            html += "</tbody></table>";
+            html += "</div></div></div></div></div></div></div>";
         });
     }
-    html += "</table>";
 
     $('#otherGoalsContainer').html(html);
 }
 
 function updateStatus(el, status) {
-    let goal = $(el).closest('tr.goal');
+    let goal = $(el).closest('.goal');
     let extGoalId = $(goal).attr('data-extGoalId');
 
     let data = {
@@ -107,21 +107,17 @@ function enableDisableUpdateBPGoalButton() {
 
     let button = $('#updateBPGoal');
     if (changed) {
-        $(button).removeClass('disabled');
+        $(button).prop( "disabled", false );
     } else {
-        $(button).addClass('disabled');
+        $(button).prop( "disabled", true );
     }
 }
-
-$(document).ready(function() {
-    enableHover('.button');
-});
 
 $(document).on('change', 'input.systolic, input.diastolic', function() {
     enableDisableUpdateBPGoalButton();
 });
 
-$(document).on('click', '#updateBPGoal:not(.disabled)', function() {
+$(document).on('click', '#updateBPGoal', function() {
     let container = $(this).closest('.bpGoal');
 
     let systolic = $(container).find('input.systolic');
@@ -142,7 +138,7 @@ $(document).on('click', '#updateBPGoal:not(.disabled)', function() {
             $(note).removeClass("error");
             $(note).addClass("success");
 
-            $('#updateBPGoal').addClass('disabled');
+            $('#updateBPGoal').prop("disabled", true);
 
         } else {
             $(note).text("Error updating goal - see logs for details.");
@@ -152,14 +148,21 @@ $(document).on('click', '#updateBPGoal:not(.disabled)', function() {
     });
 });
 
-$(document).on('click', '#goalsTable .markInProgress.button', function() {
+$(document).on('click', '.markInProgress:button', function() {
     updateStatus(this, 'IN_PROGRESS');
 });
 
-$(document).on('click', '#goalsTable .markAchieved.button', function() {
+$(document).on('click', '.markAchieved:button', function() {
     updateStatus(this, 'ACHIEVED');
 });
 
-$(document).on('click', '#goalsTable .markNotAchieved.button', function() {
+$(document).on('click', '.markNotAchieved:button', function() {
     updateStatus(this, 'NOT_ACHIEVED');
+});
+
+$(document).ready(function() {
+    loadOtherGoals(function(otherGoals) {
+        window.otherGoals = otherGoals;
+        populateOtherGoals();
+    });
 });

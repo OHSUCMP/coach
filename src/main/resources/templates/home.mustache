@@ -1,214 +1,27 @@
-{{#layout}}
-    {{#title}}{{applicationName}} - Home{{/title}}
-    {{#head}}
-        <!-- chartjs - see: https://www.chartjs.org/docs/latest/getting-started/installation.html -->
-        <!-- chartjs-plugin-annotation - see: https://github.com/chartjs/chartjs-plugin-annotation -->
-<!--        <script type="text/javascript" src="/node_modules/regression/dist/regression.js"></script>-->
-<!--        <script type="text/javascript" src="/node_modules/chart.js/dist/Chart.js"></script>-->
-<!--        <script type="text/javascript" src="/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js"></script>-->
-<!--        <script type="text/javascript" src="/node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js"></script>-->
+{{>layout/header}}
 
-        <!-- https://www.npmjs.com/package/inputmask -->
-        <script type="text/javascript" src="/node_modules/inputmask/dist/jquery.inputmask.js"></script>
-        <script type="text/javascript" src="/node_modules/inputmask/dist/bindings/inputmask.binding.js"></script>
-
-<!--        <script type="text/javascript" src="/js/loess/loess.js"></script>-->
-        <script src="/js/science.js/science.v1.js"></script>
-        <script src="/js/science.js/lib/d3/d3.js"></script>
-        <link rel="stylesheet" href="/css/home.css?v=4"/>
-        <script type="text/javascript" src="/js/home.js?v=2"></script>
-
-        <link rel="stylesheet" href="/css/recommendations.css?v=1"/>
-        <script type="text/javascript" src="/js/recommendations.js?v=1"></script>
-
-    {{#showClearSupplementalData}}
-        <script type="text/javascript">
-            $(document).on('click', '#clearSupplementalData', function() {
-                doClearSupplementalData(function(msg) {
-                    doRefresh(function(msg) {
-                        window.location.href = "/";
-                    });
-                });
-            });
-        </script>
-    {{/showClearSupplementalData}}
-
-    <script type="text/javascript">
-            function loadChart() {
-                loadBloodPressureObservations(function(bpdata) {
-                    window.bpdata = bpdata;
-                    window.bpchart = {};
-                    window.bpchart.data = window.bpdata;
-
-                    populateSummaryDiv();
-                    buildChart();
-                });
-            }
-
-            $(document).on('click', '#chartTimelineContainer > .button:not(.selected)', function() {
-                window.bpchart = {};
-
-                let type = $(this).attr('data-window');
-                // The start date of the BP set used to calculate average
-                const bpSetStartDate = getBPSetStartDate(window.bpdata);
-                window.bpchart.bpSetStartDate = bpSetStartDate;
-                if (type === 'all') {
-                    window.bpchart.data = window.bpdata;
-                } else {
-                    let startDate = new Date();
-                    let endDate = new Date();
-
-                    if (type === 'mr') {
-                        if (bpSetStartDate) {
-                            startDate = bpSetStartDate;
-                        } else {
-                            // Fall back to showing 2 months if there is no set
-                            startDate.setMonth(startDate.getMonth() - 2);
-                        }
-                        startDate.setHours(0, 0, 0);
-                        endDate.setHours(23, 59, 59);
-
-                    } else if (type === '1y') {
-                        startDate.setFullYear(startDate.getFullYear() - 1);
-                        startDate.setHours(0, 0, 0);
-                        endDate.setHours(23, 59, 59);
-                    }
-                    window.bpchart.data = truncateData(window.bpdata, startDate);
-                    window.bpchart.startDate = startDate;
-                    window.bpchart.endDate = endDate;
-                }
-
-                populateSummaryDiv();
-                updateChart();
-
-                $('#chartTimelineContainer').find('.button').each(function() {
-                    if ($(this).attr('data-window') === type) {
-                        $(this).addClass('selected');
-                    } else {
-                        $(this).removeClass('selected');
-                    }
-                });
-            });
-
-            $(document).ready(function () {
-                let sessionEstablished = $('#sessionEstablished').text();
-                if (sessionEstablished !== 'true') {
-                    return;
-                }
-
-                enableHover('#chartTimelineContainer .button');
-
-                if (isInternetExplorer()) {
-                    loadScript("/js/ie/chart.js-2.9.3/Chart.js", function() {
-                        loadScript("/js/ie/bpchart.js", function() {
-                            console.log("done loading IE chart scripts");
-                            loadChart();
-                        });
-                    });
-
-                } else {
-                    // loadScript("/node_modules/regression/dist/regression.js", function() {
-                        loadScript("/node_modules/chart.js/dist/Chart.js", function() {
-                            loadScript("/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js", function() {
-                                loadScript("/node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js", function() {
-                                    loadScript("/js/bpchart.js", function() {
-                                        loadChart();
-                                    })
-                                })
-                            })
-                        // })
-                    });
-                }
-
-                loadMedications(function(meds) {
-                    window.meds = meds;
-                    populateMedications();
-                });
-
-                loadAdverseEvents(function(adverseEvents) {
-                    window.adverseEvents = adverseEvents;
-                    populateAdverseEvents();
-                });
-
-                getRecommendations(function(container, cards) {
-                    if (cards) {
-                        let html = renderCards(cards);
-                        if (html === '') {
-                            $(container).closest('.recommendation').addClass('hidden');
-
-                        } else {
-                            $(container).html(html);
-                            $(container).find('.bpGoal input.systolic').inputmask({
-                                regex: "1?[0-9]{2}"
-                            });
-                            $(container).find('.bpGoal input.diastolic').inputmask({
-                                regex: "1?[0-9]{2}"
-                            });
-                            // $(container).find('input.madlibResponse[data-type="number"]').inputmask({
-                            //     regex: "[1-9][0-9]{0,}"
-                            // });
-                            // $(container).find('input.madlibResponse[data-type="text"]').inputmask({
-                            //     regex: "[A-Za-z' ]{1,}"
-                            // });
-                        }
-                    }
-                });
-            });
-
-            $(document).on('click', '#omronAuthLink', function() {
-                let target = $('#omronAuthLink').attr('data-target');
-                window.open(target, "_self");
-            });
-        </script>
-    {{/head}}
-    {{#menuItems}}
-        <li class="anchor selected" data-href="/">Home</li>
-        <li class="anchor" data-href="/goals">My Goals</li>
-        <li class="anchor" data-href="/vitals">Home BP Readings</li>
-        <li class="anchor" data-href="/medications">My Medications</li>
-    {{/menuItems}}
-    {{#content}}
-        <div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
-        <div id="LOESSBandwidth" class="hidden">{{loessBandwidth}}</div>
+<div class="container">
+    <div class="px-2 d-flex justify-content-between">
+        <span class="fs-4"><i class="fas fa-user color-primary"></i></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}</span>
         {{#showClearSupplementalData}}
-            <div id="clearSupplementalDataContainer">
-                <span id="clearSupplementalData" class="link">Clear Supplemental Data</span>
-            </div>
+        <span id="clearSupplementalData" class="link">Clear Supplemental Data</span>
         {{/showClearSupplementalData}}
-        <table class="content">
-            <tr>
-                <td id="patientInfo">
-                    <table style="margin-left: 50px">
-                        <tr>
-                            <td rowspan="2">
-                                <span class="circle" style="background-color: #b3fff0">&nbsp;</span>
-                            </td>
-                            <td colspan="2">
-                                <span style="font-size: x-large">{{patient.name}}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>{{patient.age}} years</td>
-                            <td>{{patient.gender}}</td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
+    </div>
 
-        <table class="content">
-            <tr>
-                <td class="heading">
-                    High Blood Pressure Control
-                </td>
-            </tr>
-            <tr>
-                <td id="highBPControlContainer">
-                    <table class="expand">
+    <div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
+    <div id="LOESSBandwidth" class="hidden">{{loessBandwidth}}</div>
+
+    <div class="mt-3">
+        <h4 class="p-2 bgd-secondary">
+            <i class="fas fa-file-medical-alt color-primary"></i> High Blood Pressure Control
+        </h4>
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-md-3 align-self-center">
+                    <div class="text-center" style="font-weight: bold;">Your blood pressure:</div>
+                    <table class="table table-borderless mt-4 mx-auto w-auto">
                         <tr>
-                            <td style="width:200px; vertical-align: top">
-                                <span style="font-weight: bold; white-space: nowrap">Your blood pressure:</span>
-                                <br/>
+                            <td>
                                 <div id="avgPlaceholder">
                                     <img src='/images/info-icon.png' class='icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>;
                                 </div>
@@ -242,93 +55,224 @@
                                     </table>
                                 </div>
                             </td>
-                            <td style="width:500px">
-                                <div id="chartContainer">
-                                    <div id="loadingChart">Loading Chart ...</div>
-                                    <div id="legend">
-                                        <span class="heading">Key</span>
-                                        <div id="chartKeyContainer" class="hidden">
-                                            <div class="chartKeyItem">
-                                                <span id="chartKeyHomeBP"></span>
-                                                <label for="chartKeyHomeBP">Home BP</label>
-                                            </div>
-                                            <div class="chartKeyItem">
-                                                <span id="chartKeyOfficeBP"></span>
-                                                <label for="chartKeyOfficeBP">Office BP</label>
-                                            </div>
-                                            <div class="chartKeyItem">
-                                                <span id="chartKeySystolic"></span>
-                                                <label for="chartKeySystolic">Systolic BP</label>
-                                            </div>
-                                            <div class="chartKeyItem">
-                                                <span id="chartKeyDiastolic"></span>
-                                                <label for="chartKeyDiastolic">Diastolic BP</label>
-                                            </div>
-                                            <div class="chartKeyItem">
-                                                <span id="chartKeyRecent"></span>
-                                                <label for="chartKeyRecent">Used in BP Avg</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div id="chartTimelineContainer" class="hidden">
-                                        <span class="heading">Timeline</span>
-                                        <span class="button" data-window="mr">Recent</span>
-                                        <span class="button" data-window="1y">1 year</span>
-                                        <span class="button selected" data-window="all">All</span>
-                                    </div>
-                                    <div id="noChartData" class="hidden">
-                                        <div>No Data</div>
-                                    </div>
-                                    <canvas id="chart" class="hidden" width="700" height="250"></canvas>
-                                </div>
-                            </td>
                         </tr>
                     </table>
-                    <div id="omron">
-                        {{#omronAuthRequestUrl}}
-                            <div>
-                                <span id="omronAuthLink" class="link" data-target="{{omronAuthRequestUrl}}">Click here</span> to authenticate and synchronize with Omron.
-                            </div>
-                        {{/omronAuthRequestUrl}}
-                        {{#omronLastUpdated}}
-                            <div>
-                                Omron data last synchronized <em>{{omronLastUpdated}}</em>
-                            </div>
-                        {{/omronLastUpdated}}
-                    </div>
-                    <div id="currentBPGoal" data-systolic="{{bpGoal.systolicTarget}}" data-diastolic="{{bpGoal.diastolicTarget}}">
-                        Your Current Blood Pressure Goal: <em><strong>Below {{bpGoal.systolicTarget}} /
-                        {{bpGoal.diastolicTarget}}</strong></em> (<a href="/goals">update</a>)
-                    </div>
-                    <div id="currentMedications">
-                    </div>
-                    <div id="adverseEvents"></div>
-                </td>
-            </tr>
-            <tr>
-                <td class="heading">
-                    Recommendations
-                </td>
-            </tr>
-            <tr id="prefetchModifiedInfo" class="hidden">
-                <td>
-                    <strong>Note:</strong> Source patient data contained one or more problematic characters that needed to be converted
-                    before being sent to the recommendation engine.  Instances of these characters have been replaced
-                    with the question mark character ("<strong>?</strong>")
-                </td>
-            </tr>
-            <tr>
-                <td id="recommendationsContainer">
-                    {{#cdshooks}}
-                        <div class="recommendation" data-id="{{id}}">
-                            <div class="heading">{{title}}</div>
-                            <div class="cardsContainer">
-                                Loading...
+                </div>
+                <div class="col-12 col-md-9">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col">
+                                <div id="loadingChart">Loading Chart ...</div>
                             </div>
                         </div>
-                    {{/cdshooks}}
-                </td>
-            </tr>
-        </table>
-    {{/content}}
-{{/layout}}
+                        <div id="chartKeyContainer" class="row justify-content-center hidden" style="font-size:0.85em;">
+                            <div class="col-md-0 col-lg-1"></div>
+                            <div class="col-md-1 col-lg-auto">
+                                <span class="fw-bold">Key</span>
+                            </div>
+                            <div class="col-md-auto">
+                                <i class="fas fa-square chartKeyBP"></i> Home BP
+                             </div>
+                            <div class="col-md-auto">
+                                <i class="fas fa-circle chartKeyBP"></i> Office BP
+                            </div>
+                            <div class="col-md-auto">
+                                <i class="fas fa-square chartKeySystolic"></i> Systolic BP
+                            </div>
+                            <div class="col-md-auto">
+                                <i class="fas fa-square chartKeyDiastolic"></i> Diastolic BP
+                            </div>
+                            <div class="col-md-auto">
+                                <i class="far fa-square chartKeyRecent"></i> Used in BP Avg
+                            </div>
+                            <div class="col-md-0 col-lg-1"></div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col offset-sm-3 offset-md-4" style="font-size:0.85em;">
+                                <div id="chartTimelineContainer" class="hidden">
+                                    <span>Timeline</span>
+                                    <button class="btn btn-secondary btn-sm" data-window="mr">Recent</span>
+                                    <button class="btn btn-secondary btn-sm" data-window="1y">1 year</span>
+                                    <button class="btn btn-secondary btn-sm selected" data-window="all">All</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col">
+                                <div id="noChartData" class="hidden">
+                                    <div>No Data</div>
+                                </div>
+                                <canvas id="chart" class="hidden" width="100%"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="omron">
+            {{#omronAuthRequestUrl}}
+                <div>
+                    <span id="omronAuthLink" class="link" data-target="{{omronAuthRequestUrl}}">Click here</span> to authenticate and synchronize with Omron.
+                </div>
+            {{/omronAuthRequestUrl}}
+            {{#omronLastUpdated}}
+                <div>
+                    Omron data last synchronized <em>{{omronLastUpdated}}</em>
+                </div>
+            {{/omronLastUpdated}}
+        </div>
+        <div id="currentBPGoal" data-systolic="{{bpGoal.systolicTarget}}" data-diastolic="{{bpGoal.diastolicTarget}}">
+            Your Current Blood Pressure Goal: <em><strong>Below {{bpGoal.systolicTarget}} /
+            {{bpGoal.diastolicTarget}}</strong></em> (<a href="/goals">update</a>)
+        </div>
+        <div id="currentMedications">
+        </div>
+        <div id="adverseEvents"></div>
+
+    </div>
+
+    <h4 class="mt-3 p-2 bgd-secondary">
+        <i class="fas fa-clipboard-list color-primary"></i> Recommendations
+    </h4>
+
+    <div id="prefetchModifiedInfo" class="hidden">
+        <strong>Note:</strong> Source patient data contained one or more problematic characters that needed to be converted
+        before being sent to the recommendation engine.  Instances of these characters have been replaced
+        with the question mark character ("<strong>?</strong>")
+    </div>
+
+    <div id="recommendationsContainer">
+        {{#cdshooks}}
+            <div class="recommendation" data-id="{{id}}">
+                <div class="heading">{{title}}</div>
+                <div class="cardsContainer">
+                    Loading...
+                </div>
+            </div>
+        {{/cdshooks}}
+    </div>
+
+</div>
+
+<script type="text/javascript">
+    function loadChart() {
+        loadBloodPressureObservations(function(bpdata) {
+            window.bpdata = bpdata;
+            window.bpchart = {};
+            window.bpchart.data = window.bpdata;
+
+            populateSummaryDiv();
+            buildChart();
+        });
+    }
+
+    $(document).on('click', '#chartTimelineContainer > .btn:not(.selected)', function() {
+        window.bpchart = {};
+
+        let type = $(this).attr('data-window');
+        // The start date of the BP set used to calculate average
+        const bpSetStartDate = getBPSetStartDate(window.bpdata);
+        window.bpchart.bpSetStartDate = bpSetStartDate;
+        if (type === 'all') {
+            window.bpchart.data = window.bpdata;
+        } else {
+            let startDate = new Date();
+            let endDate = new Date();
+
+            if (type === 'mr') {
+                if (bpSetStartDate) {
+                    startDate = bpSetStartDate;
+                } else {
+                    // Fall back to showing 2 months if there is no set
+                    startDate.setMonth(startDate.getMonth() - 2);
+                }
+                startDate.setHours(0, 0, 0);
+                endDate.setHours(23, 59, 59);
+
+            } else if (type === '1y') {
+                startDate.setFullYear(startDate.getFullYear() - 1);
+                startDate.setHours(0, 0, 0);
+                endDate.setHours(23, 59, 59);
+            }
+            window.bpchart.data = truncateData(window.bpdata, startDate);
+            window.bpchart.startDate = startDate;
+            window.bpchart.endDate = endDate;
+        }
+
+        populateSummaryDiv();
+        updateChart();
+
+        $('#chartTimelineContainer').find('.btn').each(function() {
+            if ($(this).attr('data-window') === type) {
+                $(this).addClass('selected');
+            } else {
+                $(this).removeClass('selected');
+            }
+        });
+    });
+
+    $(document).ready(function () {
+        let sessionEstablished = $('#sessionEstablished').text();
+        if (sessionEstablished !== 'true') {
+            return;
+        }
+
+        enableHover('#chartTimelineContainer .btn');
+
+        if (isInternetExplorer()) {
+            loadScript("/js/ie/chart.js-2.9.3/Chart.js", function() {
+                loadScript("/js/ie/bpchart.js", function() {
+                    console.log("done loading IE chart scripts");
+                    loadChart();
+                });
+            });
+
+        } else {
+            loadScript("/node_modules/chart.js/dist/Chart.js", function() {
+                loadScript("/node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js", function() {
+                    loadScript("/node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js", function() {
+                        loadScript("/js/bpchart.js", function() {
+                            loadChart();
+                        })
+                    })
+                })
+            });
+        }
+
+        loadMedications(function(meds) {
+            window.meds = meds;
+            populateMedications();
+        });
+
+        loadAdverseEvents(function(adverseEvents) {
+            window.adverseEvents = adverseEvents;
+            populateAdverseEvents();
+        });
+
+        getRecommendations(function(container, cards) {
+            if (cards) {
+                let html = renderCards(cards);
+                if (html === '') {
+                    $(container).closest('.recommendation').addClass('hidden');
+
+                } else {
+                    $(container).html(html);
+                    $(container).find('.bpGoal input.systolic').inputmask({
+                        regex: "1?[0-9]{2}"
+                    });
+                    $(container).find('.bpGoal input.diastolic').inputmask({
+                        regex: "1?[0-9]{2}"
+                    });
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '#omronAuthLink', function() {
+        let target = $('#omronAuthLink').attr('data-target');
+        window.open(target, "_self");
+    });
+</script>
+
+
+{{>layout/footer}}
