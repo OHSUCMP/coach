@@ -135,7 +135,7 @@ function getBPSetStartDate(bps) {
     const bpset = getBPSet(bps);
     if (bpset) {
         const sorted = sortByDateAsc(bpset);
-        return new Date(sorted[0].readingDate)
+        return sorted[0].readingDate;
     }
 
     return null;
@@ -246,7 +246,7 @@ function buildPointStyleArray(data) {
 
 function updateChart() {
     // calling buildChart() without first replacing the DOM element creates wonkiness
-    $('#chart').replaceWith('<canvas id="chart" width="700" height="250"></canvas>');
+    $('#chart').replaceWith('<canvas id="chart"></canvas>');
     buildChart();
 }
 

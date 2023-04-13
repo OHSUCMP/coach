@@ -21,9 +21,6 @@ public class CounselingController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private EHRService ehrService;
-
-    @Autowired
     private CounselingService counselingService;
 
     @GetMapping("{key}")

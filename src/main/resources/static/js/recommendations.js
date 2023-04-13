@@ -60,11 +60,9 @@ function renderCards(cards) {
             html += "<div class='error'>" + card.errorMessage + "</div>";
 
         } else {
-            html += "<table style='width:100%'><tr><td class='shrink'>";
-            html += "<img src='/images/" + card.indicator + "-icon.png' class='icon' alt='" + card.indicator + "' />";
-            // html += "<div class='circle'><span>XX</span></div>"
-            html += "</td><td class='expand'>";
-            html += "<div class='content'>";
+            html += "<div class='container'><div class='row'>";
+            html += "<div class='col-1 p-0 pl-1 pt-1' style='min-width:40px;'><img src='/images/" + card.indicator + "-icon.png' class='icon' alt='" + card.indicator + "' /></div>";
+            html += "<div class='col-11 col-md-4 content p-1'>";
             html += "<span class='summary heading'>" + card.summary + "</span>";
 
             if (card.rationale !== null) {
@@ -88,18 +86,13 @@ function renderCards(cards) {
 
             html += buildCounselingHTML(card.suggestions);
 
-            html += "</td><td>"; // class='shrink'>";
+            html += "</div><div class='col-12 col-md-7 p-1'>"
 
             html += buildAdverseEvents(card.suggestions);
-
             html += buildGoalsHTML(card.suggestions);
-
             html += buildLinksHTML(card.suggestions);
-            // if (card.selectionBehavior !== null) {
-            //     html += "<span class='selectionBehavior'>" + card.selectionBehavior + "</span>";
-            // }
 
-            html += "</td></tr></table>";
+            html += "</div></div></div>"
         }
         html += "</div>";
     });
@@ -151,7 +144,7 @@ function buildAdverseEvents(suggestions) {
                 html += "</div>";
 
                 html += "</td>";
-                html += "<td class='shrink'><div class='registerAdverseEventAction'><span>Register Action</span></div></td>";
+                html += "<td class='shrink'><div><button class='btn btn-sm button-primary registerAdverseEventAction'>Register Action</button></div></td>";
                 html += "</tr>";
 
                 html += "</tr></table>";
@@ -177,7 +170,7 @@ function buildGoalsHTML(suggestions) {
             if (s.type === 'goal' || s.type === 'bp-goal') {
                 let c = s.type === 'bp-goal' ? 'bpGoal' : 'goal';
 
-                html += "<div class='" + c + "' data-id='" + s.id +
+                html += "<div class='" + c + " p-2' data-id='" + s.id +
                     "' data-reference-system='" + s.references.system +
                     "' data-reference-code='" + s.references.code +
                     "' + data-reference-display='" + s.references.display + "'>";
@@ -261,7 +254,7 @@ function buildGoalsHTML(suggestions) {
                     }
                 }
                 html += "</td>";
-                html += "<td class='shrink'><div class='commitToGoal'><span>Commit to Goal</span></div></td>";
+                html += "<td class='shrink'><div><button class='btn btn-sm button-primary commitToGoal'>Commit to Goal</button></div></td>";
                 html += "</tr>";
 
                 if (s.type === 'goal') {
@@ -276,7 +269,7 @@ function buildGoalsHTML(suggestions) {
                 html += "</div>";
 
             } else if (s.type === 'update-goal') {
-                html += "<div class='goal' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
+                html += "<div class='goal p-2' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tr><td>";
 
@@ -286,7 +279,6 @@ function buildGoalsHTML(suggestions) {
 
                 let a_arr = ['IN_PROGRESS', 'ACHIEVED', 'NOT_ACHIEVED'];
 
-                // let a_status = s.goal.achievementStatus;
                 let a_status = s.goal ?
                     s.goal.achievementStatus :
                     'UNKNOWN';
@@ -300,7 +292,7 @@ function buildGoalsHTML(suggestions) {
                 });
                 html += "</select></div>";
                 html += "</td>";
-                html += "<td class='shrink'><div class='updateGoal'><span>Record Progress</span></div></td>";
+                html += "<td class='shrink'><div class='mb-3 me-3'><button class='btn btn-sm button-primary updateGoal'>Record Progress</button></div></td>";
                 html += "</td>";
                 html += "</tr><tr>";
 
@@ -310,12 +302,11 @@ function buildGoalsHTML(suggestions) {
         });
     }
     return html !== "" ?
-        "<div class='goalsContainer shrink'>" + html + "</div>" :
+        "<div class='goalsContainer'>" + html + "</div>" :
         "";
 }
 
 function toLabel(string) {
-    // let words = string.replaceAll("_", " ").toLowerCase().split(" ");
     let words = string.replace(/_/g, ' ').toLowerCase().split(" ");
 
     let label = words.map(function(word) {
@@ -340,13 +331,6 @@ function buildGoalInputData(s) {
             }
             while (c !== ']' && chars.length > 0) {
                 c = chars.shift();
-                // if (c === ':') {
-                //     label = buf.join('').trim();
-                //     buf = [];
-                // } else if (c === ']') {
-                //     defaultValue = buf.join('').trim();
-                //     buf = [];
-                // } else {
                 if (c !== ']') {
                     buf.push(c);
                 }
@@ -378,7 +362,7 @@ function buildLinksHTML(suggestions) {
     if (suggestions !== null) {
         suggestions.forEach(function(s) {
             if (s.type === 'suggestion-link') {
-                html += "<div class='slink'>";      // 'slink' to differentiate from 'link'
+                html += "<div class='slink p-2'>";      // 'slink' to differentiate from 'link'
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tbody>";
 
@@ -577,12 +561,6 @@ function hide(el, _complete) {
     }
 //    $(el).fadeOut(400, _complete(el));
 }
-
-$(document).ready(function() {
-    enableHover('.commitToGoal');
-    enableHover('.updateGoal');
-    enableHover('.registerAdverseEventAction');
-});
 
 $(document).on('click', '.goal .commitToGoal', function() {
     let container = $(this).closest('.goal');

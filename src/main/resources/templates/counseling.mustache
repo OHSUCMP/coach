@@ -1,53 +1,19 @@
-{{#layout}}
-    {{#title}}{{applicationName}} - Counseling{{/title}}
-    {{#head}}
-        <script type="text/javascript" src="/js/counseling.js"></script>
-        <link rel="stylesheet" href="/css/counseling.css"/>
+{{>layout/header}}
 
-        <script type="text/javascript">
-        </script>
-    {{/head}}
-    {{#menuItems}}
-        <li class="anchor" data-href="/">Home</li>
-        <li class="anchor" data-href="/goals">My Goals</li>
-        <li class="anchor" data-href="/vitals">Home BP Readings</li>
-        <li class="anchor" data-href="/medications">My Medications</li>
-    {{/menuItems}}
-    {{#content}}
-        <table class="content">
-            <tr>
-                <td id="patientInfo">
-                    <table style="margin-left: 50px">
-                        <tr>
-                            <td rowspan="2">
-                                <span class="circle" style="background-color: #b3fff0">&nbsp;</span>
-                            </td>
-                            <td colspan="2">
-                                <span style="font-size: x-large">{{patient.name}}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>{{patient.age}} years</td>
-                            <td>{{patient.gender}}</td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
+<div class="container">
+    <div class="px-2 fs-4">
+        <i class="fas fa-user color-primary"></i></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
+    </div>
+    {{#page}}
+    <div class="mt-3">
+        <h4 class="p-2 bgd-secondary">
+            <i class="fas fa-hands-helping color-primary"></i> Counseling: {{title}}
+        </h4>
+    </div>
+    <div>
+         {{{body}}}
+    </div>
+    {{/page}}
+</div>
 
-        {{#page}}
-            <table class="content">
-                <tr>
-                    <td class="heading">
-                        Counseling: {{title}}
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        {{{body}}}
-                    </td>
-                </tr>
-            </table>
-        {{/page}}
-    {{/content}}
-{{/layout}}
+{{>layout/footer}}

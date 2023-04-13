@@ -28,9 +28,6 @@ public class ContactController extends BaseController {
     private Environment env;
 
     @Autowired
-    private EHRService ehrService;
-
-    @Autowired
     private ContactMessageService contactMessageService;
 
     @GetMapping("contact")
@@ -64,8 +61,10 @@ public class ContactController extends BaseController {
 
             model.addAttribute("mychartLoginLink", mychartLoginLink);
             model.addAttribute("mychartMessageLink", mychartMessageLink);
+            model.addAttribute("pageStyles", new String[] { "contact.css" });
         }
 
         return "contact";
     }
+
 }
