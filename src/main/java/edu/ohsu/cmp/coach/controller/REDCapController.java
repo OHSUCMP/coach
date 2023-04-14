@@ -41,7 +41,7 @@ public class REDCapController extends BaseController {
         ProvisionalSessionCacheData cacheData = sessionService.getProvisionalSessionData(sessionId);
         if (cacheData != null) {
             MyPatient patient = patientService.getMyPatient(cacheData.getCredentials().getPatientId());
-            if (isConsentGranted(patient.getRedcapId())) {
+            if (redCapService.isConsentGranted(patient.getRedcapId())) {
                 patient.setConsentGranted(MyPatient.CONSENT_GRANTED_YES);
                 setRandomStudyClass(patient);
                 patientService.update(patient);
@@ -66,9 +66,5 @@ public class REDCapController extends BaseController {
             case 1: p.setStudyClass(StudyClass.INTERVENTION.getLabel()); break;
             default: throw new CaseNotHandledException("couldn't handle case where x=" + x);
         }
-    }
-
-    private boolean isConsentGranted(String redcapId) throws EncoderException, REDCapException, IOException {
-        return redCapService.isConsentGranted(redcapId);
     }
 }

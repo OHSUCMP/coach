@@ -132,8 +132,8 @@ public class REDCapService extends AbstractService {
     }
 
     public boolean isConsentGranted(String redcapId) throws EncoderException, REDCapException, IOException {
-        String icfConsent = getValue(consentForm, redcapId, consentField);
-        return StringUtils.equals(icfConsent, YES);
+        String val = getValue(consentForm, redcapId, consentField);
+        return StringUtils.equals(val, YES);
     }
 
     private String getValue(String form, String redcapId, String field) throws EncoderException, IOException, REDCapException {
