@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 public class VSACService {
     private static final String API_KEY_URL = "https://utslogin.nlm.nih.gov/cas/v1/api-key";
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-    private static final Pattern SERVICE_TICKET_URI_PATTERN = Pattern.compile(".*<form.+action=\"(.+?)\".*");
+    private static final Pattern SERVICE_TICKET_URI_PATTERN = Pattern.compile("<form\\s+action=\"([^\"]+)\"");
 
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -201,7 +201,7 @@ public class VSACService {
 
         if (response.getResponseCode() >= 200 && response.getResponseCode() < 300) { // some HTTP 2xx code, successful
             Matcher m = SERVICE_TICKET_URI_PATTERN.matcher(response.getResponseBody());
-            if (m.matches()) {
+            if (m.find()) {
                 return m.group(1);
 
             } else {
