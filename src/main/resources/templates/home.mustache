@@ -272,6 +272,16 @@
         let target = $('#omronAuthLink').attr('data-target');
         window.open(target, "_self");
     });
+
+    {{#showClearSupplementalData}}
+    $(document).on('click', '#clearSupplementalData', function() {
+        doClearSupplementalData(function(msg) {
+            doRefresh(function(msg) {
+                window.location.href = "/";
+            });
+        });
+    });
+    {{/showClearSupplementalData}}
 </script>
 
 
