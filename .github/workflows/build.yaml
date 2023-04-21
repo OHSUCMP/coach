@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -29,11 +28,6 @@ jobs:
       - name: Build with Maven
         run: mvn package -DskipTests
 
-      - name: Publish to GitHub Packages Apache Maven
-        run: mvn deploy -DskipTests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
       - name: Upload jar file
         uses: actions/upload-artifact@v3
         with:
