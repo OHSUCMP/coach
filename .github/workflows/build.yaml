@@ -34,6 +34,13 @@ jobs:
         with:
           name: coach.jar
           path: target/coach.jar
+  
+  publish-jar:
+    name: publish jar
+    needs: build-java-source
+    run: mvn --batch-mode deploy
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-image:
     name: build Docker image
