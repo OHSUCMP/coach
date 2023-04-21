@@ -30,7 +30,7 @@ jobs:
         run: mvn package -DskipTests
         
       - name: Publish Jar
-        run: mvn --batch-mode deploy
+        run: mvn --batch-mode deploy -DskipTests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
