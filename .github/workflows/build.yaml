@@ -29,11 +29,6 @@ jobs:
       - name: Build with Maven
         run: mvn package -DskipTests
         
-      - name: Publish Jar
-        run: mvn --batch-mode deploy -DskipTests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload jar file
         uses: actions/upload-artifact@v3
         with:
