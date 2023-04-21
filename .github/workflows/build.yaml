@@ -28,25 +28,17 @@ jobs:
 
       - name: Build with Maven
         run: mvn package -DskipTests
+        
+      - name: Publish Jar
+        run: mvn --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload jar file
         uses: actions/upload-artifact@v3
         with:
           name: coach.jar
           path: target/coach.jar
-  
-  publish-jar:
-    name: publish jar
-    needs: build-java-source
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Publish package
-        run: mvn --batch-mode deploy
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-image:
     name: build Docker image
