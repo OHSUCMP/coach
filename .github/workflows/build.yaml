@@ -38,9 +38,15 @@ jobs:
   publish-jar:
     name: publish jar
     needs: build-java-source
-    run: mvn --batch-mode deploy
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Publish package
+        run: mvn --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-image:
     name: build Docker image
