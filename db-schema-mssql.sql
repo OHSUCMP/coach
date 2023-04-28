@@ -1,33 +1,67 @@
 -- create the coach database if it does not yet exist
 
 if not exists (select * from sys.databases where name = 'coach')
-    begin
-        create database coach;
-    end
+begin
+    create database coach;
+end;
 go
 
 use coach;
+go
 
+-- this stored procedure facilitates clearing user sessions, which we need to do if
+-- we're going to recreate user objects
+drop procedure if exists sp_killSessionsForUser;
+go
+create procedure sp_killSessionsForUser
+  @login varchar(50)
+as
+declare @cursor cursor;
+declare @cmd varchar(255);
+begin
+    set @cursor = cursor for
+        select 'kill ' + convert(varchar(5), session_id) + ';'
+        from sys.dm_exec_sessions
+        where login_name = @login;
+    open @cursor
+    fetch next from @cursor into @cmd
+    while @@fetch_status = 0
+        begin
+            -- select 'cmd = "' + @cmd + '"';
+            exec (@cmd);
+            fetch next from @cursor into @cmd
+        end;
+    close @cursor;
+    deallocate @cursor;
+end;
+go
 
 -- uncomment this block to delete the coach user and principal prior to the next statement.
 -- this has the effect of creating the coach user credentials anew.
 
 /*
+if exists(select * from sys.dm_exec_sessions where login_name = 'coach')
+begin
+    exec sp_killSessionsForUser 'coach';
+end;
+go
+
 if exists(select * from sys.database_principals where name = 'coach')
 begin
   drop user coach;
   drop login coach;
-end
+end;
 go
 */
 
 -- create the coach user and principal if they does not yet exist
 
 if not exists(select * from sys.database_principals where name = 'coach')
-    begin
-        create login coach with password = 'CHANGE_THIS_in_PRODUCTION!';
-        create user coach for login coach;
-    end
+begin
+  create login coach with password = 'CHANGE_THIS_in_PRODUCTION!';
+  create user coach for login coach with default_schema = coach;
+  alter role db_owner add member coach;
+end;
 go
 
 -- recreate and populate tables
