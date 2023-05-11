@@ -20,7 +20,6 @@ import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.apache.commons.codec.EncoderException;
 import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Reference;
 import org.slf4j.Logger;
@@ -430,12 +429,10 @@ public class UserWorkspace {
 
                 compositeBundle.consume(svc.getProblemListConditions(sessionId));
 
-                List<Coding> codings = new ArrayList<>();
-                codings.add(fcm.getBmiCoding());
-                codings.add(fcm.getSmokingCoding());
-                codings.add(fcm.getDrinksCoding());
                 try {
-                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(codings), fcm.getBmiLookbackPeriod(),null));
+                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getBmiCoding()), fcm.getBmiLookbackPeriod(),null));
+                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getSmokingCoding()), fcm.getSmokingLookbackPeriod(),null));
+                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getDrinksCoding()), fcm.getDrinksLookbackPeriod(),null));
                 } catch (ConfigurationException e) {
                     throw new RuntimeException(e);
                 }
