@@ -200,7 +200,7 @@ function populateSummaryDiv() {
     let bpPlaceholder = $('#bpPlaceholder');
     let bpContainer = $('#bpContainer');
     let bpLabel = $('#bpLabel');
-    let bpGoalMetLabel = $('#bpGoalMetLabel');
+    let bpNote = $('#bpNote');
     let systolic = $('#systolic');
     let diastolic = $('#diastolic');
     if (indicator.show === 'most-recent') {
@@ -212,7 +212,8 @@ function populateSummaryDiv() {
         systolic.addClass('crisis');
         diastolic.html(mostRecentDiastolic);
         diastolic.addClass('crisis');
-        bpGoalMetLabel.html('');
+        bpNote.html('Very High BP - Please record another reading within 5 minutes');
+        bpNote.addClass('crisis');
 
     } else if (indicator.show === 'average') {
         bpPlaceholder.hide();
@@ -225,10 +226,11 @@ function populateSummaryDiv() {
         diastolic.removeClass('crisis');
 
         if (aboveGoal) {
-            bpGoalMetLabel.html('You are above goal');
+            bpNote.html('You are above goal');
         } else {
-            bpGoalMetLabel.html('You are at goal');
+            bpNote.html('You are at goal');
         }
+        bpNote.removeClass('crisis');
 
     } else if (indicator.show === 'placeholder') {
         // don't really need to do anything here as the mustache template is already populated how we want it
