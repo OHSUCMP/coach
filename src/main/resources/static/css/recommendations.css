@@ -126,3 +126,7 @@ div.adverseEvent {
 .bpGoal .action {
     white-space: nowrap;
 }
+
+img.icon {
+    width: 40px;
+}
