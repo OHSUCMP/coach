@@ -51,14 +51,6 @@ div.chartKeyItem {
     color: white;
 }
 
-#chartContainer {
-    display: inline-block;
-}
-
-#chartContainer .heading {
-    font-size: medium;
-}
-
 #noChartData {
     position: relative;
 }
