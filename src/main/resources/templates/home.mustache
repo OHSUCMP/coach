@@ -22,34 +22,51 @@
                     <table class="table table-borderless mt-4 mx-auto w-auto">
                         <tr>
                             <td>
-                                <div id="avgPlaceholder">
-                                    <img src='/images/info-icon.png' class='icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>;
+                                <div id="bpPlaceholder">
+                                    <img src='/images/info-icon.png' class='bp-icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>
+                                    <div>Enter more blood pressures to see average</div>
                                 </div>
-                                <div id="avgBPContainer" style="display:none">
+                                <div id="bpContainer" style="display:none">
                                     <table style="text-align:center">
                                         <tr>
-                                            <td colspan="3">
-                                                <span id="bpLabel"></span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td rowspan="3">
+                                            <td>
                                                 <div id="bpIcon"></div>
                                             </td>
-                                            <td id="avgSystolic">X</td>
-                                            <td style="vertical-align: bottom; font-size: small">systolic</td>
+                                            <td>
+                                                <table>
+                                                    <tr>
+                                                        <td colspan="3">
+                                                            <span id="bpLabel"></span>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>&nbsp;</td>
+                                                        <td>
+                                                            <table>
+                                                                <tr>
+                                                                    <td id="systolic">X</td>
+                                                                    <td style="font-size: small; padding-left: 5px">systolic</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td colspan="2"><hr style="border-top:2px solid black"/></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td id="diastolic">Y</td>
+                                                                    <td style="font-size: small; padding-left: 5px">diastolic</td>
+                                                                </tr>
+                                                            </table>
+                                                        </td>
+                                                        <td>&nbsp;</td>
+                                                    </tr>
+                                                </table>
+                                            </td>
                                         </tr>
                                         <tr>
-                                            <td style="width:50px"><hr/></td>
                                             <td>&nbsp;</td>
                                         </tr>
                                         <tr>
-                                            <td id="avgDiastolic">Y</td>
-                                            <td style="vertical-align: top; font-size: small">diastolic</td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="3">
-                                                <span id="bpGoalMetLabel"></span>
+                                            <td colspan="2">
+                                                <span id="bpNote"></span>
                                             </td>
                                         </tr>
                                     </table>
