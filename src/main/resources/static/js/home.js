@@ -191,9 +191,9 @@ function populateSummaryDiv() {
     // build the BP icon and other Hypertension classification stuff based on avgSystolic and avgDiastolic above
     let indicator;
     if (twoCrisisBPs) { // crisis; considers most recent reading ONLY
-        indicator = { img: 'stopsign.png', alt: 'Critical', show: 'two-most-recent' };
+        indicator = { img: 'critical-icon.png', alt: 'Critical', show: 'two-most-recent' };
     } else if (crisisBp) {
-        indicator = { img: 'stopsign.png', alt: 'Critical', show: 'most-recent' };
+        indicator = { img: 'critical-icon.png', alt: 'Critical', show: 'most-recent' };
     } else if (aboveGoal) {
         indicator = { img: 'stoplight-yellow.png', alt: 'Above Goal', show: 'average' };
     } else if (avgSystolic !== 0) {
