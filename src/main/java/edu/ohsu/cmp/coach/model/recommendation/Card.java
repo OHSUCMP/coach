@@ -15,6 +15,7 @@ import java.util.List;
 public class Card {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final String MONITORING_SUCCESS_KEY = "Monitoring.Success.Summary";
+    private static final String BLANK_SUMMARY_KEY = "Blank.Summary";
 
     private String summary;
     private String indicator;
@@ -37,6 +38,8 @@ public class Card {
         if (MONITORING_SUCCESS_KEY.equals(this.summary)) {
             this.summary = "";
             this.indicator = "success";
+        } else if (BLANK_SUMMARY_KEY.equals(this.summary)) {
+            this.summary = "";
         }
 
         this.detail = cdsCard.getDetail();
@@ -51,7 +54,6 @@ public class Card {
         Gson gson = new GsonBuilder().create();
         try {
             this.suggestions = gson.fromJson(cdsCard.getSuggestions(), new TypeToken<ArrayList<Suggestion>>(){}.getType());
-
         } catch (JsonSyntaxException e) {
             logger.error("caught " + e.getClass().getName() + " processing suggestions - " + e.getMessage(), e);
             logger.error("JSON=" + cdsCard.getSuggestions());

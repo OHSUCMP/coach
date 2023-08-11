@@ -91,6 +91,7 @@ function renderCards(cards) {
             html += buildAdverseEvents(card.suggestions);
             html += buildGoalsHTML(card.suggestions);
             html += buildLinksHTML(card.suggestions);
+            html += buildClinicContactHTML(card.suggestions);
 
             html += "</div></div></div>"
         }
@@ -381,6 +382,24 @@ function buildLinksHTML(suggestions) {
     return html !== "" ?
         "<div class='linksContainer'>" + html + "</div>" :
         "";
+}
+
+function buildClinicContactHTML(suggestions) {
+    let html = "";
+    if (suggestions !== null) {
+        suggestions.forEach(function(s) {
+            if (s.type === 'clinic-contact') {
+                html += "<span class='heading slink ps-2'>Clinic Contact: " + s.actions[0].label + "</span>";
+                html += "<span class='heading slink ps-2'>After Hours Line: " + s.actions[1].label + "</span>";
+                html += "<span class='heading slink p-1 ps-2'>or</span>";
+                html += "<span class='heading slink p-1 ps-2'>Call 911</span>";
+            }
+        });
+    }
+    return html !== "" ?
+        "<div class='linksContainer slink'>" + html + "</div>" :
+        "";
+
 }
 
 function parseBPData(s) {

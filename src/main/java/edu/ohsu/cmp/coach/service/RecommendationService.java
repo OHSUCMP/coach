@@ -20,6 +20,7 @@ import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHookResponse;
 import edu.ohsu.cmp.coach.model.cqfruler.HookRequest;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.model.recommendation.Action;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
@@ -64,6 +65,12 @@ public class RecommendationService extends AbstractService {
 
     @Autowired
     private CounselingService counselingService;
+
+    @Value("${contact.clinic}")
+    private String clinicContact;
+
+    @Value("${contact.after-hours}")
+    private String clinicAfterHours;
 
     public RecommendationService(@Value("${cqfruler.cdshooks.endpoint.url}") String cdsHooksEndpointURL,
                                  @Value("#{new Boolean('${security.show-dev-errors}')}") Boolean showDevErrors,
@@ -225,6 +232,16 @@ public class RecommendationService extends AbstractService {
                                 if (s.getType().equals(Suggestion.TYPE_UPDATE_GOAL)) {
                                     MyGoal myGoal = goalService.getLocalGoal(sessionId, s.getId());
                                     s.setGoal(myGoal);
+                                }
+                                if (s.getType().equals(Suggestion.TYPE_CLINIC_CONTACT)) {
+                                    List<Action> actions = new ArrayList<>();
+                                    Action callClinic = new Action();
+                                    callClinic.setLabel(clinicContact);
+                                    Action callAfterHours = new Action();
+                                    callAfterHours.setLabel(clinicAfterHours);
+                                    actions.add(callClinic);
+                                    actions.add(callAfterHours);
+                                    s.setActions(actions);
                                 }
                             }
                         }

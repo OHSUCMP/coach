@@ -85,7 +85,7 @@
 }
 
 /* keep synced with goals.css */
-.goal, .linksContainer .slink, .bpGoal {
+.goal, .linksContainer, .bpGoal {
     background-color: #eff5ff;
 }
 
