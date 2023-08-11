@@ -14,6 +14,7 @@ import java.util.List;
 
 public class Card {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final String MONITORING_SUCCESS_KEY = "Monitoring.Success.Summary";
 
     private String summary;
     private String indicator;
@@ -32,8 +33,8 @@ public class Card {
         this.summary = cdsCard.getSummary();
         this.indicator = cdsCard.getIndicator();
 
-        // Reset the indicator for the "success" summary. CQF Ruler will not allow any indicators except what is in the CDS Cards specification
-        if ("SUCCESS".equals(this.summary)) {
+        // Reset the indicator for the "success" summary in the monitoring workflow. CQF Ruler will not allow any indicators except what is in the CDS Cards specification.
+        if (MONITORING_SUCCESS_KEY.equals(this.summary)) {
             this.summary = "";
             this.indicator = "success";
         }
