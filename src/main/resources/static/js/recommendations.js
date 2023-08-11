@@ -50,7 +50,7 @@ function renderCards(cards) {
 
     let html = "";
     cards.forEach(function (card) {
-        html += "<div class='card " + card.indicator + "'>";
+        html += "<div class='card'>";
 
         if (card.prefetchModified) {
             $('#prefetchModifiedInfo.hidden').removeClass('hidden');

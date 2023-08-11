@@ -31,6 +31,13 @@ public class Card {
     public Card(CDSCard cdsCard, boolean prefetchModified) {
         this.summary = cdsCard.getSummary();
         this.indicator = cdsCard.getIndicator();
+
+        // Reset the indicator for the "success" summary. CQF Ruler will not allow any indicators except what is in the CDS Cards specification
+        if ("SUCCESS".equals(this.summary)) {
+            this.summary = "";
+            this.indicator = "success";
+        }
+
         this.detail = cdsCard.getDetail();
         this.source = cdsCard.getSource();
 
