@@ -9,12 +9,13 @@ import edu.ohsu.cmp.coach.model.cqfruler.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Card {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final String MONITORING_SUCCESS_KEY = "Monitoring.Success.Summary";
+    private static final String BLANK_SUMMARY_KEY = "Blank.Summary";
 
     private String summary;
     private String indicator;
@@ -32,6 +33,15 @@ public class Card {
     public Card(CDSCard cdsCard, boolean prefetchModified) {
         this.summary = cdsCard.getSummary();
         this.indicator = cdsCard.getIndicator();
+
+        // Reset the indicator for the "success" summary in the monitoring workflow. CQF Ruler will not allow any indicators except what is in the CDS Cards specification.
+        if (MONITORING_SUCCESS_KEY.equals(this.summary)) {
+            this.summary = "";
+            this.indicator = "success";
+        } else if (BLANK_SUMMARY_KEY.equals(this.summary)) {
+            this.summary = "";
+        }
+
         this.detail = cdsCard.getDetail();
         this.source = cdsCard.getSource();
 
@@ -44,7 +54,6 @@ public class Card {
         Gson gson = new GsonBuilder().create();
         try {
             this.suggestions = gson.fromJson(cdsCard.getSuggestions(), new TypeToken<ArrayList<Suggestion>>(){}.getType());
-
         } catch (JsonSyntaxException e) {
             logger.error("caught " + e.getClass().getName() + " processing suggestions - " + e.getMessage(), e);
             logger.error("JSON=" + cdsCard.getSuggestions());

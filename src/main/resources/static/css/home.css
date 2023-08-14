@@ -51,14 +51,6 @@ div.chartKeyItem {
     color: white;
 }
 
-#chartContainer {
-    display: inline-block;
-}
-
-#chartContainer .heading {
-    font-size: medium;
-}
-
 #noChartData {
     position: relative;
 }
@@ -88,19 +80,27 @@ div.chartKeyItem {
     width: 100%;
 }
 
-#avgPlaceholder {
-    color:#b3d9ff;
+#bpPlaceholder {
+    text-align: center;
+    color: black;
+    font-size: small;
+    font-weight: bold;
 }
 
-#avgSystolic, #avgDiastolic {
+#systolic, #diastolic {
     font-size: large;
     font-weight: bold;
 }
 
-#bpLabel, #bpGoalMetLabel {
+#bpLabel {
     font-size: small;
     font-weight: bold;
     white-space: nowrap;
+}
+
+#bpNote {
+    font-size: small;
+    font-weight: bold;
 }
 
 #medicationsContainer {
@@ -127,3 +127,12 @@ div.medication {
     font-size: small;
     font-style: italic;
 }
+
+.crisis {
+    color: red;
+}
+
+img.bp-icon {
+    width: 100px;
+}
+

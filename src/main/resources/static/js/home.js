@@ -159,67 +159,111 @@ function calculateAverageBP(bps) {
     return null;
 }
 
+function isCrisisBp(bp) {
+    return bp.systolic.value > 180 || bp.diastolic.value > 120
+}
+
 function populateSummaryDiv() {
-    let totalSystolic = 0;
-    let totalDiastolic = 0;
+    let mostRecentBP = {};
+    let crisisBp = false;
+    let twoCrisisBPs = false;
     let avgSystolic = 0;
     let avgDiastolic = 0;
+    let aboveGoal = false;
 
     let hasData = Array.isArray(window.bpdata) && window.bpdata.length > 0;
-
     if (hasData) {
+        const bpsByDataDesc = sortByDateDesc(window.bpdata);
+        mostRecentBP = bpsByDataDesc[0];
+        crisisBp = isCrisisBp(mostRecentBP);
+        const nextMostRecentBP = bpsByDataDesc[1];
+        twoCrisisBPs = crisisBp && nextMostRecentBP !== undefined && isCrisisBp(nextMostRecentBP);
         let avg = calculateAverageBP(window.bpdata);
-
         if (avg) {
             avgSystolic = Math.round(avg.systolic);
             avgDiastolic = Math.round(avg.diastolic);
+
+            let currentBPGoal = getCurrentBPGoal();
+            aboveGoal = avgSystolic > currentBPGoal.systolic || avgDiastolic > currentBPGoal.diastolic;
         }
     }
-
-    if (avgSystolic === 0) {
-        $('#avgBPContainer').hide();
-        $('#avgPlaceholder').show();
-        return;
-    }
-    $('#avgPlaceholder').hide();
-    $('#avgBPContainer').show();
-    $('#avgSystolic').html(avgSystolic);
-    $('#avgDiastolic').html(avgDiastolic);
 
     // build the BP icon and other Hypertension classification stuff based on avgSystolic and avgDiastolic above
-    let indicator = 'info';
-
-    if (avgSystolic > 180 || avgDiastolic > 120) { // crisis
-        indicator = 'critical';
-
-    } else if (avgSystolic >= 140 || avgDiastolic >= 90) { // stage 2
-        indicator = 'critical';
-
-    } else if ((avgSystolic >= 130 && avgSystolic < 140) || (avgDiastolic >= 80 && avgDiastolic < 90)) { // stage 1
-        indicator = 'warning';
-
-    } else if (avgSystolic >= 120 && avgSystolic < 130 && avgDiastolic < 80) { // elevated
-        indicator = 'warning';
-
-    } else if (avgSystolic < 120 && avgDiastolic < 80) { // normal
-        indicator = 'info';
+    let indicator;
+    if (twoCrisisBPs) { // crisis; considers most recent reading ONLY
+        indicator = { img: 'critical-icon.png', alt: 'Critical', show: 'two-most-recent' };
+    } else if (crisisBp) {
+        indicator = { img: 'critical-icon.png', alt: 'Critical', show: 'most-recent' };
+    } else if (aboveGoal) {
+        indicator = { img: 'stoplight-yellow.png', alt: 'Above Goal', show: 'average' };
+    } else if (avgSystolic !== 0) {
+        indicator = { img: 'stoplight-green.png', alt: 'At or Below Goal', show: 'average' };
+    } else {
+        indicator = { img: 'info-icon.png', alt: 'Enter more blood pressures to see average', show: 'placeholder' };
     }
 
-    let el = $('#bpIcon');
-    $(el).html("<img src='/images/" + indicator + "-icon.png' class='icon' alt='" + indicator + "' />");
-    $('#bpLabel').html('Recent BP Average:').attr('title', 'Average of the last several readings shaded in grey')
+    let bpIcon = $('#bpIcon');
+    bpIcon.html("<img src='/images/" + indicator.img + "' class='bp-icon' alt='" + indicator.alt + "' />");
 
-    let el2 = $('#bpGoalMetLabel');
-    // Only show if data exists and there were enough BPs to calculate an average
-    if (hasData && avgSystolic !== 0) {
-        let currentBPGoal = getCurrentBPGoal();
-        if (avgSystolic > currentBPGoal.systolic || avgDiastolic > currentBPGoal.diastolic) {
-            $(el2).html('You are above goal');
+    let bpIndicatorContainer = $('#bpIndicatorContainer');
+    let chartContainer = $('#chartContainer');
+    let bpPlaceholder = $('#bpPlaceholder');
+    let bpContainer = $('#bpContainer');
+    let bpLabel = $('#bpLabel');
+    let bpNote = $('#bpNote');
+    let systolic = $('#systolic');
+    let diastolic = $('#diastolic');
+
+    if (indicator.show === 'two-most-recent') {
+        bpIndicatorContainer.removeClass("col-md-3");
+        chartContainer.hide();
+        bpPlaceholder.hide();
+        bpContainer.show();
+        
+        bpLabel.html('Most Recent BP:');
+        systolic.html(mostRecentBP.systolic.value);
+        systolic.addClass('crisis');
+        diastolic.html(mostRecentBP.diastolic.value);
+        diastolic.addClass('crisis');
+        bpNote.html('Warning: Your most recent BP is still very high. Take action below.​​');
+        bpNote.addClass('crisis');
+    }
+    else if (indicator.show === 'most-recent') {
+        bpIndicatorContainer.removeClass("col-md-3");
+        chartContainer.hide();
+        bpPlaceholder.hide();
+        bpContainer.show();
+
+        bpLabel.html('Most Recent BP:');
+        systolic.html(mostRecentBP.systolic.value);
+        systolic.addClass('crisis');
+        diastolic.html(mostRecentBP.diastolic.value);
+        diastolic.addClass('crisis');
+        bpNote.html('Warning: Your BP is very high. Take action below.​');
+        bpNote.addClass('crisis');
+
+    } else if (indicator.show === 'average') {
+        bpPlaceholder.hide();
+        bpContainer.show();
+
+        bpLabel.html('Recent BP Average:').attr('title', 'Average of the last several readings shaded in grey');
+        systolic.html(avgSystolic);
+        systolic.removeClass('crisis');
+        diastolic.html(avgDiastolic);
+        diastolic.removeClass('crisis');
+
+        if (aboveGoal) {
+            bpNote.html('Your BP is above your goal!');
         } else {
-            $(el2).html('You are at goal');
+            bpNote.html('You reached your goal!');
         }
-    } else {
-        $(el2).html('');
+        bpNote.removeClass('crisis');
+
+    } else if (indicator.show === 'placeholder') {
+        // Add the placeholder image and text
+        bpPlaceholder.show();
+        bpPlaceholder.append("<img src='/images/info-icon.png' class='bp-icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>");
+        bpPlaceholder.append("<div class='mt-4'>Enter more blood pressures to see average</div>");
     }
 }
 

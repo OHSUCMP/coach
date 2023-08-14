@@ -50,7 +50,7 @@ function renderCards(cards) {
 
     let html = "";
     cards.forEach(function (card) {
-        html += "<div class='card " + card.indicator + "'>";
+        html += "<div class='card'>";
 
         if (card.prefetchModified) {
             $('#prefetchModifiedInfo.hidden').removeClass('hidden');
@@ -91,6 +91,7 @@ function renderCards(cards) {
             html += buildAdverseEvents(card.suggestions);
             html += buildGoalsHTML(card.suggestions);
             html += buildLinksHTML(card.suggestions);
+            html += buildClinicContactHTML(card.suggestions);
 
             html += "</div></div></div>"
         }
@@ -176,16 +177,12 @@ function buildGoalsHTML(suggestions) {
                     "' + data-reference-display='" + s.references.display + "'>";
 
                 html += "<span class='heading'>" + s.label + "</span>";
-                html += "<table><tr>";
-
-                html += "<td class='expand'>";
+                html += "<div class='row'>"
+                html += "<div class='col-lg-8 mb-2'>";
                 if (s.type === 'goal') {
                     if (s.actions === null || s.actions.length === 0) {
                         // freeform input
-                        html += "<div class='action'>";
-                        html += "<input type='text' placeholder='Describe your goal here' />";
-                        html += "</div>";
-
+                        html += "<input class='goal-input' type='text' placeholder='Describe your goal here' />";
                     } else {
                         // predefined multiple-choice goal, these are radio buttons
                         let i = 0;
@@ -196,18 +193,17 @@ function buildGoalsHTML(suggestions) {
                             if (arr.length === 1) {
                                 // presume that if there's just one thing in the array, that it's a fixed response,
                                 // it's the only thing that makes sense
-                                html += "<input name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + action.label + "' />";
-                                html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label>";
+                                html += "<input class='m-1' name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + action.label + "' />";
+                                html += "<label class='m-1' for='action" + x + "_" + i + "'>" + action.label + "</label>";
 
                             } else {
-                                html += "<input name='action" + x + "' type='radio' class='madlib' id='action" + x + "_" + i + "' />";
+                                html += "<input name='action" + x + "' type='radio' class='madlib m-1' id='action" + x + "_" + i + "' />";
                                 arr.forEach(function(item) {
                                     if (typeof(item) === 'string') {
-                                        html += "<span class='madlibResponse'>" + item + '</span> ';
+                                        html += "<span class='madlibResponse m-1'>" + item + '</span> ';
 
                                     } else {
-                                        // html += "<input type='text' class='madlibResponse' data-type='" + item.type + "' placeholder='" + item.label + "' disabled/> ";
-                                        html += "<input type='text' class='madlibResponse' placeholder='" + item.label + "'";
+                                        html += "<input type='text' class='madlibResponse m-1' placeholder='" + item.label + "'";
                                         if (item.defaultValue) {
                                             html += " value='" + item.defaultValue + "'";
                                         }
@@ -221,17 +217,19 @@ function buildGoalsHTML(suggestions) {
                         });
 
                         html += "<div class='action'>";
-                        html += "<input name='action" + x + "' type='radio' class='freetext' />";
-                        html += "<input type='text' class='freetextResponse' placeholder='Describe your goal here' disabled/>";
+                        html += "<input name='action" + x + "' type='radio' class='freetext m-1' />";
+                        html += "<input type='text' class='freetextResponse m-1 w-75' placeholder='Describe your goal here' disabled/>";
                         html += "</div>";
                     }
-
+                    let y = randomChars(5);
+                    html += "<label class='goal-input' for='goalTargetDate" + y + "'>When do you want to achieve this goal?</label>";
+                    html += "<input class='goal-input' id='goalTargetDate" + y + "' type='text' class='goalTargetDate' placeholder='--Select Date--' readOnly/>";
                 } else if (s.type === 'bp-goal') {
                     if (s.actions === null || s.actions.length === 0) {
                         // freeform input
                         html += "<div class='action'>";
-                        html += "<input type='text' class='systolic' placeholder='Systolic' /> /";
-                        html += "<input type='text' class='diastolic' placeholder='Diastolic' />";
+                        html += "<input type='text' class='systolic m-1' placeholder='Systolic' /> /";
+                        html += "<input type='text' class='diastolic m-1' placeholder='Diastolic' />";
                         html += "</div>";
 
                     } else {
@@ -241,31 +239,22 @@ function buildGoalsHTML(suggestions) {
                         s.actions.forEach(function (action) {
                             let bpdata = parseBPData(action.label);
                             html += "<div class='action'>";
-                            html += "<input name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + action.label + "' data-systolic='" + bpdata.systolic + "' data-diastolic='" + bpdata.diastolic + "' />";
-                            html += "<label for='action" + x + "_" + i + "'>" + action.label + "</label></div>";
+                            html += "<input class='m-1' name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + action.label + "' data-systolic='" + bpdata.systolic + "' data-diastolic='" + bpdata.diastolic + "' />";
+                            html += "<label class='m-1' for='action" + x + "_" + i + "'>" + action.label + "</label></div>";
                             i++;
                         });
 
                         html += "<div class='action'>";
-                        html += "<input name='action" + x + "' type='radio' class='custom' />";
-                        html += "<input type='text' class='customResponse systolic' placeholder='Systolic' disabled/> / ";
-                        html += "<input type='text' class='customResponse diastolic' placeholder='Diastolic' disabled/>";
+                        html += "<input name='action" + x + "' type='radio' class='custom m-1' />";
+                        html += "<input type='text' class='customResponse systolic m-1' placeholder='Systolic' disabled/> / ";
+                        html += "<input type='text' class='customResponse diastolic m-1' placeholder='Diastolic' disabled/>";
                         html += "</div>";
                     }
                 }
-                html += "</td>";
-                html += "<td class='shrink'><div><button class='btn btn-sm button-primary commitToGoal'>Commit to Goal</button></div></td>";
-                html += "</tr>";
+                html += "</div>";
+                html += "<div class='col-lg-4 mt-2'><button class='btn btn-sm button-primary commitToGoal'>Commit to Goal</button></div>";
+                html += "</div>"
 
-                if (s.type === 'goal') {
-                    html += "<tr>";
-                    let y = randomChars(5);
-                    html += "<td><label for='goalTargetDate" + y + "'>When do you want to achieve this goal?</label></td>";
-                    html += "<td><input id='goalTargetDate" + y + "' type='text' class='goalTargetDate' placeholder='--Select Date--' readOnly/></td>";
-                    html += "</tr>";
-                }
-
-                html += "</table>";
                 html += "</div>";
 
             } else if (s.type === 'update-goal') {
@@ -381,6 +370,24 @@ function buildLinksHTML(suggestions) {
     return html !== "" ?
         "<div class='linksContainer'>" + html + "</div>" :
         "";
+}
+
+function buildClinicContactHTML(suggestions) {
+    let html = "";
+    if (suggestions !== null) {
+        suggestions.forEach(function(s) {
+            if (s.type === 'clinic-contact') {
+                html += "<span class='heading slink ps-2'>Clinic Contact: " + s.actions[0].label + "</span>";
+                html += "<span class='heading slink ps-2'>After Hours Line: " + s.actions[1].label + "</span>";
+                html += "<span class='heading slink p-1 ps-2'>or</span>";
+                html += "<span class='heading slink p-1 ps-2'>Call 911</span>";
+            }
+        });
+    }
+    return html !== "" ?
+        "<div class='linksContainer slink'>" + html + "</div>" :
+        "";
+
 }
 
 function parseBPData(s) {
