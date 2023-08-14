@@ -11,6 +11,7 @@ public class Suggestion {
     public static final String TYPE_COUNSELING_LINK = "counseling-link";
     public static final String TYPE_BP_GOAL = "bp-goal";
     public static final String TYPE_UPDATE_BP_GOAL = "update-bp-goal";
+    public static final String TYPE_CLINIC_CONTACT = "clinic-contact";
 
     private String id;
     private String type;

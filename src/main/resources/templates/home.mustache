@@ -2,7 +2,7 @@
 
 <div class="container">
     <div class="px-2 d-flex justify-content-between">
-        <span class="fs-4"><i class="fas fa-user color-primary"></i></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}</span>
+        <span class="fs-4"><i class="fas fa-user color-primary"></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}</span>
         {{#showClearSupplementalData}}
         <span id="clearSupplementalData" class="link">Clear Supplemental Data</span>
         {{/showClearSupplementalData}}
@@ -17,14 +17,12 @@
         </h4>
         <div class="container">
             <div class="row">
-                <div class="col-12 col-md-3 align-self-center">
+                <div id="bpIndicatorContainer" class="col-12 col-md-3 align-self-center">
                     <div class="text-center" style="font-weight: bold;">Your blood pressure:</div>
                     <table class="table table-borderless mt-4 mx-auto w-auto">
                         <tr>
                             <td>
                                 <div id="bpPlaceholder">
-                                    <img src='/images/info-icon.png' class='bp-icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>
-                                    <div>Enter more blood pressures to see average</div>
                                 </div>
                                 <div id="bpContainer" style="display:none">
                                     <table style="text-align:center">
@@ -75,7 +73,7 @@
                         </tr>
                     </table>
                 </div>
-                <div class="col-12 col-md-9">
+                <div id="chartContainer" class="col-12 col-md-9">
                     <div class="container">
                         <div class="row">
                             <div class="col">
@@ -100,7 +98,7 @@
                                 <i class="fas fa-square chartKeyDiastolic"></i> Diastolic BP
                             </div>
                             <div class="col-md-auto">
-                                <i class="far fa-square chartKeyRecent"></i> Used in BP Avg
+                                <i class="far fa-square chartKeyRecent"></i> Data used in BP Avg
                             </div>
                             <div class="col-md-0 col-lg-1"></div>
                         </div>

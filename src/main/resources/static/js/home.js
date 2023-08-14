@@ -159,19 +159,25 @@ function calculateAverageBP(bps) {
     return null;
 }
 
+function isCrisisBp(bp) {
+    return bp.systolic.value > 180 || bp.diastolic.value > 120
+}
+
 function populateSummaryDiv() {
-    let mostRecentSystolic = 0;
-    let mostRecentDiastolic = 0;
+    let mostRecentBP = {};
+    let crisisBp = false;
+    let twoCrisisBPs = false;
     let avgSystolic = 0;
     let avgDiastolic = 0;
     let aboveGoal = false;
 
     let hasData = Array.isArray(window.bpdata) && window.bpdata.length > 0;
     if (hasData) {
-        let mostRecentBP = sortByDateDesc(window.bpdata)[0];
-        mostRecentSystolic = mostRecentBP.systolic.value;
-        mostRecentDiastolic = mostRecentBP.diastolic.value;
-
+        const bpsByDataDesc = sortByDateDesc(window.bpdata);
+        mostRecentBP = bpsByDataDesc[0];
+        crisisBp = isCrisisBp(mostRecentBP);
+        const nextMostRecentBP = bpsByDataDesc[1];
+        twoCrisisBPs = crisisBp && nextMostRecentBP !== undefined && isCrisisBp(nextMostRecentBP);
         let avg = calculateAverageBP(window.bpdata);
         if (avg) {
             avgSystolic = Math.round(avg.systolic);
@@ -184,8 +190,10 @@ function populateSummaryDiv() {
 
     // build the BP icon and other Hypertension classification stuff based on avgSystolic and avgDiastolic above
     let indicator;
-    if (mostRecentSystolic > 180 || mostRecentDiastolic > 120) { // crisis; considers most recent reading ONLY
-        indicator = { img: 'stoplight-red.png', alt: 'Critical', show: 'most-recent' };
+    if (twoCrisisBPs) { // crisis; considers most recent reading ONLY
+        indicator = { img: 'critical-icon.png', alt: 'Critical', show: 'two-most-recent' };
+    } else if (crisisBp) {
+        indicator = { img: 'critical-icon.png', alt: 'Critical', show: 'most-recent' };
     } else if (aboveGoal) {
         indicator = { img: 'stoplight-yellow.png', alt: 'Above Goal', show: 'average' };
     } else if (avgSystolic !== 0) {
@@ -197,22 +205,41 @@ function populateSummaryDiv() {
     let bpIcon = $('#bpIcon');
     bpIcon.html("<img src='/images/" + indicator.img + "' class='bp-icon' alt='" + indicator.alt + "' />");
 
+    let bpIndicatorContainer = $('#bpIndicatorContainer');
+    let chartContainer = $('#chartContainer');
     let bpPlaceholder = $('#bpPlaceholder');
     let bpContainer = $('#bpContainer');
     let bpLabel = $('#bpLabel');
     let bpNote = $('#bpNote');
     let systolic = $('#systolic');
     let diastolic = $('#diastolic');
-    if (indicator.show === 'most-recent') {
+
+    if (indicator.show === 'two-most-recent') {
+        bpIndicatorContainer.removeClass("col-md-3");
+        chartContainer.hide();
+        bpPlaceholder.hide();
+        bpContainer.show();
+        
+        bpLabel.html('Most Recent BP:');
+        systolic.html(mostRecentBP.systolic.value);
+        systolic.addClass('crisis');
+        diastolic.html(mostRecentBP.diastolic.value);
+        diastolic.addClass('crisis');
+        bpNote.html('Warning: Your most recent BP is still very high. Take action below.​​');
+        bpNote.addClass('crisis');
+    }
+    else if (indicator.show === 'most-recent') {
+        bpIndicatorContainer.removeClass("col-md-3");
+        chartContainer.hide();
         bpPlaceholder.hide();
         bpContainer.show();
 
-        bpLabel.html('Most Recent BP:').attr('title', 'Most recent reading shaded in red');
-        systolic.html(mostRecentSystolic);
+        bpLabel.html('Most Recent BP:');
+        systolic.html(mostRecentBP.systolic.value);
         systolic.addClass('crisis');
-        diastolic.html(mostRecentDiastolic);
+        diastolic.html(mostRecentBP.diastolic.value);
         diastolic.addClass('crisis');
-        bpNote.html('Very High BP - Please record another reading within 5 minutes');
+        bpNote.html('Warning: Your BP is very high. Take action below.​');
         bpNote.addClass('crisis');
 
     } else if (indicator.show === 'average') {
@@ -226,15 +253,17 @@ function populateSummaryDiv() {
         diastolic.removeClass('crisis');
 
         if (aboveGoal) {
-            bpNote.html('You are above goal');
+            bpNote.html('Your BP is above your goal!');
         } else {
-            bpNote.html('You are at goal');
+            bpNote.html('You reached your goal!');
         }
         bpNote.removeClass('crisis');
 
     } else if (indicator.show === 'placeholder') {
-        // don't really need to do anything here as the mustache template is already populated how we want it
-        // just adding this block for clarity
+        // Add the placeholder image and text
+        bpPlaceholder.show();
+        bpPlaceholder.append("<img src='/images/info-icon.png' class='bp-icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>");
+        bpPlaceholder.append("<div class='mt-4'>Enter more blood pressures to see average</div>");
     }
 }
 

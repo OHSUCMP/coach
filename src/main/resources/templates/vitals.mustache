@@ -57,18 +57,18 @@
         let el = $('#protocol');
         if ($(el).hasClass('hidden')) {
             $(el).removeClass('hidden');
-            $(this).html('Hide Protocol');
+            $(this).html('Hide Instructions');
 
         } else {
             $(el).addClass('hidden');
-            $(this).html('Show Protocol');
+            $(this).html('Show Instructions');
         }
     });
 </script>
 
 <div class="container">
     <div class="px-2 fs-4">
-        <i class="fas fa-user color-primary"></i></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
+        <i class="fas fa-user color-primary"></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
     </div>
     <ul class="nav nav-tabs mt-3" id="bp-tabs" role="tablist">
         <li class="nav-item" role="presentation">
@@ -177,13 +177,14 @@
                 <div class="row mb-3">
                     <div class="col">
                         <hr/>
-                        <span id="showHideProtocol">Hide Protocol</span>
+                        <span id="showHideProtocol">Hide Instructions</span>
                     </div>
                 </div>
+                <a name="instructions"></a>
                 <div id="protocol" class="mb-3">
-                    <div class="row mb-3">
+                    <div class="row mb-3 justify-content-center">
                         <div class="col">
-                            <span class="heading">Recommended Home Blood Pressure Measurement Protocol</span>
+                            <span class="fs-3 d-flex justify-content-center mb-4">Blood Pressure Measurement Instructions</span>
                         </div>
                     </div>
                     <div class="row">
@@ -201,18 +202,17 @@
                             <div id="protocolCuffUse">
                                 <span class="fw-bold">Proper cuff use:</span>
                                 <ul>
+                                    <li>Use arm cuff</li>
                                     <li>Above the elbow</li>
-                                    <li>Level with your heart</li>
-                                    <li>On bare skin, <span style="text-decoration: underline;">not over clothing</span></li>
+                                    <li>On bare skin, not over clothing</li>
                                     <li>Snug, but allow 2 fingers inside</li>
                                 </ul>
                             </div>
                             <div id="protocolMeasurements">
                                 <span class="fw-bold">Measurements:</span>
                                 <ul>
-                                    <li>Rest for 5 minutes<br/>
-                                        <span style="text-decoration: underline;">Do not talk or look at the phone</span>
-                                    </li>
+                                    <li>Rest for 5 minutes</li>
+                                    <li>Do not talk or look at the phone</li>
                                     <li>Record your measurement</li>
                                     <li>Wait 1 minute</li>
                                     <li>Repeat the measurement</li>
@@ -221,7 +221,7 @@
                             </div>
                         </div>
                         <div class="col-md-7">
-                            <img src="{{req.contextPath}}/images/bp-reading-protocol2.png" alt="BP Reading Protocol" class="img-fluid"/>
+                            <img src="{{req.contextPath}}/images/bp-reading-protocol3.png" alt="BP Reading Instructions" class="img-fluid"/>
                         </div>
                     </div>
                 </div>

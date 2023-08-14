@@ -85,7 +85,7 @@
 }
 
 /* keep synced with goals.css */
-.goal, .linksContainer .slink, .bpGoal {
+.goal, .linksContainer, .bpGoal {
     background-color: #eff5ff;
 }
 
@@ -129,4 +129,9 @@ div.adverseEvent {
 
 img.icon {
     width: 40px;
+}
+
+.goal-input {
+    margin-top: .8em;
+    width: 100%;
 }

@@ -10,9 +10,8 @@
 
 #protocol {
     position: relative;
-    border: 1px solid gray;
-    background-color: #e6f7ff;
+    background-color: #f4f4f3;
     padding: 1em;
-    font-size: 0.9em;
+    color: #29506e;
 }
 
