@@ -130,3 +130,8 @@ div.adverseEvent {
 img.icon {
     width: 40px;
 }
+
+.goal-input {
+    margin-top: .8em;
+    width: 100%;
+}
