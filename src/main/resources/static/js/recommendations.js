@@ -61,8 +61,8 @@ function renderCards(cards) {
 
         } else {
             html += "<div class='container'><div class='row'>";
-            html += "<div class='col-1 p-0 pl-1 pt-1' style='min-width:40px;'><img src='/images/" + card.indicator + "-icon.png' class='icon' alt='" + card.indicator + "' /></div>";
-            html += "<div class='col-11 col-md-4 content p-1'>";
+            html += "<div class='col-auto p-0 pl-1 pt-1' style='min-width:40px;'><img src='/images/" + card.indicator + "-icon.png' class='icon' alt='" + card.indicator + "' /></div>";
+            html += "<div class='col-10 col-lg-4 content p-1'>";
             html += "<span class='summary heading'>" + card.summary + "</span>";
 
             if (card.rationale !== null) {
@@ -86,7 +86,7 @@ function renderCards(cards) {
 
             html += buildCounselingHTML(card.suggestions);
 
-            html += "</div><div class='col-12 col-md-7 p-1'>"
+            html += "</div><div class='col-12 col-lg-7 p-1'>"
 
             html += buildAdverseEvents(card.suggestions);
             html += buildGoalsHTML(card.suggestions);
