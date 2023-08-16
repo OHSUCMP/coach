@@ -160,7 +160,7 @@ function calculateAverageBP(bps) {
 }
 
 function isCrisisBp(bp) {
-    return bp.systolic.value > 180 || bp.diastolic.value > 120
+    return bp.systolic.value >= 180 || bp.diastolic.value >= 120
 }
 
 function populateSummaryDiv() {
