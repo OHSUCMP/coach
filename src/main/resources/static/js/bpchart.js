@@ -136,46 +136,28 @@ function buildChart() {
         }
     };
 
-    let mostRecentBP = sortByDateDesc(window.bpdata)[0];
-    if (mostRecentBP !== undefined && (mostRecentBP.systolic.value > 180 || mostRecentBP.diastolic.value > 120)) {
-        // BP crisis
-        config.options.plugins.annotation.annotations.recent = {
-            drawTime: 'afterDatasetsDraw',
-            id: 'recent',
-            type: 'box',
-            xScaleID: 'x',
-            xMin: mostRecentBP.readingDate,
-            backgroundColor: 'transparent',
-            borderColor: 'rgba(255, 0, 0, 1)',
-            borderWidth: 5,
-            display: true
-        };
-
-    } else {
-        let bpSetStartDate = window.bpchart.bpSetStartDate;
-        let showRecentAnnotation = true;
-        if (bpSetStartDate === undefined) {
-            // On first call, get the BPSetStartDate for chartjs annotation
-            bpSetStartDate = getBPSetStartDate(window.bpdata);
-        }
-        if (!bpSetStartDate) {//|| (window.bpchart.startDate !== undefined && window.bpchart.startDate == bpSetStartDate)) {
-            // Don't shade recent BPs if no set exists or if "Recent" is selected in chart options
-            showRecentAnnotation = false;
-        }
-
-        config.options.plugins.annotation.annotations.recent = {
-            drawTime: 'afterDatasetsDraw',
-            id: 'recent',
-            type: 'box',
-            xScaleID: 'x',
-            xMin: bpSetStartDate,
-            backgroundColor: 'transparent',
-            borderColor: 'rgba(91, 107, 104, 1)',
-            borderWidth: 5,
-            display: showRecentAnnotation
-        };
+    let bpSetStartDate = window.bpchart.bpSetStartDate;
+    let showRecentAnnotation = true;
+    if (bpSetStartDate === undefined) {
+        // On first call, get the BPSetStartDate for chartjs annotation
+        bpSetStartDate = getBPSetStartDate(window.bpdata);
+    }
+    if (!bpSetStartDate) {//|| (window.bpchart.startDate !== undefined && window.bpchart.startDate == bpSetStartDate)) {
+        // Don't shade recent BPs if no set exists or if "Recent" is selected in chart options
+        showRecentAnnotation = false;
     }
 
+    config.options.plugins.annotation.annotations.recent = {
+        drawTime: 'afterDatasetsDraw',
+        id: 'recent',
+        type: 'box',
+        xScaleID: 'x',
+        xMin: bpSetStartDate,
+        backgroundColor: 'transparent',
+        borderColor: 'rgba(91, 107, 104, 1)',
+        borderWidth: 5,
+        display: showRecentAnnotation
+    };
 
     if (window.bpchart.startDate !== undefined) {
         let startDate = null;
