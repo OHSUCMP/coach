@@ -3,6 +3,10 @@ main.container {
 	padding: 80px 10px 0;
 }
 
+img.logo {
+    height: 45px;
+}
+
 .color-primary {
     color: #004466;
 }
