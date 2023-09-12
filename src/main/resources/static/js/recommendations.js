@@ -223,7 +223,7 @@ function buildGoalsHTML(suggestions) {
                     }
                     let y = randomChars(5);
                     html += "<label class='goal-input' for='goalTargetDate" + y + "'>When do you want to achieve this goal?</label>";
-                    html += "<input class='goal-input' id='goalTargetDate" + y + "' type='text' class='goalTargetDate' placeholder='--Select Date--' readOnly/>";
+                    html += "<input id='goalTargetDate" + y + "' type='text' class='goal-input goalTargetDate' placeholder='--Select Date--' readOnly/>";
                 } else if (s.type === 'bp-goal') {
                     if (s.actions === null || s.actions.length === 0) {
                         // freeform input
