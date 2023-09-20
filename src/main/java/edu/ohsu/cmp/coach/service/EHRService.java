@@ -305,6 +305,7 @@ public class EHRService extends AbstractService {
                             }
 
                             if ( ! hasGoodRoute && mr.hasMedicationReference()) {
+                                logger.debug("invalid or missing route for MedicationRequest " + mr.getId() + " - checking medication form");
                                 Bundle bundle = resourceWithBundle.getBundle();
                                 Medication m = FhirUtil.getResourceFromBundleByReference(bundle, Medication.class, mr.getMedicationReference().getReference());
                                 if (m == null) {
