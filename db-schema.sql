@@ -303,3 +303,76 @@ alter table patient add consentGranted char(1) default null;
 
 -- 2023-04-11 - clear studyClass where consentGranted is 'N' - we don't want to set this before consent is granted
 update patient set studyClass = null where consentGranted is null or consentGranted = 'N';
+
+-- 2023-09-18 - add medication form and route tables
+
+drop table if exists medication_form;
+create table medication_form (
+    id int not null auto_increment primary key,
+    description varchar(255) not null,
+    conceptCode varchar(50) not null,
+    conceptSystem varchar(100) not null,
+    conceptSystemOID varchar(50) not null
+);
+
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Drug patch', '36875001', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Pill', '46992007', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Caplet', '48582000', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Chewable tablet', '66076007', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Soluble tablet', '385035002', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Dispersible tablet', '385036001', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Capsule', '385049006', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Hard capsule', '385050006', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Soft capsule', '385051005', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Gastro-resistant capsule', '385052003', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Prolonged-release capsule', '385053008', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Modified-release capsule', '385054002', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Tablet', '385055001', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Film-coated tablet', '385057009', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Effervescent tablet', '385058004', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Gastro-resistant tablet', '385059007', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Prolonged-release tablet', '385060002', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Modified-release tablet', '385061003', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Oromucosal capsule', '385083004', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Sublingual tablet', '385084005', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Buccal tablet', '385085006', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Muco-adhesive buccal tablet', '385086007', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Transdermal patch', '385114002', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Implantation tablet', '385236009', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Coated pellets capsule', '420293008', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Extended-release film coated tablet', '420378007', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Extended-release tablet', '420627008', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Oral capsule', '420692007', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Delayed-release pellets capsule', '420767002', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Ultramicronized tablet', '420956005', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Oral tablet', '421026006', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Delayed-release capsule', '421027002', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Extended-release enteric coated tablet', '421155001', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Extended-release film coated capsule', '421300005', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Extended-release coated capsule', '421338009', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Delayed-release tablet', '421374000', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Delayed-release particles tablet', '421535006', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Extended-release capsule', '421618002', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Sustained-release buccal tablet', '421620004', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Coated particles tablet', '421721007', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Extended-release enteric coated capsule', '421752008', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Multilayer tablet', '421932003', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Coated capsule', '427129005', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_form (description, conceptCode, conceptSystem, conceptSystemOID) values('Orodispersible tablet', '447079001', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+
+
+drop table if exists medication_route;
+create table medication_route (
+    id int not null auto_increment primary key,
+    description varchar(255) not null,
+    conceptCode varchar(50) not null,
+    conceptSystem varchar(100) not null,
+    conceptSystemOID varchar(50) not null
+);
+
+insert into medication_route (description, conceptCode, conceptSystem, conceptSystemOID) values('Oral use', '26643006', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_route (description, conceptCode, conceptSystem, conceptSystemOID) values('Transdermal use', '45890007', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_route (description, conceptCode, conceptSystem, conceptSystemOID) values('Orogastric route', '418441008', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_route (description, conceptCode, conceptSystem, conceptSystemOID) values('Intraesophageal route', '445752009', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_route (description, conceptCode, conceptSystem, conceptSystemOID) values('Digestive tract route', '447964005', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
+insert into medication_route (description, conceptCode, conceptSystem, conceptSystemOID) values('Intraepidermal route', '448077001', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');

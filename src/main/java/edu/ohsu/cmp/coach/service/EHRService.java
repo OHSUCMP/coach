@@ -1,8 +1,13 @@
 package edu.ohsu.cmp.coach.service;
 
+import edu.ohsu.cmp.coach.entity.MedicationForm;
+import edu.ohsu.cmp.coach.entity.MedicationRoute;
 import edu.ohsu.cmp.coach.fhir.EncounterMatcher;
 import edu.ohsu.cmp.coach.model.GoalModel;
+import edu.ohsu.cmp.coach.model.ResourceWithBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.repository.MedicationFormRepository;
+import edu.ohsu.cmp.coach.repository.MedicationRouteRepository;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
@@ -39,6 +44,12 @@ public class EHRService extends AbstractService {
     @Autowired
     private FHIRService fhirService;
 
+    @Autowired
+    private MedicationFormRepository medicationFormRepository;
+
+    @Autowired
+    private MedicationRouteRepository medicationRouteRepository;
+
     public Patient getPatient(String sessionId) {
         logger.info("getting Patient for session=" + sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
@@ -54,9 +65,10 @@ public class EHRService extends AbstractService {
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         Bundle bundle = fhirService.search(fcc,
                 workspace.getVendorTransformer().getEncounterQuery(fcc.getCredentials().getPatientId(), fcm.getEncounterLookbackPeriod()),
-                new Function<Resource, Boolean>() {
+                new Function<ResourceWithBundle, Boolean>() {
                     @Override
-                    public Boolean apply(Resource resource) {
+                    public Boolean apply(ResourceWithBundle resourceWithBundle) {
+                        Resource resource = resourceWithBundle.getResource();
                         if (resource instanceof Encounter) {
                             Encounter encounter = (Encounter) resource;
                             if (encounter.getStatus() != Encounter.EncounterStatus.FINISHED &&
@@ -118,9 +130,10 @@ public class EHRService extends AbstractService {
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getObservationCodeQuery(fcc.getCredentials().getPatientId(), code, lookbackPeriod),
-                new Function<Resource, Boolean>() {
+                new Function<ResourceWithBundle, Boolean>() {
                     @Override
-                    public Boolean apply(Resource resource) {
+                    public Boolean apply(ResourceWithBundle resourceWithBundle) {
+                        Resource resource = resourceWithBundle.getResource();
                         if (resource instanceof Observation) {
                             Observation observation = (Observation) resource;
                             if (observation.getStatus() != Observation.ObservationStatus.FINAL &&
@@ -156,9 +169,10 @@ public class EHRService extends AbstractService {
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getConditionQuery(fcc.getCredentials().getPatientId(), category),
-                new Function<Resource, Boolean>() {
+                new Function<ResourceWithBundle, Boolean>() {
                     @Override
-                    public Boolean apply(Resource resource) {
+                    public Boolean apply(ResourceWithBundle resourceWithBundle) {
+                        Resource resource = resourceWithBundle.getResource();
                         if (resource instanceof Condition) {
                             Condition c = (Condition) resource;
 
@@ -193,9 +207,10 @@ public class EHRService extends AbstractService {
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getGoalQuery(fcc.getCredentials().getPatientId()),
-                new Function<Resource, Boolean>() {
+                new Function<ResourceWithBundle, Boolean>() {
                     @Override
-                    public Boolean apply(Resource resource) {
+                    public Boolean apply(ResourceWithBundle resourceWithBundle) {
+                        Resource resource = resourceWithBundle.getResource();
                         if (resource instanceof Goal) {
                             Goal g = (Goal) resource;
 
@@ -227,9 +242,10 @@ public class EHRService extends AbstractService {
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getMedicationStatementQuery(fcc.getCredentials().getPatientId()),
-                new Function<Resource, Boolean>() {
+                new Function<ResourceWithBundle, Boolean>() {
                     @Override
-                    public Boolean apply(Resource resource) {
+                    public Boolean apply(ResourceWithBundle resourceWithBundle) {
+                        Resource resource = resourceWithBundle.getResource();
                         if (resource instanceof MedicationStatement) {
                             MedicationStatement ms = (MedicationStatement) resource;
                             if (ms.getStatus() != MedicationStatement.MedicationStatementStatus.ACTIVE) {
@@ -247,11 +263,16 @@ public class EHRService extends AbstractService {
         logger.info("getting MedicationRequests for session=" + sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+
+        final List<Coding> validRouteCodings = getValidMedicationRouteCodings();
+        final List<Coding> validFormCodings = getValidMedicationFormCodings();
+
         Bundle bundle = fhirService.search(fcc,
                 workspace.getVendorTransformer().getMedicationRequestQuery(fcc.getCredentials().getPatientId()),
-                new Function<Resource, Boolean>() {
+                new Function<ResourceWithBundle, Boolean>() {
                     @Override
-                    public Boolean apply(Resource resource) {
+                    public Boolean apply(ResourceWithBundle resourceWithBundle) {
+                        Resource resource = resourceWithBundle.getResource();
                         if (resource instanceof MedicationRequest) {
                             MedicationRequest mr = (MedicationRequest) resource;
 
@@ -268,6 +289,36 @@ public class EHRService extends AbstractService {
 
                             if (mr.hasDoNotPerform() && mr.getDoNotPerform()) {
                                 logger.debug("removing MedicationRequest " + mr.getId() + " - doNotPerform");
+                                return false;
+                            }
+
+                            boolean hasGoodRoute = false;
+                            boolean hasGoodForm = false;
+
+                            if (mr.hasDosageInstruction()) {
+                                for (Dosage d : mr.getDosageInstruction()) {
+                                    if (d.hasRoute() && FhirUtil.hasCoding(d.getRoute(), validRouteCodings)) {
+                                        hasGoodRoute = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if ( ! hasGoodRoute && mr.hasMedicationReference()) {
+                                Bundle bundle = resourceWithBundle.getBundle();
+                                Medication m = FhirUtil.getResourceFromBundleByReference(bundle, Medication.class, mr.getMedicationReference().getReference());
+                                if (m == null) {
+                                    logger.warn("couldn't find Medication with reference=" + mr.getMedicationReference().getReference() +
+                                            " - attempting to read from FHIR server - ");
+                                    m = fhirService.readByReference(fcc, Medication.class, mr.getMedicationReference());
+                                }
+                                if (m != null && m.hasForm() && FhirUtil.hasCoding(m.getForm(), validFormCodings)) {
+                                    hasGoodForm = true;
+                                }
+                            }
+
+                            if ( ! hasGoodRoute && ! hasGoodForm ) {
+                                logger.debug("removing MedicationRequest " + mr.getId() + " - invalid route and form");
                                 return false;
                             }
                         }
@@ -311,9 +362,10 @@ public class EHRService extends AbstractService {
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getProcedureQuery(fcc.getCredentials().getPatientId()),
-                new Function<Resource, Boolean>() {
+                new Function<ResourceWithBundle, Boolean>() {
                     @Override
-                    public Boolean apply(Resource resource) {
+                    public Boolean apply(ResourceWithBundle resourceWithBundle) {
+                        Resource resource = resourceWithBundle.getResource();
                         if (resource instanceof Procedure) {
                             Procedure p = (Procedure) resource;
                             if (p.getStatus() != Procedure.ProcedureStatus.COMPLETED) {
@@ -335,5 +387,33 @@ public class EHRService extends AbstractService {
                     }
                 }
         );
+    }
+
+    private List<Coding> getValidMedicationRouteCodings() {
+        List<Coding> list = new ArrayList<>();
+
+        for (MedicationRoute mr : medicationRouteRepository.findAll()) {
+            Coding c = new Coding()
+                    .setCode(mr.getConceptCode())
+                    .setSystem(mr.getConceptSystem())
+                    .setDisplay(mr.getDescription());
+            list.add(c);
+        }
+
+        return list;
+    }
+
+    private List<Coding> getValidMedicationFormCodings() {
+        List<Coding> list = new ArrayList<>();
+
+        for (MedicationForm mf : medicationFormRepository.findAll()) {
+            Coding c = new Coding()
+                    .setCode(mf.getConceptCode())
+                    .setSystem(mf.getConceptSystem())
+                    .setDisplay(mf.getDescription());
+            list.add(c);
+        }
+
+        return list;
     }
 }

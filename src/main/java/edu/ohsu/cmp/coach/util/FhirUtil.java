@@ -144,7 +144,7 @@ public class FhirUtil {
 
         bundle.getEntry().add(new Bundle.BundleEntryComponent()
                 .setFullUrl(fullUrl)
-                .setResource(resource));
+                .setResource(resource.copy()));
     }
 
     public static String toIdentifierString(Identifier identifier) {

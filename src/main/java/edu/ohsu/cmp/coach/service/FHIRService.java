@@ -7,6 +7,7 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
+import edu.ohsu.cmp.coach.model.ResourceWithBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
@@ -129,7 +130,7 @@ public class FHIRService {
         return search(fcc, fhirQuery, null);
     }
 
-    public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery, Function<Resource, Boolean> validityFunction) {
+    public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery, Function<ResourceWithBundle, Boolean> validityFunction) {
         if (StringUtils.isBlank(fhirQuery)) return null;
 
         logger.info("search: executing query: " + fhirQuery);
@@ -154,14 +155,7 @@ public class FHIRService {
             throw ire;
         }
 
-        if (validityFunction != null) {
-            filterInvalidResources(bundle, validityFunction);
-        }
-
-        if (bundle.getLink(Bundle.LINK_NEXT) == null) {
-            return bundle;
-
-        } else {
+        if (bundle.getLink(Bundle.LINK_NEXT) != null) {
             CompositeBundle compositeBundle = new CompositeBundle();
             compositeBundle.consume(bundle);
 
@@ -174,17 +168,18 @@ public class FHIRService {
                     logger.debug("bundle = " + FhirUtil.toJson(bundle));
                 }
 
-                if (validityFunction != null) {
-                    filterInvalidResources(bundle, validityFunction);
-                }
-
                 compositeBundle.consume(bundle);
 
                 page ++;
             }
 
-            return compositeBundle.getBundle();
+            bundle = compositeBundle.getBundle();
         }
+
+        if (validityFunction != null) {
+            filterInvalidResources(bundle, validityFunction);
+        }
+        return bundle;
     }
 
     public <T extends IDomainResource> T transact(FHIRCredentialsWithClient fcc, T resource) throws IOException, ConfigurationException, DataException, EncoderException {
@@ -268,13 +263,13 @@ public class FHIRService {
 // private methods
 //
 
-    private void filterInvalidResources(Bundle bundle, Function<Resource, Boolean> validityFunction) {
+    private void filterInvalidResources(Bundle bundle, Function<ResourceWithBundle, Boolean> validityFunction) {
         if (bundle != null && bundle.hasEntry()) {
             Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
             while (iter.hasNext()) {
                 Bundle.BundleEntryComponent entry = iter.next();
                 if (entry.hasResource()) {
-                    boolean isValid = validityFunction.apply(entry.getResource());
+                    boolean isValid = validityFunction.apply(new ResourceWithBundle(entry.getResource(), bundle));
                     if ( ! isValid ) {
                         iter.remove();
                     }
