@@ -1,13 +1,4 @@
--- create the coach database if it does not yet exist
-
-if not exists (select * from sys.databases where name = 'coach')
-begin
-    create database coach;
-end;
-go
-
-use coach;
-go
+-- This creates the schema and reference data as of 9/21/2023
 
 -- this stored procedure facilitates clearing user sessions, which we need to do if
 -- we're going to recreate user objects
@@ -495,4 +486,3 @@ insert into medication_route (description, conceptCode, conceptSystem, conceptSy
 insert into medication_route (description, conceptCode, conceptSystem, conceptSystemOID) values('Intraesophageal route', '445752009', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
 insert into medication_route (description, conceptCode, conceptSystem, conceptSystemOID) values('Digestive tract route', '447964005', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
 insert into medication_route (description, conceptCode, conceptSystem, conceptSystemOID) values('Intraepidermal route', '448077001', 'http://snomed.info/sct', '2.16.840.1.113883.6.96');
-
