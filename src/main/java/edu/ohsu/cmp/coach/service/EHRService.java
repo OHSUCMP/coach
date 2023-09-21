@@ -240,6 +240,10 @@ public class EHRService extends AbstractService {
         logger.info("getting MedicationStatements for session=" + sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+
+        final List<Coding> validRouteCodings = getValidMedicationRouteCodings();
+        final List<Coding> validFormCodings = getValidMedicationFormCodings();
+
         return fhirService.search(fcc,
                 workspace.getVendorTransformer().getMedicationStatementQuery(fcc.getCredentials().getPatientId()),
                 new Function<ResourceWithBundle, Boolean>() {
@@ -250,6 +254,37 @@ public class EHRService extends AbstractService {
                             MedicationStatement ms = (MedicationStatement) resource;
                             if (ms.getStatus() != MedicationStatement.MedicationStatementStatus.ACTIVE) {
                                 logger.debug("removing MedicationStatement " + ms.getId() + " - invalid status");
+                                return false;
+                            }
+
+                            boolean hasGoodRoute = false;
+                            boolean hasGoodForm = false;
+
+                            if (ms.hasDosage()) {
+                                for (Dosage d : ms.getDosage()) {
+                                    if (d.hasRoute() && FhirUtil.hasCoding(d.getRoute(), validRouteCodings)) {
+                                        hasGoodRoute = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if ( ! hasGoodRoute && ms.hasMedicationReference()) {
+                                logger.debug("invalid or missing route for MedicationStatement " + ms.getId() + " - checking medication form");
+                                Bundle bundle = resourceWithBundle.getBundle();
+                                Medication m = FhirUtil.getResourceFromBundleByReference(bundle, Medication.class, ms.getMedicationReference().getReference());
+                                if (m == null) {
+                                    logger.warn("couldn't find Medication with reference=" + ms.getMedicationReference().getReference() +
+                                            " - attempting to read from FHIR server - ");
+                                    m = fhirService.readByReference(fcc, Medication.class, ms.getMedicationReference());
+                                }
+                                if (m != null && m.hasForm() && FhirUtil.hasCoding(m.getForm(), validFormCodings)) {
+                                    hasGoodForm = true;
+                                }
+                            }
+
+                            if ( ! hasGoodRoute && ! hasGoodForm ) {
+                                logger.debug("removing MedicationStatement " + ms.getId() + " - invalid route and form");
                                 return false;
                             }
                         }
