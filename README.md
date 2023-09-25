@@ -64,5 +64,5 @@ If you prefer not to log to files, you can override the logging configuration by
 
 This application uses Flyway to automate database migrations when schema changes occur. Flyway is executed automatically when the latest image is pulled and the application is restarted. It is best practice to take a backup of the database before deploying a new version of COACH in case any errors occur and you need to revert. Migrations are available for both MySQL and SQL Server, but the Microsoft version is not routinely tested.
 
-See (this detailed document)[src/main/resources/db/migration/README.md] for how Flyway works.
+See (this detailed developer document)[src/main/resources/db/migration/README.md] for how Flyway works.
 
