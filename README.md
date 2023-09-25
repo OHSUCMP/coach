@@ -60,3 +60,9 @@ If for some reason you cannot allow the container user to write to the file syst
 
 If you prefer not to log to files, you can override the logging configuration by mounting a `logback.xml` file into the container at `/opt/app/config/logback.xml`. You can find example configuration in [logback-console-only.xml](./docker-image-files/logback-console-only.xml) and comments in [docker-compose.override.yml](./docker-compose.override.yml).
 
+### Flyway Migrations
+
+This application uses Flyway to automate database migrations when schema changes occur. Flyway is executed automatically when the latest image is pulled and the application is restarted. It is best practice to take a backup of the database before deploying a new version of COACH in case any errors occur and you need to revert. Migrations are available for both MySQL and SQL Server, but the Microsoft version is not routinely tested.
+
+See (this detailed document)[src/main/resources/db/migration/README.md] for how Flyway works.
+
