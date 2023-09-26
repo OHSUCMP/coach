@@ -163,6 +163,13 @@ function isCrisisBp(bp) {
     return bp.systolic.value >= 180 || bp.diastolic.value >= 120
 }
 
+function within14Days(bp) {
+    // Note that 'today' will be set based on timezone of the browser, so it may not be a completely accurate comparison.
+    // We're assuming it's enough to know that the two BPs are relatively recent.
+    const today = new Date();
+    return Math.floor((today - bp.readingDate) / (1000*60*60*24)) <= 14;
+}
+
 function populateSummaryDiv() {
     let mostRecentBP = {};
     let crisisBp = false;
@@ -177,7 +184,8 @@ function populateSummaryDiv() {
         mostRecentBP = bpsByDataDesc[0];
         crisisBp = isCrisisBp(mostRecentBP);
         const nextMostRecentBP = bpsByDataDesc[1];
-        twoCrisisBPs = crisisBp && nextMostRecentBP !== undefined && isCrisisBp(nextMostRecentBP);
+        // The two crisis BPs need to have been taken within the last 14 days
+        twoCrisisBPs = crisisBp && nextMostRecentBP !== undefined && isCrisisBp(nextMostRecentBP) && within14Days(mostRecentBP) && within14Days(nextMostRecentBP);
         let avg = calculateAverageBP(window.bpdata);
         if (avg) {
             avgSystolic = Math.round(avg.systolic);
