@@ -8,6 +8,7 @@ import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.ObservationSource;
 import edu.ohsu.cmp.coach.model.PulseModel;
+import edu.ohsu.cmp.coach.model.omron.OmronVitals;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.Bundle;
@@ -29,6 +30,9 @@ public class PulseService extends AbstractService {
     @Autowired
     private HomePulseReadingService hprService;
 
+    @Autowired
+    private OmronService omronService;
+
     public List<PulseModel> buildRemotePulseList(String sessionId) throws DataException, ConfigurationException {
         CompositeBundle compositeBundle = new CompositeBundle();
         compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getPulseCodings()), fcm.getPulseLookbackPeriod(),null));
@@ -38,7 +42,7 @@ public class PulseService extends AbstractService {
         return workspace.getVendorTransformer().transformIncomingPulseReadings(compositeBundle.getBundle());
     }
 
-    public List<PulseModel> getHomePulseReadings(String sessionId) {
+    public List<PulseModel> getHomePulseReadings(String sessionId) throws DataException {
         List<PulseModel> list = new ArrayList<>();
         for (PulseModel entry : getPulseReadings(sessionId)) {
             if (entry.getSource() == ObservationSource.HOME) {
@@ -48,7 +52,7 @@ public class PulseService extends AbstractService {
         return list;
     }
 
-    public List<PulseModel> getPulseReadings(String sessionId) {
+    public List<PulseModel> getPulseReadings(String sessionId) throws DataException {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         // add remote pulses first
@@ -63,19 +67,39 @@ public class PulseService extends AbstractService {
         // now add any locally-stored pulses that do *not* logically match a pulse already retrieved remotely
         List<PulseModel> list = new ArrayList<>();
         list.addAll(remoteList);
+
         for (PulseModel pm : buildLocalPulseReadings(sessionId)) {
             String key = pm.getLogicalEqualityKey();
             if (remotePulseKeySet.contains(key)) {
                 logger.debug("NOT ADDING local Pulse matching remote Pulse with key: " + key);
 
             } else {
-                logger.debug("adding local Pulse with key: " + key);
-                list.add(pm);
+                boolean added = false;
+                if (storeRemotely) {
+                    try {
+                        VendorTransformer transformer = workspace.getVendorTransformer();
+                        Bundle outgoingBundle = transformer.transformOutgoingPulseReading(pm);
+                        List<PulseModel> list2 = transformer.transformIncomingPulseReadings(
+                                transformer.writeRemote(sessionId, fhirService, outgoingBundle)
+                        );
+                        if (list2.size() >= 1) {
+                            PulseModel pm2 = list2.get(0);
+                            workspace.getRemotePulses().add(pm2);
+                            list.add(pm2);
+                            added = true;
+                        }
+
+                    } catch (Exception e) {
+                        // remote errors are tolerable, since we will always store locally too
+                        logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create Pulse remotely - " + e.getMessage(), e);
+                    }
+                }
+                if ( ! added ) {
+                    logger.debug("adding local Pulse with key: " + key);
+                    list.add(pm);
+                }
             }
         }
-
-        // finally, integrate any Omron BPs (if the user has authenticated)
-        list.addAll(workspace.getOmronPulses());
 
         Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1);
 
@@ -131,12 +155,19 @@ public class PulseService extends AbstractService {
 // private methods
 //
 
-    private List<PulseModel> buildLocalPulseReadings(String sessionId) {
+    private List<PulseModel> buildLocalPulseReadings(String sessionId) throws DataException {
         List<PulseModel> list = new ArrayList<>();
 
+        // add manually-entered pulses
         List<HomePulseReading> hbprList = hprService.getHomePulseReadings(sessionId);
         for (HomePulseReading item : hbprList) {
             list.add(new PulseModel(item, fcm));
+        }
+
+        // add Omron-sourced pulses
+        List<OmronVitals> omronList = omronService.readFromPersistentCache(sessionId);
+        for (OmronVitals item : omronList) {
+            list.add(item.getPulseModel());
         }
 
         return list;

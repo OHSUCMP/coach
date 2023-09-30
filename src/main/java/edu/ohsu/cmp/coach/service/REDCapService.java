@@ -5,7 +5,6 @@ import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.coach.exception.REDCapException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
-import org.apache.commons.codec.EncoderException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,12 +50,12 @@ public class REDCapService extends AbstractService {
         return REDCAP_TOKEN_PATTERN.matcher(redcapApiToken).matches();
     }
 
-    public boolean hasSubjectInfoRecord(String redcapId) throws EncoderException, REDCapException, IOException {
+    public boolean hasSubjectInfoRecord(String redcapId) throws REDCapException, IOException {
         String val = getValue(subjectInfoForm, redcapId, subjectInfoForm + "_complete");
         return StringUtils.equals(val, FORM_COMPLETE);
     }
 
-    public boolean createSubjectInfoRecord(String redcapId) throws EncoderException, IOException, REDCapException {
+    public boolean createSubjectInfoRecord(String redcapId) throws IOException, REDCapException {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("record_id", redcapId);
         map.put("redcap_event_name", subjectInfoForm);
@@ -98,7 +97,7 @@ public class REDCapService extends AbstractService {
         }
     }
 
-    public String getConsentSurveyLink(String redcapId) throws REDCapException, EncoderException, IOException {
+    public String getConsentSurveyLink(String redcapId) throws REDCapException, IOException {
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
@@ -126,17 +125,17 @@ public class REDCapService extends AbstractService {
         }
     }
 
-    public boolean hasConsentRecord(String redcapId) throws EncoderException, REDCapException, IOException {
+    public boolean hasConsentRecord(String redcapId) throws REDCapException, IOException {
         String val = getValue(consentForm, redcapId, consentForm + "_complete");
         return StringUtils.equals(val, FORM_COMPLETE);
     }
 
-    public boolean isConsentGranted(String redcapId) throws EncoderException, REDCapException, IOException {
+    public boolean isConsentGranted(String redcapId) throws REDCapException, IOException {
         String val = getValue(consentForm, redcapId, consentField);
         return StringUtils.equals(val, YES);
     }
 
-    private String getValue(String form, String redcapId, String field) throws EncoderException, IOException, REDCapException {
+    private String getValue(String form, String redcapId, String field) throws IOException, REDCapException {
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 

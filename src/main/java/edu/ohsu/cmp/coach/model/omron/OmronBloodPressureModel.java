@@ -30,6 +30,22 @@ public class OmronBloodPressureModel {
         deviceType = vitals.getDeviceType();
     }
 
+    @Override
+    public String toString() {
+        return "OmronBloodPressureModel{" +
+                "id=" + id +
+                ", dateTime='" + dateTime + '\'' +
+                ", dateTimeLocal='" + dateTimeLocal + '\'' +
+                ", dateTimeUtcOffset='" + dateTimeUtcOffset + '\'' +
+                ", systolic=" + systolic +
+                ", diastolic=" + diastolic +
+                ", bloodPressureUnits='" + bloodPressureUnits + '\'' +
+                ", pulse=" + pulse +
+                ", pulseUnits='" + pulseUnits + '\'' +
+                ", deviceType='" + deviceType + '\'' +
+                '}';
+    }
+
     public Long getId() {
         return id;
     }

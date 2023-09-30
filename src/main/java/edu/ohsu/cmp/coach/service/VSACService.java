@@ -9,7 +9,6 @@ import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.xml.SimpleXMLDOM;
 import edu.ohsu.cmp.coach.model.xml.SimpleXMLElement;
 import edu.ohsu.cmp.coach.util.UUIDUtil;
-import org.apache.commons.codec.EncoderException;
 import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +53,7 @@ public class VSACService {
         return UUIDUtil.isUUID(apiKey);
     }
 
-    public ValueSet getValueSet(String oid) throws IOException, ParserConfigurationException, SAXException, ParseException, DataException, EncoderException {
+    public ValueSet getValueSet(String oid) throws IOException, ParserConfigurationException, SAXException, ParseException, DataException {
         if ( ! isVSACEnabled() ) {
             logger.warn("VSAC is not enabled - not getting ValueSet with oid=" + oid);
             return null;
@@ -128,7 +127,7 @@ public class VSACService {
 // private methods
 //
 
-    private String getRawValueSet(String oid) throws IOException, DataException, EncoderException {
+    private String getRawValueSet(String oid) throws IOException, DataException {
         String url = "https://vsac.nlm.nih.gov/vsac/svs/RetrieveMultipleValueSets";
 
         Map<String, String> urlParams = new HashMap<>();
@@ -153,7 +152,7 @@ public class VSACService {
      * @throws IOException
      * @throws HttpException
      */
-    private String getServiceTicket() throws IOException, DataException, EncoderException {
+    private String getServiceTicket() throws IOException, DataException {
         HttpResponse response = doGetServiceTicketRequest();
 
         if (response.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
@@ -170,7 +169,7 @@ public class VSACService {
         }
     }
 
-    private HttpResponse doGetServiceTicketRequest() throws IOException, DataException, EncoderException {
+    private HttpResponse doGetServiceTicketRequest() throws IOException, DataException {
         if (serviceTicketURI == null) {
             serviceTicketURI = getNewServiceTicketURI();
         }
@@ -190,7 +189,7 @@ public class VSACService {
      *
      * @return CAS Ticket
      */
-    private String getNewServiceTicketURI() throws IOException, DataException, EncoderException {
+    private String getNewServiceTicketURI() throws IOException, DataException {
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 

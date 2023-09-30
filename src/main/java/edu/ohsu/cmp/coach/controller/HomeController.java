@@ -154,7 +154,7 @@ public class HomeController extends BaseController {
     }
 
     @PostMapping("pulse-observations-list")
-    public ResponseEntity<List<PulseModel>> getPulseObservations(HttpSession session) {
+    public ResponseEntity<List<PulseModel>> getPulseObservations(HttpSession session) throws DataException {
         List<PulseModel> list = pulseService.getPulseReadings(session.getId());
         return new ResponseEntity<>(list, HttpStatus.OK);
     }

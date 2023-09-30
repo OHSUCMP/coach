@@ -4,12 +4,14 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
-import edu.ohsu.cmp.coach.model.*;
+import edu.ohsu.cmp.coach.model.BloodPressureModel;
+import edu.ohsu.cmp.coach.model.GoalModel;
+import edu.ohsu.cmp.coach.model.PulseModel;
+import edu.ohsu.cmp.coach.model.QuantityModel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.service.FHIRService;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import org.apache.commons.codec.EncoderException;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +27,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
     }
 
     @Override
-    public Bundle writeRemote(String sessionId, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException, EncoderException {
+    public Bundle writeRemote(String sessionId, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
         Bundle bundleToTransact = new Bundle();
         bundleToTransact.setType(Bundle.BundleType.TRANSACTION);
 
