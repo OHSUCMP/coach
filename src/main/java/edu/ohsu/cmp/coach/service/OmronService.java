@@ -15,7 +15,6 @@ import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.model.omron.*;
 import edu.ohsu.cmp.coach.repository.OmronVitalsCacheRepository;
-import edu.ohsu.cmp.coach.util.UUIDUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
@@ -35,6 +34,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 public class OmronService extends AbstractService {
@@ -59,11 +59,11 @@ public class OmronService extends AbstractService {
     @Value("${omron.scope}")
     private String scope;
 
-    @Value("${omron.oauth-host.url}")
-    private String oauthHostUrl;
+    @Value("${omron.authorize.url}")
+    private String omronAuthorizeUrl;
 
-    @Value("${omron.api-host.url}")
-    private String apiHostUrl;
+    @Value("${omron.url}")
+    private String omronUrl;
 
     @Value("${omron.redirect.url}")
     private String redirectUrl;
@@ -74,8 +74,10 @@ public class OmronService extends AbstractService {
     @Autowired
     private Scheduler scheduler;
 
+    private static final Pattern KEY_PATTERN = Pattern.compile("^[a-f0-9]{64}$");
+
     public boolean isOmronEnabled() {
-        return UUIDUtil.isUUID(secretKey);
+        return KEY_PATTERN.matcher(secretKey).matches();
     }
 
     public String getAuthorizationRequestUrl() {
@@ -85,10 +87,11 @@ public class OmronService extends AbstractService {
         }
 
         try {
+            // https://stg-oauth-website.ohiomron.com/connect/authorize?client_id=coach-api&response_type=code&redirect_uri=http://localhost:8082/omron/oauth&scope=bloodpressure+activity+openid+offline_access
             URLCodec urlCodec = new URLCodec();
-            return oauthHostUrl + "/connect/authorize?client_id=" + urlCodec.encode(clientId) +
-                    "&response_type=code&scope=" + urlCodec.encode(scope) +
-                    "&redirect_uri=" + urlCodec.encode(redirectUrl);
+            return omronAuthorizeUrl + "/connect/authorize?client_id=" + urlCodec.encode(clientId) +
+                    "&response_type=code&redirect_uri=" + urlCodec.encode(redirectUrl) +
+                    "&scope=" + urlCodec.encode(scope);
 
         } catch (EncoderException e) {
             throw new RuntimeException("caught " + e.getClass().getName() + " encoding Omron Authorization Request URL params - " + e.getMessage(), e);
@@ -115,7 +118,7 @@ public class OmronService extends AbstractService {
         headers.put("Content-Type", "application/x-www-form-urlencoded");
         headers.put("Cache-Control", "no-cache");
 
-        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/token", null, headers, bodyParams);
+        HttpResponse httpResponse = new HttpRequest().post(omronUrl + "/connect/token", null, headers, bodyParams);
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
@@ -150,7 +153,7 @@ public class OmronService extends AbstractService {
         headers.put("Content-Type", "application/x-www-form-urlencoded");
         headers.put("Cache-Control", "no-cache");
 
-        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/token", null, headers, bodyParams);
+        HttpResponse httpResponse = new HttpRequest().post(omronUrl + "/connect/token", null, headers, bodyParams);
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
@@ -166,34 +169,38 @@ public class OmronService extends AbstractService {
         }
     }
 
-    public void revokeAccessToken(String accessToken) throws IOException, OmronException {
-        if ( ! isOmronEnabled() ) {
-            logger.warn("Omron is not enabled - not revoking access token");
-            return;
-        }
-
-        logger.debug("revoking accessToken=" + accessToken);
-
-        Map<String, String> bodyParams = new LinkedHashMap<>();
-        bodyParams.put("client_id", clientId);
-        bodyParams.put("client_secret", secretKey);
-        bodyParams.put("token", accessToken);
-        bodyParams.put("token_type_hint", "access_token");
-
-        Map<String, String> headers = new LinkedHashMap<>();
-        headers.put("Content-Type", "application/x-www-form-urlencoded");
-        headers.put("Cache-Control", "no-cache");
-
-        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/revocation", null, headers, bodyParams);
-        int code = httpResponse.getResponseCode();
-
-        logger.debug("got response code=" + code);
-
-        if (code < 200 || code > 299) {
-            logger.error("Omron access token revocation error: " + code);
-            throw new OmronException("received HTTP " + code + " revoking access token");
-        }
-    }
+// storer 2023-10-02 - Omron updated their APIs and documentation, and they no longer document revoking access tokens
+//                     as we don't use revocations in COACH, I'm commenting out this function as I don't think the API
+//                     for it exists anymore.
+//
+//    public void revokeAccessToken(String accessToken) throws IOException, OmronException {
+//        if ( ! isOmronEnabled() ) {
+//            logger.warn("Omron is not enabled - not revoking access token");
+//            return;
+//        }
+//
+//        logger.debug("revoking accessToken=" + accessToken);
+//
+//        Map<String, String> bodyParams = new LinkedHashMap<>();
+//        bodyParams.put("client_id", clientId);
+//        bodyParams.put("client_secret", secretKey);
+//        bodyParams.put("token", accessToken);
+//        bodyParams.put("token_type_hint", "access_token");
+//
+//        Map<String, String> headers = new LinkedHashMap<>();
+//        headers.put("Content-Type", "application/x-www-form-urlencoded");
+//        headers.put("Cache-Control", "no-cache");
+//
+//        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/revocation", null, headers, bodyParams);
+//        int code = httpResponse.getResponseCode();
+//
+//        logger.debug("got response code=" + code);
+//
+//        if (code < 200 || code > 299) {
+//            logger.error("Omron access token revocation error: " + code);
+//            throw new OmronException("received HTTP " + code + " revoking access token");
+//        }
+//    }
 
     public void scheduleAccessTokenRefresh(String sessionId) {
         if ( ! isOmronEnabled() ) {
@@ -311,6 +318,8 @@ public class OmronService extends AbstractService {
             // handle silently
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            workspace.clearCaches();
         }
     }
 
@@ -392,7 +401,7 @@ public class OmronService extends AbstractService {
         headers.put("Authorization", "Bearer " + tokenData.getBearerToken());
         headers.put("Content-Type", "application/x-www-form-urlencoded");
 
-        HttpResponse httpResponse = new HttpRequest().post(apiHostUrl + "/api/measurement", null, headers, bodyParams);
+        HttpResponse httpResponse = new HttpRequest().post(omronUrl + "/api/measurement", null, headers, bodyParams);
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
