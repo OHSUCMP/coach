@@ -7,6 +7,7 @@ import edu.ohsu.cmp.coach.entity.MyOmronVitals;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.NotAuthenticatedException;
 import edu.ohsu.cmp.coach.exception.OmronException;
+import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
@@ -14,10 +15,10 @@ import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.model.omron.*;
 import edu.ohsu.cmp.coach.repository.OmronVitalsCacheRepository;
-import edu.ohsu.cmp.coach.util.UUIDUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
+import org.hl7.fhir.r4.model.Bundle;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 public class OmronService extends AbstractService {
@@ -57,11 +59,11 @@ public class OmronService extends AbstractService {
     @Value("${omron.scope}")
     private String scope;
 
-    @Value("${omron.oauth-host.url}")
-    private String oauthHostUrl;
+    @Value("${omron.authorize.url}")
+    private String omronAuthorizeUrl;
 
-    @Value("${omron.api-host.url}")
-    private String apiHostUrl;
+    @Value("${omron.url}")
+    private String omronUrl;
 
     @Value("${omron.redirect.url}")
     private String redirectUrl;
@@ -72,28 +74,31 @@ public class OmronService extends AbstractService {
     @Autowired
     private Scheduler scheduler;
 
+    private static final Pattern KEY_PATTERN = Pattern.compile("^[a-f0-9]{64}$");
+
     public boolean isOmronEnabled() {
-        return UUIDUtil.isUUID(secretKey);
+        return KEY_PATTERN.matcher(secretKey).matches();
     }
 
-    public String getAuthorizationRequestUrl() throws DataException {
+    public String getAuthorizationRequestUrl() {
         if ( ! isOmronEnabled() ) {
             logger.warn("Omron is not enabled - not generating authorization request URL");
             return null;
         }
 
         try {
+            // https://stg-oauth-website.ohiomron.com/connect/authorize?client_id=coach-api&response_type=code&redirect_uri=http://localhost:8082/omron/oauth&scope=bloodpressure+activity+openid+offline_access
             URLCodec urlCodec = new URLCodec();
-            return oauthHostUrl + "/connect/authorize?client_id=" + urlCodec.encode(clientId) +
-                    "&response_type=code&scope=" + urlCodec.encode(scope) +
-                    "&redirect_uri=" + urlCodec.encode(redirectUrl);
+            return omronAuthorizeUrl + "/connect/authorize?client_id=" + urlCodec.encode(clientId) +
+                    "&response_type=code&redirect_uri=" + urlCodec.encode(redirectUrl) +
+                    "&scope=" + urlCodec.encode(scope);
 
         } catch (EncoderException e) {
-            throw new DataException("caught " + e.getClass().getName() + " encoding Omron Authorization Request URL params - " + e.getMessage(), e);
+            throw new RuntimeException("caught " + e.getClass().getName() + " encoding Omron Authorization Request URL params - " + e.getMessage(), e);
         }
     }
 
-    public AccessTokenResponse requestAccessToken(String authorizationCode) throws IOException, EncoderException, OmronException {
+    public AccessTokenResponse requestAccessToken(String authorizationCode) throws IOException, OmronException {
         if ( ! isOmronEnabled() ) {
             logger.warn("Omron is not enabled - not requesting access token");
             return null;
@@ -113,7 +118,7 @@ public class OmronService extends AbstractService {
         headers.put("Content-Type", "application/x-www-form-urlencoded");
         headers.put("Cache-Control", "no-cache");
 
-        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/token", null, headers, bodyParams);
+        HttpResponse httpResponse = new HttpRequest().post(omronUrl + "/connect/token", null, headers, bodyParams);
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
@@ -129,7 +134,7 @@ public class OmronService extends AbstractService {
         }
     }
 
-    public RefreshTokenResponse refreshAccessToken(String refreshToken) throws IOException, EncoderException, OmronException {
+    public RefreshTokenResponse refreshAccessToken(String refreshToken) throws IOException, OmronException {
         if ( ! isOmronEnabled() ) {
             logger.warn("Omron is not enabled - not refreshing access token");
             return null;
@@ -148,7 +153,7 @@ public class OmronService extends AbstractService {
         headers.put("Content-Type", "application/x-www-form-urlencoded");
         headers.put("Cache-Control", "no-cache");
 
-        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/token", null, headers, bodyParams);
+        HttpResponse httpResponse = new HttpRequest().post(omronUrl + "/connect/token", null, headers, bodyParams);
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
@@ -164,34 +169,38 @@ public class OmronService extends AbstractService {
         }
     }
 
-    public void revokeAccessToken(String accessToken) throws EncoderException, IOException, OmronException {
-        if ( ! isOmronEnabled() ) {
-            logger.warn("Omron is not enabled - not revoking access token");
-            return;
-        }
-
-        logger.debug("revoking accessToken=" + accessToken);
-
-        Map<String, String> bodyParams = new LinkedHashMap<>();
-        bodyParams.put("client_id", clientId);
-        bodyParams.put("client_secret", secretKey);
-        bodyParams.put("token", accessToken);
-        bodyParams.put("token_type_hint", "access_token");
-
-        Map<String, String> headers = new LinkedHashMap<>();
-        headers.put("Content-Type", "application/x-www-form-urlencoded");
-        headers.put("Cache-Control", "no-cache");
-
-        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/revocation", null, headers, bodyParams);
-        int code = httpResponse.getResponseCode();
-
-        logger.debug("got response code=" + code);
-
-        if (code < 200 || code > 299) {
-            logger.error("Omron access token revocation error: " + code);
-            throw new OmronException("received HTTP " + code + " revoking access token");
-        }
-    }
+// storer 2023-10-02 - Omron updated their APIs and documentation, and they no longer document revoking access tokens
+//                     as we don't use revocations in COACH, I'm commenting out this function as I don't think the API
+//                     for it exists anymore.
+//
+//    public void revokeAccessToken(String accessToken) throws IOException, OmronException {
+//        if ( ! isOmronEnabled() ) {
+//            logger.warn("Omron is not enabled - not revoking access token");
+//            return;
+//        }
+//
+//        logger.debug("revoking accessToken=" + accessToken);
+//
+//        Map<String, String> bodyParams = new LinkedHashMap<>();
+//        bodyParams.put("client_id", clientId);
+//        bodyParams.put("client_secret", secretKey);
+//        bodyParams.put("token", accessToken);
+//        bodyParams.put("token_type_hint", "access_token");
+//
+//        Map<String, String> headers = new LinkedHashMap<>();
+//        headers.put("Content-Type", "application/x-www-form-urlencoded");
+//        headers.put("Cache-Control", "no-cache");
+//
+//        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/revocation", null, headers, bodyParams);
+//        int code = httpResponse.getResponseCode();
+//
+//        logger.debug("got response code=" + code);
+//
+//        if (code < 200 || code > 299) {
+//            logger.error("Omron access token revocation error: " + code);
+//            throw new OmronException("received HTTP " + code + " revoking access token");
+//        }
+//    }
 
     public void scheduleAccessTokenRefresh(String sessionId) {
         if ( ! isOmronEnabled() ) {
@@ -259,7 +268,43 @@ public class OmronService extends AbstractService {
             MeasurementResult result = requestMeasurements(sessionId, workspace.getOmronLastUpdated());
             if (result.hasBloodPressures()) {
                 for (OmronBloodPressureModel model : result.getBloodPressure()) {
-                    writeToPersistentCache(workspace.getInternalPatientId(), model);
+                    MyOmronVitals vitals = null;
+                    try {
+                        vitals = writeToPersistentCache(workspace.getInternalPatientId(), model);
+
+                    } catch (Exception e) {
+                        logger.error("caught " + e.getClass().getName() + " persisting Omron vitals - " + e.getMessage() + " - skipping -", e);
+                        logger.debug("vitals = " + model);
+                    }
+
+                    // write vitals remotely, if they were persisted to the cache successfully, and if writing remotely is enabled
+                    if (vitals != null && storeRemotely) {
+                        if (vitals.getSystolic() != null && vitals.getDiastolic() != null) {
+                            try {
+                                BloodPressureModel bpm = new BloodPressureModel(vitals, fcm);
+                                VendorTransformer transformer = workspace.getVendorTransformer();
+                                Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
+                                transformer.writeRemote(sessionId, fhirService, outgoingBundle);
+
+                            } catch (Exception e) {
+                                // remote errors are tolerable, since we will always store locally too
+                                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " + e.getMessage(), e);
+                            }
+                        }
+
+                        if (vitals.getPulse() != null) {
+                            try {
+                                PulseModel pm = new PulseModel(vitals, fcm);
+                                VendorTransformer transformer = workspace.getVendorTransformer();
+                                Bundle outgoingBundle = transformer.transformOutgoingPulseReading(pm);
+                                transformer.writeRemote(sessionId, fhirService, outgoingBundle);
+
+                            } catch (Exception e) {
+                                // remote errors are tolerable, since we will always store locally too
+                                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " + e.getMessage(), e);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -267,16 +312,14 @@ public class OmronService extends AbstractService {
             patientService.setOmronLastUpdated(workspace.getInternalPatientId(), lastUpdated);
             workspace.setOmronLastUpdated(lastUpdated);
 
-            workspace.clearOmronCache();
-
         } catch (OmronException e) {
             logger.error("caught " + e.getClass().getName() + " updating vitals cache - " + e.getMessage(), e);
         } catch (NotAuthenticatedException nae) {
             // handle silently
-        } catch (EncoderException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            workspace.clearCaches();
         }
     }
 
@@ -286,8 +329,25 @@ public class OmronService extends AbstractService {
         List<OmronVitals> list = new ArrayList<>();
         for (MyOmronVitals vitals : repository.findAllByPatId(workspace.getInternalPatientId())) {
             try {
-                BloodPressureModel bpModel = new BloodPressureModel(vitals, fcm);
-                PulseModel pulseModel = new PulseModel(vitals, fcm);
+                BloodPressureModel bpModel = null;
+                PulseModel pulseModel = null;
+
+                if (vitals.getSystolic() != null && vitals.getDiastolic() != null) {
+                    try {
+                        bpModel = new BloodPressureModel(vitals, fcm);
+                    } catch (DataException e) {
+                        logger.error("caught " + e.getClass().getName() + " building BloodPressureModel from MyOmronVitals - " + e.getMessage(), e);
+                    }
+                }
+
+                if (vitals.getPulse() != null) {
+                    try {
+                        pulseModel = new PulseModel(vitals, fcm);
+                    } catch (DataException e) {
+                        logger.error("caught " + e.getClass().getName() + " building PulseModel from MyOmronVitals - " + e.getMessage(), e);
+                    }
+                }
+
                 list.add(new OmronVitals(bpModel, pulseModel));
 
             } catch (ParseException e) {
@@ -314,7 +374,7 @@ public class OmronService extends AbstractService {
 // private methods
 //
 
-    private MeasurementResult requestMeasurements(String sessionId, Date sinceTimestamp) throws EncoderException, IOException, NotAuthenticatedException, OmronException {
+    private MeasurementResult requestMeasurements(String sessionId, Date sinceTimestamp) throws IOException, NotAuthenticatedException, OmronException {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         MyOmronTokenData tokenData = workspace.getOmronTokenData();
@@ -341,7 +401,7 @@ public class OmronService extends AbstractService {
         headers.put("Authorization", "Bearer " + tokenData.getBearerToken());
         headers.put("Content-Type", "application/x-www-form-urlencoded");
 
-        HttpResponse httpResponse = new HttpRequest().post(apiHostUrl + "/api/measurement", null, headers, bodyParams);
+        HttpResponse httpResponse = new HttpRequest().post(omronUrl + "/api/measurement", null, headers, bodyParams);
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
@@ -360,15 +420,16 @@ public class OmronService extends AbstractService {
         }
     }
 
-    private void writeToPersistentCache(Long internalPatientId, OmronBloodPressureModel model) {
+    private MyOmronVitals writeToPersistentCache(Long internalPatientId, OmronBloodPressureModel model) {
         if ( ! repository.existsByOmronId(model.getId()) ) {
             logger.info("caching Omron vitals with id=" + model.getId() + " for patient with id=" + internalPatientId);
             MyOmronVitals vitals = new MyOmronVitals(model);
             vitals.setPatId(internalPatientId);
             vitals.setCreatedDate(new Date());
-            repository.save(vitals);
+            return repository.save(vitals);
         } else {
             logger.debug("not caching Omron vitals with id=" + model.getId() + " - already exists!");
+            return null;
         }
     }
 }

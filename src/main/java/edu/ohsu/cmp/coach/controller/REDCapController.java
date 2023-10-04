@@ -9,7 +9,6 @@ import edu.ohsu.cmp.coach.service.PatientService;
 import edu.ohsu.cmp.coach.service.REDCapService;
 import edu.ohsu.cmp.coach.session.ProvisionalSessionCacheData;
 import edu.ohsu.cmp.coach.session.SessionService;
-import org.apache.commons.codec.EncoderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +34,7 @@ public class REDCapController extends BaseController {
     private REDCapService redCapService;
 
     @GetMapping("process-consent")
-    public String processConsent(HttpSession session) throws ConfigurationException, EncoderException, REDCapException, IOException {
+    public String processConsent(HttpSession session) throws ConfigurationException, REDCapException, IOException {
         String sessionId = session.getId();
 
         ProvisionalSessionCacheData cacheData = sessionService.getProvisionalSessionData(sessionId);

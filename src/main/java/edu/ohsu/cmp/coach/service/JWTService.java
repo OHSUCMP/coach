@@ -12,7 +12,6 @@ import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.CryptoUtil;
-import org.apache.commons.codec.EncoderException;
 import edu.ohsu.cmp.coach.util.UUIDUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
@@ -31,7 +30,10 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class JWTService {
@@ -111,7 +113,7 @@ public class JWTService {
      * @param jwt
      * @return
      */
-    public AccessToken getAccessToken(String tokenAuthUrl, String jwt) throws IOException, EncoderException {
+    public AccessToken getAccessToken(String tokenAuthUrl, String jwt) throws IOException {
         if ( ! isJWTEnabled() ) return null;
 
         logger.debug("requesting JWT access token from tokenAuthUrl=" + tokenAuthUrl + ", jwt=" + jwt);

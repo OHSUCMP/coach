@@ -13,7 +13,8 @@ public class QuantityModel {
         this.unit = q.hasUnit() ? q.getUnit() : unit;
     }
 
-    public QuantityModel(Integer value, String unit) {
+    public QuantityModel(Integer value, String unit) throws DataException {
+        if (value == null) throw new DataException("quantity value is null");
         this.value = value;
         this.unit = unit;
     }

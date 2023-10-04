@@ -1,13 +1,18 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.exception.*;
+import edu.ohsu.cmp.coach.entity.HomeBloodPressureReading;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
+import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.exception.MethodNotImplementedException;
+import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
-import edu.ohsu.cmp.coach.util.FhirUtil;
-import edu.ohsu.cmp.coach.entity.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
+import edu.ohsu.cmp.coach.model.omron.OmronVitals;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Coding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +30,9 @@ public class BloodPressureService extends AbstractService {
 
     @Autowired
     private HomeBloodPressureReadingService hbprService;
+
+    @Autowired
+    private OmronService omronService;
 
     public List<BloodPressureModel> buildRemoteBloodPressureList(String sessionId) throws DataException, ConfigurationException {
         CompositeBundle compositeBundle = new CompositeBundle();
@@ -66,19 +74,39 @@ public class BloodPressureService extends AbstractService {
         // now add any locally-stored BPs that do *not* logically match a BP already retrieved remotely
         List<BloodPressureModel> list = new ArrayList<>();
         list.addAll(remoteList);
+
         for (BloodPressureModel bpm : buildLocalBloodPressureReadings(sessionId)) {
             String key = bpm.getLogicalEqualityKey();
             if (remoteBPKeySet.contains(key)) {
                 logger.debug("NOT ADDING local BP matching remote BP with key: " + key);
 
             } else {
-                logger.debug("adding local BP with key: " + key);
-                list.add(bpm);
+                boolean added = false;
+                if (storeRemotely) {
+                    try {
+                        VendorTransformer transformer = workspace.getVendorTransformer();
+                        Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
+                        List<BloodPressureModel> list2 = transformer.transformIncomingBloodPressureReadings(
+                                transformer.writeRemote(sessionId, fhirService, outgoingBundle)
+                        );
+                        if (list2.size() >= 1) {
+                            BloodPressureModel bpm2 = list2.get(0);
+                            workspace.getRemoteBloodPressures().add(bpm2);
+                            list.add(bpm2);
+                            added = true;
+                        }
+
+                    } catch (Exception e) {
+                        // remote errors are tolerable, since we will always store locally too
+                        logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " + e.getMessage(), e);
+                    }
+                }
+                if ( ! added ) {
+                    logger.debug("adding local BP with key: " + key);
+                    list.add(bpm);
+                }
             }
         }
-
-        // finally, integrate any Omron BPs (if the user has authenticated)
-        list.addAll(workspace.getOmronBloodPressures());
 
         Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1);
 
@@ -157,9 +185,16 @@ public class BloodPressureService extends AbstractService {
     private List<BloodPressureModel> buildLocalBloodPressureReadings(String sessionId) throws DataException {
         List<BloodPressureModel> list = new ArrayList<>();
 
+        // add manually-entered BPs
         List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
         for (HomeBloodPressureReading item : hbprList) {
             list.add(new BloodPressureModel(item, fcm));
+        }
+
+        // add Omron-sourced BPs
+        List<OmronVitals> omronList = omronService.readFromPersistentCache(sessionId);
+        for (OmronVitals item : omronList) {
+            list.add(item.getBloodPressureModel());
         }
 
         return list;

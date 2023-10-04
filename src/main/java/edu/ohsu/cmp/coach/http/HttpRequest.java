@@ -29,15 +29,15 @@ public class HttpRequest {
         this.urlCodec = new URLCodec();
     }
 
-    public HttpResponse get(String url) throws IOException, EncoderException {
+    public HttpResponse get(String url) throws IOException {
         return get(url, null, null);
     }
 
-    public HttpResponse get(String url, Map<String, String> urlParams) throws IOException, EncoderException {
+    public HttpResponse get(String url, Map<String, String> urlParams) throws IOException {
         return get(url, urlParams, null);
     }
 
-    public HttpResponse get(String url, Map<String, String> urlParams, Map<String, String> requestHeaders) throws IOException, EncoderException {
+    public HttpResponse get(String url, Map<String, String> urlParams, Map<String, String> requestHeaders) throws IOException {
         if (urlParams != null && ! urlParams.isEmpty()) {
             url += "?" + buildURLEncodedParams(urlParams);
         }
@@ -53,23 +53,23 @@ public class HttpRequest {
         return execute(httpget);
     }
 
-    public HttpResponse post(String url) throws IOException, EncoderException {
+    public HttpResponse post(String url) throws IOException {
         return post(url, null, null, (String) null);
     }
 
-    public HttpResponse post(String url, Map<String, String> urlParams) throws IOException, EncoderException {
+    public HttpResponse post(String url, Map<String, String> urlParams) throws IOException {
         return post(url, urlParams, null, (String) null);
     }
 
-    public HttpResponse post(String url, Map<String, String> urlParams, Map<String, String> requestHeaders) throws IOException, EncoderException {
+    public HttpResponse post(String url, Map<String, String> urlParams, Map<String, String> requestHeaders) throws IOException {
         return post(url, urlParams, requestHeaders, (String) null);
     }
 
-    public HttpResponse post(String url, Map<String, String> urlParams, Map<String, String> requestHeaders, Map<String, String> bodyParams) throws IOException, EncoderException {
+    public HttpResponse post(String url, Map<String, String> urlParams, Map<String, String> requestHeaders, Map<String, String> bodyParams) throws IOException {
         return post(url, urlParams, requestHeaders, buildURLEncodedParams(bodyParams));
     }
 
-    public HttpResponse post(String url, Map<String, String> urlParams, Map<String, String> requestHeaders, String body) throws IOException, EncoderException {
+    public HttpResponse post(String url, Map<String, String> urlParams, Map<String, String> requestHeaders, String body) throws IOException {
         if (urlParams != null && ! urlParams.isEmpty()) {
             url += "?" + buildURLEncodedParams(urlParams);
         }
@@ -136,12 +136,16 @@ public class HttpRequest {
         return new HttpResponse(code, sb.toString());
     }
 
-    private String buildURLEncodedParams(Map<String, String> params) throws EncoderException {
+    private String buildURLEncodedParams(Map<String, String> params) {
         if (params == null || params.isEmpty()) return null;
 
         List<String> list = new ArrayList<String>();
         for (Map.Entry<String, String> entry : params.entrySet()) {
-            list.add(String.format("%s=%s", entry.getKey(), urlCodec.encode(entry.getValue())));
+            try {
+                list.add(String.format("%s=%s", entry.getKey(), urlCodec.encode(entry.getValue())));
+            } catch (EncoderException e) {
+                throw new RuntimeException("caught " + e.getClass().getName() + " encoding URL param {" + entry.getKey() + ", " + entry.getValue() + "} - " + e.getMessage(), e);
+            }
         }
         return StringUtils.join(list, '&');
     }
