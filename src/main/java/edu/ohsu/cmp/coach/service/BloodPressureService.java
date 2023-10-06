@@ -84,6 +84,8 @@ public class BloodPressureService extends AbstractService {
                 boolean added = false;
                 if (storeRemotely) {
                     try {
+                        logger.info("attempting to store remotely BP: " + bpm + "(" + bpm.getSystolic() + "/" + bpm.getDiastolic() +
+                                " @ " + bpm.getReadingDateString() + ")");
                         VendorTransformer transformer = workspace.getVendorTransformer();
                         Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
                         List<BloodPressureModel> list2 = transformer.transformIncomingBloodPressureReadings(
