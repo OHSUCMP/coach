@@ -87,3 +87,32 @@ function appendReadingToTable(obj) {
 
     $(container).html(sortedData);
 }
+
+function populateReadingTimestampNow() {
+    let now = new Date($.now());
+
+    // readingDate : mm-dd-yyyy
+    let month = now.getMonth() + 1;
+    let dayOfMonth = now.getDate();
+    let year = now.getFullYear();
+
+    // readingTime : hh:mm am
+    let hour = now.getHours(); // 0 - 23.  0 - 11: am.  12-23: pm.
+    let ampm = 'am';
+    if (hour >= 12) {
+        hour = hour - 12;
+        ampm = 'pm';
+    }
+    if (hour === 0) {
+        hour = 12;
+    }
+    let min = now.getMinutes();;
+
+    let readingDate = String(month).padStart(2, '0') + '-' + String(dayOfMonth).padStart(2, '0') + '-' + year;
+    let readingTime = String(hour).padStart(2, '0') + ':' + String(min).padStart(2, '0') + ' ' + ampm;
+
+//    alert("now = '" + now + '; readingDate = "' + readingDate + '", readingTime = "' + readingTime + '"');
+
+    $('#readingDate').val(readingDate);
+    $('#readingTime').val(readingTime);
+}

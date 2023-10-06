@@ -64,6 +64,10 @@
             $(this).html('Show Instructions');
         }
     });
+
+    $(document).on('click', '#readingTimestampNow', function() {
+        populateReadingTimestampNow();
+    });
 </script>
 
 <div class="container">
@@ -141,6 +145,12 @@
                                     <span class="input-group-text" id="time-addon">Time:</span>
                                     <input id="readingTime" type="text" class="form-control" aria-label="Time" aria-describedby="time-addon">
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mt-5">
+                                <button id="readingTimestampNow" type="button" class="btn btn-sm button-secondary">Use Current Date and Time</button>
                             </div>
                         </div>
                     </div>

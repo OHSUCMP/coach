@@ -107,6 +107,16 @@ body {
     color: black;
 }
 
+.button-secondary {
+    background-color: #7698a1;
+    color: black;
+}
+
+.button-secondary:hover {
+    background-color: #9bd0da;
+    color: black;
+}
+
 .link {
     color: #004d99;
     text-decoration: none;
