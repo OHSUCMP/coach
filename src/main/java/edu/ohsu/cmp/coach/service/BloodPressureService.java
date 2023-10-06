@@ -82,27 +82,30 @@ public class BloodPressureService extends AbstractService {
 
             } else {
                 boolean added = false;
-                if (storeRemotely) {
-                    try {
-                        logger.info("attempting to store remotely BP: " + bpm + "(" + bpm.getSystolic() + "/" + bpm.getDiastolic() +
-                                " @ " + bpm.getReadingDateString() + ")");
-                        VendorTransformer transformer = workspace.getVendorTransformer();
-                        Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
-                        List<BloodPressureModel> list2 = transformer.transformIncomingBloodPressureReadings(
-                                transformer.writeRemote(sessionId, fhirService, outgoingBundle)
-                        );
-                        if (list2.size() >= 1) {
-                            BloodPressureModel bpm2 = list2.get(0);
-                            workspace.getRemoteBloodPressures().add(bpm2);
-                            list.add(bpm2);
-                            added = true;
-                        }
-
-                    } catch (Exception e) {
-                        // remote errors are tolerable, since we will always store locally too
-                        logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " + e.getMessage(), e);
-                    }
-                }
+// storer 2023-10-06 - commenting this out temporarily, this function gets called a lot in parallel and for some reason some local readings
+//                     that aren't retrieved remotely aren't writing remotely because they already exist, somehow.  need to debug that.  in the
+//                     meantime, we don't want to execute a dozen write attempts that fail for these
+//                if (storeRemotely) {
+//                    try {
+//                        logger.info("attempting to store remotely BP: " + bpm + "(" + bpm.getSystolic() + "/" + bpm.getDiastolic() +
+//                                " @ " + bpm.getReadingDateString() + ")");
+//                        VendorTransformer transformer = workspace.getVendorTransformer();
+//                        Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
+//                        List<BloodPressureModel> list2 = transformer.transformIncomingBloodPressureReadings(
+//                                transformer.writeRemote(sessionId, fhirService, outgoingBundle)
+//                        );
+//                        if (list2.size() >= 1) {
+//                            BloodPressureModel bpm2 = list2.get(0);
+//                            workspace.getRemoteBloodPressures().add(bpm2);
+//                            list.add(bpm2);
+//                            added = true;
+//                        }
+//
+//                    } catch (Exception e) {
+//                        // remote errors are tolerable, since we will always store locally too
+//                        logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " + e.getMessage(), e);
+//                    }
+//                }
                 if ( ! added ) {
                     logger.debug("adding local BP with key: " + key);
                     list.add(bpm);

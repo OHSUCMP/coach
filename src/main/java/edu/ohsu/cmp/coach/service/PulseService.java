@@ -75,25 +75,28 @@ public class PulseService extends AbstractService {
 
             } else {
                 boolean added = false;
-                if (storeRemotely) {
-                    try {
-                        VendorTransformer transformer = workspace.getVendorTransformer();
-                        Bundle outgoingBundle = transformer.transformOutgoingPulseReading(pm);
-                        List<PulseModel> list2 = transformer.transformIncomingPulseReadings(
-                                transformer.writeRemote(sessionId, fhirService, outgoingBundle)
-                        );
-                        if (list2.size() >= 1) {
-                            PulseModel pm2 = list2.get(0);
-                            workspace.getRemotePulses().add(pm2);
-                            list.add(pm2);
-                            added = true;
-                        }
-
-                    } catch (Exception e) {
-                        // remote errors are tolerable, since we will always store locally too
-                        logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create Pulse remotely - " + e.getMessage(), e);
-                    }
-                }
+// storer 2023-10-06 - commenting this out temporarily, this function gets called a lot in parallel and for some reason some local readings
+//                     that aren't retrieved remotely aren't writing remotely because they already exist, somehow.  need to debug that.  in the
+//                     meantime, we don't want to execute a dozen write attempts that fail for these
+//                if (storeRemotely) {
+//                    try {
+//                        VendorTransformer transformer = workspace.getVendorTransformer();
+//                        Bundle outgoingBundle = transformer.transformOutgoingPulseReading(pm);
+//                        List<PulseModel> list2 = transformer.transformIncomingPulseReadings(
+//                                transformer.writeRemote(sessionId, fhirService, outgoingBundle)
+//                        );
+//                        if (list2.size() >= 1) {
+//                            PulseModel pm2 = list2.get(0);
+//                            workspace.getRemotePulses().add(pm2);
+//                            list.add(pm2);
+//                            added = true;
+//                        }
+//
+//                    } catch (Exception e) {
+//                        // remote errors are tolerable, since we will always store locally too
+//                        logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create Pulse remotely - " + e.getMessage(), e);
+//                    }
+//                }
                 if ( ! added ) {
                     logger.debug("adding local Pulse with key: " + key);
                     list.add(pm);
