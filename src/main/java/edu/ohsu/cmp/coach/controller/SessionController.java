@@ -69,14 +69,19 @@ public class SessionController extends BaseController {
                                             @RequestParam String userId,
                                             @RequestParam("audience") String audienceStr) throws ConfigurationException {
 
+        logger.debug("in prepare-session for session " + session.getId());
+
         FHIRCredentials credentials = new FHIRCredentials(clientId, serverUrl, bearerToken, patientId, userId);
         Audience audience = Audience.fromTag(audienceStr);
 
         MyPatient myPatient = patientService.getMyPatient(patientId);
 
         boolean skipConsent = ! redCapService.isRedcapEnabled();
+        boolean consentGranted = StringUtils.equals(myPatient.getConsentGranted(), MyPatient.CONSENT_GRANTED_YES);
 
-        if (skipConsent || StringUtils.equals(myPatient.getConsentGranted(), MyPatient.CONSENT_GRANTED_YES)) {
+        logger.debug("skipConsent = " + skipConsent + ", consentGranted = " + consentGranted);
+
+        if (skipConsent || consentGranted) {
             sessionService.prepareSession(session.getId(), credentials, audience);
 
             return ResponseEntity.ok("session configured successfully");

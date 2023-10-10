@@ -47,6 +47,7 @@ public class SessionService extends AbstractService {
     }
 
     public void prepareProvisionalSession(String sessionId, FHIRCredentials credentials, Audience audience) {
+        logger.debug("preparing provisional session " + sessionId + " with credentials=" + credentials);
         ProvisionalSessionCacheData cacheData = new ProvisionalSessionCacheData(credentials, audience);
         provisionalCache.put(sessionId, cacheData);
         scheduleExpireProvisional(sessionId);
