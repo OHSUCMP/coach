@@ -79,7 +79,8 @@ public class HomeController extends BaseController {
 
         String sessionId = session.getId();
         if (sessionService.exists(sessionId)) {
-            logger.info("requesting data for session " + sessionId);
+            logger.info("session exists.  requesting data for session " + sessionId);
+
             UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
             try {
@@ -112,6 +113,8 @@ public class HomeController extends BaseController {
             return "home";
 
         } else if (sessionService.existsProvisional(sessionId)) {
+            logger.info("provisional session exists.  starting consent workflow for session " + sessionId);
+
             // we only get here if the user hasn't yet consented OR if they denied consent.
             ProvisionalSessionCacheData cacheData = sessionService.getProvisionalSessionData(sessionId);
             MyPatient patient = patientService.getMyPatient(cacheData.getCredentials().getPatientId());
@@ -141,6 +144,8 @@ public class HomeController extends BaseController {
             }
 
         } else {
+            logger.info("no session exists.  completing SMART-on-FHIR handshake for session " + sessionId);
+
             model.addAttribute("applicationName", applicationName);
             model.addAttribute("cacheCredentials", cacheCredentials);
             return "fhir-complete-handshake";
