@@ -19,7 +19,6 @@
 
         $(document).ready(function() {
             clearSession(function() {
-                console.log("session data cleared, calling authorize with clientId='{{clientId}}', scope='{{scope}}', redirect_uri='{{redirectUri}}', iss='{{iss}}'");
                 FHIR.oauth2.authorize({
                     "client_id": "{{clientId}}",
                     "scope": "{{scope}}",
