@@ -52,7 +52,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
 
     // read local
     public BloodPressureModel(HomeBloodPressureReading reading, FhirConfigManager fcm) throws DataException {
-        super(ObservationSource.HOME, reading.getFollowedInstructions(), reading.getReadingDate());
+        super(ObservationSource.valueOf(reading.getSource()), reading.getFollowedInstructions(), reading.getReadingDate());
 
         if (reading.getSystolic() == null || reading.getDiastolic() == null) {
             throw new DataException("both systolic and diastolic are required (reading.id=" + reading.getId() + ")");
@@ -121,7 +121,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
     }
 
     public BloodPressureModel(MyOmronVitals vitals, FhirConfigManager fcm) throws ParseException, DataException {
-        super(ObservationSource.HOME, null, OMRON_DATETIME_FORMAT.parse(vitals.getDateTimeLocal() + vitals.getDateTimeUtcOffset()), fcm);
+        super(ObservationSource.OMRON, null, OMRON_DATETIME_FORMAT.parse(vitals.getDateTimeLocal() + vitals.getDateTimeUtcOffset()), fcm);
         sourceOmronBloodPressureModel = new OmronBloodPressureModel(vitals);
         localDatabaseId = vitals.getId();
         systolic = new QuantityModel(vitals.getSystolic(), vitals.getBloodPressureUnits());
@@ -156,10 +156,6 @@ public class BloodPressureModel extends AbstractVitalsModel {
         } else {
             throw new DataException("diastolic observation : invalid coding (Observation.id=" + diastolicObservation.getId() + ")");
         }
-    }
-
-    public boolean isHomeReading() {
-        return source == ObservationSource.HOME;
     }
 
     @Override
@@ -223,5 +219,13 @@ public class BloodPressureModel extends AbstractVitalsModel {
 
     public QuantityModel getDiastolic() {
         return diastolic;
+    }
+
+    public boolean isLow() {
+        return systolic.getValue() < 90 || diastolic.getValue() < 60;
+    }
+
+    public boolean isHigh() {
+        return systolic.getValue() >= 180 || diastolic.getValue() >= 120;
     }
 }

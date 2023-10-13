@@ -6,9 +6,7 @@ import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
-import edu.ohsu.cmp.coach.model.ObservationSource;
 import edu.ohsu.cmp.coach.model.PulseModel;
-import edu.ohsu.cmp.coach.model.omron.OmronVitals;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.Bundle;
@@ -30,9 +28,6 @@ public class PulseService extends AbstractService {
     @Autowired
     private HomePulseReadingService hprService;
 
-    @Autowired
-    private OmronService omronService;
-
     public List<PulseModel> buildRemotePulseList(String sessionId) throws DataException, ConfigurationException {
         CompositeBundle compositeBundle = new CompositeBundle();
         compositeBundle.consume(ehrService.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getPulseCodings()), fcm.getPulseLookbackPeriod(),null));
@@ -44,15 +39,28 @@ public class PulseService extends AbstractService {
 
     public List<PulseModel> getHomePulseReadings(String sessionId) throws DataException {
         List<PulseModel> list = new ArrayList<>();
-        for (PulseModel entry : getPulseReadings(sessionId)) {
-            if (entry.getSource() == ObservationSource.HOME) {
+
+        for (PulseModel entry : getPulseReadings(sessionId, false)) {
+            if (entry.isHomeReading()) {
                 list.add(entry);
             }
         }
+
+        // *now* we impose the limit, *after* we've filtered to only HOME readings
+
+        Integer limit = fcm.getBpLimit();
+        if (limit != null && list.size() > limit) {
+            list = list.subList(0, limit);
+        }
+
         return list;
     }
 
     public List<PulseModel> getPulseReadings(String sessionId) throws DataException {
+        return getPulseReadings(sessionId, true);
+    }
+
+    public List<PulseModel> getPulseReadings(String sessionId, boolean doLimit) throws DataException {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         // add remote pulses first
@@ -106,9 +114,11 @@ public class PulseService extends AbstractService {
 
         Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1);
 
-        Integer limit = fcm.getBpLimit();
-        if (limit != null && list.size() > limit) {
-            list = list.subList(0, limit);
+        if (doLimit) {
+            Integer limit = fcm.getBpLimit();
+            if (limit != null && list.size() > limit) {
+                list = list.subList(0, limit);
+            }
         }
 
         return list;
@@ -165,12 +175,6 @@ public class PulseService extends AbstractService {
         List<HomePulseReading> hbprList = hprService.getHomePulseReadings(sessionId);
         for (HomePulseReading item : hbprList) {
             list.add(new PulseModel(item, fcm));
-        }
-
-        // add Omron-sourced pulses
-        List<OmronVitals> omronList = omronService.readFromPersistentCache(sessionId);
-        for (OmronVitals item : omronList) {
-            list.add(item.getPulseModel());
         }
 
         return list;

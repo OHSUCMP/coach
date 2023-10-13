@@ -107,6 +107,12 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
         return source;
     }
 
+    public boolean isHomeReading() {
+        return source == ObservationSource.HOME ||
+                source == ObservationSource.COACH_UI ||
+                source == ObservationSource.OMRON;
+    }
+
     public Boolean getFollowedProtocol() {
         return followedProtocol;
     }

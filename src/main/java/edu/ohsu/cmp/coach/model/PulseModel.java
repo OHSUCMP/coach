@@ -41,7 +41,7 @@ public class PulseModel extends AbstractVitalsModel {
 
     // read local
     public PulseModel(HomePulseReading reading, FhirConfigManager fcm) throws DataException {
-        super(ObservationSource.HOME, reading.getFollowedInstructions(), reading.getReadingDate());
+        super(ObservationSource.valueOf(reading.getSource()), reading.getFollowedInstructions(), reading.getReadingDate());
 
         localDatabaseId = reading.getId();
         pulse = new QuantityModel(reading.getPulse(), fcm.getPulseValueUnit());
@@ -72,14 +72,8 @@ public class PulseModel extends AbstractVitalsModel {
         }
     }
 
-    public PulseModel(OmronBloodPressureModel model, FhirConfigManager fcm) throws ParseException, DataException {
-        super(ObservationSource.HOME, null, OMRON_DATETIME_FORMAT.parse(model.getDateTimeLocal() + model.getDateTimeUtcOffset()), fcm);
-        sourceOmronBloodPressureModel = model;
-        pulse = new QuantityModel(model.getPulse(), model.getPulseUnits());
-    }
-
     public PulseModel(MyOmronVitals vitals, FhirConfigManager fcm) throws ParseException, DataException {
-        super(ObservationSource.HOME, null, OMRON_DATETIME_FORMAT.parse(vitals.getDateTimeLocal() + vitals.getDateTimeUtcOffset()), fcm);
+        super(ObservationSource.OMRON, null, OMRON_DATETIME_FORMAT.parse(vitals.getDateTimeLocal() + vitals.getDateTimeUtcOffset()), fcm);
         sourceOmronBloodPressureModel = new OmronBloodPressureModel(vitals);
         localDatabaseId = vitals.getId();
         pulse = new QuantityModel(vitals.getPulse(), vitals.getPulseUnits());

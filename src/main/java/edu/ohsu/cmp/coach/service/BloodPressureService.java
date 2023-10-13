@@ -8,11 +8,9 @@ import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
-import edu.ohsu.cmp.coach.model.omron.OmronVitals;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,9 +29,6 @@ public class BloodPressureService extends AbstractService {
     @Autowired
     private HomeBloodPressureReadingService hbprService;
 
-    @Autowired
-    private OmronService omronService;
-
     public List<BloodPressureModel> buildRemoteBloodPressureList(String sessionId) throws DataException, ConfigurationException {
         CompositeBundle compositeBundle = new CompositeBundle();
 
@@ -51,15 +46,28 @@ public class BloodPressureService extends AbstractService {
 
     public List<BloodPressureModel> getHomeBloodPressureReadings(String sessionId) throws DataException {
         List<BloodPressureModel> list = new ArrayList<>();
-        for (BloodPressureModel entry : getBloodPressureReadings(sessionId)) {
+
+        for (BloodPressureModel entry : getBloodPressureReadings(sessionId, false)) {
             if (entry.isHomeReading()) {
                 list.add(entry);
             }
         }
+
+        // *now* we impose the limit, *after* we've filtered to only HOME readings
+
+        Integer limit = fcm.getBpLimit();
+        if (limit != null && list.size() > limit) {
+            list = list.subList(0, limit);
+        }
+
         return list;
     }
 
     public List<BloodPressureModel> getBloodPressureReadings(String sessionId) throws DataException {
+        return getBloodPressureReadings(sessionId, true);
+    }
+
+    public List<BloodPressureModel> getBloodPressureReadings(String sessionId, boolean doLimit) throws DataException {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         // add remote BPs first
@@ -115,9 +123,11 @@ public class BloodPressureService extends AbstractService {
 
         Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1);
 
-        Integer limit = fcm.getBpLimit();
-        if (limit != null && list.size() > limit) {
-            list = list.subList(0, limit);
+        if (doLimit) {
+            Integer limit = fcm.getBpLimit();
+            if (limit != null && list.size() > limit) {
+                list = list.subList(0, limit);
+            }
         }
 
         return list;
@@ -194,12 +204,6 @@ public class BloodPressureService extends AbstractService {
         List<HomeBloodPressureReading> hbprList = hbprService.getHomeBloodPressureReadings(sessionId);
         for (HomeBloodPressureReading item : hbprList) {
             list.add(new BloodPressureModel(item, fcm));
-        }
-
-        // add Omron-sourced BPs
-        List<OmronVitals> omronList = omronService.readFromPersistentCache(sessionId);
-        for (OmronVitals item : omronList) {
-            list.add(item.getBloodPressureModel());
         }
 
         return list;

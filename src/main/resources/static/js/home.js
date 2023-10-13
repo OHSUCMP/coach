@@ -1,7 +1,8 @@
 // Match the enum ObservationSource in Java
 const BPSource = Object.freeze({
     Home: "HOME",
-    // HomeBluetooth: "HOME_BLUETOOTH",
+    CoachUI: "COACH_UI",
+    Omron: "OMRON",
     Office: "OFFICE",
     Unknown: "UNKNOWN"
 })
@@ -112,7 +113,7 @@ function getBPSet(bps) {
             return acc;
         }
         acc.bpset.push(bp);
-        if (bp.source === BPSource.Home /* || bp.source === BPSource.HomeBluetooth */ ) {
+        if (bp.source === BPSource.Home || bp.source === BPSource.CoachUI || bp.source === BPSource.Omron ) {
             acc.score += 0.334;
         } else {
             // Anything explicitly not home is considered OFFICE and given 1 point
@@ -287,7 +288,7 @@ function buildPointStyleArray(data) {
     // see https://www.chartjs.org/docs/latest/configuration/elements.html for options
     let arr = [];
     data.forEach(function(item) {
-        if (item.source === BPSource.Home /* || item.source === BPSource.HomeBluetooth*/ ) {
+        if (item.source === BPSource.Home || item.source === BPSource.CoachUI || item.source === BPSource.Omron ) {
             arr.push('circle');
         } else if (item.source === BPSource.Office) {
             arr.push('rect');

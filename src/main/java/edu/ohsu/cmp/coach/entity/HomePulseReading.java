@@ -19,25 +19,28 @@ public class HomePulseReading {
     private Date readingDate;
     private Boolean followedInstructions;
     private Date createdDate;
+    private String source;
 
     protected HomePulseReading() {
     }
 
-    public HomePulseReading(Integer pulse, Date readingDate, Boolean followedInstructions) {
+    public HomePulseReading(Integer pulse, Date readingDate, Boolean followedInstructions, ObservationSource source) {
         this.pulse = pulse;
         this.readingDate = readingDate;
         this.followedInstructions = followedInstructions;
+        this.source = source.name();
     }
 
     // used during create, do not set ID
     public HomePulseReading(PulseModel pm) throws DataException {
-        if (pm.getSource() != ObservationSource.HOME) {
+        if (pm.getSource() != ObservationSource.COACH_UI && pm.getSource() != ObservationSource.OMRON) {
             throw new DataException("cannot convert PulseModel with source=" +
                     pm.getSource() + " to HomePulseReading");
         }
         this.pulse = pm.getPulse().getValue().intValue();
         this.readingDate = pm.getReadingDate();
         this.followedInstructions = pm.getFollowedProtocol();
+        this.source = pm.getSource().name();
     }
 
     public Long getId() {
@@ -86,5 +89,13 @@ public class HomePulseReading {
 
     public void setCreatedDate(Date createdTimestamp) {
         this.createdDate = createdTimestamp;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 }

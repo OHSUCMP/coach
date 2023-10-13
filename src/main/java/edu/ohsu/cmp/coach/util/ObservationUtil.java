@@ -17,7 +17,7 @@ public class ObservationUtil {
 
         EncounterMatcher matcher = new EncounterMatcher(fcm);
         if      (matcher.isOfficeEncounter(encounter))  source = ObservationSource.OFFICE;
-        else if (matcher.isHomeEncounter(encounter))    source = ObservationSource.HOME;
+        else if (matcher.isHomeEncounter(encounter))    source = ObservationSource.HOME;    // this should remain generic HOME as a more specific source is unknown
 
         return source != null ?
                 source :
@@ -39,7 +39,7 @@ public class ObservationUtil {
             CodeableConcept code = bpObservation.getCode();
 
             if (FhirUtil.hasCoding(code, fcm.getBpHomeCodings()) || FhirUtil.hasHomeSettingExtension(bpObservation)) {
-                source = ObservationSource.HOME;
+                source = ObservationSource.HOME;    // this should remain generic HOME as a more specific source is unknown
 
             } else if (FhirUtil.hasCoding(code, fcm.getBpOfficeCodings())) {
                 source = ObservationSource.OFFICE;
@@ -53,7 +53,7 @@ public class ObservationUtil {
 
     public static ObservationSource getPulseSource(Observation pulseObservation) {
         return FhirUtil.hasHomeSettingExtension(pulseObservation) ?
-                ObservationSource.HOME :
+                ObservationSource.HOME :    // this should remain generic HOME as a more specific source is unknown
                 ObservationSource.UNKNOWN;
     }
 

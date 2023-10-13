@@ -7,7 +7,6 @@ import edu.ohsu.cmp.coach.entity.MyOmronVitals;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.NotAuthenticatedException;
 import edu.ohsu.cmp.coach.exception.OmronException;
-import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
@@ -18,7 +17,6 @@ import edu.ohsu.cmp.coach.repository.OmronVitalsCacheRepository;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
-import org.hl7.fhir.r4.model.Bundle;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +71,12 @@ public class OmronService extends AbstractService {
 
     @Autowired
     private Scheduler scheduler;
+
+    @Autowired
+    private BloodPressureService bloodPressureService;
+
+    @Autowired
+    private PulseService pulseService;
 
     private static final Pattern KEY_PATTERN = Pattern.compile("^[a-f0-9]{64}$");
 
@@ -268,6 +272,8 @@ public class OmronService extends AbstractService {
             MeasurementResult result = requestMeasurements(sessionId, workspace.getOmronLastUpdated());
             if (result.hasBloodPressures()) {
                 for (OmronBloodPressureModel model : result.getBloodPressure()) {
+
+                    // first persist the original object to local cache
                     MyOmronVitals vitals = null;
                     try {
                         vitals = writeToPersistentCache(workspace.getInternalPatientId(), model);
@@ -277,31 +283,26 @@ public class OmronService extends AbstractService {
                         logger.debug("vitals = " + model);
                     }
 
-                    // write vitals remotely, if they were persisted to the cache successfully, and if writing remotely is enabled
-                    if (vitals != null && storeRemotely) {
+                    if (vitals != null) {
+                        // now create this blood pressure into our home blood pressure model table (if applicable)
                         if (vitals.getSystolic() != null && vitals.getDiastolic() != null) {
                             try {
-                                BloodPressureModel bpm = new BloodPressureModel(vitals, fcm);
-                                VendorTransformer transformer = workspace.getVendorTransformer();
-                                Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
-                                transformer.writeRemote(sessionId, fhirService, outgoingBundle);
+                                bloodPressureService.create(sessionId, new BloodPressureModel(vitals, fcm));
 
                             } catch (Exception e) {
                                 // remote errors are tolerable, since we will always store locally too
-                                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " + e.getMessage(), e);
+                                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP - " + e.getMessage(), e);
                             }
                         }
 
+                        // and also persist pulse into our home pulse model table (if applicable)
                         if (vitals.getPulse() != null) {
                             try {
-                                PulseModel pm = new PulseModel(vitals, fcm);
-                                VendorTransformer transformer = workspace.getVendorTransformer();
-                                Bundle outgoingBundle = transformer.transformOutgoingPulseReading(pm);
-                                transformer.writeRemote(sessionId, fhirService, outgoingBundle);
+                                pulseService.create(sessionId, new PulseModel(vitals, fcm));
 
                             } catch (Exception e) {
                                 // remote errors are tolerable, since we will always store locally too
-                                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " + e.getMessage(), e);
+                                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create Pulse - " + e.getMessage(), e);
                             }
                         }
                     }
