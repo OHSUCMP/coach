@@ -2,8 +2,12 @@ drop table if exists hypotension_adverse_event;
 create table hypotension_adverse_event (
     id int not null auto_increment primary key,
     patId int not null,
-    bp1Id int unique not null,
-    bp2Id int unique not null,
+    bp1Systolic int not null,
+    bp1Diastolic int not null,
+    bp1ReadingDate datetime not null,
+    bp2Systolic int not null,
+    bp2Diastolic int not null,
+    bp2ReadingDate datetime not null,
     createdDate datetime not null
 );
 
