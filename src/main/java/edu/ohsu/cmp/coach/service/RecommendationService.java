@@ -65,6 +65,9 @@ public class RecommendationService extends AbstractService {
     @Autowired
     private CounselingService counselingService;
 
+    @Autowired
+    private AdverseEventService adverseEventService;
+
     @Value("${contact.clinic}")
     private String clinicContact;
 
@@ -134,9 +137,9 @@ public class RecommendationService extends AbstractService {
             // HACK: if the patient has no Adverse Events, we must construct a fake one to send to
             //       CQF-Ruler to prevent it from querying the FHIR server for them and consequently
             //       blowing up
-            List<AdverseEventModel> adverseEvents = workspace.getAdverseEvents();
+            List<AdverseEventModel> adverseEvents = adverseEventService.getAdverseEvents(sessionId);
             if (adverseEvents.size() > 0) {
-                for (AdverseEventModel adverseEvent : workspace.getAdverseEvents()) {
+                for (AdverseEventModel adverseEvent : adverseEvents) {
 //                    prefetch.add(adverseEvent.toBundle(p.getId(), fcm));
                     compositeBundle.consume(adverseEvent.toBundle(p.getId(), fcm));
                 }

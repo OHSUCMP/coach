@@ -8,7 +8,9 @@ import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.ObservationSource;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
+import edu.ohsu.cmp.coach.service.HypotensionAdverseEventService;
 import edu.ohsu.cmp.coach.service.PulseService;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Observation;
 import org.slf4j.Logger;
@@ -37,6 +39,9 @@ public class VitalsController extends BaseController {
 
     @Autowired
     private PulseService pulseService;
+
+    @Autowired
+    private HypotensionAdverseEventService hypotensionAdverseEventService;
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) throws DataException {
@@ -68,13 +73,12 @@ public class VitalsController extends BaseController {
                                                             @RequestParam Long readingDateTS,
                                                             @RequestParam Boolean followedInstructions) throws DataException, ConfigurationException, IOException, ScopeException {
 
-        // get the cache just to make sure it's defined and the user is properly authenticated
-        userWorkspaceService.get(session.getId());
+        UserWorkspace workspace = userWorkspaceService.get(session.getId());
 
         Date readingDate1 = new Date(readingDateTS);
 
         List<AbstractVitalsModel> list = new ArrayList<>();
-        BloodPressureModel bpm1 = new BloodPressureModel(ObservationSource.HOME,
+        BloodPressureModel bpm1 = new BloodPressureModel(ObservationSource.COACH_UI,
                 systolic1, diastolic1, readingDate1, followedInstructions, fcm);
         bpm1 = bpService.create(session.getId(), bpm1);
         list.add(bpm1);
@@ -85,7 +89,7 @@ public class VitalsController extends BaseController {
         Observation protocolObservation = bpm1.getSourceProtocolObservation();
 
         if (pulse1 != null) {
-            PulseModel p1 = new PulseModel(ObservationSource.HOME, pulse1, readingDate1, followedInstructions, fcm);
+            PulseModel p1 = new PulseModel(ObservationSource.COACH_UI, pulse1, readingDate1, followedInstructions, fcm);
             p1.setSourceEncounter(encounter);
             p1.setSourceProtocolObservation(protocolObservation);
             p1 = pulseService.create(session.getId(), p1);
@@ -100,7 +104,7 @@ public class VitalsController extends BaseController {
         Date readingDate2 = cal.getTime();
 
         if (systolic2 != null && diastolic2 != null) {
-            BloodPressureModel bpm2 = new BloodPressureModel(ObservationSource.HOME,
+            BloodPressureModel bpm2 = new BloodPressureModel(ObservationSource.COACH_UI,
                     systolic2, diastolic2, readingDate2, followedInstructions, fcm);
             bpm2.setSourceEncounter(encounter);
             bpm2.setSourceProtocolObservation(protocolObservation);
@@ -109,16 +113,19 @@ public class VitalsController extends BaseController {
         }
 
         if (pulse2 != null) {
-            PulseModel p2 = new PulseModel(ObservationSource.HOME, pulse2, readingDate2, followedInstructions, fcm);
+            PulseModel p2 = new PulseModel(ObservationSource.COACH_UI, pulse2, readingDate2, followedInstructions, fcm);
             p2.setSourceEncounter(encounter);
             p2.setSourceProtocolObservation(protocolObservation);
             p2 = pulseService.create(session.getId(), p2);
             list.add(p2);
         }
 
-        userWorkspaceService.get(session.getId()).runRecommendations();
+        workspace.clearVitalsCaches();
+
+        boolean modified = hypotensionAdverseEventService.refresh(session.getId());
+
+        workspace.runRecommendations();
 
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
-
 }

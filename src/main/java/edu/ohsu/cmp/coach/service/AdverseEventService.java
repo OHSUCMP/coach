@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.service;
 
+import edu.ohsu.cmp.coach.entity.HypotensionAdverseEvent;
 import edu.ohsu.cmp.coach.entity.MyAdverseEvent;
 import edu.ohsu.cmp.coach.entity.MyAdverseEventOutcome;
 import edu.ohsu.cmp.coach.entity.Outcome;
@@ -7,6 +8,7 @@ import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.AdverseEventModel;
 import edu.ohsu.cmp.coach.repository.AdverseEventOutcomeRepository;
 import edu.ohsu.cmp.coach.repository.AdverseEventRepository;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.*;
@@ -24,6 +26,10 @@ public class AdverseEventService extends AbstractService {
 
     private static final String URN_OID_PREFIX = "urn:oid:";
     private static final String URL_PREFIX = "http://";
+    private static final String COACH_SYSTEM = "https://coach.ohsu.edu";
+    private static final String COACH_CODE = "coach-adverse-event";
+    private static final String COACH_DISPLAY = "Adverse Event reported by COACH";
+    private static final String OUTCOME_SYSTEM = "http://terminology.hl7.org/CodeSystem/adverse-event-outcome";
 
     private static final Date ONE_MONTH_AGO;
     static {
@@ -46,26 +52,40 @@ public class AdverseEventService extends AbstractService {
     private AdverseEventOutcomeRepository outcomeRepository;
 
     @Autowired
-    private EHRService ehrService;
+    private HypotensionAdverseEventService hypotensionAdverseEventService;
 
-    public List<AdverseEventModel> buildAdverseEvents(String sessionId) throws DataException {
+
+    public List<AdverseEventModel> getAdverseEvents(String sessionId) throws DataException {
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+
+        List<AdverseEventModel> list = new ArrayList<>();
+        list.addAll(workspace.getRemoteAdverseEvents());
+
+        for (HypotensionAdverseEvent hae : hypotensionAdverseEventService.getHypotensionAdverseEventList(sessionId)) {
+            list.add(new AdverseEventModel(buildAdverseEvent(sessionId, hae)));
+        }
+
+        return list;
+    }
+
+    public List<AdverseEventModel> buildRemoteAdverseEvents(String sessionId) throws DataException {
         List<AdverseEventModel> list = new ArrayList<>();
 
-        Bundle b = buildAdverseEventConditions(sessionId);
+        Bundle b = buildRemoteAdverseEventConditions(sessionId);
         if (b == null) return null;
 
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (entry.getResource() instanceof Condition) {
                 Condition c = (Condition) entry.getResource();
-                AdverseEvent ae = convertConditionToAdverseEvent(sessionId, c);
-                list.add(new AdverseEventModel(ae, c));
+                AdverseEvent ae = buildAdverseEvent(sessionId, c);
+                list.add(new AdverseEventModel(ae));
             }
         }
 
         return list;
     }
 
-    private AdverseEvent convertConditionToAdverseEvent(String sessionId, Condition c) {
+    private AdverseEvent buildAdverseEvent(String sessionId, Condition c) {
         String aeid = "adverseevent-" + DigestUtils.sha256Hex(c.getId() + salt);
 
         AdverseEvent ae = new AdverseEvent();
@@ -80,9 +100,9 @@ public class AdverseEventService extends AbstractService {
         //       originated within the COACH application.  we don't want CQF-Ruler using AdverseEvent
         //       resources from the EHR, so we need a reliable way to differentiate them
         ae.getEvent().addCoding(new Coding()
-                .setCode("coach-adverse-event")
-                .setSystem("https://coach.ohsu.edu")
-                .setDisplay("Adverse Event reported by COACH"));
+                .setCode(COACH_CODE)
+                .setSystem(COACH_SYSTEM)
+                .setDisplay(COACH_DISPLAY));
 
         ae.getResultingCondition().add(new Reference().setReference(c.getId()));
 
@@ -103,7 +123,44 @@ public class AdverseEventService extends AbstractService {
         MyAdverseEventOutcome outcome = getOutcome(aeid);
         ae.getOutcome().addCoding(new Coding()
                 .setCode(outcome.getOutcome().getFhirValue())
-                .setSystem("http://terminology.hl7.org/CodeSystem/adverse-event-outcome"));
+                .setSystem(OUTCOME_SYSTEM));
+
+        return ae;
+    }
+
+    private AdverseEvent buildAdverseEvent(String sessionId, HypotensionAdverseEvent hae) {
+        String aeid = "adverseevent-" + DigestUtils.sha256Hex(hae.getLogicalEqualityKey() + salt);
+
+        AdverseEvent ae = new AdverseEvent();
+        ae.setId(aeid);
+
+        Patient p = userWorkspaceService.get(sessionId).getPatient().getSourcePatient();
+        ae.setSubject(new Reference().setReference(p.getId()));
+
+        CodeableConcept cc = new CodeableConcept();
+        cc.addCoding()
+                .setCode(HypotensionAdverseEvent.CODE)
+                .setSystem(HypotensionAdverseEvent.SYSTEM)
+                .setDisplay(HypotensionAdverseEvent.DISPLAY);
+        cc.setText(hae.getDescription());
+        ae.setEvent(cc);
+
+        // HACK: adding custom event code to make it clear to CQF-Ruler that these AdverseEvent resources
+        //       originated within the COACH application.  we don't want CQF-Ruler using AdverseEvent
+        //       resources from the EHR, so we need a reliable way to differentiate them
+        ae.getEvent().addCoding(new Coding()
+                .setCode(COACH_CODE)
+                .setSystem(COACH_SYSTEM)
+                .setDisplay(COACH_DISPLAY));
+
+        ae.setDate(hae.getBp2ReadingDate());        // BP2 will always be the more recent of the two
+        ae.setDetected(hae.getCreatedDate());       // when COACH detected the AE, i.e. when the AE was created
+        ae.setRecordedDate(hae.getCreatedDate());   // we detected it and recorded it at the same time
+
+        MyAdverseEventOutcome outcome = getOutcome(aeid);
+        ae.getOutcome().addCoding(new Coding()
+                .setCode(outcome.getOutcome().getFhirValue())
+                .setSystem(OUTCOME_SYSTEM));
 
         return ae;
     }
@@ -150,7 +207,7 @@ public class AdverseEventService extends AbstractService {
         return DigestUtils.sha256Hex(s + salt);
     }
 
-    private Bundle buildAdverseEventConditions(String sessionId) {
+    private Bundle buildRemoteAdverseEventConditions(String sessionId) {
         Bundle conditions = userWorkspaceService.get(sessionId).getEncounterDiagnosisConditions().copy();
 
         Map<String, List<MyAdverseEvent>> codesWeCareAbout = new HashMap<>();

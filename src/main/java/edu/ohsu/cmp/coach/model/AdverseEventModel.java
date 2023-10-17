@@ -8,25 +8,17 @@ import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.AdverseEvent;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Coding;
-import org.hl7.fhir.r4.model.Condition;
 
 public class AdverseEventModel implements FHIRCompatible {
 
     private AdverseEvent sourceAdverseEvent;
-    private Condition sourceCondition;
-
     private String system;
     private String code;
     private String description;
     private String outcome;         // should map with Outcome.fhirValue
 
     public AdverseEventModel(AdverseEvent adverseEvent) throws DataException {
-        this(adverseEvent, null);
-    }
-
-    public AdverseEventModel(AdverseEvent adverseEvent, Condition sourceCondition) throws DataException {
         this.sourceAdverseEvent = adverseEvent;
-        this.sourceCondition = sourceCondition;
 
         Coding c = adverseEvent.getEvent().getCodingFirstRep();
         this.system = c.getSystem();
@@ -45,11 +37,6 @@ public class AdverseEventModel implements FHIRCompatible {
     @JsonIgnore
     public AdverseEvent getSourceAdverseEvent() {
         return sourceAdverseEvent;
-    }
-
-    @JsonIgnore
-    public Condition getSourceCondition() {
-        return sourceCondition;
     }
 
     public String getSystem() {

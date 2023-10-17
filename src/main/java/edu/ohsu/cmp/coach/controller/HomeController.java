@@ -70,6 +70,10 @@ public class HomeController extends BaseController {
     @Autowired
     private REDCapService redCapService;
 
+    @Autowired
+    private AdverseEventService adverseEventService;
+
+
     @Value("#{new Boolean('${security.browser.cache-credentials}')}")
     Boolean cacheCredentials;
 
@@ -225,11 +229,11 @@ public class HomeController extends BaseController {
     }
 
     @PostMapping("adverse-events-list")
-    public ResponseEntity<List<AdverseEventModel>> getAdverseEvents(HttpSession session) {
+    public ResponseEntity<List<AdverseEventModel>> getAdverseEvents(HttpSession session) throws DataException {
         try {
             List<AdverseEventModel> list = new ArrayList<>();
 
-            for (AdverseEventModel ae : userWorkspaceService.get(session.getId()).getAdverseEvents()) {
+            for (AdverseEventModel ae : adverseEventService.getAdverseEvents(session.getId())) {
                 if (ae.hasOutcome(Outcome.ONGOING)) {
                     list.add(ae);
                 }

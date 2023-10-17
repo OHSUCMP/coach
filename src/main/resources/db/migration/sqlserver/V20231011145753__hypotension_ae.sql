@@ -14,7 +14,7 @@ create table hypotension_adverse_event (
 create index idxPatId on hypotension_adverse_event (patId);
 go
 
--- add source column since we're storing Omron readings here now too to facilitate AE referencing
+-- add source column since we're storing Omron readings here now too
 alter table home_bp_reading add source varchar(10);
 go
 update home_bp_reading set source='COACH_UI' where source is null;

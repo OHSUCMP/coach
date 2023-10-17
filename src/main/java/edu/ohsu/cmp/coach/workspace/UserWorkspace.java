@@ -150,9 +150,10 @@ public class UserWorkspace {
                 getRemoteBloodPressures();
                 getRemotePulses();
                 getEncounterDiagnosisConditions();
-                getAdverseEvents();
+                getRemoteAdverseEvents();
                 getMedications();
                 getSupplementalResources();
+                refreshHypotensionAdverseEvents();
                 getAllCards();
                 logger.info("DONE populating workspace for session=" + sessionId +
                         " (took " + (System.currentTimeMillis() - start) + "ms)");
@@ -176,6 +177,12 @@ public class UserWorkspace {
         cache.invalidateAll();
         cardCache.invalidateAll();
         bundleCache.invalidateAll();
+    }
+
+    public void clearVitalsCaches() {
+        logger.info("clearing BP and Pulse caches for session=" + sessionId);
+        cache.invalidate(CACHE_BP);
+        cache.invalidate(CACHE_PULSE);
     }
 
     public void shutdown() {
@@ -338,18 +345,18 @@ public class UserWorkspace {
         });
     }
 
-    public List<AdverseEventModel> getAdverseEvents() {
+    public List<AdverseEventModel> getRemoteAdverseEvents() {
         return (List<AdverseEventModel>) cache.get(CACHE_ADVERSE_EVENT, new Function<String, List<AdverseEventModel>>() {
             @Override
             public List<AdverseEventModel> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Adverse Events for session=" + sessionId);
+                logger.info("BEGIN building remote Adverse Events for session=" + sessionId);
 
                 AdverseEventService svc = ctx.getBean(AdverseEventService.class);
                 try {
-                    List<AdverseEventModel> list = svc.buildAdverseEvents(sessionId);
+                    List<AdverseEventModel> list = svc.buildRemoteAdverseEvents(sessionId);
 
-                    logger.info("DONE building Adverse Events for session=" + sessionId +
+                    logger.info("DONE building remote Adverse Events for session=" + sessionId +
                             " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
                     return list;
@@ -435,6 +442,18 @@ public class UserWorkspace {
                 return compositeBundle.getBundle();
             }
         });
+    }
+
+    private void refreshHypotensionAdverseEvents() {
+        HypotensionAdverseEventService svc = ctx.getBean(HypotensionAdverseEventService.class);
+        try {
+            svc.refresh(sessionId);
+            logger.info("DONE refreshing hypotension AdverseEvent resources for session=" + sessionId);
+
+        } catch (DataException e) {
+            logger.warn("caught " + e.getClass().getName() + " refreshing hypotension AdverseEvent resources for session=" +
+                    sessionId + " - " + e.getMessage(), e);
+        }
     }
 
     public Map<String, List<Card>> getAllCards() {
