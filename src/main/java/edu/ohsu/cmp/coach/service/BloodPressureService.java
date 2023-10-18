@@ -10,7 +10,8 @@ import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Coding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,7 +122,7 @@ public class BloodPressureService extends AbstractService {
             }
         }
 
-        Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1);
+        Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1); // sort newest first
 
         if (doLimit) {
             Integer limit = fcm.getBpLimit();

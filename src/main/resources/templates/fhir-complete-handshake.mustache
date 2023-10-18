@@ -27,7 +27,7 @@
             }).done(function(cards, textStatus, jqXHR) {
                 if (jqXHR.status === 200) {
                     $('body').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
-                    window.location.href = REDIRECT_URL;
+                    window.location.replace(REDIRECT_URL);
 
                 } else {
                     $('body').html("Error - received response " + response.status + " status");

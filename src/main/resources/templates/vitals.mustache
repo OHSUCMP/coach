@@ -30,6 +30,15 @@
             createVitals(vitalsData, function(status, list) {
                 let el = $('#saveMessage');
                 if (status === 200) {
+                    if (containsHighReading(vitalsData)) {
+                        alert("One or more readings recently submitted was found to be high.  Click OK to return ot the home page to view updated recommendations.")
+                        window.location.replace("/");
+
+                    } else if (containsLowReading(vitalsData)) {
+                        alert("One or more readings recently submitted was found to be low.  Click OK to return ot the home page to view updated recommendations.")
+                        window.location.replace("/");
+                    }
+
                     $(list).each(function() {
                         appendReadingToTable(this);
                     });

@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.entity.HypotensionAdverseEvent;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.model.AbstractVitalsModel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.repository.HypotensionAdverseEventRepository;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -36,7 +37,9 @@ public class HypotensionAdverseEventService extends AbstractService {
         // next, construct a new index of hypotension AEs based on this person's BP readings
         Map<String, HypotensionAdverseEvent> newMap = new LinkedHashMap<>();
         BloodPressureModel bpm1 = null;
-        for (BloodPressureModel bpm : bloodPressureService.getHomeBloodPressureReadings(sessionId)) {
+        List<BloodPressureModel> homeBPList = bloodPressureService.getHomeBloodPressureReadings(sessionId);
+        homeBPList.sort(Comparator.comparing(AbstractVitalsModel::getReadingDate)); // sort oldest first
+        for (BloodPressureModel bpm : homeBPList) {
             if (bpm.isLow()) {
                 if (bpm1 != null) {
                     // create AE from bpm and bpm1
@@ -64,15 +67,12 @@ public class HypotensionAdverseEventService extends AbstractService {
 
         // any items remaining in the old list should be deleted.
         for (HypotensionAdverseEvent hae : currentMap.values()) {
-            logger.info("deleting hypotension adverse event that no longer reflects current state for session=" +
-                    sessionId + " - " + hae.getLogicalEqualityKey());
-            delete(hae);
+            delete(sessionId, hae);
             modified = true;
         }
 
         // any items remaining in the new list should be created.
         for (HypotensionAdverseEvent hae : newMap.values()) {
-            logger.info("creating new hypotension adverse event for session=" + sessionId + " - " + hae.getLogicalEqualityKey());
             create(sessionId, hae);
             modified = true;
         }
@@ -86,13 +86,16 @@ public class HypotensionAdverseEventService extends AbstractService {
     }
 
     public HypotensionAdverseEvent create(String sessionId, HypotensionAdverseEvent hae) {
+        logger.info("creating new hypotension adverse event for session=" + sessionId + " - " + hae.getLogicalEqualityKey());
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         hae.setPatId(workspace.getInternalPatientId());
         hae.setCreatedDate(new Date());
         return repository.save(hae);
     }
 
-    public void delete(HypotensionAdverseEvent hae) {
+    public void delete(String sessionId, HypotensionAdverseEvent hae) {
+        logger.info("deleting hypotension adverse event that no longer reflects current state for session=" +
+                sessionId + " - " + hae.getLogicalEqualityKey());
         repository.delete(hae);
     }
 }

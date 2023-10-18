@@ -52,6 +52,26 @@ function buildVitalsData() {
     return data;
 }
 
+function containsHighReading(vitalsData) {
+    let isHigh = false;
+    if ($.isNumeric(vitalsData.systolic2) && $.isNumeric(vitalsData.diastolic2)) {
+        isHigh = vitalsData.systolic2 >= 180 || vitalsData.diastolic2 >= 120;
+    } else if ($.isNumeric(vitalsData.systolic1) && $.isNumeric(vitalsData.diastolic1)) {
+        isHigh = vitalsData.systolic1 >= 180 || vitalsData.diastolic1 >= 120;
+    }
+    return isHigh;
+}
+
+function containsLowReading(vitalsData) {
+    let isLow = false;
+    if ($.isNumeric(vitalsData.systolic2) && $.isNumeric(vitalsData.diastolic2)) {
+        isLow = vitalsData.systolic2 < 90 || vitalsData.diastolic2 < 60;
+    } else if ($.isNumeric(vitalsData.systolic1) && $.isNumeric(vitalsData.diastolic1)) {
+        isLow = vitalsData.systolic1 < 90 || vitalsData.diastolic1 < 60;
+    }
+    return isLow;
+}
+
 function createVitals(vitalsData, _callback) {
     $.ajax({
         method: "POST",
