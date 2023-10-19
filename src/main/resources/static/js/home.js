@@ -289,9 +289,9 @@ function buildPointStyleArray(data) {
     let arr = [];
     data.forEach(function(item) {
         if (item.source === BPSource.Home || item.source === BPSource.CoachUI || item.source === BPSource.Omron ) {
-            arr.push('circle');
-        } else if (item.source === BPSource.Office) {
             arr.push('rect');
+        } else if (item.source === BPSource.Office) {
+            arr.push('circle');
         }
     });
     return arr;
