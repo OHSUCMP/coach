@@ -45,31 +45,50 @@ function buildVitalsData() {
     readingDate.setHours(h);
     readingDate.setMinutes(m);
 
-    data.readingDateTS = $.datepicker.formatDate('@', readingDate);
+    data.readingDateTS1 = $.datepicker.formatDate('@', readingDate);    // @ == Unix timestamp, ms since epoch
+    if (systolic2 !== '' && diastolic2 !== '') {
+        let offsetMS = 5 * 60 * 1000;                                 // 5 minutes
+        let ts = parseInt(data.readingDateTS1) + offsetMS;
+        data.readingDateTS2 = '' + ts;
+    }
 
     data.followedInstructions = $('input[type=radio][name=confirm]:checked').val() === 'yes';
 
     return data;
 }
 
-function containsHighReading(vitalsData) {
-    let isHigh = false;
+function getMostRecentReading(vitalsData) {
+    let mostRecent = {};
     if ($.isNumeric(vitalsData.systolic2) && $.isNumeric(vitalsData.diastolic2)) {
-        isHigh = vitalsData.systolic2 >= 180 || vitalsData.diastolic2 >= 120;
-    } else if ($.isNumeric(vitalsData.systolic1) && $.isNumeric(vitalsData.diastolic1)) {
-        isHigh = vitalsData.systolic1 >= 180 || vitalsData.diastolic1 >= 120;
+        // if a second reading exists, it is necessarily after the first one
+        mostRecent.systolic = vitalsData.systolic2;
+        mostRecent.diastolic = vitalsData.diastolic2;
+        if (vitalsData.pulse2 !== '') {
+            mostRecent.pulse = vitalsData.pulse2;
+        }
+        mostRecent.readingDateTS = vitalsData.readingDateTS2;
+    } else {
+        mostRecent.systolic = vitalsData.systolic1;
+        mostRecent.diastolic = vitalsData.diastolic1;
+        if (vitalsData.pulse1 !== '') {
+            mostRecent.pulse = vitalsData.pulse1;
+        }
+        mostRecent.readingDateTS = vitalsData.readingDateTS1;
     }
-    return isHigh;
+    return mostRecent;
 }
 
-function containsLowReading(vitalsData) {
-    let isLow = false;
-    if ($.isNumeric(vitalsData.systolic2) && $.isNumeric(vitalsData.diastolic2)) {
-        isLow = vitalsData.systolic2 < 90 || vitalsData.diastolic2 < 60;
-    } else if ($.isNumeric(vitalsData.systolic1) && $.isNumeric(vitalsData.diastolic1)) {
-        isLow = vitalsData.systolic1 < 90 || vitalsData.diastolic1 < 60;
-    }
-    return isLow;
+function isHigh(reading) {
+    return reading.systolic >= 180 || reading.diastolic >= 120;
+}
+
+function isLow(reading) {
+    return reading.systolic < 90 || reading.diastolic < 60;
+}
+
+function isMostRecentOfAll(reading) {
+    let mostRecentTS = $('#mostRecentBPReadingTS').text().trim();
+    return ! $.isNumeric(mostRecentTS) || reading.readingDateTS > mostRecentTS;
 }
 
 function createVitals(vitalsData, _callback) {

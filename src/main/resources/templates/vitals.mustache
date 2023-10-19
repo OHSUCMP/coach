@@ -30,13 +30,19 @@
             createVitals(vitalsData, function(status, list) {
                 let el = $('#saveMessage');
                 if (status === 200) {
-                    if (containsHighReading(vitalsData)) {
-                        alert("One or more readings recently submitted was found to be high.  Click OK to return ot the home page to view updated recommendations.")
-                        window.location.replace("/");
+                    let r = getMostRecentReading(vitalsData);
+                    if (isMostRecentOfAll(r)) {
+                        if (isHigh(r)) {
+                            alert("One or more readings recently submitted was found to be high.  Click OK to return ot the home page to view updated recommendations.")
+                            window.location.replace("/");
 
-                    } else if (containsLowReading(vitalsData)) {
-                        alert("One or more readings recently submitted was found to be low.  Click OK to return ot the home page to view updated recommendations.")
-                        window.location.replace("/");
+                        } else if (isLow(r)) {
+                            alert("One or more readings recently submitted was found to be low.  Click OK to return ot the home page to view updated recommendations.")
+                            window.location.replace("/");
+
+                        } else {
+                            $('#mostRecentBPReadingTS').text(r.readingDateTS);
+                        }
                     }
 
                     $(list).each(function() {
@@ -83,6 +89,7 @@
     <div class="px-2 fs-4">
         <i class="fas fa-user color-primary"></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
     </div>
+    <div id="mostRecentBPReadingTS" class="hidden">{{mostRecentBPReadingTS}}</div>
     <ul class="nav nav-tabs mt-3" id="bp-tabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="entry-tab" data-bs-toggle="tab" data-bs-target="#entry" type="button" role="tab" aria-controls="entry" aria-selected="true">Home Blood Pressure Entry</button>

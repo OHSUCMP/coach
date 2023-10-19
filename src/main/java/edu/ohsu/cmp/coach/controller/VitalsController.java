@@ -54,6 +54,12 @@ public class VitalsController extends BaseController {
 
         Collections.sort(homeReadings);
 
+        List<BloodPressureModel> allBPReadings = bpService.getBloodPressureReadings(session.getId());
+        Long mostRecentTS = allBPReadings.size() > 0 ?
+                allBPReadings.get(0).getReadingDate().getTime() :
+                null;
+
+        model.addAttribute("mostRecentBPReadingTS", mostRecentTS);
         model.addAttribute("homeReadings", homeReadings);
         model.addAttribute("pageStyles", new String[] { "vitals.css" });
         model.addAttribute("pageScripts", new String[] { "vitals.js", "form.js" });
@@ -70,12 +76,13 @@ public class VitalsController extends BaseController {
                                                             @RequestParam(required = false) Integer systolic2,
                                                             @RequestParam(required = false) Integer diastolic2,
                                                             @RequestParam(required = false) Integer pulse2,
-                                                            @RequestParam Long readingDateTS,
+                                                            @RequestParam Long readingDateTS1,
+                                                            @RequestParam(required = false) Long readingDateTS2,
                                                             @RequestParam Boolean followedInstructions) throws DataException, ConfigurationException, IOException, ScopeException {
 
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
 
-        Date readingDate1 = new Date(readingDateTS);
+        Date readingDate1 = new Date(readingDateTS1);
 
         List<AbstractVitalsModel> list = new ArrayList<>();
         BloodPressureModel bpm1 = new BloodPressureModel(ObservationSource.COACH_UI,
@@ -96,28 +103,32 @@ public class VitalsController extends BaseController {
             list.add(p1);
         }
 
-        // offset reading date of second reading by 5 minutes
+// second reading date timestamp is now calculated in the UI, as the UI needs to know for sure when the most recent was
+// in order to accurately determine if user should be redirected to the home page in the event of a most-recent high or low
+// BP reading.  only way to relabily ensure that is to calculate it there
+//        // offset reading date of second reading by 5 minutes
+//
+//        Calendar cal = Calendar.getInstance();
+//        cal.setTime(readingDate1);
+//        cal.add(Calendar.MINUTE, 5);
+//        Date readingDate2 = cal.getTime();
 
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(readingDate1);
-        cal.add(Calendar.MINUTE, 5);
-        Date readingDate2 = cal.getTime();
-
-        if (systolic2 != null && diastolic2 != null) {
+        if (systolic2 != null && diastolic2 != null && readingDateTS2 != null) {
+            Date readingDate2 = new Date(readingDateTS2);
             BloodPressureModel bpm2 = new BloodPressureModel(ObservationSource.COACH_UI,
                     systolic2, diastolic2, readingDate2, followedInstructions, fcm);
             bpm2.setSourceEncounter(encounter);
             bpm2.setSourceProtocolObservation(protocolObservation);
             bpm2 = bpService.create(session.getId(), bpm2);
             list.add(bpm2);
-        }
 
-        if (pulse2 != null) {
-            PulseModel p2 = new PulseModel(ObservationSource.COACH_UI, pulse2, readingDate2, followedInstructions, fcm);
-            p2.setSourceEncounter(encounter);
-            p2.setSourceProtocolObservation(protocolObservation);
-            p2 = pulseService.create(session.getId(), p2);
-            list.add(p2);
+            if (pulse2 != null) {
+                PulseModel p2 = new PulseModel(ObservationSource.COACH_UI, pulse2, readingDate2, followedInstructions, fcm);
+                p2.setSourceEncounter(encounter);
+                p2.setSourceProtocolObservation(protocolObservation);
+                p2 = pulseService.create(session.getId(), p2);
+                list.add(p2);
+            }
         }
 
         workspace.clearVitalsCaches();
