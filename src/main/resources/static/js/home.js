@@ -160,8 +160,12 @@ function calculateAverageBP(bps) {
     return null;
 }
 
-function isCrisisBp(bp) {
+function isCrisisBP(bp) {
     return bp.systolic.value >= 180 || bp.diastolic.value >= 120
+}
+
+function isLowCrisisBP(bp) {
+    return bp.systolic.value < 90 || bp.diastolic.value < 60;
 }
 
 function within14Days(bp) {
@@ -173,8 +177,10 @@ function within14Days(bp) {
 
 function populateSummaryDiv() {
     let mostRecentBP = {};
-    let crisisBp = false;
+    let crisisBP = false;
+    let lowCrisisBP = false;
     let twoCrisisBPs = false;
+    let twoLowCrisisBPs = false;
     let avgSystolic = 0;
     let avgDiastolic = 0;
     let aboveGoal = false;
@@ -183,10 +189,12 @@ function populateSummaryDiv() {
     if (hasData) {
         const bpsByDataDesc = sortByDateDesc(window.bpdata);
         mostRecentBP = bpsByDataDesc[0];
-        crisisBp = isCrisisBp(mostRecentBP);
+        crisisBP = isCrisisBP(mostRecentBP);
+        lowCrisisBP = isLowCrisisBP(mostRecentBP);
         const nextMostRecentBP = bpsByDataDesc[1];
         // The two crisis BPs need to have been taken within the last 14 days
-        twoCrisisBPs = crisisBp && nextMostRecentBP !== undefined && isCrisisBp(nextMostRecentBP) && within14Days(mostRecentBP) && within14Days(nextMostRecentBP);
+        twoCrisisBPs = crisisBP && nextMostRecentBP !== undefined && isCrisisBP(nextMostRecentBP) && within14Days(mostRecentBP) && within14Days(nextMostRecentBP);
+        twoLowCrisisBPs = lowCrisisBP && nextMostRecentBP !== undefined && isLowCrisisBP(nextMostRecentBP);
         let avg = calculateAverageBP(window.bpdata);
         if (avg) {
             avgSystolic = Math.round(avg.systolic);
@@ -199,10 +207,8 @@ function populateSummaryDiv() {
 
     // build the BP icon and other Hypertension classification stuff based on avgSystolic and avgDiastolic above
     let indicator;
-    if (twoCrisisBPs) { // crisis; considers most recent reading ONLY
-        indicator = { img: 'critical-icon.png', alt: 'Critical', show: 'two-most-recent' };
-    } else if (crisisBp) {
-        indicator = { img: 'critical-icon.png', alt: 'Critical', show: 'most-recent' };
+    if (twoCrisisBPs | crisisBP | twoLowCrisisBPs | lowCrisisBP) { // crisis; considers most recent reading ONLY
+        indicator = { img: 'critical-icon.png', alt: 'Critical', show: 'critical' };
     } else if (aboveGoal) {
         indicator = { img: 'stoplight-yellow.png', alt: 'Above Goal', show: 'average' };
     } else if (avgSystolic !== 0) {
@@ -223,7 +229,7 @@ function populateSummaryDiv() {
     let systolic = $('#systolic');
     let diastolic = $('#diastolic');
 
-    if (indicator.show === 'two-most-recent') {
+    if (indicator.show === 'critical') {
         bpIndicatorContainer.removeClass("col-md-3");
         chartContainer.hide();
         bpPlaceholder.hide();
@@ -234,24 +240,18 @@ function populateSummaryDiv() {
         systolic.addClass('crisis');
         diastolic.html(mostRecentBP.diastolic.value);
         diastolic.addClass('crisis');
-        bpNote.html('Warning: Your most recent BP is still very high. Take action below.​​');
+        if (twoCrisisBPs) {
+            bpNote.html('Warning: Your most recent BP is still very high. Take action below.​​');
+        } else if (crisisBP) {
+            bpNote.html('Warning: Your BP is very high. Take action below.​');
+        } else if (twoLowCrisisBPs) {
+            bpNote.html('Warning: Your most recent BP is still very low. Take action below.​​');
+        } else if (lowCrisisBP) {
+            bpNote.html('Warning: Your BP is very low. Take action below.​');
+        }
         bpNote.addClass('crisis');
     }
-    else if (indicator.show === 'most-recent') {
-        bpIndicatorContainer.removeClass("col-md-3");
-        chartContainer.hide();
-        bpPlaceholder.hide();
-        bpContainer.show();
-
-        bpLabel.html('Most Recent BP:');
-        systolic.html(mostRecentBP.systolic.value);
-        systolic.addClass('crisis');
-        diastolic.html(mostRecentBP.diastolic.value);
-        diastolic.addClass('crisis');
-        bpNote.html('Warning: Your BP is very high. Take action below.​');
-        bpNote.addClass('crisis');
-
-    } else if (indicator.show === 'average') {
+    else if (indicator.show === 'average') {
         bpPlaceholder.hide();
         bpContainer.show();
 

@@ -33,11 +33,11 @@
                     let r = getMostRecentReading(vitalsData);
                     if (isMostRecentOfAll(r)) {
                         if (isHigh(r)) {
-                            alert("One or more readings recently submitted was found to be high.  Click OK to return ot the home page to view updated recommendations.")
+                            alert("One or more readings recently submitted was found to be high.  Click OK to return to the home page to view updated recommendations.")
                             window.location.replace("/");
 
                         } else if (isLow(r)) {
-                            alert("One or more readings recently submitted was found to be low.  Click OK to return ot the home page to view updated recommendations.")
+                            alert("One or more readings recently submitted was found to be low.  Click OK to return to the home page to view updated recommendations.")
                             window.location.replace("/");
 
                         } else {
