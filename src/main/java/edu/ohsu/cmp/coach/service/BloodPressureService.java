@@ -122,7 +122,7 @@ public class BloodPressureService extends AbstractService {
             }
         }
 
-        Collections.sort(list, (o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1); // sort newest first
+        list.sort((o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1); // sort newest first
 
         if (doLimit) {
             Integer limit = fcm.getBpLimit();
