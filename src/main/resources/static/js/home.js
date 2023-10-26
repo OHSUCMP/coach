@@ -181,10 +181,10 @@ function populateSummaryDiv() {
 
     let hasData = Array.isArray(window.bpdata) && window.bpdata.length > 0;
     if (hasData) {
-        const bpsByDataDesc = sortByDateDesc(window.bpdata);
-        mostRecentBP = bpsByDataDesc[0];
+        const bpsByDateDesc = sortByDateDesc(window.bpdata);
+        mostRecentBP = bpsByDateDesc[0];
         crisisBp = isCrisisBp(mostRecentBP);
-        const nextMostRecentBP = bpsByDataDesc[1];
+        const nextMostRecentBP = bpsByDateDesc[1];
         // The two crisis BPs need to have been taken within the last 14 days
         twoCrisisBPs = crisisBp && nextMostRecentBP !== undefined && isCrisisBp(nextMostRecentBP) && within14Days(mostRecentBP) && within14Days(nextMostRecentBP);
         let avg = calculateAverageBP(window.bpdata);
