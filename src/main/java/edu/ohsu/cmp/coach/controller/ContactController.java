@@ -1,8 +1,10 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.ContactMessage;
+import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.model.BloodPressureSummaryModel;
+import edu.ohsu.cmp.coach.service.BloodPressureService;
 import edu.ohsu.cmp.coach.service.ContactMessageService;
-import edu.ohsu.cmp.coach.service.EHRService;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,11 +20,17 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Controller
 public class ContactController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    public static final String TOKEN_READINGS_COUNT = "readings";
+    public static final String TOKEN_DAYS_COUNT = "days";
+    public static final String TOKEN_SYSTOLIC = "systolic";
+    public static final String TOKEN_DIASTOLIC = "diastolic";
 
     @Autowired
     private Environment env;
@@ -30,8 +38,11 @@ public class ContactController extends BaseController {
     @Autowired
     private ContactMessageService contactMessageService;
 
+    @Autowired
+    private BloodPressureService bpService;
+
     @GetMapping("contact")
-    public String view(HttpSession session, Model model, @RequestParam("token") String token) {
+    public String view(HttpSession session, Model model, @RequestParam("token") String token) throws DataException {
         if (userWorkspaceService.exists(session.getId())) {
             logger.info("showing contact form for session " + session.getId());
 
@@ -45,8 +56,9 @@ public class ContactController extends BaseController {
             String message = "";
             String subject = "";
             if (contactMessage != null) {
-                message = contactMessage.getBody();
-                subject = contactMessage.getSubject();
+                Map<String, String> tokenMap = buildTokenMap(session.getId());
+                message = replaceTokens(contactMessage.getBody(), tokenMap);
+                subject = replaceTokens(contactMessage.getSubject(), tokenMap);
                 try {
                     Map<String, Object> map = new HashMap<>();
                     map.put("subject", URLEncoder.encode(subject, StandardCharsets.UTF_8));
@@ -67,4 +79,20 @@ public class ContactController extends BaseController {
         return "contact";
     }
 
+    private Map<String, String> buildTokenMap(String sessionId) throws DataException {
+        BloodPressureSummaryModel summaryModel = new BloodPressureSummaryModel(bpService.getBloodPressureReadings(sessionId));
+        Map<String, String> map = new LinkedHashMap<>();
+        map.put(TOKEN_READINGS_COUNT, String.valueOf(summaryModel.getRecentHomeBPReadingsCount()));
+        map.put(TOKEN_DAYS_COUNT, String.valueOf(summaryModel.getRecentHomeBPReadingsDayCount()));
+        map.put(TOKEN_SYSTOLIC, String.valueOf(summaryModel.getAvgSystolic()));
+        map.put(TOKEN_DIASTOLIC, String.valueOf(summaryModel.getAvgDiastolic()));
+        return map;
+    }
+
+    private String replaceTokens(String s, Map<String, String> map) {
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            s = s.replaceAll("\\{" + entry.getKey() + "}", entry.getValue());
+        }
+        return s;
+    }
 }
