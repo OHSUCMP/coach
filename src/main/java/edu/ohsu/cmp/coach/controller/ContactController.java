@@ -3,8 +3,10 @@ package edu.ohsu.cmp.coach.controller;
 import edu.ohsu.cmp.coach.entity.ContactMessage;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.BloodPressureSummaryModel;
+import edu.ohsu.cmp.coach.model.MedicationModel;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
 import edu.ohsu.cmp.coach.service.ContactMessageService;
+import edu.ohsu.cmp.coach.service.MedicationService;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +21,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 public class ContactController extends BaseController {
@@ -31,6 +31,7 @@ public class ContactController extends BaseController {
     public static final String TOKEN_DAYS_COUNT = "days";
     public static final String TOKEN_SYSTOLIC = "systolic";
     public static final String TOKEN_DIASTOLIC = "diastolic";
+    public static final String TOKEN_MEDS = "meds";
 
     @Autowired
     private Environment env;
@@ -40,6 +41,9 @@ public class ContactController extends BaseController {
 
     @Autowired
     private BloodPressureService bpService;
+
+    @Autowired
+    private MedicationService medicationService;
 
     @GetMapping("contact")
     public String view(HttpSession session, Model model, @RequestParam("token") String token) throws DataException {
@@ -86,7 +90,18 @@ public class ContactController extends BaseController {
         map.put(TOKEN_DAYS_COUNT, String.valueOf(summaryModel.getRecentHomeBPReadingsDayCount()));
         map.put(TOKEN_SYSTOLIC, String.valueOf(summaryModel.getAvgSystolic()));
         map.put(TOKEN_DIASTOLIC, String.valueOf(summaryModel.getAvgDiastolic()));
+        map.put(TOKEN_MEDS, getAntihypertensiveMeds(sessionId));
         return map;
+    }
+
+    private String getAntihypertensiveMeds(String sessionId) {
+        List<String> list = new ArrayList<>();
+        for (MedicationModel m : medicationService.getAntihypertensiveMedications(sessionId)) {
+            list.add(m.getDescription());
+        }
+        return list.size() > 0 ?
+                String.join(", ", list) :
+                "(none)";
     }
 
     private String replaceTokens(String s, Map<String, String> map) {
