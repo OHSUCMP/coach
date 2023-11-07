@@ -1,7 +1,9 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.MyPatient;
+import edu.ohsu.cmp.coach.entity.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
+import edu.ohsu.cmp.coach.exception.REDCapException;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.service.PatientService;
@@ -18,6 +20,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.io.IOException;
 
 import javax.servlet.http.HttpSession;
 
@@ -67,7 +71,7 @@ public class SessionController extends BaseController {
                                             @RequestParam String bearerToken,
                                             @RequestParam String patientId,
                                             @RequestParam String userId,
-                                            @RequestParam("audience") String audienceStr) throws ConfigurationException {
+                                            @RequestParam("audience") String audienceStr) throws ConfigurationException, REDCapException, IOException {
 
         logger.debug("in prepare-session for session " + session.getId());
 
@@ -76,18 +80,17 @@ public class SessionController extends BaseController {
 
         MyPatient myPatient = patientService.getMyPatient(patientId);
 
-        boolean skipConsent = ! redCapService.isRedcapEnabled();
-        boolean consentGranted = StringUtils.equals(myPatient.getConsentGranted(), MyPatient.CONSENT_GRANTED_YES);
+        RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(myPatient.getRedcapId());
 
-        logger.debug("skipConsent = " + skipConsent + ", consentGranted = " + consentGranted);
+        logger.debug("activelyEnrolled = " + redcapParticipantInfo.getIsActivelyEnrolled());
 
-        if (skipConsent || consentGranted) {
+        if (redcapParticipantInfo.getIsActivelyEnrolled()) {
             sessionService.prepareSession(session.getId(), credentials, audience);
 
             return ResponseEntity.ok("session configured successfully");
 
         } else {
-            // consent has either not been granted yet OR has been denied.
+            // The participant is not actively enrolled in REDCap (for any number of reasons)
             // cache session data somewhere well-segregated from the UserWorkspace, as a UserWorkspace must only be
             // set up for authorized users.
             // HomeController.view will handle the next step of this workflow

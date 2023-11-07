@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.MyPatient;
 import edu.ohsu.cmp.coach.entity.Outcome;
+import edu.ohsu.cmp.coach.entity.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.AdverseEventModel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
@@ -117,34 +118,42 @@ public class HomeController extends BaseController {
             return "home";
 
         } else if (sessionService.existsProvisional(sessionId)) {
-            logger.info("provisional session exists.  starting consent workflow for session " + sessionId);
+            logger.info("provisional session exists.  starting REDCap workflow for session " + sessionId);
 
-            // we only get here if the user hasn't yet consented OR if they denied consent.
+            // we get here if the user hasn't completed REDCap enrollment, has denied consent, or withdrew
             ProvisionalSessionCacheData cacheData = sessionService.getProvisionalSessionData(sessionId);
             MyPatient patient = patientService.getMyPatient(cacheData.getCredentials().getPatientId());
 
-            if (StringUtils.equals(patient.getConsentGranted(), MyPatient.CONSENT_GRANTED_NO)) {
-                sessionService.expireProvisional(sessionId);
-                model.addAttribute("applicationName", applicationName);
-                return "no-consent";
-
-            } else {
-                try {
-                    if ( ! redCapService.hasSubjectInfoRecord(patient.getRedcapId()) ) {
-                        redCapService.createSubjectInfoRecord(patient.getRedcapId());
-                    }
-
-                    if (redCapService.hasConsentRecord(patient.getRedcapId())) {
-                        return "redirect:/redcap/process-consent";
-
-                    } else {
-                        String consentSurveyLink = redCapService.getConsentSurveyLink(patient.getRedcapId());
-                        return "redirect:" + consentSurveyLink;
-                    }
-                } catch (Exception e) {
-                    logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+            try {
+                RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(patient.getRedcapId());
+                if ( ! redcapParticipantInfo.getExists() ) {
+                    // If they are not in REDCap yet, create them and forward them to the entry survey
+                    redCapService.createSubjectInfoRecord(patient.getRedcapId());
+                    String entrySurveyLink = redCapService.getEntrySurveyLink(patient.getRedcapId());
+                    return "redirect:" + entrySurveyLink;
+                } else if (redcapParticipantInfo.getHasConsentRecord() &&
+                    !redcapParticipantInfo.getIsConsentGranted()) {
+                    // If consent record exists and the answer is no, exit
+                    sessionService.expireProvisional(sessionId);
+                    model.addAttribute("applicationName", applicationName);
+                    return "no-consent";
+                } else if (!redcapParticipantInfo.getHasConsentRecord() || 
+                        !redcapParticipantInfo.getIsRandomized()) {
+                    // If there is no consent or randomization record, forward them to their survey queue
+                    String surveyQueueLink = redCapService.getSurveyQueueLink(patient.getRedcapId());
+                    return "redirect:" + surveyQueueLink;                
+                } else if (redcapParticipantInfo.getIsWithdrawn()) {
+                    // If withdrawn, exit
+                    sessionService.expireProvisional(sessionId);
+                    model.addAttribute("applicationName", applicationName);
+                    return "withdrawn";
+                } else {
+                    logger.error("REDCap participant " + patient.getRedcapId() + "is actively enrolled but cannot access COACH.");
                     return "error";
                 }
+            } catch (Exception e) {
+                logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+                return "error";
             }
 
         } else {
@@ -167,31 +176,6 @@ public class HomeController extends BaseController {
         List<PulseModel> list = pulseService.getPulseReadings(session.getId());
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
-
-//    @PostMapping("current-bp-goal")
-//    public ResponseEntity<GoalModel> getCurrentBPGoal(HttpSession session) {
-//        GoalModel goal = goalService.getCurrentBPGoal(session.getId());
-//        return new ResponseEntity<>(goal, HttpStatus.OK);
-//    }
-
-//    @PostMapping("recommendation")
-//    public ResponseEntity<List<Card>> getRecommendation(HttpSession session,
-//                                                        @RequestParam("id") String hookId) {
-//
-//        try {
-//            UserWorkspace workspace = workspaceService.get(session.getId());
-//
-//            List<Card> cards = workspace.getCards(hookId);
-//            logger.info("got cards for hookId=" + hookId + "!");
-//
-//            return new ResponseEntity<>(cards, HttpStatus.OK);
-//
-//        } catch (RuntimeException re) {
-//            logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
-//                    re.getMessage(), re);
-//            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
 
     @PostMapping("recommendation")
     public Callable<ResponseEntity<List<Card>>> getRecommendation(HttpSession session,
