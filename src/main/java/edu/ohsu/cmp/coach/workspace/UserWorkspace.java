@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.workspace;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import edu.ohsu.cmp.coach.entity.MyPatient;
+import edu.ohsu.cmp.coach.entity.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
@@ -51,6 +52,7 @@ public class UserWorkspace {
     private final ApplicationContext ctx;
     private final String sessionId;
     private final Audience audience;
+    private final RandomizationGroup randomizationGroup;
     private final FHIRCredentialsWithClient fhirCredentialsWithClient;
     private final FhirQueryManager fqm;
     private final FhirConfigManager fcm;
@@ -66,14 +68,14 @@ public class UserWorkspace {
     private MyOmronTokenData omronTokenData = null;
     private Date omronLastUpdated = null;
 
-    private final StudyClass studyClass;
-
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
+                            RandomizationGroup randomizationGroup,
                             FHIRCredentialsWithClient fhirCredentialsWithClient,
                             FhirQueryManager fqm, FhirConfigManager fcm) {
         this.ctx = ctx;
         this.sessionId = sessionId;
         this.audience = audience;
+        this.randomizationGroup = randomizationGroup;
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
         this.fqm = fqm;
         this.fcm = fcm;
@@ -84,7 +86,6 @@ public class UserWorkspace {
         );
         this.internalPatientId = myPatient.getId();
         this.omronLastUpdated = myPatient.getOmronLastUpdated();
-        this.studyClass = StudyClass.fromString(myPatient.getStudyClass());
 
         cache = Caffeine.newBuilder()
                 .expireAfterWrite(6, TimeUnit.HOURS)
@@ -109,6 +110,10 @@ public class UserWorkspace {
         return audience;
     }
 
+    public RandomizationGroup getRandomizationGroup() {
+        return randomizationGroup;
+    }
+
     public FHIRCredentialsWithClient getFhirCredentialsWithClient() {
         return fhirCredentialsWithClient;
     }
@@ -131,10 +136,6 @@ public class UserWorkspace {
 
     public void setOmronLastUpdated(Date omronLastUpdated) {
         this.omronLastUpdated = omronLastUpdated;
-    }
-
-    public StudyClass getStudyClass() {
-        return studyClass;
     }
 
     public void populate() {

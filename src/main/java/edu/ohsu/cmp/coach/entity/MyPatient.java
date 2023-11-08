@@ -15,9 +15,7 @@ public class MyPatient {
 
     private String patIdHash;
     private Date omronLastUpdated;
-    private String studyClass;
     private String redcapId;
-    private String consentGranted;
 
     protected MyPatient() {
     }
@@ -50,27 +48,11 @@ public class MyPatient {
         this.omronLastUpdated = omronLastUpdated;
     }
 
-    public String getStudyClass() {
-        return studyClass;
-    }
-
-    public void setStudyClass(String studyClass) {
-        this.studyClass = studyClass;
-    }
-
     public String getRedcapId() {
         return redcapId;
     }
 
     public void setRedcapId(String redcapId) {
         this.redcapId = redcapId;
-    }
-
-    public String getConsentGranted() {
-        return consentGranted;
-    }
-
-    public void setConsentGranted(String consentGranted) {
-        this.consentGranted = consentGranted;
     }
 }

@@ -1,14 +1,16 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.MyPatient;
+import edu.ohsu.cmp.coach.entity.RandomizationGroup;
+import edu.ohsu.cmp.coach.entity.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
+import edu.ohsu.cmp.coach.exception.REDCapException;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.model.recommendation.Audience;
 import edu.ohsu.cmp.coach.service.PatientService;
 import edu.ohsu.cmp.coach.service.REDCapService;
 import edu.ohsu.cmp.coach.session.SessionService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.io.IOException;
 
 import javax.servlet.http.HttpSession;
 
@@ -67,7 +71,7 @@ public class SessionController extends BaseController {
                                             @RequestParam String bearerToken,
                                             @RequestParam String patientId,
                                             @RequestParam String userId,
-                                            @RequestParam("audience") String audienceStr) throws ConfigurationException {
+                                            @RequestParam("audience") String audienceStr) throws ConfigurationException, REDCapException, IOException {
 
         logger.debug("in prepare-session for session " + session.getId());
 
@@ -76,18 +80,25 @@ public class SessionController extends BaseController {
 
         MyPatient myPatient = patientService.getMyPatient(patientId);
 
-        boolean skipConsent = ! redCapService.isRedcapEnabled();
-        boolean consentGranted = StringUtils.equals(myPatient.getConsentGranted(), MyPatient.CONSENT_GRANTED_YES);
+        boolean activelyEnrolled = true;
+        RandomizationGroup randomizationGroup = RandomizationGroup.ENHANCED;
+        // TODO: Also need a check for whether the person logging in is a provider. If so, bypass REDCap
+        if (redCapService.isRedcapEnabled()) {
+            RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(myPatient.getRedcapId());
+            activelyEnrolled = redcapParticipantInfo.getIsActivelyEnrolled();
+            if (activelyEnrolled) {
+                randomizationGroup = redcapParticipantInfo.getRandomizationGroup();
+            }
+            logger.debug("REDCap activelyEnrolled = " + redcapParticipantInfo.getIsActivelyEnrolled());
+        }
 
-        logger.debug("skipConsent = " + skipConsent + ", consentGranted = " + consentGranted);
-
-        if (skipConsent || consentGranted) {
-            sessionService.prepareSession(session.getId(), credentials, audience);
+        if (activelyEnrolled) {
+            sessionService.prepareSession(session.getId(), credentials, audience, randomizationGroup);
 
             return ResponseEntity.ok("session configured successfully");
 
         } else {
-            // consent has either not been granted yet OR has been denied.
+            // REDCap is enabled and the participant is not actively enrolled (for any number of reasons)
             // cache session data somewhere well-segregated from the UserWorkspace, as a UserWorkspace must only be
             // set up for authorized users.
             // HomeController.view will handle the next step of this workflow
