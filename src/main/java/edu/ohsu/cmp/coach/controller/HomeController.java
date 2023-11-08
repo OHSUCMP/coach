@@ -123,6 +123,7 @@ public class HomeController extends BaseController {
             // we get here if the user hasn't completed REDCap enrollment, has denied consent, or withdrew
             ProvisionalSessionCacheData cacheData = sessionService.getProvisionalSessionData(sessionId);
             MyPatient patient = patientService.getMyPatient(cacheData.getCredentials().getPatientId());
+            sessionService.expireProvisional(sessionId);
 
             try {
                 RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(patient.getRedcapId());
@@ -134,7 +135,6 @@ public class HomeController extends BaseController {
                 } else if (redcapParticipantInfo.getHasConsentRecord() &&
                     !redcapParticipantInfo.getIsConsentGranted()) {
                     // If consent record exists and the answer is no, exit
-                    sessionService.expireProvisional(sessionId);
                     model.addAttribute("applicationName", applicationName);
                     return "no-consent";
                 } else if (!redcapParticipantInfo.getHasConsentRecord() || 
@@ -144,7 +144,6 @@ public class HomeController extends BaseController {
                     return "redirect:" + surveyQueueLink;                
                 } else if (redcapParticipantInfo.getIsWithdrawn()) {
                     // If withdrawn, exit
-                    sessionService.expireProvisional(sessionId);
                     model.addAttribute("applicationName", applicationName);
                     return "withdrawn";
                 } else {
