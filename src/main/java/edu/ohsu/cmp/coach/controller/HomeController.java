@@ -74,7 +74,6 @@ public class HomeController extends BaseController {
     @Autowired
     private AdverseEventService adverseEventService;
 
-
     @Value("#{new Boolean('${security.browser.cache-credentials}')}")
     Boolean cacheCredentials;
 
@@ -87,6 +86,7 @@ public class HomeController extends BaseController {
             logger.info("session exists.  requesting data for session " + sessionId);
 
             UserWorkspace workspace = userWorkspaceService.get(sessionId);
+            logger.info("Randomization group for user: " + workspace.getRandomizationGroup());
 
             try {
                 model.addAttribute("applicationName", applicationName);

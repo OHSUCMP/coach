@@ -1,7 +1,6 @@
 package edu.ohsu.cmp.coach.config;
 
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

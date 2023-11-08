@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.workspace;
 
+import edu.ohsu.cmp.coach.entity.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.SessionMissingException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
@@ -46,9 +47,9 @@ public class UserWorkspaceService {
         return map.containsKey(sessionId);
     }
 
-    public void init(String sessionId, Audience audience, FHIRCredentialsWithClient fcc) throws ConfigurationException {
+    public void init(String sessionId, Audience audience, RandomizationGroup randomizationGroup, FHIRCredentialsWithClient fcc) throws ConfigurationException {
         try {
-            UserWorkspace workspace = new UserWorkspace(ctx, sessionId, audience, fcc, fqm, fcm);
+            UserWorkspace workspace = new UserWorkspace(ctx, sessionId, audience, randomizationGroup, fcc, fqm, fcm);
             workspace.setVendorTransformer(buildVendorTransformer(workspace));
             map.put(sessionId, workspace);
 

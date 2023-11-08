@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.MyPatient;
+import edu.ohsu.cmp.coach.entity.RandomizationGroup;
 import edu.ohsu.cmp.coach.entity.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.REDCapException;
@@ -10,7 +11,6 @@ import edu.ohsu.cmp.coach.service.PatientService;
 import edu.ohsu.cmp.coach.service.REDCapService;
 import edu.ohsu.cmp.coach.session.SessionService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,17 +80,25 @@ public class SessionController extends BaseController {
 
         MyPatient myPatient = patientService.getMyPatient(patientId);
 
-        RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(myPatient.getRedcapId());
+        boolean activelyEnrolled = true;
+        RandomizationGroup randomizationGroup = RandomizationGroup.ENHANCED;
+        // TODO: Also need a check for whether the person logging in is a provider. If so, bypass REDCap
+        if (redCapService.isRedcapEnabled()) {
+            RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(myPatient.getRedcapId());
+            activelyEnrolled = redcapParticipantInfo.getIsActivelyEnrolled();
+            if (activelyEnrolled) {
+                randomizationGroup = redcapParticipantInfo.getRandomizationGroup();
+            }
+            logger.debug("REDCap activelyEnrolled = " + redcapParticipantInfo.getIsActivelyEnrolled());
+        }
 
-        logger.debug("activelyEnrolled = " + redcapParticipantInfo.getIsActivelyEnrolled());
-
-        if (redcapParticipantInfo.getIsActivelyEnrolled()) {
-            sessionService.prepareSession(session.getId(), credentials, audience);
+        if (activelyEnrolled) {
+            sessionService.prepareSession(session.getId(), credentials, audience, randomizationGroup);
 
             return ResponseEntity.ok("session configured successfully");
 
         } else {
-            // The participant is not actively enrolled in REDCap (for any number of reasons)
+            // REDCap is enabled and the participant is not actively enrolled (for any number of reasons)
             // cache session data somewhere well-segregated from the UserWorkspace, as a UserWorkspace must only be
             // set up for authorized users.
             // HomeController.view will handle the next step of this workflow

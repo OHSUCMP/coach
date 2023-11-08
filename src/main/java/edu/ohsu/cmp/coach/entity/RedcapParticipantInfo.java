@@ -3,6 +3,8 @@ package edu.ohsu.cmp.coach.entity;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.ohsu.cmp.coach.service.REDCapService;
 
@@ -11,6 +13,8 @@ import edu.ohsu.cmp.coach.service.REDCapService;
  */
 public class RedcapParticipantInfo {
     
+    private static final Logger logger = LoggerFactory.getLogger(RedcapParticipantInfo.class);
+
     private static final String PARTICIPANT_CONSENT_FORM = "coach_informed_consent";
     private static final String PARTICIPANT_CONSENT_FIELD = "icf_consent_73fb68";
     private static final String PARTICIPANT_RANDOMIZATION_FORM = "staff_coach_randomization";
@@ -22,7 +26,7 @@ public class RedcapParticipantInfo {
     private boolean hasConsentRecord;
     private boolean isConsentGranted;
     private boolean isRandomized;
-    private String randomizationGroup;
+    private RandomizationGroup randomizationGroup;
     private boolean isWithdrawn;
 
     /**
@@ -54,7 +58,15 @@ public class RedcapParticipantInfo {
             StringUtils.equals(baseline.get(PARTICIPANT_CONSENT_FIELD), REDCapService.YES)
         );
         pi.setIsRandomized(StringUtils.equals(baseline.get(PARTICIPANT_RANDOMIZATION_FORM + "_complete"), REDCapService.FORM_COMPLETE));  
-        pi.setRandomizationGroup(baseline.get(PARTICIPANT_RANDOMIZATION_FIELD));
+        if (pi.getIsRandomized()) {
+            String randString = baseline.get(PARTICIPANT_RANDOMIZATION_FIELD);
+            try {
+                int rand = Integer.parseInt(randString);
+                pi.setRandomizationGroup(RandomizationGroup.getByRedcapCode(rand));
+            } catch (IllegalArgumentException e) {
+                RedcapParticipantInfo.logger.error("Randomization Group" + randString + " is not understood. User will get ENHANCED experience.");
+            }
+        }
         pi.setIsWithdrawn(StringUtils.equals(ongoing.get(PARTICIPANT_DISPOSITION_WITHDRAW_FIELD), REDCapService.YES));
         return pi;
     }
@@ -119,11 +131,11 @@ public class RedcapParticipantInfo {
      * Return the participant's randomization
      * @return
      */
-    public String getRandomizationGroup() {
+    public RandomizationGroup getRandomizationGroup() {
         return randomizationGroup;
     }
 
-    public void setRandomizationGroup(String randomizationGroup) {
+    public void setRandomizationGroup(RandomizationGroup randomizationGroup) {
         this.randomizationGroup = randomizationGroup;
     }
 
