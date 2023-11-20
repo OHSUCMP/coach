@@ -20,6 +20,62 @@
     <script type="text/javascript" src="{{req.contextPath}}/node_modules/jquery/dist/jquery.js"></script>
     <script type="text/javascript" src="{{req.contextPath}}/node_modules/jquery-ui-dist/jquery-ui.js"></script>
     <script type="text/javascript" src="{{req.contextPath}}/js/coach.js"></script>
+
+    // adapted from https://stackoverflow.com/questions/667555/how-to-detect-idle-time-in-javascript
+    <script type="text/javascript">
+        const IDLE_TIMEOUT_SECONDS = {{idleTimeoutSeconds}};
+        const IDLE_WARNING_COUNTDOWN_SECONDS = 60;
+        const IDLE_WARNING_APPEAR_SECONDS = IDLE_TIMEOUT_SECONDS - IDLE_WARNING_COUNTDOWN_SECONDS;
+
+        if (IDLE_TIMEOUT_SECONDS > 0) {
+            // adapted from https://www.w3schools.com/howto/howto_js_countdown.asp
+            function startLastMinuteTimer(el, secondsStart) {
+                let s = secondsStart;
+                $(el).html(s);
+                return setInterval(function() {
+                    if (s <= 0) {
+                        window.location.replace("/inactivityLogout");
+                    } else {
+                        s -= 1;
+                        $(el).html(s);
+                    }
+                }, 1000);
+            }
+
+            // adapted from https://stackoverflow.com/questions/667555/how-to-detect-idle-time-in-javascript
+            function setupIdleLogout() {
+                window.onload = resetTimer;
+                window.onmousemove = resetTimer;
+                window.onmousedown = resetTimer;    // catches touchscreen presses as well
+                window.ontouchstart = resetTimer;   // catches touchscreen swipes as well
+                window.ontouchmove = resetTimer;    // required by some devices
+                window.onclick = resetTimer;        // catches touchpad clicks as well
+                window.onkeydown = resetTimer;
+                window.addEventListener('scroll', resetTimer, true); // improved; see comments
+
+                let x;
+                function showFinalCountdown() {
+                    $("#timeoutCountdownContainer").show(function() {
+                        x = startLastMinuteTimer('#timeoutCountdownSeconds', IDLE_WARNING_COUNTDOWN_SECONDS);
+                    });
+                }
+
+                let t;
+                function resetTimer() {
+                    clearTimeout(t);
+                    t = setTimeout(showFinalCountdown, IDLE_WARNING_APPEAR_SECONDS * 1000);
+                }
+
+                $(document).on('click', '#continueSession', function() {
+                    $('#timeoutCountdownContainer').hide(function() {
+                        clearInterval(x);
+                        resetTimer();
+                    });
+                });
+            }
+            setupIdleLogout();
+        }
+    </script>
     
     {{#pageScripts}}
 	  {{! Page-specific scripts can be specified in the view model }}
@@ -32,7 +88,18 @@
     {{/pageNodeScripts}}
 </head>
 <body>
-	<header>
+    <div id="timeoutCountdownContainer" class="modal">
+        <div id="timeoutCountdown" class="modalContent">
+            <div class="heading">Continue Session?</div>
+            <div>You are about to be logged out due to inactivity.  Click the button below to continue your session.</div>
+            <div><strong><span id="timeoutCountdownSeconds">SECONDS</span></strong> second(s) remaining ...</div>
+            <div class="buttonContainer">
+                <button id="continueSession" class="btn btn-sm button-primary">Continue Session</button>
+            </div>
+        </div>
+    </div>
+
+    <header>
 		<nav class="navbar navbar-expand-md navbar-dark fixed-top bgd-primary">
 			<div class="container-fluid">
 				<img src="/images/coach-logo.png" alt="COACH" class="navbar-brand logo"/>

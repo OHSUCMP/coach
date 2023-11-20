@@ -27,7 +27,7 @@ public class MedicationsController extends BaseController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
-        model.addAttribute("applicationName", applicationName);
+        setCommonViewComponents(model);
         model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
 
         List<MedicationModel> antihypertensiveMedications = filterDuplicates(medicationService.getAntihypertensiveMedications(session.getId()));

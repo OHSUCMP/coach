@@ -1,14 +1,18 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.workspace.UserWorkspaceService;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.workspace.UserWorkspaceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.ui.Model;
 
 public abstract class BaseController {
     @Value("${application.name}")
-    protected String applicationName;
+    private String applicationName;
+
+    @Value("${security.idle-timeout-seconds}")
+    private Integer idleTimeoutSeconds;
 
     @Autowired
     protected UserWorkspaceService userWorkspaceService;
@@ -18,4 +22,9 @@ public abstract class BaseController {
 
     @Autowired
     protected FhirConfigManager fcm;
+
+    protected void setCommonViewComponents(Model model) {
+        model.addAttribute("applicationName", applicationName);
+        model.addAttribute("idleTimeoutSeconds", idleTimeoutSeconds);
+    }
 }

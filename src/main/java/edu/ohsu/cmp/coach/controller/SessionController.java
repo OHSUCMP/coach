@@ -21,9 +21,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.io.IOException;
-
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 
 @Controller
 public class SessionController extends BaseController {
@@ -46,7 +45,7 @@ public class SessionController extends BaseController {
     @GetMapping("launch-ehr")
     public String launchEHR(HttpSession session, Model model) {
         sessionService.expireAll(session.getId());
-        model.addAttribute("applicationName", applicationName);
+        setCommonViewComponents(model);
         model.addAttribute("clientId", env.getProperty("smart.ehr.clientId"));
         model.addAttribute("scope", env.getProperty("smart.ehr.scope"));
         model.addAttribute("redirectUri", env.getProperty("smart.ehr.redirectUri"));
@@ -56,7 +55,7 @@ public class SessionController extends BaseController {
     @GetMapping("launch-patient")
     public String launchPatient(HttpSession session, Model model) {
         sessionService.expireAll(session.getId());
-        model.addAttribute("applicationName", applicationName);
+        setCommonViewComponents(model);
         model.addAttribute("clientId", env.getProperty("smart.patient.clientId"));
         model.addAttribute("scope", env.getProperty("smart.patient.scope"));
         model.addAttribute("redirectUri", env.getProperty("smart.patient.redirectUri"));
@@ -112,6 +111,12 @@ public class SessionController extends BaseController {
     public String logout(HttpSession session) {
         sessionService.expireAll(session.getId());
         return "logout";
+    }
+
+    @GetMapping("inactivityLogout")
+    public String inactivityLogout(HttpSession session) {
+        sessionService.expireAll(session.getId());
+        return "inactivityLogout";
     }
 
     @PostMapping("clear-session")

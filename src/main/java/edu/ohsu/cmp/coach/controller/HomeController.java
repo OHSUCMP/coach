@@ -89,7 +89,7 @@ public class HomeController extends BaseController {
             logger.info("Randomization group for user: " + workspace.getRandomizationGroup());
 
             try {
-                model.addAttribute("applicationName", applicationName);
+                setCommonViewComponents(model);
                 model.addAttribute("sessionEstablished", true);
                 model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
                 model.addAttribute("pageStyles", new String[] { "home.css?v=4", "recommendations.css?v=1" });
@@ -135,7 +135,7 @@ public class HomeController extends BaseController {
                 } else if (redcapParticipantInfo.getHasConsentRecord() &&
                     !redcapParticipantInfo.getIsConsentGranted()) {
                     // If consent record exists and the answer is no, exit
-                    model.addAttribute("applicationName", applicationName);
+                    setCommonViewComponents(model);
                     return "no-consent";
                 } else if (!redcapParticipantInfo.getHasConsentRecord() || 
                         !redcapParticipantInfo.getIsRandomized()) {
@@ -144,7 +144,7 @@ public class HomeController extends BaseController {
                     return "redirect:" + surveyQueueLink;                
                 } else if (redcapParticipantInfo.getIsWithdrawn()) {
                     // If withdrawn, exit
-                    model.addAttribute("applicationName", applicationName);
+                    setCommonViewComponents(model);
                     return "withdrawn";
                 } else {
                     logger.error("REDCap participant " + patient.getRedcapId() + "is actively enrolled but cannot access COACH.");
@@ -158,7 +158,7 @@ public class HomeController extends BaseController {
         } else {
             logger.info("no session exists.  completing SMART-on-FHIR handshake for session " + sessionId);
 
-            model.addAttribute("applicationName", applicationName);
+            setCommonViewComponents(model);
             model.addAttribute("cacheCredentials", cacheCredentials);
             return "fhir-complete-handshake";
         }

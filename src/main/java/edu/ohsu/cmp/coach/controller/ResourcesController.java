@@ -12,13 +12,13 @@ public class ResourcesController extends BaseController {
     
     @GetMapping("/symptoms-911")
     public String symptoms(HttpSession session, Model model) {
-        model.addAttribute("applicationName", applicationName);
+        setCommonViewComponents(model);
         return "symptoms";
     }
 
     @GetMapping("/side-effects")
     public String sideEffects(HttpSession session, Model model) {
-        model.addAttribute("applicationName", applicationName);
+        setCommonViewComponents(model);
         return "side-effects";
     }
 

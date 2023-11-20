@@ -1,13 +1,12 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import edu.ohsu.cmp.coach.model.AchievementStatus;
 import edu.ohsu.cmp.coach.entity.GoalHistory;
 import edu.ohsu.cmp.coach.entity.MyGoal;
+import edu.ohsu.cmp.coach.model.AchievementStatus;
 import edu.ohsu.cmp.coach.model.GoalHistoryModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
-import edu.ohsu.cmp.coach.service.EHRService;
 import edu.ohsu.cmp.coach.service.GoalService;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +35,7 @@ public class GoalsController extends BaseController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
-        model.addAttribute("applicationName", applicationName);
+        setCommonViewComponents(model);
         model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
         model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
         model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(session.getId()));

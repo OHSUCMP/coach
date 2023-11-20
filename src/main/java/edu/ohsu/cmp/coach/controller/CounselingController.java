@@ -3,7 +3,6 @@ package edu.ohsu.cmp.coach.controller;
 import edu.ohsu.cmp.coach.entity.Counseling;
 import edu.ohsu.cmp.coach.model.CounselingPageModel;
 import edu.ohsu.cmp.coach.service.CounselingService;
-import edu.ohsu.cmp.coach.service.EHRService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +24,7 @@ public class CounselingController extends BaseController {
 
     @GetMapping("{key}")
     public String view(HttpSession session, Model model, @PathVariable(value="key") String key) {
-        model.addAttribute("applicationName", applicationName);
+        setCommonViewComponents(model);
         model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
 
         CounselingPageModel page = new CounselingPageModel(counselingService.getPage(key));

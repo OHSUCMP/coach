@@ -50,7 +50,7 @@ public class ContactController extends BaseController {
         if (userWorkspaceService.exists(session.getId())) {
             logger.info("showing contact form for session " + session.getId());
 
-            model.addAttribute("applicationName", applicationName);
+            setCommonViewComponents(model);
             model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
 
             String mychartLoginLink = env.getProperty("mychart.login.url");

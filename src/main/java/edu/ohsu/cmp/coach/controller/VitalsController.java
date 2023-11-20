@@ -45,7 +45,7 @@ public class VitalsController extends BaseController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) throws DataException {
-        model.addAttribute("applicationName", applicationName);
+        setCommonViewComponents(model);
         model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
 
         List<AbstractVitalsModel> homeReadings = new ArrayList<>();
