@@ -29,12 +29,12 @@
 
         if (IDLE_TIMEOUT_SECONDS > 0) {
             // adapted from https://www.w3schools.com/howto/howto_js_countdown.asp
-            function startLastMinuteTimer(el, secondsStart) {
-                let s = secondsStart;
+            function startLastMinuteTimer(el) {
+                let s = IDLE_WARNING_COUNTDOWN_SECONDS;
                 $(el).html(s);
                 return setInterval(function() {
                     if (s <= 0) {
-                        window.location.replace("/inactivityLogout");
+                        window.location.replace("/inactivity-logout");
                     } else {
                         s -= 1;
                         $(el).html(s);
@@ -44,31 +44,31 @@
 
             // adapted from https://stackoverflow.com/questions/667555/how-to-detect-idle-time-in-javascript
             function setupIdleLogout() {
-                window.onload = resetTimer;
-                window.onmousemove = resetTimer;
-                window.onmousedown = resetTimer;    // catches touchscreen presses as well
-                window.ontouchstart = resetTimer;   // catches touchscreen swipes as well
-                window.ontouchmove = resetTimer;    // required by some devices
-                window.onclick = resetTimer;        // catches touchpad clicks as well
-                window.onkeydown = resetTimer;
+                window.addEventListener('load', resetTimer);
+                window.addEventListener('mousemove', resetTimer);
+                window.addEventListener('mousedown', resetTimer);    // catches touchscreen presses as well
+                window.addEventListener('touchstart', resetTimer);   // catches touchscreen swipes as well
+                window.addEventListener('touchmove', resetTimer);    // required by some devices
+                window.addEventListener('click', resetTimer);        // catches touchpad clicks as well
+                window.addEventListener('keydown', resetTimer);
                 window.addEventListener('scroll', resetTimer, true); // improved; see comments
 
-                let x;
+                let lastMinuteTimer;
                 function showFinalCountdown() {
                     $("#timeoutCountdownContainer").show(function() {
-                        x = startLastMinuteTimer('#timeoutCountdownSeconds', IDLE_WARNING_COUNTDOWN_SECONDS);
+                        lastMinuteTimer = startLastMinuteTimer('#timeoutCountdownSeconds');
                     });
                 }
 
-                let t;
+                let backgroundTimer;
                 function resetTimer() {
-                    clearTimeout(t);
-                    t = setTimeout(showFinalCountdown, IDLE_WARNING_APPEAR_SECONDS * 1000);
+                    clearTimeout(backgroundTimer);
+                    backgroundTimer = setTimeout(showFinalCountdown, IDLE_WARNING_APPEAR_SECONDS * 1000);
                 }
 
                 $(document).on('click', '#continueSession', function() {
                     $('#timeoutCountdownContainer').hide(function() {
-                        clearInterval(x);
+                        clearInterval(lastMinuteTimer);
                         resetTimer();
                     });
                 });

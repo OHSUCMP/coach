@@ -113,10 +113,10 @@ public class SessionController extends BaseController {
         return "logout";
     }
 
-    @GetMapping("inactivityLogout")
+    @GetMapping("inactivity-logout")
     public String inactivityLogout(HttpSession session) {
         sessionService.expireAll(session.getId());
-        return "inactivityLogout";
+        return "inactivity-logout";
     }
 
     @PostMapping("clear-session")
