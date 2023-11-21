@@ -107,6 +107,19 @@ public class SessionController extends BaseController {
         }
     }
 
+    @PostMapping("validate-session")
+    public ResponseEntity<?> validateSession(HttpSession session) {
+        logger.info("validating session " + session.getId() + " - exists? --> " + userWorkspaceService.exists(session.getId()));
+        return userWorkspaceService.exists(session.getId()) ?
+                ResponseEntity.ok(true) :
+                ResponseEntity.ok(false);
+    }
+
+    @GetMapping("unauthorized")
+    public String unauthorized(HttpSession session) {
+        return "unauthorized";
+    }
+
     @GetMapping("logout")
     public String logout(HttpSession session) {
         sessionService.expireAll(session.getId());

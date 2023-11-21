@@ -19,21 +19,43 @@
 
     <script type="text/javascript" src="{{req.contextPath}}/node_modules/jquery/dist/jquery.js"></script>
     <script type="text/javascript" src="{{req.contextPath}}/node_modules/jquery-ui-dist/jquery-ui.js"></script>
-    <script type="text/javascript" src="{{req.contextPath}}/js/coach.js"></script>
 
-    // adapted from https://stackoverflow.com/questions/667555/how-to-detect-idle-time-in-javascript
     <script type="text/javascript">
         const IDLE_TIMEOUT_SECONDS = {{idleTimeoutSeconds}};
-        const IDLE_WARNING_COUNTDOWN_SECONDS = 60;
-        const IDLE_WARNING_APPEAR_SECONDS = IDLE_TIMEOUT_SECONDS - IDLE_WARNING_COUNTDOWN_SECONDS;
+        const IDLE_COUNTDOWN_SECONDS = 60;
+        const IDLE_COUNTDOWN_APPEAR_SECONDS = IDLE_TIMEOUT_SECONDS - IDLE_COUNTDOWN_SECONDS;
 
-        if (IDLE_TIMEOUT_SECONDS > 0) {
+        // adapted from https://stackoverflow.com/questions/667555/how-to-detect-idle-time-in-javascript
+        let setupIdleTimeout = function() {
+            if (window.idleTimeoutConfigured === true) {
+                console.log("idle timeout already configured, skipping -");
+                return;
+            }
+            window.idleTimeoutConfigured = true;
+
+            console.log("configuring idle timeout -");
+
+            window.addEventListener('load', resetBackgroundTimer);
+            window.addEventListener('mousemove', resetBackgroundTimer);
+            window.addEventListener('mousedown', resetBackgroundTimer);    // catches touchscreen presses as well
+            window.addEventListener('touchstart', resetBackgroundTimer);   // catches touchscreen swipes as well
+            window.addEventListener('touchmove', resetBackgroundTimer);    // required by some devices
+            window.addEventListener('click', resetBackgroundTimer);        // catches touchpad clicks as well
+            window.addEventListener('keydown', resetBackgroundTimer);
+            window.addEventListener('scroll', resetBackgroundTimer, true); // improved; see comments
+            window.addEventListener('focus', resetBackgroundTimer);
+
+            let backgroundTimer;
+            let timeoutCountdown;
+
             // adapted from https://www.w3schools.com/howto/howto_js_countdown.asp
-            function startLastMinuteTimer(el) {
-                let s = IDLE_WARNING_COUNTDOWN_SECONDS;
+            function startTimeoutCountdown(el) {
+                let s = IDLE_COUNTDOWN_SECONDS;
                 $(el).html(s);
                 return setInterval(function() {
                     if (s <= 0) {
+                        clearInterval(timeoutCountdown);
+                        clearTimeout(backgroundTimer);
                         window.location.replace("/inactivity-logout");
                     } else {
                         s -= 1;
@@ -42,41 +64,55 @@
                 }, 1000);
             }
 
-            // adapted from https://stackoverflow.com/questions/667555/how-to-detect-idle-time-in-javascript
-            function setupIdleLogout() {
-                window.addEventListener('load', resetTimer);
-                window.addEventListener('mousemove', resetTimer);
-                window.addEventListener('mousedown', resetTimer);    // catches touchscreen presses as well
-                window.addEventListener('touchstart', resetTimer);   // catches touchscreen swipes as well
-                window.addEventListener('touchmove', resetTimer);    // required by some devices
-                window.addEventListener('click', resetTimer);        // catches touchpad clicks as well
-                window.addEventListener('keydown', resetTimer);
-                window.addEventListener('scroll', resetTimer, true); // improved; see comments
-
-                let lastMinuteTimer;
-                function showFinalCountdown() {
-                    $("#timeoutCountdownContainer").show(function() {
-                        lastMinuteTimer = startLastMinuteTimer('#timeoutCountdownSeconds');
-                    });
-                }
-
-                let backgroundTimer;
-                function resetTimer() {
-                    clearTimeout(backgroundTimer);
-                    backgroundTimer = setTimeout(showFinalCountdown, IDLE_WARNING_APPEAR_SECONDS * 1000);
-                }
-
-                $(document).on('click', '#continueSession', function() {
-                    $('#timeoutCountdownContainer').hide(function() {
-                        clearInterval(lastMinuteTimer);
-                        resetTimer();
-                    });
+            function showTimeoutCountdown() {
+                $("#timeoutCountdownContainer").show(function() {
+                    timeoutCountdown = startTimeoutCountdown('#timeoutCountdownSeconds');
                 });
             }
-            setupIdleLogout();
+
+            function resetBackgroundTimer() {
+                clearTimeout(backgroundTimer);
+                backgroundTimer = setTimeout(showTimeoutCountdown, IDLE_COUNTDOWN_APPEAR_SECONDS * 1000);
+            }
+
+            $(document).on('click', '#continueSession', function() {
+                $('#timeoutCountdownContainer').hide(function() {
+                    clearInterval(timeoutCountdown);
+                    resetBackgroundTimer();
+                });
+            });
+
+            console.log("idle timeout configured.");
+        };
+
+        function validateSession() {
+            console.log("validating session");
+            $.ajax({
+                method: "POST",
+                url: "/validate-session",
+                async: true,
+                success: function(result) {
+                    if (result === true) {
+                        if (IDLE_TIMEOUT_SECONDS > 0) {
+                            setupIdleTimeout();
+                        }
+                    } else {
+                        window.location.replace("/unauthorized");
+                    }
+                },
+                error: function() {
+                    window.location.replace("/error");
+                }
+            });
         }
+
+        $(window).on('focus', function() {
+            validateSession();
+        });
     </script>
-    
+
+    <script type="text/javascript" src="{{req.contextPath}}/js/coach.js"></script>
+
     {{#pageScripts}}
 	  {{! Page-specific scripts can be specified in the view model }}
 	  <script type="text/javascript" src="{{req.contextPath}}/js/{{.}}"></script>
