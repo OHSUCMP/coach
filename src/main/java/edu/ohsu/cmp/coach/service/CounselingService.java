@@ -20,12 +20,12 @@ public class CounselingService extends AbstractService {
     @Autowired
     private CounselingPageRepository pageRepository;
 
-    public List<Counseling> getCounselingList(String sessionId) {
+    public List<Counseling> getLocalCounselingList(String sessionId) {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         return repository.findAllByPatId(workspace.getInternalPatientId());
     }
 
-    public Counseling getCounseling(String sessionId, String extCounselingId) {
+    public Counseling getLocalCounseling(String sessionId, String extCounselingId) {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         return repository.findOneByPatIdAndExtCounselingId(workspace.getInternalPatientId(), extCounselingId);
     }

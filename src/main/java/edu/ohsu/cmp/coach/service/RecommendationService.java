@@ -10,6 +10,7 @@ import edu.ohsu.cmp.coach.entity.Counseling;
 import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
+import edu.ohsu.cmp.coach.fhir.transform.BaseVendorTransformer;
 import edu.ohsu.cmp.coach.fhir.transform.DefaultVendorTransformer;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.http.HttpRequest;
@@ -26,7 +27,6 @@ import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
-import edu.ohsu.cmp.coach.util.UUIDUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
@@ -47,6 +47,7 @@ public class RecommendationService extends AbstractService {
                                                     // false: make CQF Ruler calls (slow, expensive)
 
     private static final String GENERIC_ERROR_MESSAGE = "ERROR: An error was encountered processing this recommendation.  See server logs for details.";
+    private static final String COACH_SYSTEM = "https://coach.ohsu.edu";
 
     private String cdsHooksEndpointURL;
     private Boolean showDevErrors;
@@ -115,57 +116,18 @@ public class RecommendationService extends AbstractService {
         boolean prefetchModified = false;
 
         try {
-            Patient p = workspace.getPatient().getSourcePatient();
-
-//            List<IBaseResource> prefetch = new ArrayList<>();
             CompositeBundle compositeBundle = new CompositeBundle();
-
-//            prefetch.add(p);
+            Patient p = workspace.getPatient().getSourcePatient();
             compositeBundle.consume(p);
-
-//            prefetch.add(buildBPBundle(sessionId, p.getId()));
             compositeBundle.consume(buildBPBundle(sessionId, transformer));
-
 //            compositeBundle.consume(buildPulseBundle(sessionId, transformer));      // do we care about pulses in recommendations?
-
-//            prefetch.add(buildLocalCounselingBundle(sessionId, p.getId()));
             compositeBundle.consume(buildLocalCounselingBundle(sessionId, p.getId()));
-
-//            prefetch.add(buildGoalsBundle(sessionId, p.getId()));
             compositeBundle.consume(buildGoalsBundle(sessionId, transformer));
-
-            // HACK: if the patient has no Adverse Events, we must construct a fake one to send to
-            //       CQF-Ruler to prevent it from querying the FHIR server for them and consequently
-            //       blowing up
-            List<AdverseEventModel> adverseEvents = adverseEventService.getAdverseEvents(sessionId);
-            if (adverseEvents.size() > 0) {
-                for (AdverseEventModel adverseEvent : adverseEvents) {
-//                    prefetch.add(adverseEvent.toBundle(p.getId(), fcm));
-                    compositeBundle.consume(adverseEvent.toBundle(p.getId(), fcm));
-                }
-            } else {
-//                prefetch.add(buildFakeAdverseEventHACK(sessionId));
-                compositeBundle.consume(buildFakeAdverseEventHACK(sessionId));
-            }
-
-//            prefetch.add(workspace.getEncounterDiagnosisConditions());
+            compositeBundle.consume(buildAdverseEventsBundle(sessionId, p.getId()));
             compositeBundle.consume(workspace.getEncounterDiagnosisConditions());
-
-            for (MedicationModel m : workspace.getMedications()) {
-                if (m.hasSourceMedicationStatement()) {
-                    compositeBundle.consume(m.getSourceMedicationStatement());
-                } else if (m.hasSourceMedicationRequest()) {
-                    compositeBundle.consume(m.getSourceMedicationRequest());
-                    if (m.hasSourceMedicationRequestMedication()) {
-                        compositeBundle.consume(m.getSourceMedicationRequestMedication());
-                    }
-                }
-            }
-
-//            prefetch.add(workspace.getSupplementalResources());
+            compositeBundle.consume(buildMedicationsBundle(sessionId));
             compositeBundle.consume(workspace.getSupplementalResources());
 
-//            HookRequest hookRequest = new HookRequest(fcc.getCredentials(), prefetch);
             HookRequest hookRequest = new HookRequest(fcc.getCredentials(), compositeBundle.getBundle());
 
             prefetchModified = hookRequest.isPrefetchModified();
@@ -280,89 +242,144 @@ public class RecommendationService extends AbstractService {
     }
 
     private Bundle buildLocalCounselingBundle(String sessionId, String patientId) {
-        Bundle bundle = new Bundle();
-        bundle.setType(Bundle.BundleType.COLLECTION);
+        CompositeBundle bundle = new CompositeBundle();
 
-        List<Counseling> counselingList = counselingService.getCounselingList(sessionId);
-        for (Counseling c : counselingList) {
-            String uuid = UUIDUtil.getRandomUUID();
-
-            Encounter e = buildEncounter(uuid, patientId, c.getCreatedDate());
-            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Encounter/" + e.getId()).setResource(e);
-
-            Procedure p = buildLocalCounselingProcedure(patientId, e.getId(), c);
-            bundle.addEntry().setFullUrl("http://hl7.org/fhir/Procedure/" + p.getId()).setResource(p);
+        List<Counseling> list = counselingService.getLocalCounselingList(sessionId);
+        if (list.size() > 0) {
+            for (Counseling c : list) {
+                bundle.consume(buildLocalCounselingProcedure(patientId, c));
+            }
+        } else {
+            bundle.consume(buildFakeLocalCounselingProcedureHACK(patientId));
         }
 
-        return bundle;
+        return bundle.getBundle();
     }
 
-    private Procedure buildLocalCounselingProcedure(String patientId, String encounterId, Counseling c) {
+    private Procedure buildLocalCounselingProcedure(String patientId, Counseling c) {
         Procedure p = new Procedure();
 
         p.setId(c.getExtCounselingId());
         p.setSubject(new Reference().setReference(patientId));
-        p.setEncounter(new Reference().setReference(encounterId));
         p.setStatus(Procedure.ProcedureStatus.COMPLETED);
 
         // set counseling category.  see https://www.hl7.org/fhir/valueset-procedure-category.html
         p.getCategory().addCoding(fcm.getProcedureCounselingCoding());
 
-        p.getCode().addCoding().setCode(c.getReferenceCode()).setSystem(c.getReferenceSystem());
+        p.getCode().addCoding(new Coding()
+                .setCode(c.getReferenceCode())
+                .setSystem(c.getReferenceSystem())
+        );
 
         p.getPerformedDateTimeType().setValue(c.getCreatedDate());
 
         return p;
     }
 
+    private Procedure buildFakeLocalCounselingProcedureHACK(String patientId) {
+        Procedure p = new Procedure();
+        p.setId("counseling-procedure-FAKE-HACK");
+        p.setSubject(new Reference().setReference(patientId));
+        p.setStatus(Procedure.ProcedureStatus.NULL);
+
+        // set counseling category.  see https://www.hl7.org/fhir/valueset-procedure-category.html
+        p.getCategory().addCoding(fcm.getProcedureCounselingCoding());
+
+        p.getCode().addCoding(new Coding()
+                .setCode("coach-fake-procedure")
+                .setSystem(COACH_SYSTEM)
+                .setDisplay("***FAKE*** Counseling Procedure generated by COACH to prevent CQF-Ruler from querying the FHIR server")
+        );
+
+        p.getPerformedDateTimeType().setValue(new Date());
+
+        return p;
+    }
+
     private Bundle buildGoalsBundle(String sessionId, VendorTransformer transformer) throws DataException {
         CompositeBundle bundle = new CompositeBundle();
-        for (GoalModel gm : goalService.getGoals(sessionId)) {
-            transformer.transformOutgoingGoal(gm);
-            bundle.consume(transformer.transformOutgoingGoal(gm));
+        List<GoalModel> list = goalService.getGoals(sessionId);
+        if (list.size() > 0) {
+            for (GoalModel gm : list) {
+                bundle.consume(transformer.transformOutgoingGoal(gm));
+            }
+        } else {
+            bundle.consume(buildFakeGoalHACK(sessionId));
         }
         return bundle.getBundle();
     }
 
+    private Goal buildFakeGoalHACK(String sessionId) {
+        Goal g = new Goal();
+        g.setId("goal-FAKE-HACK");
+        Patient p = userWorkspaceService.get(sessionId).getPatient().getSourcePatient();
+        g.setSubject(new Reference().setReference(p.getId()));
+        g.setLifecycleStatus(Goal.GoalLifecycleStatus.NULL);
+        g.getDescription().setText("***FAKE*** Goal generated by COACH to prevent CQF-Ruler from querying the FHIR server");
+        return g;
+    }
+
     private Bundle buildBPBundle(String sessionId, VendorTransformer transformer) throws DataException {
         CompositeBundle bundle = new CompositeBundle();
-        for (BloodPressureModel bpm : bpService.getBloodPressureReadings(sessionId)) {
-            bundle.consume(transformer.transformOutgoingBloodPressureReading(bpm));
+        List<BloodPressureModel> list = bpService.getBloodPressureReadings(sessionId);
+        if (list.size() > 0) {
+            for (BloodPressureModel bpm : list) {
+                bundle.consume(transformer.transformOutgoingBloodPressureReading(bpm));
+            }
+        } else {
+            bundle.consume(buildFakeObservationHACK("bp-observation-FAKE-HACK", sessionId));
         }
         return bundle.getBundle();
     }
 
     private Bundle buildPulseBundle(String sessionId, VendorTransformer transformer) throws DataException {
         CompositeBundle bundle = new CompositeBundle();
-        for (PulseModel pm : pulseService.getPulseReadings(sessionId)) {
-            bundle.consume(transformer.transformOutgoingPulseReading(pm));
+        List<PulseModel> list = pulseService.getPulseReadings(sessionId);
+        if (list.size() > 0) {
+            for (PulseModel pm : list) {
+                bundle.consume(transformer.transformOutgoingPulseReading(pm));
+            }
+        } else {
+            bundle.consume(buildFakeObservationHACK("pulse-observation-FAKE-HACK", sessionId));
         }
         return bundle.getBundle();
     }
 
-    private Encounter buildEncounter(String uuid, String patientId, Date date) {
-        Encounter e = new Encounter();
 
-        e.setId("encounter-" + uuid);
-        e.setStatus(Encounter.EncounterStatus.FINISHED);
-        e.setClass_(fcm.getEncounterClassOfficeCoding());
-//        e.getClass_().setSystem(fcm.getEncounterClassSystem())
-//                .setCode(fcm.getEncounterClassAMBCode())
-//                .setDisplay(fcm.getEncounterClassAMBDisplay());
+    private Observation buildFakeObservationHACK(String id, String sessionId) {
+        Observation o = new Observation();
 
-        e.setSubject(new Reference().setReference(patientId));
+        o.setId(id);
 
-        Calendar start = Calendar.getInstance();
-        start.setTime(date);
-        start.add(Calendar.MINUTE, -1);
+        Patient p = userWorkspaceService.get(sessionId).getPatient().getSourcePatient();
+        o.setSubject(new Reference().setReference(p.getId()));
+        o.setStatus(Observation.ObservationStatus.NULL);
 
-        Calendar end = Calendar.getInstance();
-        end.setTime(date);
-        end.add(Calendar.MINUTE, 1);
+        o.addCategory().addCoding()
+                .setCode(BaseVendorTransformer.OBSERVATION_CATEGORY_CODE)
+                .setSystem(BaseVendorTransformer.OBSERVATION_CATEGORY_SYSTEM)
+                .setDisplay("vital-signs");
 
-        e.getPeriod().setStart(start.getTime()).setEnd(end.getTime());
+        o.getCode().addCoding(new Coding()
+                .setCode("coach-fake-observation")
+                .setSystem(COACH_SYSTEM)
+                .setDisplay("***FAKE*** Observation generated by COACH to prevent CQF-Ruler from querying the FHIR server")
+        );
 
-        return e;
+        return o;
+    }
+
+    private Bundle buildAdverseEventsBundle(String sessionId, String patientId) throws DataException {
+        CompositeBundle bundle = new CompositeBundle();
+        List<AdverseEventModel> adverseEvents = adverseEventService.getAdverseEvents(sessionId);
+        if (adverseEvents.size() > 0) {
+            for (AdverseEventModel adverseEvent : adverseEvents) {
+                bundle.consume(adverseEvent.toBundle(patientId, fcm));
+            }
+        } else {
+            bundle.consume(buildFakeAdverseEventHACK(patientId));
+        }
+        return bundle.getBundle();
     }
 
     /**
@@ -370,26 +387,56 @@ public class RecommendationService extends AbstractService {
      *
      * build a FAKE AdverseEvent resource to trick CQF Ruler into not querying the FHIR server for
      * AdverseEvent resources.  this is gross but sadly necessary for the time being.
-     * @param sessionId
+     * @param patientId
      * @return
      */
-    private AdverseEvent buildFakeAdverseEventHACK(String sessionId) {
-        String aeid = "adverseevent-FAKE-HACK";
-
+    private AdverseEvent buildFakeAdverseEventHACK(String patientId) {
         AdverseEvent ae = new AdverseEvent();
-        ae.setId(aeid);
-
-        Patient p = userWorkspaceService.get(sessionId).getPatient().getSourcePatient();
-
-        ae.setSubject(new Reference().setReference(p.getId()));
-
+        ae.setId("adverseevent-FAKE-HACK");
+        ae.setSubject(new Reference().setReference(patientId));
         ae.getEvent().addCoding(new Coding()
                 .setCode("coach-fake-adverse-event")
-                .setSystem("https://coach.ohsu.edu")
-                .setDisplay("***FAKE*** Adverse Event generated by COACH to prevent CQF-Ruler from querying the FHIR server"));
-
+                .setSystem(COACH_SYSTEM)
+                .setDisplay("***FAKE*** Adverse Event generated by COACH to prevent CQF-Ruler from querying the FHIR server")
+        );
         ae.setDate(new Date());
-
         return ae;
+    }
+
+    private Bundle buildMedicationsBundle(String sessionId) {
+        CompositeBundle bundle = new CompositeBundle();
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+
+        List<MedicationModel> list = workspace.getMedications();
+        if (list.size() > 0) {
+            for (MedicationModel m : list) {
+                if (m.hasSourceMedicationStatement()) {
+                    bundle.consume(m.getSourceMedicationStatement());
+                } else if (m.hasSourceMedicationRequest()) {
+                    bundle.consume(m.getSourceMedicationRequest());
+                    if (m.hasSourceMedicationRequestMedication()) {
+                        bundle.consume(m.getSourceMedicationRequestMedication());
+                    }
+                }
+            }
+        } else {
+            bundle.consume(buildFakeMedicationRequest(workspace.getPatient().getSourcePatient().getId()));
+        }
+        return bundle.getBundle();
+    }
+
+    private MedicationRequest buildFakeMedicationRequest(String patientId) {
+        MedicationRequest mr = new MedicationRequest();
+
+        mr.setStatus(MedicationRequest.MedicationRequestStatus.NULL);
+        mr.setIntent(MedicationRequest.MedicationRequestIntent.NULL);
+        mr.getMedicationCodeableConcept().addCoding(new Coding()
+                .setCode("coach-fake-medication")
+                .setSystem(COACH_SYSTEM)
+                .setDisplay("***FAKE*** medication generated by COACH to prevent CQF-Ruler from querying the FHIR server")
+        );
+        mr.setSubject(new Reference().setReference(patientId));
+
+        return mr;
     }
 }

@@ -41,7 +41,7 @@ public class CounselingController extends BaseController {
                                              @RequestParam String referenceCode,
                                              @RequestParam String counselingText) {
 
-        Counseling c = counselingService.getCounseling(session.getId(), extCounselingId);
+        Counseling c = counselingService.getLocalCounseling(session.getId(), extCounselingId);
 
         if (c == null) {
             c = counselingService.create(session.getId(),
