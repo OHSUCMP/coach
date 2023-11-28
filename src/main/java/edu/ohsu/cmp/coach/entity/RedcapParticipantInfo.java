@@ -15,6 +15,7 @@ public class RedcapParticipantInfo {
     
     private static final Logger logger = LoggerFactory.getLogger(RedcapParticipantInfo.class);
 
+    private static final String PARTICIPANT_INFORMATION_SHEET_FORM = "information_sheet";
     private static final String PARTICIPANT_CONSENT_FORM = "coach_informed_consent";
     private static final String PARTICIPANT_CONSENT_FIELD = "icf_consent_73fb68";
     private static final String PARTICIPANT_RANDOMIZATION_FORM = "staff_coach_randomization";
@@ -23,6 +24,7 @@ public class RedcapParticipantInfo {
 
     private String redcapId;
     private boolean exists;
+    private boolean isInformationSheetComplete;
     private boolean hasConsentRecord;
     private boolean isConsentGranted;
     private boolean isRandomized;
@@ -53,6 +55,7 @@ public class RedcapParticipantInfo {
         RedcapParticipantInfo pi = new RedcapParticipantInfo();
         pi.setRedcapId(redcapId);
         pi.setExists(true);
+        pi.setIsInformationSheetComplete(StringUtils.equals(baseline.get(PARTICIPANT_INFORMATION_SHEET_FORM + "_complete"), REDCapService.FORM_COMPLETE));
         pi.setHasConsentRecord(StringUtils.equals(baseline.get(PARTICIPANT_CONSENT_FORM + "_complete"), REDCapService.FORM_COMPLETE));
         pi.setIsConsentGranted(pi.getHasConsentRecord() && 
             StringUtils.equals(baseline.get(PARTICIPANT_CONSENT_FIELD), REDCapService.YES)
@@ -89,6 +92,18 @@ public class RedcapParticipantInfo {
 
     public void setExists(boolean exists) {
         this.exists = exists;
+    }
+
+    /**
+     * Return whether the participant information sheet is marked complete
+     * @return
+     */
+    public boolean getIsInformationSheetComplete() {
+        return isInformationSheetComplete;
+    }
+
+    public void setIsInformationSheetComplete(boolean isInformationSheetComplete) {
+        this.isInformationSheetComplete = isInformationSheetComplete;
     }
 
     /**
