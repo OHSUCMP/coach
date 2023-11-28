@@ -132,6 +132,10 @@ public class HomeController extends BaseController {
                     redCapService.createSubjectInfoRecord(patient.getRedcapId());
                     String entrySurveyLink = redCapService.getEntrySurveyLink(patient.getRedcapId());
                     return "redirect:" + entrySurveyLink;
+                } else if (!redcapParticipantInfo.getIsInformationSheetComplete()) {
+                    // If they haven't gotten past the entry survey and don't have a queue yet, send them back to the entry survey
+                    String entrySurveyLink = redCapService.getEntrySurveyLink(patient.getRedcapId());
+                    return "redirect:" + entrySurveyLink;
                 } else if (redcapParticipantInfo.getHasConsentRecord() &&
                     !redcapParticipantInfo.getIsConsentGranted()) {
                     // If consent record exists and the answer is no, exit
