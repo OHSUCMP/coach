@@ -46,8 +46,9 @@ public class UserWorkspace {
     private static final String CACHE_GOAL = "Goal";
     private static final String CACHE_MEDICATION = "Medication";
 
-    private static final String CACHE_CONDITION_ENCOUNTER_DIAGNOSIS = "ConditionEncounterDiagnosis";
-    private static final String CACHE_SUPPLEMENTAL_RESOURCES = "SupplementalResources";
+    private static final String CACHE_CONDITION_ENCOUNTER_DIAGNOSIS = "EncounterDiagnosisConditions";
+    private static final String CACHE_PROBLEM_LIST_CONDITIONS = "ProblemListConditions";
+    private static final String CACHE_OTHER_SUPPLEMENTAL_RESOURCES = "OtherSupplementalResources";
 
     private final ApplicationContext ctx;
     private final String sessionId;
@@ -153,7 +154,8 @@ public class UserWorkspace {
                 getEncounterDiagnosisConditions();
                 getRemoteAdverseEvents();
                 getMedications();
-                getSupplementalResources();
+                getProblemListConditions();
+                getOtherSupplementalResources();
                 refreshHypotensionAdverseEvents();
                 getAllCards();
                 logger.info("DONE populating workspace for session=" + sessionId +
@@ -415,8 +417,26 @@ public class UserWorkspace {
         });
     }
 
-    public Bundle getSupplementalResources() {
-        return bundleCache.get(CACHE_SUPPLEMENTAL_RESOURCES, new Function<String, Bundle>() {
+    public Bundle getProblemListConditions() {
+        return bundleCache.get(CACHE_PROBLEM_LIST_CONDITIONS, new Function<String, Bundle>() {
+            @Override
+            public Bundle apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Problem List Conditions Resources for session=" + sessionId);
+
+                EHRService svc = ctx.getBean(EHRService.class);
+                Bundle bundle = svc.getProblemListConditions(sessionId);
+
+                logger.info("DONE building Problem List Resources for session=" + sessionId +
+                        " (size=" + bundle.getEntry().size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return bundle;
+            }
+        });
+    }
+
+    public Bundle getOtherSupplementalResources() {
+        return bundleCache.get(CACHE_OTHER_SUPPLEMENTAL_RESOURCES, new Function<String, Bundle>() {
             @Override
             public Bundle apply(String s) {
                 long start = System.currentTimeMillis();
@@ -425,7 +445,8 @@ public class UserWorkspace {
                 EHRService svc = ctx.getBean(EHRService.class);
                 CompositeBundle compositeBundle = new CompositeBundle();
 
-                compositeBundle.consume(svc.getProblemListConditions(sessionId));
+// moved to its own function so that we can identify if any were present without any complicated introspection into the Bundle
+//                compositeBundle.consume(svc.getProblemListConditions(sessionId));
 
                 try {
                     compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getBmiCoding()), fcm.getBmiLookbackPeriod(),null));
