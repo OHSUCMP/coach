@@ -150,13 +150,15 @@ public class SessionController extends BaseController {
 
     @PostMapping("clear-supplemental-data")
     public ResponseEntity<?> clearSupplementalData(HttpSession session) {
-        Boolean permitClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
+        boolean permitClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
         if (permitClearSupplementalData) {
             logger.info("clearing supplemental data for session=" + session.getId());
             UserWorkspace workspace = userWorkspaceService.get(session.getId());
             workspace.clearSupplementalData();
             return ResponseEntity.ok("supplemental data cleared");
+
         } else {
+            logger.warn("attempted to clear supplemental data for session=" + session.getId() + ", but this action is not permitted.");
             return ResponseEntity.badRequest().build();
         }
     }
