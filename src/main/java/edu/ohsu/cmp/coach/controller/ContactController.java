@@ -59,10 +59,14 @@ public class ContactController extends BaseController {
             ContactMessage contactMessage = contactMessageService.getMessage(token);
             String message = "";
             String subject = "";
+            String aboveText = "";
+            String belowText = "";
             if (contactMessage != null) {
                 Map<String, String> tokenMap = buildTokenMap(session.getId());
                 message = replaceTokens(contactMessage.getBody(), tokenMap);
                 subject = replaceTokens(contactMessage.getSubject(), tokenMap);
+                aboveText = contactMessage.getAboveText();
+                belowText = contactMessage.getBelowText();
                 try {
                     Map<String, Object> map = new HashMap<>();
                     map.put("subject", URLEncoder.encode(subject, StandardCharsets.UTF_8));
@@ -74,6 +78,8 @@ public class ContactController extends BaseController {
             }
             model.addAttribute("subject", subject);
             model.addAttribute("message", message);
+            model.addAttribute("aboveText", aboveText);
+            model.addAttribute("belowText", belowText);
 
             model.addAttribute("mychartLoginLink", mychartLoginLink);
             model.addAttribute("mychartMessageLink", mychartMessageLink);
@@ -99,9 +105,7 @@ public class ContactController extends BaseController {
         for (MedicationModel m : medicationService.getAntihypertensiveMedications(sessionId)) {
             list.add(m.getDescription());
         }
-        return list.size() > 0 ?
-                String.join(", ", list) :
-                "(none)";
+        return toEnglishList(list, "no anti-hypertensive medications");
     }
 
     private String replaceTokens(String s, Map<String, String> map) {
@@ -109,5 +113,25 @@ public class ContactController extends BaseController {
             s = s.replaceAll("\\{" + entry.getKey() + "}", entry.getValue());
         }
         return s;
+    }
+
+    private String toEnglishList(List<String> list, String textIfEmpty) {
+        if (list.size() > 2) {
+            String s = String.join(", ", list);
+            int index = s.lastIndexOf(", ");
+            if (index > 0) {
+                s = s.substring(0, index + 1) + " and" + s.substring(index + 1);
+            }
+            return s;
+
+        } else if (list.size() == 2) {
+            return list.get(0) + " and " + list.get(1);
+
+        } else if (list.size() == 1) {
+            return list.get(0);
+
+        } else {
+            return textIfEmpty;
+        }
     }
 }

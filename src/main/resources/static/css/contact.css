@@ -3,3 +3,8 @@
     font-family: monospace;
     height: 15em;
 }
+
+.critical {
+    color: red;
+    font-weight: bold;
+}

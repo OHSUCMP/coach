@@ -23,6 +23,11 @@
     </div>
 
     <div class="heading">Pre-Populated Note Based on Recommendations</div>
+    {{#aboveText}}
+        <div id="aboveText" class="mt-3">
+            {{{aboveText}}}
+        </div>
+    {{/aboveText}}
     <div id="messageContainer" class="card mt-3">
         <div class="card-header">
             <strong>Subject: </strong><span id="subject">{{subject}}</span>
@@ -33,7 +38,11 @@
             <button id="copyAndPaste" class="btn btn-sm button-primary">Copy and Paste</button>
         </div>
     </div>
-
+    {{#belowText}}
+        <div id="belowText" class="mt-3">
+            {{{belowText}}}
+        </div>
+    {{/belowText}}
     <div id="myChartInstructionsContainer" class="modal">
         <div id="myChartInstructions" class="modalContent">
             <div class="heading">Message Copied!  Next Steps:</div>

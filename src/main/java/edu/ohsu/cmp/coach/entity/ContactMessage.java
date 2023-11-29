@@ -12,6 +12,8 @@ public class ContactMessage {
     private String messageKey;
     private String subject;
     private String body;
+    private String aboveText;
+    private String belowText;
 
     protected ContactMessage() {
     }
@@ -46,5 +48,21 @@ public class ContactMessage {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public String getAboveText() {
+        return aboveText;
+    }
+
+    public void setAboveText(String beforeText) {
+        this.aboveText = beforeText;
+    }
+
+    public String getBelowText() {
+        return belowText;
+    }
+
+    public void setBelowText(String afterText) {
+        this.belowText = afterText;
     }
 }
