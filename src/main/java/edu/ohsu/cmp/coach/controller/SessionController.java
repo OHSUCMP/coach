@@ -11,6 +11,7 @@ import edu.ohsu.cmp.coach.service.PatientService;
 import edu.ohsu.cmp.coach.service.REDCapService;
 import edu.ohsu.cmp.coach.session.SessionService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -149,9 +150,14 @@ public class SessionController extends BaseController {
 
     @PostMapping("clear-supplemental-data")
     public ResponseEntity<?> clearSupplementalData(HttpSession session) {
-        logger.info("clearing supplemental data for session=" + session.getId());
-        UserWorkspace workspace = userWorkspaceService.get(session.getId());
-        workspace.clearSupplementalData();
-        return ResponseEntity.ok("supplemental data cleared");
+        Boolean permitClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
+        if (permitClearSupplementalData) {
+            logger.info("clearing supplemental data for session=" + session.getId());
+            UserWorkspace workspace = userWorkspaceService.get(session.getId());
+            workspace.clearSupplementalData();
+            return ResponseEntity.ok("supplemental data cleared");
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
