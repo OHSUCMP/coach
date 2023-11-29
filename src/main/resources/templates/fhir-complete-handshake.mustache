@@ -26,11 +26,17 @@
                 data: data
             }).done(function(cards, textStatus, jqXHR) {
                 if (jqXHR.status === 200) {
-                    $('body').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
+                    $('.response').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
                     window.location.replace(REDIRECT_URL);
-
                 } else {
-                    $('body').html("Error - received response " + response.status + " status");
+                    $('.response').html("Error - received response " + jqXHR.status + " status");
+                }
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                try {
+                    let response = JSON.parse(jqXHR.responseText);
+                    $('.response').html("Error " + jqXHR.status + ": " + (response.message ? response.message : "An error occurred. Try again later or contact study staff."));
+                } catch (e) {
+                    $('.response').html("Error " + jqXHR.status + ": An error occurred. Try again later or contact study staff.");
                 }
             });
         }
@@ -53,6 +59,8 @@
     </script>
 </head>
 <body>
+<div class="response" style="font-size:1.5em;">
 Completing handshake...
+</div>
 </body>
 </html>

@@ -1,23 +1,11 @@
 package edu.ohsu.cmp.coach.exception;
 
-public class REDCapException extends Exception {
-    public REDCapException() {
-        super();
-    }
+import org.springframework.web.server.ResponseStatusException;
 
-    public REDCapException(String message) {
-        super(message);
-    }
+public class REDCapException extends ResponseStatusException {
 
-    public REDCapException(String message, Throwable cause) {
-        super(message, cause);
+    public REDCapException(int rawStatusCode, String reason, Throwable cause) {
+        super(rawStatusCode, reason, cause);
     }
-
-    public REDCapException(Throwable cause) {
-        super(cause);
-    }
-
-    protected REDCapException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
+    
 }

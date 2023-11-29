@@ -78,33 +78,28 @@ public class REDCapService {
                 bodyParams
         );
 
-        int code = response.getResponseCode();
-        if (code < 200 || code > 299) {
-            logger.error("REDCap ERROR: received code " + code + " - body=" + response.getResponseBody());
-            throw new REDCapException("received code " + code + " from REDCap");
+        checkException(response);
 
-        } else {
-            logger.debug("REDCap: received code " + code + " - body=" + response.getResponseBody());
-            Gson gson = new Gson();
-            List<Map<String, String>> records = gson.fromJson(response.getResponseBody(), new TypeToken<List<Map<String, String>>>(){}.getType());
+        Gson gson = new Gson();
+        List<Map<String, String>> records = gson.fromJson(response.getResponseBody(), new TypeToken<List<Map<String, String>>>(){}.getType());
 
-            if (records.isEmpty()) {
-                return RedcapParticipantInfo.buildNotExists(redcapId);
-            } else if (records.size() == 1) {
-                return RedcapParticipantInfo.buildFromRecord(redcapId, records.get(0), new LinkedHashMap<String,String>());
-            } else if (records.size() == 2) {
-                // Distinguish the baseline and ongoing events.
-                Map<String,String> record1 = records.get(0);
-                Map<String,String> record2 = records.get(1);
-                if (StringUtils.equals(record1.get("redcap_event_name"), PARTICIPANT_BASELINE_EVENT)) {
-                    return RedcapParticipantInfo.buildFromRecord(redcapId, record1, record2);
-                } else {
-                    return RedcapParticipantInfo.buildFromRecord(redcapId, record2, record1);
-                }                
+        if (records.isEmpty()) {
+            return RedcapParticipantInfo.buildNotExists(redcapId);
+        } else if (records.size() == 1) {
+            return RedcapParticipantInfo.buildFromRecord(redcapId, records.get(0), new LinkedHashMap<String,String>());
+        } else if (records.size() == 2) {
+            // Distinguish the baseline and ongoing events.
+            Map<String,String> record1 = records.get(0);
+            Map<String,String> record2 = records.get(1);
+            if (StringUtils.equals(record1.get("redcap_event_name"), PARTICIPANT_BASELINE_EVENT)) {
+                return RedcapParticipantInfo.buildFromRecord(redcapId, record1, record2);
             } else {
-                throw new REDCapException("found too many records for (" + redcapId + ") - expected 1, found " + records.size());
-            }
+                return RedcapParticipantInfo.buildFromRecord(redcapId, record2, record1);
+            }                
+        } else {
+            throw new REDCapException(422, "found too many records for (" + redcapId + ") - expected 1, found " + records.size(), null);
         }
+
     }
 
     /**
@@ -145,17 +140,9 @@ public class REDCapService {
                 bodyParams
         );
 
-        int code = response.getResponseCode();
-        if (code < 200 || code > 299) {
-            logger.error("REDCap ERROR: received code " + code + " - body=" + response.getResponseBody());
-            throw new REDCapException("received code " + code + " from REDCap");
-
-        } else {
-            logger.debug("REDCap: received code " + code + " - body=" + response.getResponseBody());
-            Map<String, String> record = gson.fromJson(response.getResponseBody(), new TypeToken<Map<String, String>>(){}.getType());
-
-            return record.get("count").equals("1");
-        }
+        checkException(response);
+        Map<String, String> record = gson.fromJson(response.getResponseBody(), new TypeToken<Map<String, String>>(){}.getType());
+        return record.get("count").equals("1");
     }
 
     /**
@@ -183,15 +170,8 @@ public class REDCapService {
                 bodyParams
         );
 
-        int code = response.getResponseCode();
-        if (code < 200 || code > 299) {
-            logger.error("REDCap ERROR: received code " + code + " - body=" + response.getResponseBody());
-            throw new REDCapException("received code " + code + " from REDCap");
-
-        } else {
-            logger.debug("REDCap: received code " + code + " - body=" + response.getResponseBody());
-            return response.getResponseBody();
-        }
+        checkException(response);
+        return response.getResponseBody();
     }
 
     /**
@@ -217,14 +197,18 @@ public class REDCapService {
                 bodyParams
         );
 
-        int code = response.getResponseCode();
-        if (code < 200 || code > 299) {
-            logger.error("REDCap ERROR: received code " + code + " - body=" + response.getResponseBody());
-            throw new REDCapException("received code " + code + " from REDCap");
+        checkException(response);
+        return response.getResponseBody();
+    }
 
-        } else {
-            logger.debug("REDCap: received code " + code + " - body=" + response.getResponseBody());
-            return response.getResponseBody();
+    private void checkException(HttpResponse response) throws REDCapException {
+        int code = response.getResponseCode();
+        if (code == 400) {
+            // This is the code REDCap sends when it is offline for maintenance
+            throw new REDCapException(400, "COACH is temporarily unavailable. Please try again later.", null);
+        } else if (code < 200 || code > 299) {
+            logger.error("REDCap ERROR: received code " + code + " - body=" + response.getResponseBody());
+            throw new REDCapException(code, response.getResponseBody(), null);
         }
     }
 
