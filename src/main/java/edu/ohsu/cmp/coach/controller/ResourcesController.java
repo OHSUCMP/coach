@@ -6,10 +6,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import javax.servlet.http.HttpSession;
 
-// This is linked in the recommendations. Don't change the URL.
+// These pages may be linked to in the recommendations. Don't change the URL.
 @Controller
 public class ResourcesController extends BaseController {
     
+    @GetMapping("/faq")
+    public String faq(HttpSession session, Model model) {
+        setCommonViewComponents(model);
+        return "faq";
+    }
+
     @GetMapping("/symptoms-911")
     public String symptoms(HttpSession session, Model model) {
         setCommonViewComponents(model);

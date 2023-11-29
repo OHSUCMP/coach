@@ -126,3 +126,7 @@ body {
     text-decoration: underline;
     cursor: pointer;
 }
+
+.thick {
+    font-weight: bold;
+}

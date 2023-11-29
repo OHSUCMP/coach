@@ -1,7 +1,13 @@
 package edu.ohsu.cmp.coach.layout;
 
 import com.samskivert.mustache.Mustache;
+
+import java.util.Calendar;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -47,4 +53,10 @@ public class LayoutAdvice {
             layout.setContent(frag.execute());
         };
     }
+
+    @ModelAttribute
+	public void addDefaultAttributes(HttpServletRequest req, Model model) {
+		model.addAttribute("currentYear", Calendar.getInstance().get(Calendar.YEAR));
+	}
+
 }
