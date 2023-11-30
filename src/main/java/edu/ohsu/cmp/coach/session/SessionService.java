@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
@@ -24,6 +25,9 @@ public class SessionService extends AbstractService {
 
     @Value("${socket.timeout:300000}")
     private Integer socketTimeout;
+
+    @Autowired
+    private ApplicationContext ctx;
 
     @Autowired
     private Scheduler scheduler;
@@ -85,6 +89,7 @@ public class SessionService extends AbstractService {
     // information doesn't persist indefinitely if the user exits the workflow prematurely
     private void scheduleExpireProvisional(String sessionId) {
         JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put(ExpireProvisionalSessionJob.JOBDATA_APPLICATIONCONTEXT, ctx);
         jobDataMap.put(ExpireProvisionalSessionJob.JOBDATA_SESSIONID, sessionId);
 
         String id = UUID.randomUUID().toString();
