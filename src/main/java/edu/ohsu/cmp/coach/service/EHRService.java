@@ -175,6 +175,7 @@ public class EHRService extends AbstractService {
                         Resource resource = resourceWithBundle.getResource();
                         // #114: Epic returns this additional resource that keeps us from accurately counting conditions and inserting a fake one when needed
                         if (resource instanceof OperationOutcome) {
+                            logger.debug("removing OperationOutcome from response to Condition search");
                             return false;
                         }
                         if (resource instanceof Condition) {
