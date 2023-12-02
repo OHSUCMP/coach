@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.entity;
 
 public enum RandomizationGroup {
-    ENHANCED(1), USUAL(2);
+    ENHANCED(1), BASIC(2);
     private int redcapCode;
     
     RandomizationGroup(int redcapCode) {
@@ -16,7 +16,7 @@ public enum RandomizationGroup {
         if (redcapCode == 1) {
             return ENHANCED;
         } else if (redcapCode == 2) {
-            return USUAL;
+            return BASIC;
         }
 
         throw new IllegalArgumentException("No randomization group maps to " + redcapCode);
