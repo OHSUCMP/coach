@@ -482,7 +482,7 @@ public class UserWorkspace {
         Map<String, List<Card>> map = new LinkedHashMap<>();
         RecommendationService svc = ctx.getBean(RecommendationService.class);
         try {
-            for (CDSHook hook : svc.getOrderedCDSHooks()) {
+            for (CDSHook hook : svc.getOrderedCDSHooks(sessionId)) {
                 try {
                     map.put(hook.getId(), getCards(hook.getId()));
                 } catch (Exception e) {
