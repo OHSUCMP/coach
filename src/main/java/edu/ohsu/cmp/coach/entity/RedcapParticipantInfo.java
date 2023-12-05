@@ -19,7 +19,7 @@ public class RedcapParticipantInfo {
     private static final String PARTICIPANT_CONSENT_FORM = "coach_informed_consent";
     private static final String PARTICIPANT_CONSENT_FIELD = "icf_consent_73fb68";
     private static final String PARTICIPANT_RANDOMIZATION_FORM = "staff_coach_randomization";
-    private static final String PARTICIPANT_RANDOMIZATION_FIELD = "randomization";
+    private static final String PARTICIPANT_RANDOMIZATION_FIELD = "randomized_assignment";
     private static final String PARTICIPANT_DISPOSITION_WITHDRAW_FIELD = "withdraw";
 
     private String redcapId;
@@ -67,7 +67,7 @@ public class RedcapParticipantInfo {
                 int rand = Integer.parseInt(randString);
                 pi.setRandomizationGroup(RandomizationGroup.getByRedcapCode(rand));
             } catch (IllegalArgumentException e) {
-                RedcapParticipantInfo.logger.error("Randomization Group" + randString + " is not understood. User will get ENHANCED experience.");
+                RedcapParticipantInfo.logger.error("Randomization Group " + randString + " is not understood. User will get ENHANCED experience.");
             }
         }
         pi.setIsWithdrawn(StringUtils.equals(ongoing.get(PARTICIPANT_DISPOSITION_WITHDRAW_FIELD), REDCapService.YES));
