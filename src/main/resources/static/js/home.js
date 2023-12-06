@@ -5,7 +5,15 @@ const BPSource = Object.freeze({
     Omron: "OMRON",
     Office: "OFFICE",
     Unknown: "UNKNOWN"
-})
+});
+
+function isEnhanced() {
+    return $('#randomizationGroup').text() === 'ENHANCED';
+}
+
+function isBasic() {
+    return $('#randomizationGroup').text() === 'BASIC';
+}
 
 function doClearSupplementalData(_callback) {
     $.ajax({
@@ -205,21 +213,7 @@ function populateSummaryDiv() {
         }
     }
 
-    // build the BP icon and other Hypertension classification stuff based on avgSystolic and avgDiastolic above
-    let indicator;
-    if (twoCrisisBPs | crisisBP | twoLowCrisisBPs | lowCrisisBP) { // crisis; considers most recent reading ONLY
-        indicator = { img: 'critical-icon.png', alt: 'Critical', show: 'critical' };
-    } else if (aboveGoal) {
-        indicator = { img: 'stoplight-yellow.png', alt: 'Above Goal', show: 'average' };
-    } else if (avgSystolic !== 0) {
-        indicator = { img: 'stoplight-green.png', alt: 'At or Below Goal', show: 'average' };
-    } else {
-        indicator = { img: 'info-icon.png', alt: 'Enter more blood pressures to see average', show: 'placeholder' };
-    }
-
     let bpIcon = $('#bpIcon');
-    bpIcon.html("<img src='/images/" + indicator.img + "' class='bp-icon' alt='" + indicator.alt + "' />");
-
     let bpIndicatorContainer = $('#bpIndicatorContainer');
     let chartContainer = $('#chartContainer');
     let bpPlaceholder = $('#bpPlaceholder');
@@ -229,29 +223,65 @@ function populateSummaryDiv() {
     let systolic = $('#systolic');
     let diastolic = $('#diastolic');
 
-    if (indicator.show === 'critical') {
+    if (twoCrisisBPs || crisisBP || twoLowCrisisBPs || lowCrisisBP) {
+        bpIcon.html("<img src='/images/critical-icon.png' class='bp-icon' alt='Critical' />");
+        bpIcon.show();
         bpIndicatorContainer.removeClass("col-md-3");
         chartContainer.hide();
         bpPlaceholder.hide();
         bpContainer.show();
-        
+
         bpLabel.html('Most Recent BP:');
+        bpLabel.show();
         systolic.html(mostRecentBP.systolic.value);
         systolic.addClass('crisis');
         diastolic.html(mostRecentBP.diastolic.value);
         diastolic.addClass('crisis');
         if (twoCrisisBPs) {
-            bpNote.html('Warning: Your most recent BP is still very high. Take action below.​​');
+            bpNote.html('Warning: Your most recent BP is still very high. Take action below.');
         } else if (crisisBP) {
-            bpNote.html('Warning: Your BP is very high. Take action below.​');
+            bpNote.html('Warning: Your BP is very high. Take action below.');
         } else if (twoLowCrisisBPs) {
-            bpNote.html('Warning: Your most recent BP is still very low. Take action below.​​');
+            bpNote.html('Warning: Your most recent BP is still very low. Take action below.');
         } else if (lowCrisisBP) {
-            bpNote.html('Warning: Your BP is very low. Take action below.​');
+            bpNote.html('Warning: Your BP is very low. Take action below.');
         }
         bpNote.addClass('crisis');
-    }
-    else if (indicator.show === 'average') {
+        bpNote.show();
+
+    } else if (avgSystolic === 0) { // not enough readings to compute average
+        // Add the placeholder image and text
+        bpPlaceholder.show();
+        bpPlaceholder.append("<img src='/images/info-icon.png' class='bp-icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>");
+        bpPlaceholder.append("<div class='mt-4'>Enter more blood pressures to see average</div>");
+
+    } else if (isBasic()) {
+        bpIndicatorContainer.removeClass("col-md-3");
+        chartContainer.hide();
+        bpIcon.hide();
+        bpNote.hide();
+        bpPlaceholder.hide();
+        bpContainer.show();
+
+        bpLabel.html('Most Recent BP:');
+        bpLabel.show();
+        systolic.html(mostRecentBP.systolic.value);
+        systolic.removeClass('crisis');
+        diastolic.html(mostRecentBP.diastolic.value);
+        diastolic.removeClass('crisis');
+
+    } else if (isEnhanced()) {
+        if (aboveGoal) {
+            bpIcon.html("<img src='/images/stoplight-yellow.png' class='bp-icon' alt='Above Goal' />");
+            bpNote.html('Your BP is above your goal!');
+        } else {
+            bpIcon.html("<img src='/images/stoplight-green.png' class='bp-icon' alt='At or Below Goal' />");
+            bpNote.html('You reached your goal!');
+        }
+
+        bpIcon.show();
+        bpNote.removeClass('crisis');
+        bpNote.show();
         bpPlaceholder.hide();
         bpContainer.show();
 
@@ -260,19 +290,6 @@ function populateSummaryDiv() {
         systolic.removeClass('crisis');
         diastolic.html(avgDiastolic);
         diastolic.removeClass('crisis');
-
-        if (aboveGoal) {
-            bpNote.html('Your BP is above your goal!');
-        } else {
-            bpNote.html('You reached your goal!');
-        }
-        bpNote.removeClass('crisis');
-
-    } else if (indicator.show === 'placeholder') {
-        // Add the placeholder image and text
-        bpPlaceholder.show();
-        bpPlaceholder.append("<img src='/images/info-icon.png' class='bp-icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>");
-        bpPlaceholder.append("<div class='mt-4'>Enter more blood pressures to see average</div>");
     }
 }
 

@@ -8,6 +8,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.coach.entity.Counseling;
 import edu.ohsu.cmp.coach.entity.MyGoal;
+import edu.ohsu.cmp.coach.entity.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.transform.BaseVendorTransformer;
@@ -52,10 +53,15 @@ public class RecommendationService extends AbstractService {
     private static final String GENERIC_ERROR_MESSAGE = "ERROR: An error was encountered processing this recommendation.  See server logs for details.";
     private static final String COACH_SYSTEM = "https://coach.ohsu.edu";
 
+    @Value("${cqfruler.cdshooks.endpoint.url}")
     private String cdsHooksEndpointURL;
+
+    @Value("#{new Boolean('${security.show-dev-errors}')}")
     private Boolean showDevErrors;
+
     private List<String> cdsHookOrder;
 
+    private List<String> basicGroupAllowFilter;
 
     @Autowired
     private BloodPressureService bpService;
@@ -78,15 +84,13 @@ public class RecommendationService extends AbstractService {
     @Value("${contact.after-hours}")
     private String clinicAfterHours;
 
-    public RecommendationService(@Value("${cqfruler.cdshooks.endpoint.url}") String cdsHooksEndpointURL,
-                                 @Value("#{new Boolean('${security.show-dev-errors}')}") Boolean showDevErrors,
-                                 @Value("${cqfruler.cdshooks.order.csv}") String cdsHookOrder) {
-        this.cdsHooksEndpointURL = cdsHooksEndpointURL;
-        this.showDevErrors = showDevErrors;
-        this.cdsHookOrder = Arrays.asList(cdsHookOrder.split("\\s*,\\s*"));
+    public RecommendationService(@Value("${cqfruler.cdshooks.order.csv}") String cdsHookOrderStr,
+                                 @Value("${cqfruler.cdshooks.basic-group.allow-filter.csv}") String basicGroupAllowFilterStr) {
+        this.cdsHookOrder = Arrays.asList(cdsHookOrderStr.split("\\s*,\\s*"));
+        this.basicGroupAllowFilter = Arrays.asList(basicGroupAllowFilterStr.split("\\s*,\\s*"));
     }
 
-    public List<CDSHook> getOrderedCDSHooks() throws IOException {
+    public List<CDSHook> getOrderedCDSHooks(String sessionId) throws IOException {
         Map<String, CDSHook> map = new LinkedHashMap<>();
         for (CDSHook cdsHook : CDSHooksUtil.getCDSHooks(TESTING, cdsHooksEndpointURL)) {
             map.put(cdsHook.getId(), cdsHook);
@@ -101,6 +105,18 @@ public class RecommendationService extends AbstractService {
         }
 
         list.addAll(map.values());
+
+        // for users belonging to the "basic" randomization group, filter hooks to only those permitted for that cohort
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        if (workspace.getRandomizationGroup() == RandomizationGroup.BASIC && basicGroupAllowFilter.size() > 0) {
+            Iterator<CDSHook> iter = list.iterator();
+            while (iter.hasNext()) {
+                CDSHook item = iter.next();
+                if ( ! basicGroupAllowFilter.contains(item.getId()) ) {
+                    iter.remove();
+                }
+            }
+        }
 
         return list;
     }

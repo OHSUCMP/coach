@@ -1,5 +1,9 @@
 {{>layout/header}}
 
+<div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
+<div id="randomizationGroup" class="hidden">{{randomizationGroup}}</div>
+<div id="LOESSBandwidth" class="hidden">{{loessBandwidth}}</div>
+
 <div class="container">
     <div class="px-2 d-flex justify-content-between">
         <span class="fs-4"><i class="fas fa-user color-primary"></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}</span>
@@ -7,9 +11,6 @@
         <span id="clearSupplementalData" class="link">Clear Supplemental Data</span>
         {{/showClearSupplementalData}}
     </div>
-
-    <div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
-    <div id="LOESSBandwidth" class="hidden">{{loessBandwidth}}</div>
 
     <div class="mt-3">
         <h4 class="p-2 bgd-secondary">

@@ -97,6 +97,7 @@ public class HomeController extends BaseController {
                 model.addAttribute("pageScripts", new String[] { "science.js/science.v1.js", "science.js/lib/d3/d3.js", "home.js?v=2", "recommendations.js?v=1" });
                 model.addAttribute("patient", workspace.getPatient());
                 model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
+                model.addAttribute("randomizationGroup", String.valueOf(workspace.getRandomizationGroup()));
 
                 Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
                 model.addAttribute("showClearSupplementalData", showClearSupplementalData);
@@ -108,7 +109,7 @@ public class HomeController extends BaseController {
                     model.addAttribute("omronLastUpdated", OMRON_LAST_UPDATED.format(workspace.getOmronLastUpdated()));
                 }
 
-                List<CDSHook> list = recommendationService.getOrderedCDSHooks();
+                List<CDSHook> list = recommendationService.getOrderedCDSHooks(sessionId);
                 model.addAttribute("cdshooks", list);
 
             } catch (Exception e) {
