@@ -7,6 +7,7 @@ import java.util.Calendar;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -15,6 +16,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 @ControllerAdvice
 public class LayoutAdvice {
     private final Mustache.Compiler compiler;
+
+    @Value("${app.name}")
+	private String appName;
+
+	@Value("${app.version}")
+	private String appVersion;
 
     @Autowired
     public LayoutAdvice(Mustache.Compiler compiler) {
@@ -56,7 +63,9 @@ public class LayoutAdvice {
 
     @ModelAttribute
 	public void addDefaultAttributes(HttpServletRequest req, Model model) {
-		model.addAttribute("currentYear", Calendar.getInstance().get(Calendar.YEAR));
+        model.addAttribute("appName", appName);
+        model.addAttribute("appVersion", appVersion);
+        model.addAttribute("currentYear", Calendar.getInstance().get(Calendar.YEAR));
 	}
 
 }
