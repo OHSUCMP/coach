@@ -130,12 +130,12 @@ public class HomeController extends BaseController {
                 RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(patient.getRedcapId());
                 if ( ! redcapParticipantInfo.getExists() ) {
                     // If they are not in REDCap yet, create them and forward them to the entry survey
-                    redCapService.createSubjectInfoRecord(patient.getRedcapId());
-                    String entrySurveyLink = redCapService.getEntrySurveyLink(patient.getRedcapId());
+                    String recordId = redCapService.createSubjectInfoRecord(redcapParticipantInfo.getCoachId());
+                    String entrySurveyLink = redCapService.getEntrySurveyLink(recordId);
                     return "redirect:" + entrySurveyLink;
                 } else if (!redcapParticipantInfo.getIsInformationSheetComplete()) {
                     // If they haven't gotten past the entry survey and don't have a queue yet, send them back to the entry survey
-                    String entrySurveyLink = redCapService.getEntrySurveyLink(patient.getRedcapId());
+                    String entrySurveyLink = redCapService.getEntrySurveyLink(redcapParticipantInfo.getRecordId());
                     return "redirect:" + entrySurveyLink;
                 } else if (redcapParticipantInfo.getHasConsentRecord() &&
                     !redcapParticipantInfo.getIsConsentGranted()) {
@@ -145,14 +145,14 @@ public class HomeController extends BaseController {
                 } else if (!redcapParticipantInfo.getHasConsentRecord() || 
                         !redcapParticipantInfo.getIsRandomized()) {
                     // If there is no consent or randomization record, forward them to their survey queue
-                    String surveyQueueLink = redCapService.getSurveyQueueLink(patient.getRedcapId());
+                    String surveyQueueLink = redCapService.getSurveyQueueLink(redcapParticipantInfo.getRecordId());
                     return "redirect:" + surveyQueueLink;                
                 } else if (redcapParticipantInfo.getIsWithdrawn()) {
                     // If withdrawn, exit
                     setCommonViewComponents(model);
                     return "withdrawn";
                 } else {
-                    logger.error("REDCap participant " + patient.getRedcapId() + "is actively enrolled but cannot access COACH.");
+                    logger.error("REDCap participant " + redcapParticipantInfo.getRecordId() + "is actively enrolled but cannot access COACH.");
                     return "error";
                 }
             } catch (Exception e) {
