@@ -32,6 +32,8 @@ public class REDCapService {
     public static final String FORM_UNVERIFIED = "1";
     public static final String FORM_COMPLETE = "2";
 
+    public static final String PARTICIPANT_RECORD_ID_FIELD = "record_id";
+    private static final String PARTICIPANT_COACH_ID_FIELD = "coach_id";
     private static final String PARTICIPANT_BASELINE_EVENT = "baseline_arm_1";
     private static final String PARTICIPANT_ONGOING_EVENT = "ongoing_arm_1";
     private static final String PARTICIPANT_INFO_FORM = "participant_info";
@@ -52,13 +54,13 @@ public class REDCapService {
     }
 
     /**
-     * Return a summary of the participant's status in the study
-     * @param redcapId
+     * Using the coach uuid, get the record id in REDCap
+     * @param coachId
      * @return
      * @throws IOException
      * @throws REDCapException
      */
-    public RedcapParticipantInfo getParticipantInfo(String redcapId) throws IOException, REDCapException {
+    private String getRecordId(String coachId) throws IOException, REDCapException {
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
@@ -68,8 +70,54 @@ public class REDCapService {
         bodyParams.put("format", "json");
         bodyParams.put("type", "flat");
         bodyParams.put("rawOrLabel", "raw");
-        bodyParams.put("events", "'"+ PARTICIPANT_BASELINE_EVENT + "', '" + PARTICIPANT_ONGOING_EVENT + "'");
-        bodyParams.put("records", redcapId);
+        bodyParams.put("events", PARTICIPANT_BASELINE_EVENT);
+        bodyParams.put("fields", PARTICIPANT_RECORD_ID_FIELD);
+        bodyParams.put("filterLogic", "[coach_id]='" + coachId + "'");
+
+        HttpResponse response = new HttpRequest().post(
+            redcapConfiguration.getApiUrl(),
+            null,
+            requestHeaders,
+            bodyParams
+        );
+
+        checkException(response);
+
+        Gson gson = new Gson();
+        List<Map<String, String>> records = gson.fromJson(response.getResponseBody(), new TypeToken<List<Map<String, String>>>(){}.getType());
+
+        if (records.isEmpty()) {
+            return null;
+        } else {
+            return records.get(0).get(PARTICIPANT_RECORD_ID_FIELD);
+        }
+    }
+
+    /**
+     * Return a summary of the participant's status in the study
+     * @param coachId The uuid COACH generates and stores to map to REDCap
+     * @return
+     * @throws IOException
+     * @throws REDCapException
+     */
+    public RedcapParticipantInfo getParticipantInfo(String coachId) throws IOException, REDCapException {
+
+        String recordId = getRecordId(coachId);
+        if (recordId == null) {
+            return RedcapParticipantInfo.buildNotExists(coachId);
+        }
+
+        Map<String, String> requestHeaders = new LinkedHashMap<>();
+        requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
+
+        Map<String, String> bodyParams = new LinkedHashMap<>();
+        bodyParams.put("token", redcapConfiguration.getApiToken());
+        bodyParams.put("content", "record");
+        bodyParams.put("format", "json");
+        bodyParams.put("type", "flat");
+        bodyParams.put("rawOrLabel", "raw");
+        bodyParams.put("events", PARTICIPANT_BASELINE_EVENT + "," + PARTICIPANT_ONGOING_EVENT);
+        bodyParams.put("records", recordId);
 
         HttpResponse response = new HttpRequest().post(
                 redcapConfiguration.getApiUrl(),
@@ -83,35 +131,34 @@ public class REDCapService {
         Gson gson = new Gson();
         List<Map<String, String>> records = gson.fromJson(response.getResponseBody(), new TypeToken<List<Map<String, String>>>(){}.getType());
 
-        if (records.isEmpty()) {
-            return RedcapParticipantInfo.buildNotExists(redcapId);
-        } else if (records.size() == 1) {
-            return RedcapParticipantInfo.buildFromRecord(redcapId, records.get(0), new LinkedHashMap<String,String>());
+        if (records.size() == 1) {
+            return RedcapParticipantInfo.buildFromRecord(coachId, records.get(0), new LinkedHashMap<String,String>());
         } else if (records.size() == 2) {
             // Distinguish the baseline and ongoing events.
             Map<String,String> record1 = records.get(0);
             Map<String,String> record2 = records.get(1);
             if (StringUtils.equals(record1.get("redcap_event_name"), PARTICIPANT_BASELINE_EVENT)) {
-                return RedcapParticipantInfo.buildFromRecord(redcapId, record1, record2);
+                return RedcapParticipantInfo.buildFromRecord(coachId, record1, record2);
             } else {
-                return RedcapParticipantInfo.buildFromRecord(redcapId, record2, record1);
+                return RedcapParticipantInfo.buildFromRecord(coachId, record2, record1);
             }                
         } else {
-            throw new REDCapException(422, "found too many records for (" + redcapId + ") - expected 1, found " + records.size(), null);
+            throw new REDCapException(422, "found too many records for (" + recordId + ") - expected 1, found " + records.size(), null);
         }
 
     }
 
     /**
      * Create a new record for the subject in REDCap
-     * @param redcapId
+     * @param coachId
      * @return
      * @throws IOException
      * @throws REDCapException
      */
-    public boolean createSubjectInfoRecord(String redcapId) throws IOException, REDCapException {
+    public String createSubjectInfoRecord(String coachId) throws IOException, REDCapException {
         Map<String, String> map = new LinkedHashMap<>();
-        map.put("record_id", redcapId);
+        map.put(PARTICIPANT_RECORD_ID_FIELD, coachId);
+        map.put(PARTICIPANT_COACH_ID_FIELD, coachId);
         map.put("redcap_event_name", PARTICIPANT_BASELINE_EVENT);
         map.put(PARTICIPANT_INFO_FORM + "_complete", FORM_COMPLETE);
         map.put("redcap_data_access_group", redcapConfiguration.getDataAccessGroup());
@@ -131,6 +178,7 @@ public class REDCapService {
         bodyParams.put("content", "record");
         bodyParams.put("format", "json");
         bodyParams.put("type", "flat");
+        bodyParams.put("forceAutoNumber", "true");
         bodyParams.put("data", data);
 
         HttpResponse response = new HttpRequest().post(
@@ -141,25 +189,24 @@ public class REDCapService {
         );
 
         checkException(response);
-        Map<String, String> record = gson.fromJson(response.getResponseBody(), new TypeToken<Map<String, String>>(){}.getType());
-        return record.get("count").equals("1");
+        return getRecordId(coachId);
     }
 
     /**
      * Get the url for the entry survey into the REDCap flow
-     * @param redcapId
+     * @param recordId
      * @return
      * @throws REDCapException
      * @throws IOException
      */
-    public String getEntrySurveyLink(String redcapId) throws REDCapException, IOException {
+    public String getEntrySurveyLink(String recordId) throws REDCapException, IOException {
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
         Map<String, String> bodyParams = new LinkedHashMap<>();
         bodyParams.put("token", redcapConfiguration.getApiToken());
         bodyParams.put("content", "surveyLink");
-        bodyParams.put("record", redcapId);
+        bodyParams.put("record", recordId);
         bodyParams.put("event", PARTICIPANT_BASELINE_EVENT);
         bodyParams.put("instrument", ENTRY_FORM);
 
@@ -176,19 +223,19 @@ public class REDCapService {
 
     /**
      * Get the url to the participant's survey queue
-     * @param redcapId
+     * @param recordId
      * @return
      * @throws REDCapException
      * @throws IOException
      */
-    public String getSurveyQueueLink(String redcapId) throws REDCapException, IOException {
+    public String getSurveyQueueLink(String recordId) throws REDCapException, IOException {
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
         Map<String, String> bodyParams = new LinkedHashMap<>();
         bodyParams.put("token", redcapConfiguration.getApiToken());
         bodyParams.put("content", "surveyQueueLink");
-        bodyParams.put("record", redcapId);
+        bodyParams.put("record", recordId);
 
         HttpResponse response = new HttpRequest().post(
                 redcapConfiguration.getApiUrl(),
