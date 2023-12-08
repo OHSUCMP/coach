@@ -33,8 +33,17 @@ public class BloodPressureSummaryModel {
                 }
             }
         }
-        recentHomeBPReadingsDayCount = earliestHomeReadingWithinTimeframeTS != null && latestHomeReadingWithinTimeframeTS != null ?
-                Math.round((float) (latestHomeReadingWithinTimeframeTS - earliestHomeReadingWithinTimeframeTS) / MS_IN_DAY) :
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        cal.set(Calendar.HOUR_OF_DAY, 12);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        long todayAtNoonTS = cal.getTimeInMillis();
+
+        recentHomeBPReadingsDayCount = earliestHomeReadingWithinTimeframeTS != null ?
+                Math.round((float) (todayAtNoonTS - earliestHomeReadingWithinTimeframeTS) / MS_IN_DAY) :
                 30; // default to 30 days
 
 
