@@ -8,7 +8,7 @@
 
     $(document).on('click', '#closeInstructions', function() {
         $('#myChartInstructionsContainer').hide();
-    })
+    });
 </script>
 
 <div class="container">
@@ -45,16 +45,13 @@
     {{/belowText}}
     <div id="myChartInstructionsContainer" class="modal">
         <div id="myChartInstructions" class="modalContent">
+            {{^instructions}}
+                <div class="heading">Message Copied!</div>
+            {{/instructions}}
+            {{#instructions}}
             <div class="heading">Message Copied!  Next Steps:</div>
-            <ol>
-                <li>Log into MyChart (<a href="{{mychartLoginLink}}" target="_blank">direct link</a>)</li>
-                <li>Go to the Messages activity, click "Ask a Question," then select "Contact my Doctor's Office" (<a href="{{mychartMessageLink}}" target="_blank">direct link</a>)</li>
-                <li>Select the Care Team member that gave you access to this Application</li>
-                <li>Specify an appropriate Subject</li>
-                <li>Paste (Ctrl-V, or right-click and select "Paste") this message into the MyChart message text-area</li>
-                <li>Review the message, and edit as desired</li>
-                <li>When everything looks complete and correct, click "Send"</li>
-            </ol>
+                {{{instructions}}}
+            {{/instructions}}
             <div class="buttonContainer">
                 <button id="closeInstructions" class="btn btn-sm button-primary">Close</button>
             </div>
