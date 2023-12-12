@@ -7,10 +7,11 @@ import edu.ohsu.cmp.coach.model.MedicationModel;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
 import edu.ohsu.cmp.coach.service.ContactMessageService;
 import edu.ohsu.cmp.coach.service.MedicationService;
-import edu.ohsu.cmp.coach.util.MustacheUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,7 +19,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -45,6 +45,9 @@ public class ContactController extends BaseController {
     @Autowired
     private MedicationService medicationService;
 
+    @Value("${contact.instructions-html}")
+    private String contactInstructions;
+
     @GetMapping("contact")
     public String view(HttpSession session, Model model, @RequestParam("token") String token) throws DataException {
         if (userWorkspaceService.exists(session.getId())) {
@@ -52,9 +55,6 @@ public class ContactController extends BaseController {
 
             setCommonViewComponents(model);
             model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
-
-            String mychartLoginLink = env.getProperty("mychart.login.url");
-            String mychartMessageLink = env.getProperty("mychart.askAMedicalQuestion.url");
 
             ContactMessage contactMessage = contactMessageService.getMessage(token);
             String message = "";
@@ -67,22 +67,19 @@ public class ContactController extends BaseController {
                 subject = replaceTokens(contactMessage.getSubject(), tokenMap);
                 aboveText = contactMessage.getAboveText();
                 belowText = contactMessage.getBelowText();
-                try {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("subject", URLEncoder.encode(subject, StandardCharsets.UTF_8));
-                    mychartMessageLink = MustacheUtil.compileMustache(mychartMessageLink, map);
-
-                } catch (IOException e) {
-                    logger.error("caught " + e.getClass().getName() + " compiling MyChart Message Link template: " + e.getMessage(), e);
-                }
             }
             model.addAttribute("subject", subject);
             model.addAttribute("message", message);
             model.addAttribute("aboveText", aboveText);
             model.addAttribute("belowText", belowText);
 
-            model.addAttribute("mychartLoginLink", mychartLoginLink);
-            model.addAttribute("mychartMessageLink", mychartMessageLink);
+            Map<String, String> map = new HashMap<>();
+            map.put("subject", URLEncoder.encode(subject, StandardCharsets.UTF_8));
+            String instructions = replaceTokens(contactInstructions, map);
+            if (StringUtils.isNotBlank(instructions)) {
+                model.addAttribute("instructions", instructions);
+            }
+
             model.addAttribute("pageStyles", new String[] { "contact.css" });
         }
 
