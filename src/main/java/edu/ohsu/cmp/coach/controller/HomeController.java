@@ -133,28 +133,32 @@ public class HomeController extends BaseController {
                     String recordId = redCapService.createSubjectInfoRecord(redcapParticipantInfo.getCoachId());
                     String entrySurveyLink = redCapService.getEntrySurveyLink(recordId);
                     return "redirect:" + entrySurveyLink;
-                } else if (!redcapParticipantInfo.getIsInformationSheetComplete()) {
+
+                } else if ( ! redcapParticipantInfo.getIsInformationSheetComplete() ) {
                     // If they haven't gotten past the entry survey and don't have a queue yet, send them back to the entry survey
                     String entrySurveyLink = redCapService.getEntrySurveyLink(redcapParticipantInfo.getRecordId());
                     return "redirect:" + entrySurveyLink;
-                } else if (redcapParticipantInfo.getHasConsentRecord() &&
-                    !redcapParticipantInfo.getIsConsentGranted()) {
+
+                } else if (redcapParticipantInfo.getHasConsentRecord() && ! redcapParticipantInfo.getIsConsentGranted()) {
                     // If consent record exists and the answer is no, exit
                     setCommonViewComponents(model);
                     return "no-consent";
-                } else if (!redcapParticipantInfo.getHasConsentRecord() || 
-                        !redcapParticipantInfo.getIsRandomized()) {
+
+                } else if ( ! redcapParticipantInfo.getHasConsentRecord() || ! redcapParticipantInfo.getIsRandomized()) {
                     // If there is no consent or randomization record, forward them to their survey queue
                     String surveyQueueLink = redCapService.getSurveyQueueLink(redcapParticipantInfo.getRecordId());
                     return "redirect:" + surveyQueueLink;                
+
                 } else if (redcapParticipantInfo.getIsWithdrawn()) {
                     // If withdrawn, exit
                     setCommonViewComponents(model);
                     return "withdrawn";
+
                 } else {
                     logger.error("REDCap participant " + redcapParticipantInfo.getRecordId() + "is actively enrolled but cannot access COACH.");
                     return "error";
                 }
+
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
                 return "error";
@@ -162,7 +166,6 @@ public class HomeController extends BaseController {
 
         } else {
             logger.info("no session exists.  completing SMART-on-FHIR handshake for session " + sessionId);
-
             setCommonViewComponents(model);
             model.addAttribute("cacheCredentials", cacheCredentials);
             return "fhir-complete-handshake";
