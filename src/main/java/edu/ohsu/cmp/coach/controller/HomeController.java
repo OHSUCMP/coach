@@ -99,6 +99,13 @@ public class HomeController extends BaseController {
                 model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
                 model.addAttribute("randomizationGroup", String.valueOf(workspace.getRandomizationGroup()));
 
+                if (redCapService.isRedcapEnabled()) {
+                    // TODO: This is very indirect. Is there a better way?
+                    String fhirId = workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
+                    MyPatient myPatient = patientService.getMyPatient(fhirId);
+                    model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(myPatient.getRedcapId()));
+                }
+
                 Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
                 model.addAttribute("showClearSupplementalData", showClearSupplementalData);
 
