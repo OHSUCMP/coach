@@ -5,7 +5,7 @@ import edu.ohsu.cmp.coach.entity.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
-import edu.ohsu.cmp.coach.model.recommendation.Audience;
+import edu.ohsu.cmp.coach.model.Audience;
 import edu.ohsu.cmp.coach.service.AbstractService;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.quartz.*;

@@ -3,7 +3,7 @@ package edu.ohsu.cmp.coach.util;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
-import edu.ohsu.cmp.coach.model.recommendation.Audience;
+import edu.ohsu.cmp.coach.model.Audience;
 
 import java.io.IOException;
 import java.io.StringReader;

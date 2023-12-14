@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.session;
 
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
-import edu.ohsu.cmp.coach.model.recommendation.Audience;
+import edu.ohsu.cmp.coach.model.Audience;
 
 public class ProvisionalSessionCacheData {
     private FHIRCredentials credentials;
