@@ -142,7 +142,7 @@ public class HomeController extends BaseController {
                 } else if (redcapParticipantInfo.getHasConsentRecord() && ! redcapParticipantInfo.getIsConsentGranted()) {
                     // If consent record exists and the answer is no, exit
                     setCommonViewComponents(model);
-                    return "no-consent";
+                    return "consent-previously-denied";
 
                 } else if ( ! redcapParticipantInfo.getHasConsentRecord() || ! redcapParticipantInfo.getIsRandomized()) {
                     // If there is no consent or randomization record, forward them to their survey queue
