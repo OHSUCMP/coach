@@ -32,12 +32,24 @@ public class REDCapService {
     public static final String FORM_UNVERIFIED = "1";
     public static final String FORM_COMPLETE = "2";
 
+    // REDCap Events
+    public static final String PARTICIPANT_BASELINE_EVENT = "baseline_arm_1";
+    public static final String PARTICIPANT_ONGOING_EVENT = "ongoing_arm_1";
+
+    // REDCap Forms
+    public static final String PARTICIPANT_INFO_FORM = "participant_info";
+    public static final String PARTICIPANT_INFORMATION_SHEET_FORM = "information_sheet";
+    public static final String PARTICIPANT_CONSENT_FORM = "coach_informed_consent";
+    public static final String PARTICIPANT_RANDOMIZATION_FORM = "staff_coach_randomization";
+    public static final String PARTICIPANT_DISPOSITION_FORM = "staff_participant_administration_and_disposition";
+    public static final String ADVERSE_EVENT_FORM = "adverse_event_form";
+
+    // REDCap Fields
     public static final String PARTICIPANT_RECORD_ID_FIELD = "record_id";
-    private static final String PARTICIPANT_COACH_ID_FIELD = "coach_id";
-    private static final String PARTICIPANT_BASELINE_EVENT = "baseline_arm_1";
-    private static final String PARTICIPANT_ONGOING_EVENT = "ongoing_arm_1";
-    private static final String PARTICIPANT_INFO_FORM = "participant_info";
-    private static final String ENTRY_FORM = "information_sheet";
+    public static final String PARTICIPANT_COACH_ID_FIELD = "coach_id";
+    public static final String PARTICIPANT_CONSENT_FIELD = "icf_consent_73fb68";
+    public static final String PARTICIPANT_RANDOMIZATION_FIELD = "randomized_assignment";
+    public static final String PARTICIPANT_DISPOSITION_WITHDRAW_FIELD = "withdraw";
 
     @Autowired
     RedcapConfiguration redcapConfiguration;
@@ -117,6 +129,8 @@ public class REDCapService {
         bodyParams.put("type", "flat");
         bodyParams.put("rawOrLabel", "raw");
         bodyParams.put("events", PARTICIPANT_BASELINE_EVENT + "," + PARTICIPANT_ONGOING_EVENT);
+        // Forms must be specified so we don't get repeat instances of other forms impacting the expected results
+        bodyParams.put("forms", PARTICIPANT_INFO_FORM + "," + PARTICIPANT_INFORMATION_SHEET_FORM + "," + PARTICIPANT_CONSENT_FORM + "," + PARTICIPANT_RANDOMIZATION_FORM + "," + PARTICIPANT_DISPOSITION_FORM);
         bodyParams.put("records", recordId);
 
         HttpResponse response = new HttpRequest().post(
@@ -208,7 +222,7 @@ public class REDCapService {
         bodyParams.put("content", "surveyLink");
         bodyParams.put("record", recordId);
         bodyParams.put("event", PARTICIPANT_BASELINE_EVENT);
-        bodyParams.put("instrument", ENTRY_FORM);
+        bodyParams.put("instrument", PARTICIPANT_INFORMATION_SHEET_FORM);
 
         HttpResponse response = new HttpRequest().post(
                 redcapConfiguration.getApiUrl(),
@@ -236,6 +250,72 @@ public class REDCapService {
         bodyParams.put("token", redcapConfiguration.getApiToken());
         bodyParams.put("content", "surveyQueueLink");
         bodyParams.put("record", recordId);
+
+        HttpResponse response = new HttpRequest().post(
+                redcapConfiguration.getApiUrl(),
+                null,
+                requestHeaders,
+                bodyParams
+        );
+
+        checkException(response);
+        return response.getResponseBody();
+    }
+
+    /**
+     * Get the url for the next AE report for the participant
+     * @param coachId
+     * @return
+     * @throws REDCapException
+     * @throws IOException
+     */
+    public String getAESurveyLink(String coachId) throws REDCapException, IOException {
+        // First get the recordId from the REDCap id
+        String recordId = getRecordId(coachId);
+
+        // Next, see if there are completed AEs and calculate the repeat instance
+        Map<String, String> requestHeaders = new LinkedHashMap<>();
+        requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
+
+        Map<String, String> bodyParams = new LinkedHashMap<>();
+        bodyParams.put("token", redcapConfiguration.getApiToken());
+        bodyParams.put("content", "record");
+        bodyParams.put("format", "json");
+        bodyParams.put("type", "flat");
+        bodyParams.put("rawOrLabel", "raw");
+        bodyParams.put("events", PARTICIPANT_ONGOING_EVENT);
+        bodyParams.put("records", recordId);
+
+        HttpResponse response = new HttpRequest().post(
+                redcapConfiguration.getApiUrl(),
+                null,
+                requestHeaders,
+                bodyParams
+        );
+
+        checkException(response);
+        Gson gson = new Gson();
+        List<Map<String, String>> records = gson.fromJson(response.getResponseBody(), new TypeToken<List<Map<String, String>>>(){}.getType());
+
+        if (records.isEmpty()) {
+            return getAESurveyLinkForRepeatInstance(recordId, 1);
+        } else {
+            Integer maxRepeatInstance = records.stream().filter(it->ADVERSE_EVENT_FORM.equals(it.get("redcap_repeat_instrument"))).map(it -> Integer.parseInt(it.get("redcap_repeat_instance"))).max(Integer::compare).get();
+            return getAESurveyLinkForRepeatInstance(recordId, maxRepeatInstance + 1);
+        }
+    }
+
+    private String getAESurveyLinkForRepeatInstance(String recordId, int i) throws REDCapException, IOException {
+        Map<String, String> requestHeaders = new LinkedHashMap<>();
+        requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
+
+        Map<String, String> bodyParams = new LinkedHashMap<>();
+        bodyParams.put("token", redcapConfiguration.getApiToken());
+        bodyParams.put("content", "surveyLink");
+        bodyParams.put("record", recordId);
+        bodyParams.put("event", PARTICIPANT_ONGOING_EVENT);
+        bodyParams.put("instrument", ADVERSE_EVENT_FORM);
+        bodyParams.put("repeat_instance", String.valueOf(i));
 
         HttpResponse response = new HttpRequest().post(
                 redcapConfiguration.getApiUrl(),
