@@ -290,6 +290,8 @@ function populateSummaryDiv() {
         systolic.removeClass('crisis');
         diastolic.html(avgDiastolic);
         diastolic.removeClass('crisis');
+    } else {
+        console.error("Unexpected randomization group")
     }
 }
 

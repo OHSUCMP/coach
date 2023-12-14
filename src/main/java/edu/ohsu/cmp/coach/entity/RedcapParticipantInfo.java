@@ -60,13 +60,15 @@ public class RedcapParticipantInfo {
         pi.setIsConsentGranted(pi.getHasConsentRecord() && 
             StringUtils.equals(baseline.get(PARTICIPANT_CONSENT_FIELD), REDCapService.YES)
         );
-        pi.setIsRandomized(StringUtils.equals(baseline.get(PARTICIPANT_RANDOMIZATION_FORM + "_complete"), REDCapService.FORM_COMPLETE));  
+        // Check both that the form is complete and that the field is not blank
+        pi.setIsRandomized(StringUtils.equals(baseline.get(PARTICIPANT_RANDOMIZATION_FORM + "_complete"), REDCapService.FORM_COMPLETE) && StringUtils.isNotBlank(baseline.get(PARTICIPANT_RANDOMIZATION_FIELD)));
         if (pi.getIsRandomized()) {
             String randString = baseline.get(PARTICIPANT_RANDOMIZATION_FIELD);
             try {
                 int rand = Integer.parseInt(randString);
                 pi.setRandomizationGroup(RandomizationGroup.getByRedcapCode(rand));
             } catch (IllegalArgumentException e) {
+                pi.setRandomizationGroup(RandomizationGroup.ENHANCED);
                 RedcapParticipantInfo.logger.error("Randomization Group " + randString + " is not understood. User will get ENHANCED experience.");
             }
         }
