@@ -1,3 +1,7 @@
+function isEnhanced() {
+    return $('#randomizationGroup').text() === 'ENHANCED';
+}
+
 function loadOtherGoals(_callback) {
     $.ajax({
         method: "POST",
@@ -161,8 +165,10 @@ $(document).on('click', '.markNotAchieved:button', function() {
 });
 
 $(document).ready(function() {
-    loadOtherGoals(function(otherGoals) {
-        window.otherGoals = otherGoals;
-        populateOtherGoals();
-    });
+    if (isEnhanced()) {
+        loadOtherGoals(function(otherGoals) {
+            window.otherGoals = otherGoals;
+            populateOtherGoals();
+        });
+    }
 });
