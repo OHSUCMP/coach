@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.GoalHistory;
 import edu.ohsu.cmp.coach.entity.MyGoal;
+import edu.ohsu.cmp.coach.entity.RandomizationGroup;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
 import edu.ohsu.cmp.coach.model.GoalHistoryModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
@@ -35,10 +36,14 @@ public class GoalsController extends BaseController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
+        String sessionId = session.getId();
         setCommonViewComponents(model);
-        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
-        model.addAttribute("bpGoal", goalService.getCurrentBPGoal(session.getId()));
-        model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(session.getId()));
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        model.addAttribute("randomizationGroup", workspace.getRandomizationGroup());
+        model.addAttribute("isEnhancedView", workspace.getRandomizationGroup() == RandomizationGroup.ENHANCED);
+        model.addAttribute("patient", workspace.getPatient());
+        model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
+        model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(sessionId));
         model.addAttribute("pageStyles", new String[] { "goals.css" });
         model.addAttribute("pageScripts", new String[] { "goals.js" });
 
