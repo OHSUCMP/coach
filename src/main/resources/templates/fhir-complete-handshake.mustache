@@ -7,6 +7,8 @@
     <script type="text/javascript" src="/node_modules/fhirclient/build/fhir-client.js"></script>
     <script type="text/javascript">
         const REDIRECT_URL = "/";
+        const PATIENT_NOT_CONSENTED_RESPONSE = "{{patientNotConsentedResponse}}";
+        const PATIENT_NOT_CONSENTED_ENDPOINT = "{{patientNotConsentedEndpoint}}";
 
         function prepareSession(client) {
             let data = {
@@ -14,8 +16,7 @@
                 serverUrl: client.state.serverUrl,
                 bearerToken: client.state.tokenResponse.access_token,
                 patientId: client.getPatientId(),
-                userId: client.getUserId(),
-                audience: "patient"
+                userId: client.getUserId()
             };
 
             // alert("useful development breakpoint");
@@ -24,10 +25,15 @@
                 method: "POST",
                 url: "/prepare-session",
                 data: data
-            }).done(function(cards, textStatus, jqXHR) {
+            }).done(function(body, textStatus, jqXHR) {
+                // alert("useful debug checkpoint");
                 if (jqXHR.status === 200) {
-                    $('.response').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
-                    window.location.replace(REDIRECT_URL);
+                    if (body === PATIENT_NOT_CONSENTED_RESPONSE) {
+                        window.location.replace(PATIENT_NOT_CONSENTED_ENDPOINT);
+                    } else {
+                        $('.response').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
+                        window.location.replace(REDIRECT_URL);
+                    }
                 } else {
                     $('.response').html("Error - received response " + jqXHR.status + " status");
                 }

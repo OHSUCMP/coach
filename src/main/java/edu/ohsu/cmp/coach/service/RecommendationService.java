@@ -23,7 +23,7 @@ import edu.ohsu.cmp.coach.model.cqfruler.CDSHookResponse;
 import edu.ohsu.cmp.coach.model.cqfruler.HookRequest;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Action;
-import edu.ohsu.cmp.coach.model.recommendation.Audience;
+import edu.ohsu.cmp.coach.model.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;

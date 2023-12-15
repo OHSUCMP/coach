@@ -168,6 +168,23 @@
         {{/cdshooks}}
     </div>
 
+    {{#aeSurveyLink}}
+    <div class="mt-3">
+        <h4 class="p-2 bgd-secondary">
+            <i class="fas fa-exclamation-circle color-primary"></i> Report Potential Side Effects Associated with Blood Pressure Management
+        </h4>
+        <p>
+        A few key side effects are often related to hypertension treatment. Click for <a href="{{req.contextPath}}/side-effects">complete list</a>. 
+        Please make sure to talk to your doctor if you have these conditions or if you are concerned about your blood pressure. 
+        You can also inform the study team through this <a href="{{aeSurveyLink}}" target="_blank">link</a>.
+        </p>
+        <p>
+        Whenever you visit the emergency department or stay in the hospital, please let your doctor <strong>and</strong> the study team know, 
+        as we need to monitor certain events as part of the study.
+        </p>
+    </div>
+    {{/aeSurveyLink}}
+
 </div>
 
 <script type="text/javascript">
