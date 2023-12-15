@@ -54,7 +54,7 @@ public class REDCapService {
     @Autowired
     RedcapConfiguration redcapConfiguration;
 
-    @Value("${launch.url}")
+    @Value("${redcap.patient-launch-url}")
     private String launchUrl;
 
     /**
