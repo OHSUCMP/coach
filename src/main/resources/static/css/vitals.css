@@ -15,3 +15,9 @@
     color: #29506e;
 }
 
+div.validationMessage {
+    display: block;
+    color: red;
+    font-style: italic;
+}
+

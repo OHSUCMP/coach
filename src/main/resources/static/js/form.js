@@ -68,6 +68,7 @@ function validateField(field) {
     let pass = true;
     let notAnswered = undefined;
     let required = $(field).hasClass('required');
+    let message = undefined;
 
     $(field).find('input[type=number]').each(function() {
         let val = $(this).val().trim();
@@ -77,9 +78,28 @@ function validateField(field) {
     });
 
     $(field).find('input[type=text]').each(function() {
-        let val = $(this).val().trim();
-        notAnswered = val === '';
+        let valStr = $(this).val().trim();
+        notAnswered = valStr === '';
         pass = notAnswered ? ! required : true;
+        let minStr = $(this).attr('data-min');
+        let maxStr = $(this).attr('data-max');
+        if (pass && valStr !== '' && (minStr !== undefined || maxStr !== undefined)) {   // validate as a number if either min and / or max is defined
+            let val = parseInt(valStr);
+            if (minStr !== undefined) {
+                let min = parseInt(minStr);
+                if (val < min) {
+                    pass = false;
+                    message = 'Value must be >= ' + min;
+                }
+            }
+            if (maxStr !== undefined) {
+                let max = parseInt(maxStr);
+                if (val > max) {
+                    pass = false;
+                    message = 'Value must be <= ' + max;
+                }
+            }
+        }
     });
 
     // NOTE : this radio validator probably won't work correctly if there are multiple different radio
@@ -106,8 +126,18 @@ function validateField(field) {
         } else {
             $(this).removeClass('answered');
         }
-    
     });
+
+    let nextEl = $(field).next();
+    if (message !== undefined) {
+        if (nextEl.is('div.validationMessage')) {
+            $(nextEl).html(message);
+        } else {
+            $(field).after('<div class="validationMessage">' + message + '</div>');
+        }
+    } else if (nextEl.is('div.validationMessage')) {
+        $(nextEl).remove();
+    }
 
     return pass;
 }
