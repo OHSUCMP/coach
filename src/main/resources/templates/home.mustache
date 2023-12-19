@@ -131,6 +131,11 @@
                     <span id="omronAuthLink" class="link" data-target="{{omronAuthRequestUrl}}">Click here</span> to authenticate and synchronize with Omron.
                 </div>
             {{/omronAuthRequestUrl}}
+            {{#omronSynchronizing}}
+                <div>
+                    Omron data is currently synchronizing.  Please wait...
+                </div>
+            {{/omronSynchronizing}}
             {{#omronLastUpdated}}
                 <div>
                     Omron data last synchronized <em>{{omronLastUpdated}}</em>

@@ -112,7 +112,10 @@ public class HomeController extends BaseController {
                 if (workspace.getOmronTokenData() == null) {
                     model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
                 }
-                if (workspace.getOmronLastUpdated() != null) {
+
+                if (workspace.isOmronSynchronizing()) {
+                    model.addAttribute("omronSynchronizing", true);
+                } else if (workspace.getOmronLastUpdated() != null) {
                     model.addAttribute("omronLastUpdated", OMRON_LAST_UPDATED.format(workspace.getOmronLastUpdated()));
                 }
 

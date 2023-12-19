@@ -55,7 +55,7 @@ public class OmronController extends BaseController {
             }
 
             try {
-                omronService.synchronize(session.getId());
+                workspace.initiateSynchronousOmronUpdate();
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " synchronizing with Omron - " + e.getMessage(), e);
                 throw new RuntimeException(e);
@@ -81,7 +81,7 @@ public class OmronController extends BaseController {
 
         // id = the id of the user who performed the upload.  received into id_token on initial user authorization
 
-        omronService.synchronize(workspace.getSessionId());
+        workspace.initiateSynchronousOmronUpdate();
 
         return new ResponseEntity<>(HttpStatus.OK);         // returns only OK status, no body
     }
