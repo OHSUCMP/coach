@@ -183,6 +183,20 @@ function within14Days(bp) {
     return Math.floor((today - bp.readingDate) / (1000*60*60*24)) <= 14;
 }
 
+// Generic function to remove classes col-md-? and col-lg-? so the actual numbers can change if need be.
+function removeBootstrapCols(selection) {
+    selection.removeClass(function(n, c) {
+        const match = c.match(/(col-md-(\d)+)/);
+        if (c.includes("col-md")) return match[1];
+        else return "";
+    });
+    selection.removeClass(function(n, c) {
+        const match = c.match(/(col-lg-(\d)+)/);
+        if (c.includes("col-lg")) return match[1];
+        else return "";
+    });
+}
+
 function populateSummaryDiv() {
     let mostRecentBP = {};
     let crisisBP = false;
@@ -224,9 +238,9 @@ function populateSummaryDiv() {
     let diastolic = $('#diastolic');
 
     if (twoCrisisBPs || crisisBP || twoLowCrisisBPs || lowCrisisBP) {
-        bpIcon.html("<img src='/images/critical-icon.png' class='bp-icon' alt='Critical' />");
+        bpIcon.html("<img src='/images/critical-icon.png' class='bp-icon' alt='Critical' /><span class='tiptext'>Your most recent BP is very high. Check the Resources tab to learn more about what to do.</span>");
         bpIcon.show();
-        bpIndicatorContainer.removeClass("col-md-3");
+        removeBootstrapCols(bpIndicatorContainer);
         chartContainer.hide();
         bpPlaceholder.hide();
         bpContainer.show();
@@ -256,7 +270,7 @@ function populateSummaryDiv() {
         bpPlaceholder.append("<div class='mt-4'>Enter more blood pressures to see average</div>");
 
     } else if (isBasic()) {
-        bpIndicatorContainer.removeClass("col-md-3");
+        removeBootstrapCols(bpIndicatorContainer);
         chartContainer.hide();
         bpIcon.hide();
         bpNote.hide();
@@ -272,10 +286,10 @@ function populateSummaryDiv() {
 
     } else if (isEnhanced()) {
         if (aboveGoal) {
-            bpIcon.html("<img src='/images/stoplight-yellow.png' class='bp-icon' alt='Above Goal' />");
+            bpIcon.html("<img src='/images/stoplight-yellow.png' class='bp-icon' alt='Above Goal' /><span class='tiptext'>Your average BP is above goal. Average is calculated based on a maximum of 12 recent readings. Check the Resources tab to learn more about what to do.</span>");
             bpNote.html('Your BP is above your goal!');
         } else {
-            bpIcon.html("<img src='/images/stoplight-green.png' class='bp-icon' alt='At or Below Goal' />");
+            bpIcon.html("<img src='/images/stoplight-green.png' class='bp-icon' alt='At or Below Goal' /><span class='tiptext'>Your average BP is at goal. Average is calculated based on a maximum of 12 recent readings. Check the Resources tab to learn more about what to do.</span>");
             bpNote.html('You reached your goal!');
         }
 
