@@ -89,7 +89,7 @@
     <div class="px-2 fs-4">
         <i class="fas fa-user color-primary"></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
     </div>
-    <div id="mostRecentBPReadingTS" class="hidden">{{mostRecentBPReadingTS}}</div>
+    <div id="mostRecentBPReadingTS" class="hidden">{{#mostRecentBPReadingTS}}{{.}}{{/mostRecentBPReadingTS}}</div>
     <ul class="nav nav-tabs mt-3" id="bp-tabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="entry-tab" data-bs-toggle="tab" data-bs-target="#entry" type="button" role="tab" aria-controls="entry" aria-selected="true">Home Blood Pressure Entry</button>
