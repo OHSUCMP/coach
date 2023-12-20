@@ -175,8 +175,8 @@ public class HomeController extends BaseController {
             logger.info("no session exists.  completing SMART-on-FHIR handshake for session " + sessionId);
             setCommonViewComponents(model);
             model.addAttribute("cacheCredentials", cacheCredentials);
-            model.addAttribute("patientNotConsentedEndpoint", "/patient-not-consented");
-            model.addAttribute("patientNotConsentedResponse", SessionController.PATIENT_NOT_CONSENTED_RESPONSE);
+            model.addAttribute("patientNotActiveEndpoint", "/patient-not-active");
+            model.addAttribute("patientNotActiveResponse", SessionController.PATIENT_NOT_ACTIVE_RESPONSE);
             return "fhir-complete-handshake";
         }
     }
