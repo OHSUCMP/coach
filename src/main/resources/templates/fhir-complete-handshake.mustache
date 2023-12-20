@@ -7,8 +7,8 @@
     <script type="text/javascript" src="/node_modules/fhirclient/build/fhir-client.js"></script>
     <script type="text/javascript">
         const REDIRECT_URL = "/";
-        const PATIENT_NOT_CONSENTED_RESPONSE = "{{patientNotConsentedResponse}}";
-        const PATIENT_NOT_CONSENTED_ENDPOINT = "{{patientNotConsentedEndpoint}}";
+        const PATIENT_NOT_ACTIVE_RESPONSE = "{{patientNotActiveResponse}}";
+        const PATIENT_NOT_ACTIVE_ENDPOINT = "{{patientNotActiveEndpoint}}";
 
         function prepareSession(client) {
             let data = {
@@ -28,8 +28,8 @@
             }).done(function(body, textStatus, jqXHR) {
                 // alert("useful debug checkpoint");
                 if (jqXHR.status === 200) {
-                    if (body === PATIENT_NOT_CONSENTED_RESPONSE) {
-                        window.location.replace(PATIENT_NOT_CONSENTED_ENDPOINT);
+                    if (body === PATIENT_NOT_ACTIVE_RESPONSE) {
+                        window.location.replace(PATIENT_NOT_ACTIVE_ENDPOINT);
                     } else {
                         $('.response').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
                         window.location.replace(REDIRECT_URL);
