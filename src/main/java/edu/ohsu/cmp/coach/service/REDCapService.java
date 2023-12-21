@@ -49,6 +49,7 @@ public class REDCapService {
     public static final String PARTICIPANT_COACH_ID_FIELD = "coach_id";
     public static final String PARTICIPANT_CONSENT_FIELD = "icf_consent_73fb68";
     public static final String PARTICIPANT_RANDOMIZATION_FIELD = "randomized_assignment";
+    public static final String PARTICIPANT_RANDOMIZATION_DATE_FIELD = "randomization_date";
     public static final String PARTICIPANT_DISPOSITION_WITHDRAW_FIELD = "withdraw";
 
     @Autowired
