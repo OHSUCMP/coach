@@ -32,7 +32,7 @@ import java.io.IOException;
 public class SessionController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public static final String PATIENT_NOT_CONSENTED_RESPONSE = "PATIENT_NOT_CONSENTED";
+    public static final String PATIENT_NOT_ACTIVE_RESPONSE = "PATIENT_NOT_ACTIVE";
 
     @Autowired
     private SessionService sessionService;
@@ -149,19 +149,19 @@ public class SessionController extends BaseController {
 
             if (dag == RedcapDataAccessGroup.OHSU || dag == RedcapDataAccessGroup.MU) {
                 // for OHSU and MU, simply display the enhanced view for the patient, irrespective of the patient's
-                // randomization group, and irrespective of whether or not the patient is enrolled or has consented
+                // randomization group, and irrespective of whether or not the patient is actively enrolled
 
                 sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED);
                 return ResponseEntity.ok("care team session established");
 
             } else if (dag == RedcapDataAccessGroup.VUMC) {
                 // for VUMC, the flow is a little different.  we still want to display the enhanced view for the patient
-                // irrespective of their randomzation group, but if the patient has NOT consented, we want to display
-                // a static "patient not consented" page to the care team
+                // irrespective of their randomization group, but if the patient is not actively enrolled, we want to display
+                // a static "patient not active" page to the care team
 
                 if (requiresEnrollment) {
-                    // REDCap is enabled and the patient hasn't consented yet.  display static "patient not consented" page
-                    return ResponseEntity.ok(PATIENT_NOT_CONSENTED_RESPONSE);
+                    // REDCap is enabled and the patient hasn't isn't actively enrolled.  display static "patient not active" page
+                    return ResponseEntity.ok(PATIENT_NOT_ACTIVE_RESPONSE);
 
                 } else {
                     sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED);
@@ -190,10 +190,10 @@ public class SessionController extends BaseController {
         return "unauthorized";
     }
 
-    @GetMapping("patient-not-consented")
-    public String patientNotConsented(HttpSession session, Model model) {
+    @GetMapping("patient-not-active")
+    public String patientNotActive(HttpSession session, Model model) {
         setCommonViewComponents(model);
-        return "patient-not-consented";
+        return "patient-not-active";
     }
 
     @GetMapping("logout")
