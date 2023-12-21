@@ -103,29 +103,76 @@ function updateBPGoal(bpGoalData, _callback) {
 
 function enableDisableUpdateBPGoalButton() {
     let el = $('#bpContent .bpGoal');
-    let systolic = $(el).find('input.systolic').val();
-    let diastolic = $(el).find('input.diastolic').val();
+    let systolic = $('#systolic').val();
+    let diastolic = $('#diastolic').val();
     let origSystolic = $(el).attr('data-systolic');
     let origDiastolic = $(el).attr('data-diastolic');
     let changed = (systolic !== origSystolic || diastolic !== origDiastolic);
 
     let button = $('#updateBPGoal');
+    let note = $('#updateNote');
     if (changed) {
-        $(button).prop( "disabled", false );
+        let pass = true;
+        let messages = [];
+
+        $(el).find('input').each(function() {
+            let minStr = $(this).attr('data-min');
+            let maxStr = $(this).attr('data-max');
+            if (minStr !== '' && maxStr !== '') {   // validate as a number if either min and / or max is defined
+                let desc = $(this).attr('placeholder');
+                let valStr = $(this).val().trim();
+                if (valStr === '') {
+                    pass = false;
+                    messages.push(desc + ' is required.');
+                    $(this).addClass('error');
+
+                } else {
+                    let val = parseInt(valStr);
+                    let min = parseInt(minStr);
+                    let max = parseInt(maxStr);
+                    if (val < min || val > max) {
+                        pass = false;
+                        messages.push(desc + ' must be between ' + min + ' and ' + max + '.');
+                        $(this).addClass('error');
+                    } else {
+                        $(this).removeClass('error');
+                    }
+                }
+            }
+        });
+
+        if (pass) {
+            $(button).prop( "disabled", false );
+            $(note).text('');
+            $(note.removeClass('error'));
+            $(note.removeClass('success'));
+
+        } else {
+            $(button).prop( "disabled", true );
+            $(note).text(messages.join(' '));
+            $(note).addClass('error');
+        }
+
     } else {
+        $(el).find('input').each(function() {
+            $(this).removeClass('error');
+        });
         $(button).prop( "disabled", true );
+        $(note).text('');
+        $(note.removeClass('error'));
+        $(note.removeClass('success'));
     }
 }
 
-$(document).on('change', 'input.systolic, input.diastolic', function() {
+$(document).on('change', '#systolic, #diastolic', function() {
     enableDisableUpdateBPGoalButton();
 });
 
 $(document).on('click', '#updateBPGoal', function() {
     let container = $(this).closest('.bpGoal');
 
-    let systolic = $(container).find('input.systolic');
-    let diastolic = $(container).find('input.diastolic');
+    let systolic = $('#systolic');
+    let diastolic = $('#diastolic');
 
     let bpGoalData = {
         systolicTarget: $(systolic).val(),
