@@ -68,6 +68,7 @@ public class UserWorkspace {
     // Omron stuff
     private MyOmronTokenData omronTokenData = null;
     private Date omronLastUpdated = null;
+    private String redcapId = null;
     private Boolean omronSynchronizing = false;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
@@ -88,6 +89,7 @@ public class UserWorkspace {
         );
         this.internalPatientId = myPatient.getId();
         this.omronLastUpdated = myPatient.getOmronLastUpdated();
+        this.redcapId = myPatient.getRedcapId();
 
         cache = Caffeine.newBuilder()
                 .expireAfterWrite(6, TimeUnit.HOURS)
@@ -138,6 +140,10 @@ public class UserWorkspace {
 
     public void setOmronLastUpdated(Date omronLastUpdated) {
         this.omronLastUpdated = omronLastUpdated;
+    }
+
+    public String getRedcapId() {
+        return redcapId;
     }
 
     public void populate() {
