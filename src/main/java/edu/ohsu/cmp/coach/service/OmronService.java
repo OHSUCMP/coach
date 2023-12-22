@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.coach.entity.MyOmronVitals;
+import edu.ohsu.cmp.coach.entity.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.NotAuthenticatedException;
 import edu.ohsu.cmp.coach.exception.OmronException;
@@ -77,6 +78,9 @@ public class OmronService extends AbstractService {
 
     @Autowired
     private PulseService pulseService;
+
+    @Autowired
+    private REDCapService redCapService;
 
     private static final Pattern KEY_PATTERN = Pattern.compile("^[a-f0-9]{64}$");
 
@@ -386,9 +390,20 @@ public class OmronService extends AbstractService {
         Map<String, String> bodyParams = new LinkedHashMap<>();
 
         if (sinceTimestamp == null) {
+            Date date;
+            if (redCapService.isRedcapEnabled()) {
+                RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(workspace.getRedcapId());
+                date = redcapParticipantInfo.getRandomizationDate();
+            } else {
+                date = new Date();
+            }
             Calendar calendar = Calendar.getInstance();
-            calendar.setTime(new Date());
-            calendar.add(Calendar.YEAR, -2);
+            calendar.setTime(date);
+            calendar.add(Calendar.DATE, -30);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
             sinceTimestamp = calendar.getTime();
         }
         bodyParams.put("since", OMRON_DATE_FORMAT.format(sinceTimestamp));
