@@ -1,4 +1,4 @@
-input.systolic, input.diastolic {
+#systolic, #diastolic {
     width: 40px;
 }
 
@@ -14,4 +14,9 @@ span.completed {
 
 #noOtherGoals {
     margin-top: 2em;
+}
+
+div.bpGoal input.error {
+    border: 1px solid red;
+    color: black;
 }

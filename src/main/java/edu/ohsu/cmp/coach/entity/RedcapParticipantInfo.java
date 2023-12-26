@@ -1,5 +1,8 @@
 package edu.ohsu.cmp.coach.entity;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +26,7 @@ public class RedcapParticipantInfo {
     private boolean isConsentGranted;
     private boolean isRandomized;
     private RandomizationGroup randomizationGroup;
+    private Date randomizationDate;
     private boolean isWithdrawn;
 
     /**
@@ -56,16 +60,26 @@ public class RedcapParticipantInfo {
         pi.setIsConsentGranted(pi.getHasConsentRecord() && 
             StringUtils.equals(baseline.get(REDCapService.PARTICIPANT_CONSENT_FIELD), REDCapService.YES)
         );
-        // Check both that the form is complete and that the field is not blank
-        pi.setIsRandomized(StringUtils.equals(baseline.get(REDCapService.PARTICIPANT_RANDOMIZATION_FORM + "_complete"), REDCapService.FORM_COMPLETE) && StringUtils.isNotBlank(baseline.get(REDCapService.PARTICIPANT_RANDOMIZATION_FIELD)));
+        // Check that the randomization and randomization date fields have been filled out
+        String randString = baseline.get(REDCapService.PARTICIPANT_RANDOMIZATION_FIELD);
+        String randDateString = baseline.get(REDCapService.PARTICIPANT_RANDOMIZATION_DATE_FIELD);
+        pi.setIsRandomized(StringUtils.isNotBlank(randString) && StringUtils.isNotBlank(randDateString));
         if (pi.getIsRandomized()) {
-            String randString = baseline.get(REDCapService.PARTICIPANT_RANDOMIZATION_FIELD);
             try {
                 int rand = Integer.parseInt(randString);
                 pi.setRandomizationGroup(RandomizationGroup.getByRedcapCode(rand));
             } catch (IllegalArgumentException e) {
                 pi.setRandomizationGroup(RandomizationGroup.ENHANCED);
-                RedcapParticipantInfo.logger.error("Randomization Group " + randString + " is not understood. User will get ENHANCED experience.");
+                RedcapParticipantInfo.logger.error("Randomization Group " + randString + " is not understood. User " + coachId + " will get ENHANCED experience.");
+            }
+            
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                pi.setRandomizationDate(sdf.parse(randDateString));
+            } catch (ParseException e) {
+                pi.setIsRandomized(false);
+                pi.setRandomizationGroup(null);
+                RedcapParticipantInfo.logger.error("Randomization date " + randDateString + " is not understood. User " + coachId + " is denied access.");
             }
         }
         pi.setIsWithdrawn(StringUtils.equals(ongoing.get(REDCapService.PARTICIPANT_DISPOSITION_WITHDRAW_FIELD), REDCapService.YES));
@@ -158,6 +172,18 @@ public class RedcapParticipantInfo {
 
     public void setRandomizationGroup(RandomizationGroup randomizationGroup) {
         this.randomizationGroup = randomizationGroup;
+    }
+
+    /**
+     * Returns the randomization date for the participant or null if they are not randomized
+     * @return
+     */
+    public Date getRandomizationDate() {
+        return randomizationDate;
+    }
+
+    public void setRandomizationDate(Date randomizationDate) {
+        this.randomizationDate = randomizationDate;
     }
 
     /**

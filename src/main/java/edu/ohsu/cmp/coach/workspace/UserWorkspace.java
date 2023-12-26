@@ -35,7 +35,7 @@ import java.util.function.Function;
 public class UserWorkspace {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public static final int POOL_SIZE = 2;
+    public static final int POOL_SIZE = 5;
 
     private static final String CACHE_PATIENT = "Patient";
     private static final String CACHE_ENCOUNTER = "Encounter";
@@ -68,6 +68,8 @@ public class UserWorkspace {
     // Omron stuff
     private MyOmronTokenData omronTokenData = null;
     private Date omronLastUpdated = null;
+    private String redcapId = null;
+    private Boolean omronSynchronizing = false;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
                             RandomizationGroup randomizationGroup,
@@ -87,6 +89,7 @@ public class UserWorkspace {
         );
         this.internalPatientId = myPatient.getId();
         this.omronLastUpdated = myPatient.getOmronLastUpdated();
+        this.redcapId = myPatient.getRedcapId();
 
         cache = Caffeine.newBuilder()
                 .expireAfterWrite(6, TimeUnit.HOURS)
@@ -137,6 +140,10 @@ public class UserWorkspace {
 
     public void setOmronLastUpdated(Date omronLastUpdated) {
         this.omronLastUpdated = omronLastUpdated;
+    }
+
+    public String getRedcapId() {
+        return redcapId;
     }
 
     public void populate() {
@@ -588,5 +595,44 @@ public class UserWorkspace {
 
     public void setOmronTokenData(MyOmronTokenData omronTokenData) {
         this.omronTokenData = omronTokenData;
+    }
+
+    public void initiateSynchronousOmronUpdate() {
+        OmronService omronService = ctx.getBean(OmronService.class);
+        if (omronSynchronizing) {
+            logger.warn("Omron is still synchronizing; aborting new synchronize request");
+            return;
+        }
+
+        if ( ! omronService.isOmronEnabled() ) {
+            logger.warn("Omron integration is currently disabled; aborting synchronize request");
+            return;
+        }
+
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN Omron synchronization for session=" + sessionId);
+                try {
+                    omronSynchronizing = true;
+                    omronService.synchronize(sessionId);
+
+                } catch (Exception e) {
+                    logger.error("caught " + e.getClass().getName() + " synchronizing with Omron - " + e.getMessage(), e);
+
+                } finally {
+                    omronSynchronizing = false;
+                }
+                logger.info("DONE Omron synchronization for session=" + sessionId +
+                        " (took " + (System.currentTimeMillis() - start) + "ms)");
+            }
+        };
+
+        executorService.submit(runnable);
+    }
+
+    public Boolean isOmronSynchronizing() {
+        return omronSynchronizing;
     }
 }

@@ -1,5 +1,13 @@
 {{>layout/header}}
 
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#systolic, #diastolic').inputmask({
+            regex: "[0-9]+"
+        });
+    });
+</script>
+
 <div id="randomizationGroup" class="hidden">{{randomizationGroup}}</div>
 
 <div class="container">
@@ -15,11 +23,12 @@
     </div>
     <div id="bpContent">
         <div class="bpGoal" data-systolic="{{systolicTarget}}" data-diastolic="{{diastolicTarget}}">
+            <p><em>Update your BP goal only if you've discussed a different goal with your care team.</em></p>
             <span class="me-2">My current Blood Pressure goal is:</span>
             <span class="d-inline-block me-3">
-                <input type='text' class='systolic' placeholder='Systolic' value="{{systolicTarget}}" />
+                <input id='systolic' type='text' placeholder='Systolic' data-min="120" data-max="150" value="{{systolicTarget}}" />
                 /
-                <input type='text' class='diastolic' placeholder='Diastolic' value="{{diastolicTarget}}" />
+                <input id='diastolic' type='text' placeholder='Diastolic' data-min="80" data-max="90" value="{{diastolicTarget}}" />
             </span>
             <button id="updateBPGoal" class="me-3 btn btn-sm button-primary" disabled>Update</button>
             <span id="updateNote" class="d-inline-block"></span>

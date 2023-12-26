@@ -46,6 +46,7 @@ public class GoalsController extends BaseController {
         model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(sessionId));
         model.addAttribute("pageStyles", new String[] { "goals.css" });
         model.addAttribute("pageScripts", new String[] { "goals.js" });
+        model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
 
         return "goals";
     }
