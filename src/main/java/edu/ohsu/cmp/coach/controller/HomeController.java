@@ -93,15 +93,8 @@ public class HomeController extends BaseController {
                 model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
                 model.addAttribute("pageScripts", new String[] { "science.js/science.v1.js", "science.js/lib/d3/d3.js", "home.js?v=2", "recommendations.js?v=1" });
                 model.addAttribute("patient", workspace.getPatient());
-
-                GoalModel bpGoal = goalService.getCurrentBPGoal(sessionId);
-                model.addAttribute("bpGoal", bpGoal);
-
-                boolean bpGoalIsDefault =
-                        GoalModel.BP_GOAL_DEFAULT_SYSTOLIC.equals(bpGoal.getSystolicTarget()) &&
-                        GoalModel.BP_GOAL_DEFAULT_DIASTOLIC.equals(bpGoal.getDiastolicTarget());
-                model.addAttribute("bpGoalIsDefault", bpGoalIsDefault);
-
+                model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
+                model.addAttribute("bpGoalUpdated", workspace.getBpGoalUpdated());
                 model.addAttribute("randomizationGroup", String.valueOf(workspace.getRandomizationGroup()));
 
                 if (redCapService.isRedcapEnabled()) {

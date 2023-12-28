@@ -258,7 +258,7 @@
 
         enableHover('#chartTimelineContainer .btn');
 
-        if ({{bpGoalIsDefault}}) {
+        if (!{{bpGoalUpdated}}) {
             $('#currentBPGoal').attr('title', '140/90 is default. Update your BP goal only if you\'ve discussed a different goal with your care team.');
         }
 
