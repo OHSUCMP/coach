@@ -119,11 +119,11 @@ function enableDisableUpdateBPGoalButton() {
             let minStr = $(this).attr('data-min');
             let maxStr = $(this).attr('data-max');
             if (minStr !== '' && maxStr !== '') {   // validate as a number if either min and / or max is defined
-                let desc = $(this).attr('placeholder');
+                let label = $(this).attr('data-label');
                 let valStr = $(this).val().trim();
                 if (valStr === '') {
                     pass = false;
-                    messages.push(desc + ' is required.');
+                    messages.push(label + ' is required.');
                     $(this).addClass('error');
 
                 } else {
@@ -132,7 +132,7 @@ function enableDisableUpdateBPGoalButton() {
                     let max = parseInt(maxStr);
                     if (val < min || val > max) {
                         pass = false;
-                        messages.push(desc + ' must be between ' + min + ' and ' + max + '.');
+                        messages.push(label + ' must be between ' + min + ' and ' + max + '.');
                         $(this).addClass('error');
                     } else {
                         $(this).removeClass('error');
