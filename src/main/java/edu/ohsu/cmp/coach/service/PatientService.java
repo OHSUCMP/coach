@@ -46,6 +46,7 @@ public class PatientService extends AbstractService {
         } else {
             p = new MyPatient(patIdHash);
             p.setRedcapId(UUIDUtil.getRandomUUID());
+            p.setBpGoalUpdated(false);
             p = repository.save(p);
         }
 
@@ -57,6 +58,15 @@ public class PatientService extends AbstractService {
         if (p.isPresent()) {
             MyPatient myPatient = p.get();
             myPatient.setOmronLastUpdated(omronLastUpdated);
+            repository.save(myPatient);
+        }
+    }
+
+    public void setBPGoalUpdated(Long internalPatientId, Boolean bpGoalUpdated) {
+        Optional<MyPatient> p = repository.findById(internalPatientId);
+        if (p.isPresent()) {
+            MyPatient myPatient = p.get();
+            myPatient.setBpGoalUpdated(bpGoalUpdated);
             repository.save(myPatient);
         }
     }

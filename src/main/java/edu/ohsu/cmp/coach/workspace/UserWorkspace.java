@@ -13,7 +13,6 @@ import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
-import edu.ohsu.cmp.coach.model.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.service.*;
@@ -69,6 +68,7 @@ public class UserWorkspace {
     private MyOmronTokenData omronTokenData = null;
     private Date omronLastUpdated = null;
     private String redcapId = null;
+    private Boolean bpGoalUpdated = null;
     private Boolean omronSynchronizing = false;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
@@ -90,6 +90,7 @@ public class UserWorkspace {
         this.internalPatientId = myPatient.getId();
         this.omronLastUpdated = myPatient.getOmronLastUpdated();
         this.redcapId = myPatient.getRedcapId();
+        this.bpGoalUpdated = myPatient.getBpGoalUpdated();
 
         cache = Caffeine.newBuilder()
                 .expireAfterWrite(6, TimeUnit.HOURS)
@@ -146,6 +147,16 @@ public class UserWorkspace {
         return redcapId;
     }
 
+    public Boolean getBpGoalUpdated() {
+        return bpGoalUpdated;
+    }
+
+    public void setBpGoalUpdated(Boolean bpGoalUpdated) {
+        this.bpGoalUpdated = bpGoalUpdated;
+        PatientService patientService = ctx.getBean(PatientService.class);
+        patientService.setBPGoalUpdated(internalPatientId, bpGoalUpdated);
+    }
+
     public void populate() {
         Runnable runnable = new Runnable() {
             @Override
@@ -154,6 +165,7 @@ public class UserWorkspace {
                 logger.info("BEGIN populating workspace for session=" + sessionId);
                 getPatient();
                 getGoals();
+                doBPGoalCheck();
                 getEncounters();
                 getProtocolObservations();
                 getRemoteBloodPressures();
@@ -385,6 +397,8 @@ public class UserWorkspace {
                 long start = System.currentTimeMillis();
                 logger.info("BEGIN build Goals for session=" + sessionId);
 
+                // todo : augment this to also get BP goals from ServiceRequest Orders once the backend context is reestablished
+
                 GoalService svc = ctx.getBean(GoalService.class);
                 try {
                     List<GoalModel> list = svc.buildCurrentGoals(sessionId);
@@ -399,6 +413,18 @@ public class UserWorkspace {
                 }
             }
         });
+    }
+
+    private void doBPGoalCheck() {                  // ONLY CHECK REMOTE GOALS!  local BP goal update will be set via GoalsController.updatebp().
+                                                    // checking local BP goal here will not differentiate between intentional user-defined and default goals
+        if ( ! bpGoalUpdated ) {
+            for (GoalModel goal : getGoals()) {     // these come from the FHIR server.
+                if (goal.isBPGoal()) {
+                    setBpGoalUpdated(true);
+                    break;
+                }
+            }
+        }
     }
 
     public List<MedicationModel> getMedications() {
