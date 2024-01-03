@@ -31,17 +31,6 @@ public class AdverseEventService extends AbstractService {
     private static final String COACH_DISPLAY = "Adverse Event reported by COACH";
     private static final String OUTCOME_SYSTEM = "http://terminology.hl7.org/CodeSystem/adverse-event-outcome";
 
-    private static final Date ONE_MONTH_AGO;
-    static {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(new Date());
-        cal.add(Calendar.MONTH, -1);
-        cal.set(Calendar.HOUR, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        ONE_MONTH_AGO = cal.getTime();
-    }
-
     @Value("${security.salt}")
     private String salt;
 
@@ -265,17 +254,26 @@ public class AdverseEventService extends AbstractService {
             }
         }
 
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        cal.add(Calendar.MONTH, -1);
+        cal.set(Calendar.HOUR, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date oneMonthAgo = cal.getTime();
+
         // filter out any conditions that a) have no effective date, or b) the effective date is > 1 month ago
         iter = conditions.getEntry().iterator();
         while (iter.hasNext()) {
             Bundle.BundleEntryComponent entry = iter.next();
             Condition c = (Condition) entry.getResource();
             if (c.hasOnsetDateTimeType()) {
-                if (c.getOnsetDateTimeType().getValue().before(ONE_MONTH_AGO)) {
+                if (c.getOnsetDateTimeType().getValue().before(oneMonthAgo)) {
                     iter.remove();
                 }
             } else if (c.hasRecordedDate()) {
-                if (c.getRecordedDate().before(ONE_MONTH_AGO)) {
+                if (c.getRecordedDate().before(oneMonthAgo)) {
                     iter.remove();
                 }
             } else if (c.hasEncounter()) {
@@ -285,9 +283,9 @@ public class AdverseEventService extends AbstractService {
                     if (e.getStatus().equals(Encounter.EncounterStatus.FINISHED)) {
                         if (e.hasPeriod()) {
                             Period p = e.getPeriod();
-                            if (p.hasStart() && p.getStart().before(ONE_MONTH_AGO)) {
+                            if (p.hasStart() && p.getStart().before(oneMonthAgo)) {
                                 iter.remove();
-                            } else if (p.hasEnd() && p.getEnd().before(ONE_MONTH_AGO)) {
+                            } else if (p.hasEnd() && p.getEnd().before(oneMonthAgo)) {
                                 iter.remove();
                             }
                         }
