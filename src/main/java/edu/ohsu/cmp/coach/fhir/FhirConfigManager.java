@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Component
 @PropertySource("${fhirconfig.file}")
@@ -66,6 +67,9 @@ public class FhirConfigManager {
     @Value("${protocol.answer.yes}")        private String protocolAnswerYes;
     @Value("${protocol.answer.no}")         private String protocolAnswerNo;
 
+    private List<Coding> serviceRequestOrderBPGoalCustomCodings = null;
+    private Pattern serviceRequestOrderBPGoalNoteSystolicRegex = null;
+    private Pattern serviceRequestOrderBPGoalNoteDiastolicRegex = null;
 
     public Coding getEncounterClassOfficeCoding() {   // ambulatory class to attach to crafted office visit encounters
         if (encounterClassOfficeCoding == null) {
@@ -259,6 +263,33 @@ public class FhirConfigManager {
             pulseCustomCodings = buildCodings(env.getProperty("pulse.custom-codings"));
         }
         return pulseCustomCodings;
+    }
+
+    public List<Coding> getServiceRequestOrderBPGoalCustomCodings() {
+        if (serviceRequestOrderBPGoalCustomCodings == null) {
+            serviceRequestOrderBPGoalCustomCodings = buildCodings(env.getProperty("service-request-order.bp-goal.custom-codings"));
+        }
+        return serviceRequestOrderBPGoalCustomCodings;
+    }
+
+    public Pattern getServiceRequestOrderBPGoalNoteSystolicRegex() {
+        if (serviceRequestOrderBPGoalNoteSystolicRegex == null) {
+            serviceRequestOrderBPGoalNoteSystolicRegex = buildPattern(env.getProperty("service-request-order.bp-goal.note.systolic-regex"));
+        }
+        return serviceRequestOrderBPGoalNoteSystolicRegex;
+    }
+
+    public Pattern getServiceRequestOrderBPGoalNoteDiastolicRegex() {
+        if (serviceRequestOrderBPGoalNoteDiastolicRegex == null) {
+            serviceRequestOrderBPGoalNoteDiastolicRegex = buildPattern(env.getProperty("service-request-order.bp-goal.note.diastolic-regex"));
+        }
+        return serviceRequestOrderBPGoalNoteDiastolicRegex;
+    }
+
+    private Pattern buildPattern(String regex) {
+        return StringUtils.isNotBlank(regex) ?
+                Pattern.compile(regex) :
+                null;
     }
 
     public String getPulseValueCode() {
