@@ -1,25 +1,37 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
-import edu.ohsu.cmp.coach.workspace.UserWorkspace;
-import edu.ohsu.cmp.coach.model.AchievementStatus;
 import edu.ohsu.cmp.coach.entity.GoalHistory;
 import edu.ohsu.cmp.coach.entity.MyGoal;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
+import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.fhir.CompositeBundle;
+import edu.ohsu.cmp.coach.model.AchievementStatus;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.repository.GoalHistoryRepository;
 import edu.ohsu.cmp.coach.repository.GoalRepository;
+import edu.ohsu.cmp.coach.util.FhirUtil;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 public class GoalService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Value("${security.salt}")
+    private String salt;
 
     @Autowired
     private EHRService ehrService;
@@ -32,7 +44,7 @@ public class GoalService extends AbstractService {
 
     public List<GoalModel> getGoals(String sessionId) {
         List<GoalModel> list = new ArrayList<>();
-        list.addAll(userWorkspaceService.get(sessionId).getGoals());
+        list.addAll(userWorkspaceService.get(sessionId).getRemoteGoals());
         list.addAll(buildLocalGoals(sessionId));
         return list;
     }
@@ -54,12 +66,116 @@ public class GoalService extends AbstractService {
      * @return
      * @throws DataException
      */
-    public List<GoalModel> buildCurrentGoals(String sessionId) throws DataException {
-        VendorTransformer transformer = userWorkspaceService.get(sessionId).getVendorTransformer();
-        return transformer.transformIncomingGoals(ehrService.getGoals(sessionId));
+    public List<GoalModel> buildRemoteGoals(String sessionId) throws DataException, ConfigurationException, IOException {
+        CompositeBundle compositeBundle = new CompositeBundle();
+        compositeBundle.consume(ehrService.getGoals(sessionId));
+        compositeBundle.consume(buildServiceRequestBasedBPGoals(sessionId));
+        return userWorkspaceService.get(sessionId).getVendorTransformer().transformIncomingGoals(compositeBundle.getBundle());
     }
 
+    public Bundle buildServiceRequestBasedBPGoals(String sessionId) {
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.COLLECTION);
 
+        Bundle serviceRequestBundle = userWorkspaceService.get(sessionId).getOrderServiceRequests();
+        if (serviceRequestBundle != null) {
+            for (Bundle.BundleEntryComponent entry : serviceRequestBundle.getEntry()) {
+                if (entry.getResource() instanceof ServiceRequest) {
+                    ServiceRequest sr = (ServiceRequest) entry.getResource();
+                    try {
+                        if (sr.hasCode() && FhirUtil.hasCoding(sr.getCode(), fcm.getServiceRequestOrderBPGoalCustomCodings())) {
+                            Goal g = buildBPGoal(sessionId, sr);
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("created Goal: " + FhirUtil.toJson(g));
+                            }
+                            FhirUtil.appendResourceToBundle(bundle, g);
+                        }
+
+                    } catch (Exception e) {
+                        logger.error("caught " + e.getClass().getName() + " building BP Goal from ServiceRequest " +
+                                sr.getId() + " - " + e.getMessage(), e);
+                    }
+                }
+            }
+        }
+
+        return bundle;
+    }
+
+    private Goal buildBPGoal(String sessionId, ServiceRequest sr) {
+        String gid = "goal-" + DigestUtils.sha256Hex(sr.getId() + salt);
+
+        Goal g = new Goal();
+        g.setId(gid);
+
+        g.setLifecycleStatus(Goal.GoalLifecycleStatus.ACTIVE);
+
+        g.setAchievementStatus(new CodeableConcept()
+                .addCoding(new Coding()
+                        .setSystem(GoalModel.ACHIEVEMENT_STATUS_CODING_SYSTEM)
+                        .setCode(GoalModel.ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE)
+                )
+        );
+
+        Patient p = userWorkspaceService.get(sessionId).getPatient().getSourcePatient();
+        g.setSubject(new Reference().setReference(p.getId()));
+
+        g.addAddresses(new Reference().setReference(sr.getId()));
+
+        Pattern systolicPattern = fcm.getServiceRequestOrderBPGoalNoteSystolicRegex();
+        int systolic = Integer.parseInt(parseFromNote(sr.getNote(), systolicPattern));
+        g.addTarget(new Goal.GoalTargetComponent()
+                .setMeasure(new CodeableConcept()
+                        .addCoding(fcm.getBpSystolicCommonCoding())
+                        .setText("Systolic Goal: " + systolic)
+                )
+                .setDetail(new Quantity()
+                        .setValue(systolic)
+                        .setUnit(fcm.getBpValueUnit())
+                )
+        );
+
+        Pattern diastolicPattern = fcm.getServiceRequestOrderBPGoalNoteDiastolicRegex();
+        int diastolic = Integer.parseInt(parseFromNote(sr.getNote(), diastolicPattern));
+        g.addTarget(new Goal.GoalTargetComponent()
+                .setMeasure(new CodeableConcept()
+                        .addCoding(fcm.getBpDiastolicCommonCoding())
+                        .setText("Diastolic Goal: " + diastolic)
+                )
+                .setDetail(new Quantity()
+                        .setValue(diastolic)
+                        .setUnit(fcm.getBpValueUnit())
+                )
+        );
+
+        g.setDescription(new CodeableConcept()
+                .addCoding(fcm.getBpPanelCommonCoding())
+                .setText("BP Goal: " + systolic + "/" + diastolic)
+        );
+
+        g.setStart(new DateType()
+                .setValue(sr.getAuthoredOn())
+        );
+
+        g.setStatusDate(sr.getAuthoredOn());
+
+        return g;
+    }
+
+    private String parseFromNote(List<Annotation> note, Pattern p) {
+        if (note == null || note.isEmpty() || p == null) return null;
+
+        for (Annotation a : note) {
+            if (StringUtils.isNotBlank(a.getText())) {
+                Matcher m = p.matcher(a.getText());
+                if (m.find()) {
+                    return m.group(1);
+                }
+            }
+        }
+
+        return null;
+    }
 
     public List<String> getExtGoalIdList(String sessionId) {
         List<String> list = new ArrayList<>();
@@ -85,30 +201,30 @@ public class GoalService extends AbstractService {
      * app-based BP goal if no goal exists
      */
     public GoalModel getCurrentBPGoal(String sessionId) {
-        // goals can be stored locally and in the EHR.  so get current BP goals from each source, then
+        // goals can be stored locally and remotely in the EHR.  so get current BP goals from each source, then
         // return whichever is more current, creating a fresh local goal if none could be found.
 
-        GoalModel ehrBPGoal = getCurrentEHRBPGoal(sessionId);
+        GoalModel remoteBPGoal = getCurrentRemoteBPGoal(sessionId);
 
         MyGoal g = getCurrentLocalBPGoal(sessionId);
-        GoalModel bpGoal = g != null ?
+        GoalModel localBPGoal = g != null ?
                 new GoalModel(g) :
                 null;
 
-        if (ehrBPGoal != null && bpGoal != null) {
-            int comparison = ehrBPGoal.getCreatedDate().compareTo(bpGoal.getCreatedDate());
-            if (comparison < 0) return bpGoal;
-            else if (comparison > 0) return ehrBPGoal;
+        if (remoteBPGoal != null && localBPGoal != null) {
+            int comparison = remoteBPGoal.getCreatedDate().compareTo(localBPGoal.getCreatedDate());
+            if (comparison < 0) return localBPGoal;
+            else if (comparison > 0) return remoteBPGoal;
             else {
                 // conflicting dates!  default to app goal I guess?
-                return bpGoal;
+                return localBPGoal;
             }
 
-        } else if (ehrBPGoal != null) {
-            return ehrBPGoal;
+        } else if (remoteBPGoal != null) {
+            return remoteBPGoal;
 
-        } else if (bpGoal != null) {
-            return bpGoal;
+        } else if (localBPGoal != null) {
+            return localBPGoal;
 
         } else {
             return new GoalModel(create(sessionId, new MyGoal(fcm.getBpPanelCommonCoding(),
@@ -125,22 +241,22 @@ public class GoalService extends AbstractService {
     }
 
     // utility function to get the latest BP goal from the EHR
-    private GoalModel getCurrentEHRBPGoal(String sessionId) {
-        GoalModel currentEHRBPGoal = null;
+    private GoalModel getCurrentRemoteBPGoal(String sessionId) {
+        GoalModel currentRemoteBPGoal = null;
 
         // Remove goals without a createdDate since they can't accurately be compared to others
-        List<GoalModel> goals = userWorkspaceService.get(sessionId).getGoals().
+        List<GoalModel> goals = userWorkspaceService.get(sessionId).getRemoteGoals().
             stream().filter(g -> g.getCreatedDate() != null).collect(Collectors.toList());
         for (GoalModel goal : goals) {
-            if (goal.isEHRGoal() && goal.isBPGoal()) {
-                if (currentEHRBPGoal == null) {
-                    currentEHRBPGoal = goal;
-                } else if (goal.compareTo(currentEHRBPGoal) < 0) {
-                    currentEHRBPGoal = goal;
+            if (goal.isRemoteGoal() && goal.isBPGoal()) {
+                if (currentRemoteBPGoal == null) {
+                    currentRemoteBPGoal = goal;
+                } else if (goal.compareTo(currentRemoteBPGoal) < 0) {
+                    currentRemoteBPGoal = goal;
                 }
             }
         }
-        return currentEHRBPGoal;
+        return currentRemoteBPGoal;
     }
 
     public boolean hasAnyLocalNonBPGoals(String sessionId) {
