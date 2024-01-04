@@ -26,6 +26,7 @@ public interface VendorTransformer {
     String getMedicationStatementQuery(String patientId);
     String getMedicationRequestQuery(String patientId);
     String getProcedureQuery(String patientId);
+    String getServiceRequestQuery(String patientId);
 
     Bundle writeRemote(String sessionId, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException;
 
