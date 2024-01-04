@@ -137,7 +137,7 @@ public class GoalModel implements Comparable<GoalModel> {
 //        return g;
 //    }
 
-    public boolean isEHRGoal() {
+    public boolean isRemoteGoal() {
         return sourceGoal != null;
     }
 

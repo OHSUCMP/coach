@@ -538,7 +538,10 @@ public class FhirUtil {
 
     public static String getTokenAuthenticationURL(CapabilityStatement metadata) throws DataException {
         if (metadata == null) return null;
-        if ( ! metadata.hasRest() ) throw new DataException("metadata is missing rest");
+
+        if ( ! metadata.hasRest() ) {
+            throw new DataException("metadata is missing rest");
+        }
 
         String tokenAuthUrl = null;
         for (CapabilityStatement.CapabilityStatementRestComponent comp : metadata.getRest()) {
@@ -556,7 +559,10 @@ public class FhirUtil {
             }
         }
 
-        if (tokenAuthUrl == null) throw new DataException("could not find token auth URL in metadata");
+        if (tokenAuthUrl == null) {
+            throw new DataException("could not find token auth URL in server metadata");
+        }
+
         return tokenAuthUrl;
     }
 

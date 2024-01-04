@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import edu.ohsu.cmp.coach.entity.MyPatient;
 import edu.ohsu.cmp.coach.entity.RandomizationGroup;
-import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
@@ -44,9 +43,10 @@ public class UserWorkspace {
     private static final String CACHE_ADVERSE_EVENT = "AdverseEvent";
     private static final String CACHE_GOAL = "Goal";
     private static final String CACHE_MEDICATION = "Medication";
+    private static final String CACHE_ORDER_SERVICE_REQUEST = "OrderServiceRequest";
 
-    private static final String CACHE_CONDITION_ENCOUNTER_DIAGNOSIS = "EncounterDiagnosisConditions";
-    private static final String CACHE_PROBLEM_LIST_CONDITIONS = "ProblemListConditions";
+    private static final String CACHE_CONDITION_ENCOUNTER_DIAGNOSIS = "EncounterDiagnosisCondition";
+    private static final String CACHE_PROBLEM_LIST_CONDITION = "ProblemListCondition";
     private static final String CACHE_OTHER_SUPPLEMENTAL_RESOURCES = "OtherSupplementalResources";
 
     private final ApplicationContext ctx;
@@ -164,7 +164,8 @@ public class UserWorkspace {
                 long start = System.currentTimeMillis();
                 logger.info("BEGIN populating workspace for session=" + sessionId);
                 getPatient();
-                getGoals();
+                getOrderServiceRequests();
+                getRemoteGoals();
                 doBPGoalCheck();
                 getEncounters();
                 getProtocolObservations();
@@ -242,10 +243,14 @@ public class UserWorkspace {
 
                 EHRService svc = ctx.getBean(EHRService.class);
                 Map<String, Encounter> map = new LinkedHashMap<>();
-                for (Encounter encounter : svc.getEncounters(sessionId)) {
-                    for (String key : FhirUtil.buildKeys(encounter.getId(), encounter.getIdentifier())) {
-                        map.put(key, encounter);
+                try {
+                    for (Encounter encounter : svc.getEncounters(sessionId)) {
+                        for (String key : FhirUtil.buildKeys(encounter.getId(), encounter.getIdentifier())) {
+                            map.put(key, encounter);
+                        }
                     }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
 
                 logger.info("DONE building Encounters for session=" + sessionId +
@@ -264,7 +269,12 @@ public class UserWorkspace {
                 logger.info("BEGIN build Patient for session=" + sessionId);
 
                 PatientService svc = ctx.getBean(PatientService.class);
-                PatientModel patient = svc.buildPatient(sessionId);
+                PatientModel patient = null;
+                try {
+                    patient = svc.buildPatient(sessionId);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
 
                 logger.info("DONE building Patient for session=" + sessionId +
                         " (took " + (System.currentTimeMillis() - start) + "ms)");
@@ -282,18 +292,18 @@ public class UserWorkspace {
                 logger.info("BEGIN build Protocol Observations for session=" + sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
-                Bundle bundle = null;
+                CompositeBundle compositeBundle = new CompositeBundle();
+
                 try {
-                    bundle = svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getProtocolCoding()), fcm.getProtocolLookbackPeriod(),null);
-                } catch (ConfigurationException e) {
+                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getProtocolCoding()), fcm.getProtocolLookbackPeriod(), null));
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
 
-                int size = bundle.hasEntry() ? bundle.getEntry().size() : 0;
                 logger.info("DONE building Protocol Observations for session=" + sessionId +
-                        " (size=" + size + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
-                return bundle;
+                return compositeBundle.getBundle();
             }
         });
     }
@@ -314,9 +324,7 @@ public class UserWorkspace {
 
                     return list;
 
-                } catch (DataException e) {
-                    throw new RuntimeException(e);
-                } catch (ConfigurationException e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -339,9 +347,7 @@ public class UserWorkspace {
 
                     return list;
 
-                } catch (DataException e) {
-                    throw new RuntimeException(e);
-                } catch (ConfigurationException e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -356,13 +362,18 @@ public class UserWorkspace {
                 logger.info("BEGIN build Encounter Diagnosis Conditions for session=" + sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
-                Bundle bundle = svc.getEncounterDiagnosisConditions(sessionId);
+                CompositeBundle compositeBundle = new CompositeBundle();
 
-                int size = bundle.hasEntry() ? bundle.getEntry().size() : 0;
+                try {
+                    compositeBundle.consume(svc.getEncounterDiagnosisConditions(sessionId));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
                 logger.info("DONE building Encounter Diagnosis Conditions for session=" + sessionId +
-                        " (size=" + size + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
-                return bundle;
+                return compositeBundle.getBundle();
             }
         });
     }
@@ -390,25 +401,47 @@ public class UserWorkspace {
         });
     }
 
-    public List<GoalModel> getGoals() {
+    public Bundle getOrderServiceRequests() {
+        return bundleCache.get(CACHE_ORDER_SERVICE_REQUEST, new Function<String, Bundle>() {
+            @Override
+            public Bundle apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Order Service Requests for session=" + sessionId);
+
+                EHRService svc = ctx.getBean(EHRService.class);
+                CompositeBundle compositeBundle = new CompositeBundle();
+
+                try {
+                    compositeBundle.consume(svc.getOrderServiceRequests(sessionId));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                logger.info("DONE building Order ServiceRequests for session=" + sessionId +
+                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return compositeBundle.getBundle();
+            }
+        });
+    }
+
+    public List<GoalModel> getRemoteGoals() {
         return (List<GoalModel>) cache.get(CACHE_GOAL, new Function<String, List<GoalModel>>() {
             @Override
             public List<GoalModel> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Goals for session=" + sessionId);
-
-                // todo : augment this to also get BP goals from ServiceRequest Orders once the backend context is reestablished
+                logger.info("BEGIN build remote Goals for session=" + sessionId);
 
                 GoalService svc = ctx.getBean(GoalService.class);
                 try {
-                    List<GoalModel> list = svc.buildCurrentGoals(sessionId);
+                    List<GoalModel> list = svc.buildRemoteGoals(sessionId);
 
-                    logger.info("DONE building Goals for session=" + sessionId +
+                    logger.info("DONE building remote Goals for session=" + sessionId +
                             " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
                     return list;
 
-                } catch (DataException e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -418,7 +451,7 @@ public class UserWorkspace {
     private void doBPGoalCheck() {                  // ONLY CHECK REMOTE GOALS!  local BP goal update will be set via GoalsController.updatebp().
                                                     // checking local BP goal here will not differentiate between intentional user-defined and default goals
         if ( ! bpGoalUpdated ) {
-            for (GoalModel goal : getGoals()) {     // these come from the FHIR server.
+            for (GoalModel goal : getRemoteGoals()) {     // these come from the FHIR server.
                 if (goal.isBPGoal()) {
                     setBpGoalUpdated(true);
                     break;
@@ -443,7 +476,7 @@ public class UserWorkspace {
 
                     return list;
 
-                } catch (DataException e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -451,19 +484,25 @@ public class UserWorkspace {
     }
 
     public Bundle getProblemListConditions() {
-        return bundleCache.get(CACHE_PROBLEM_LIST_CONDITIONS, new Function<String, Bundle>() {
+        return bundleCache.get(CACHE_PROBLEM_LIST_CONDITION, new Function<String, Bundle>() {
             @Override
             public Bundle apply(String s) {
                 long start = System.currentTimeMillis();
                 logger.info("BEGIN build Problem List Conditions Resources for session=" + sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
-                Bundle bundle = svc.getProblemListConditions(sessionId);
+                CompositeBundle compositeBundle = new CompositeBundle();
+
+                try {
+                    compositeBundle.consume(svc.getProblemListConditions(sessionId));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
 
                 logger.info("DONE building Problem List Resources for session=" + sessionId +
-                        " (size=" + bundle.getEntry().size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
 
-                return bundle;
+                return compositeBundle.getBundle();
             }
         });
     }
@@ -485,11 +524,10 @@ public class UserWorkspace {
                     compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getBmiCoding()), fcm.getBmiLookbackPeriod(),null));
                     compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getSmokingCoding()), fcm.getSmokingLookbackPeriod(),null));
                     compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getDrinksCoding()), fcm.getDrinksLookbackPeriod(),null));
-                } catch (ConfigurationException e) {
+                    compositeBundle.consume(svc.getCounselingProcedures(sessionId));
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-
-                compositeBundle.consume(svc.getCounselingProcedures(sessionId));
 
                 logger.info("DONE building Supplemental Resources for session=" + sessionId +
                         " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
@@ -594,6 +632,8 @@ public class UserWorkspace {
 
         GoalService gService = ctx.getBean(GoalService.class);
         gService.deleteAll(sessionId);
+
+        setBpGoalUpdated(false);    // if we're flushing goals, this flag needs to be reset as well
 
         CounselingService cService = ctx.getBean(CounselingService.class);
         cService.deleteAll(sessionId);

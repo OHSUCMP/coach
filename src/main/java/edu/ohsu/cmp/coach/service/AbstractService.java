@@ -7,7 +7,6 @@ import edu.ohsu.cmp.coach.workspace.UserWorkspaceService;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Reference;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
@@ -24,9 +23,6 @@ public abstract class AbstractService implements Constants {
 
     @Autowired
     protected Environment env;
-
-    @Value("${fhir.observation.bp-write}")
-    protected Boolean storeRemotely;
 
     protected List<String> buildKeys(Reference reference) {
         return FhirUtil.buildKeys(reference);
