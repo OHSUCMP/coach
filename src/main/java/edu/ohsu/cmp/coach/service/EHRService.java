@@ -2,6 +2,8 @@ package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.entity.MedicationForm;
 import edu.ohsu.cmp.coach.entity.MedicationRoute;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.EncounterMatcher;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.ResourceWithBundle;
@@ -18,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -50,20 +53,20 @@ public class EHRService extends AbstractService {
     @Autowired
     private MedicationRouteRepository medicationRouteRepository;
 
-    public Patient getPatient(String sessionId) {
+    public Patient getPatient(String sessionId) throws DataException, ConfigurationException, IOException {
         logger.info("getting Patient for session=" + sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-        return fhirService.readByReference(fcc, Patient.class,
+        return fhirService.readByReference(fcc, workspace.getFhirQueryManager().getPatientStrategy(), Patient.class,
                 workspace.getVendorTransformer().getPatientLookup(fcc.getCredentials().getPatientId())
         );
     }
 
-    public List<Encounter> getEncounters(String sessionId) {
+    public List<Encounter> getEncounters(String sessionId) throws DataException, ConfigurationException, IOException {
         logger.info("getting Encounters for session=" + sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-        Bundle bundle = fhirService.search(fcc,
+        Bundle bundle = fhirService.search(fcc, workspace.getFhirQueryManager().getEncounterStrategy(),
                 workspace.getVendorTransformer().getEncounterQuery(fcc.getCredentials().getPatientId(), fcm.getEncounterLookbackPeriod()),
                 new Function<ResourceWithBundle, Boolean>() {
                     @Override
@@ -124,11 +127,12 @@ public class EHRService extends AbstractService {
      * @param limit specifies a maximum number of search results to return.  May be null
      * @return
      */
-    public Bundle getObservations(String sessionId, String code, String lookbackPeriod, @Nullable Integer limit) {
+    public Bundle getObservations(String sessionId, String code, String lookbackPeriod,
+                                  @Nullable Integer limit) throws DataException, ConfigurationException, IOException {
         logger.info("getting Observations for session=" + sessionId + " having code(s): " + code);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-        return fhirService.search(fcc,
+        return fhirService.search(fcc, workspace.getFhirQueryManager().getObservationCodeStrategy(),
                 workspace.getVendorTransformer().getObservationCodeQuery(fcc.getCredentials().getPatientId(), code, lookbackPeriod),
                 new Function<ResourceWithBundle, Boolean>() {
                     @Override
@@ -155,19 +159,19 @@ public class EHRService extends AbstractService {
         });
     }
 
-    public Bundle getEncounterDiagnosisConditions(String sessionId) {
+    public Bundle getEncounterDiagnosisConditions(String sessionId) throws DataException, ConfigurationException, IOException {
         return getConditions(sessionId, "encounter-diagnosis");
     }
 
-    public Bundle getProblemListConditions(String sessionId) {
+    public Bundle getProblemListConditions(String sessionId) throws DataException, ConfigurationException, IOException {
         return getConditions(sessionId, "problem-list-item");
     }
 
-    public Bundle getConditions(String sessionId, String category) {
+    public Bundle getConditions(String sessionId, String category) throws DataException, ConfigurationException, IOException {
         logger.info("getting " + category + " Conditions for session=" + sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-        return fhirService.search(fcc,
+        return fhirService.search(fcc, workspace.getFhirQueryManager().getConditionStrategy(),
                 workspace.getVendorTransformer().getConditionQuery(fcc.getCredentials().getPatientId(), category),
                 new Function<ResourceWithBundle, Boolean>() {
                     @Override
@@ -206,11 +210,11 @@ public class EHRService extends AbstractService {
         );
     }
 
-    public Bundle getGoals(String sessionId) {
+    public Bundle getGoals(String sessionId) throws DataException, ConfigurationException, IOException {
         logger.info("getting Goals for session=" + sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-        return fhirService.search(fcc,
+        return fhirService.search(fcc, workspace.getFhirQueryManager().getGoalStrategy(),
                 workspace.getVendorTransformer().getGoalQuery(fcc.getCredentials().getPatientId()),
                 new Function<ResourceWithBundle, Boolean>() {
                     @Override
@@ -241,7 +245,46 @@ public class EHRService extends AbstractService {
         );
     }
 
-    public Bundle getMedicationStatements(String sessionId) {
+    public Bundle getOrderServiceRequests(String sessionId) throws DataException, ConfigurationException, IOException {
+        logger.info("getting Order ServiceRequests for session=" + sessionId);
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
+        return fhirService.search(fcc, workspace.getFhirQueryManager().getServiceRequestStrategy(),
+                workspace.getVendorTransformer().getServiceRequestQuery(fcc.getCredentials().getPatientId()),
+                new Function<ResourceWithBundle, Boolean>() {
+                    @Override
+                    public Boolean apply(ResourceWithBundle resourceWithBundle) {
+                        Resource resource = resourceWithBundle.getResource();
+                        if (resource instanceof ServiceRequest) {
+                            ServiceRequest sr = (ServiceRequest) resource;
+
+                            if (sr.getStatus() != ServiceRequest.ServiceRequestStatus.ACTIVE) {
+                                logger.debug("removing ServiceRequest " + sr.getId() + " - invalid Status");
+                                return false;
+                            }
+
+                            if (sr.getIntent() != ServiceRequest.ServiceRequestIntent.ORDER &&
+                                    sr.getIntent() != ServiceRequest.ServiceRequestIntent.ORIGINALORDER &&
+                                    sr.getIntent() != ServiceRequest.ServiceRequestIntent.REFLEXORDER &&
+                                    sr.getIntent() != ServiceRequest.ServiceRequestIntent.FILLERORDER &&
+                                    sr.getIntent() != ServiceRequest.ServiceRequestIntent.INSTANCEORDER) {
+                                logger.debug("removing ServiceRequest " + sr.getId() + " - invalid Intent");
+                                return false;
+                            }
+
+                            if (sr.hasDoNotPerform() && sr.getDoNotPerform()) {
+                                logger.debug("removing ServiceRequest " + sr.getId() + " - doNotPerform");
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    }
+                }
+        );
+    }
+
+    public Bundle getMedicationStatements(String sessionId) throws DataException, ConfigurationException, IOException {
         logger.info("getting MedicationStatements for session=" + sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
@@ -249,7 +292,7 @@ public class EHRService extends AbstractService {
         final List<Coding> validRouteCodings = getValidMedicationRouteCodings();
         final List<Coding> validFormCodings = getValidMedicationFormCodings();
 
-        return fhirService.search(fcc,
+        return fhirService.search(fcc, workspace.getFhirQueryManager().getMedicationStatementStrategy(),
                 workspace.getVendorTransformer().getMedicationStatementQuery(fcc.getCredentials().getPatientId()),
                 new Function<ResourceWithBundle, Boolean>() {
                     @Override
@@ -281,7 +324,12 @@ public class EHRService extends AbstractService {
                                 if (m == null) {
                                     logger.warn("couldn't find Medication with reference=" + ms.getMedicationReference().getReference() +
                                             " - attempting to read from FHIR server - ");
-                                    m = fhirService.readByReference(fcc, Medication.class, ms.getMedicationReference());
+                                    try {
+                                        m = fhirService.readByReference(fcc, workspace.getFhirQueryManager().getMedicationStrategy(),
+                                                Medication.class, ms.getMedicationReference());
+                                    } catch (Exception e) {
+                                        throw new RuntimeException(e);
+                                    }
                                 }
                                 if (m != null && m.hasForm() && FhirUtil.hasCoding(m.getForm(), validFormCodings)) {
                                     hasGoodForm = true;
@@ -299,7 +347,7 @@ public class EHRService extends AbstractService {
         );
     }
 
-    public Bundle getMedicationRequests(String sessionId) {
+    public Bundle getMedicationRequests(String sessionId) throws DataException, ConfigurationException, IOException {
         logger.info("getting MedicationRequests for session=" + sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
@@ -307,7 +355,7 @@ public class EHRService extends AbstractService {
         final List<Coding> validRouteCodings = getValidMedicationRouteCodings();
         final List<Coding> validFormCodings = getValidMedicationFormCodings();
 
-        Bundle bundle = fhirService.search(fcc,
+        Bundle bundle = fhirService.search(fcc, workspace.getFhirQueryManager().getMedicationRequestStrategy(),
                 workspace.getVendorTransformer().getMedicationRequestQuery(fcc.getCredentials().getPatientId()),
                 new Function<ResourceWithBundle, Boolean>() {
                     @Override
@@ -351,7 +399,12 @@ public class EHRService extends AbstractService {
                                 if (m == null) {
                                     logger.warn("couldn't find Medication with reference=" + mr.getMedicationReference().getReference() +
                                             " - attempting to read from FHIR server - ");
-                                    m = fhirService.readByReference(fcc, Medication.class, mr.getMedicationReference());
+                                    try {
+                                        m = fhirService.readByReference(fcc, workspace.getFhirQueryManager().getMedicationStrategy(),
+                                                Medication.class, mr.getMedicationReference());
+                                    } catch (Exception e) {
+                                        throw new RuntimeException(e);
+                                    }
                                 }
                                 if (m != null && m.hasForm() && FhirUtil.hasCoding(m.getForm(), validFormCodings)) {
                                     hasGoodForm = true;
@@ -382,7 +435,8 @@ public class EHRService extends AbstractService {
                     MedicationRequest mr = (MedicationRequest) entry.getResource();
                     if (mr.hasMedicationReference()) {
                         if ( ! FhirUtil.bundleContainsReference(bundle, mr.getMedicationReference()) ) {
-                            Medication m = fhirService.readByReference(fcc, Medication.class, mr.getMedicationReference());
+                            Medication m = fhirService.readByReference(fcc, workspace.getFhirQueryManager().getMedicationStrategy(),
+                                    Medication.class, mr.getMedicationReference());
                             medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
                         }
                     }
@@ -397,11 +451,11 @@ public class EHRService extends AbstractService {
         return bundle;
     }
 
-    public Bundle getCounselingProcedures(String sessionId) {
+    public Bundle getCounselingProcedures(String sessionId) throws DataException, ConfigurationException, IOException {
         logger.info("getting Counseling Procedures for session=" + sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-        return fhirService.search(fcc,
+        return fhirService.search(fcc, workspace.getFhirQueryManager().getProcedureStrategy(),
                 workspace.getVendorTransformer().getProcedureQuery(fcc.getCredentials().getPatientId()),
                 new Function<ResourceWithBundle, Boolean>() {
                     @Override
