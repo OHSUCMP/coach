@@ -3,9 +3,9 @@ package edu.ohsu.cmp.coach.service;
 import edu.ohsu.cmp.coach.entity.HomeBloodPressureReading;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.exception.MethodNotImplementedException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
+import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.util.FhirUtil;
@@ -15,14 +15,21 @@ import org.hl7.fhir.r4.model.Coding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 public class BloodPressureService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Value("${fhir.vitals-writeback-strategy}")
+    private FhirStrategy vitalsWritebackStrategy;
 
     @Autowired
     private EHRService ehrService;
@@ -30,7 +37,7 @@ public class BloodPressureService extends AbstractService {
     @Autowired
     private HomeBloodPressureReadingService hbprService;
 
-    public List<BloodPressureModel> buildRemoteBloodPressureList(String sessionId) throws DataException, ConfigurationException {
+    public List<BloodPressureModel> buildRemoteBloodPressureList(String sessionId) throws DataException, ConfigurationException, IOException {
         CompositeBundle compositeBundle = new CompositeBundle();
 
         List<Coding> codings = new ArrayList<>();
@@ -90,35 +97,8 @@ public class BloodPressureService extends AbstractService {
                 logger.debug("NOT ADDING local BP matching remote BP with key: " + key);
 
             } else {
-                boolean added = false;
-// storer 2023-10-06 - commenting this out temporarily, this function gets called a lot in parallel and for some reason some local readings
-//                     that aren't retrieved remotely aren't writing remotely because they already exist, somehow.  need to debug that.  in the
-//                     meantime, we don't want to execute a dozen write attempts that fail for these
-//                if (storeRemotely) {
-//                    try {
-//                        logger.info("attempting to store remotely BP: " + bpm + "(" + bpm.getSystolic() + "/" + bpm.getDiastolic() +
-//                                " @ " + bpm.getReadingDateString() + ")");
-//                        VendorTransformer transformer = workspace.getVendorTransformer();
-//                        Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
-//                        List<BloodPressureModel> list2 = transformer.transformIncomingBloodPressureReadings(
-//                                transformer.writeRemote(sessionId, fhirService, outgoingBundle)
-//                        );
-//                        if (list2.size() >= 1) {
-//                            BloodPressureModel bpm2 = list2.get(0);
-//                            workspace.getRemoteBloodPressures().add(bpm2);
-//                            list.add(bpm2);
-//                            added = true;
-//                        }
-//
-//                    } catch (Exception e) {
-//                        // remote errors are tolerable, since we will always store locally too
-//                        logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " + e.getMessage(), e);
-//                    }
-//                }
-                if ( ! added ) {
-                    logger.debug("adding local BP with key: " + key);
-                    list.add(bpm);
-                }
+                logger.debug("adding local BP with key: " + key);
+                list.add(bpm);
             }
         }
 
@@ -139,7 +119,7 @@ public class BloodPressureService extends AbstractService {
 
         BloodPressureModel bpm2 = null;
 
-        if (storeRemotely) {
+        if (vitalsWritebackStrategy != FhirStrategy.DISABLED) {
             try {
                 VendorTransformer transformer = workspace.getVendorTransformer();
                 Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
@@ -173,26 +153,6 @@ public class BloodPressureService extends AbstractService {
         return bpm2;
     }
 
-    public Boolean delete(String sessionId, String id) {
-        // delete home BP reading (do not allow deleting office BP readings!)
-
-        try {
-            if (storeRemotely) {
-                throw new MethodNotImplementedException("remote delete is not implemented");
-
-            } else {
-                Long longId = Long.parseLong(id);
-                hbprService.delete(sessionId, longId);
-            }
-
-            return true;
-
-        } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " attempting to delete resource with id=" + id +
-                    " for session " + sessionId, e);
-            return false;
-        }
-    }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // private methods
