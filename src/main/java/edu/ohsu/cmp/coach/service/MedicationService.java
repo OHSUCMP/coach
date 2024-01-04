@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.entity.Concept;
 import edu.ohsu.cmp.coach.entity.ValueSet;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.MedicationModel;
 import edu.ohsu.cmp.coach.util.FhirUtil;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -42,7 +44,7 @@ public class MedicationService extends AbstractService {
         logger.info("done refreshing anti-hypertensive medication ValueSets.");
     }
 
-    public List<MedicationModel> buildMedications(String sessionId) throws DataException {
+    public List<MedicationModel> buildMedications(String sessionId) throws DataException, ConfigurationException, IOException {
         List<MedicationModel> list = new ArrayList<>();
 
         Bundle medicationStatementsBundle = ehrService.getMedicationStatements(sessionId);
