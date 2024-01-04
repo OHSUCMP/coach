@@ -157,6 +157,14 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         );
     }
 
+    @Override
+    public String getServiceRequestQuery(String patientId) {
+        String serviceRequestQuery = workspace.getFhirQueryManager().getServiceRequestQuery();
+        return buildQuery(serviceRequestQuery, params()
+                .add(TOKEN_SUBJECT, patientId)
+        );
+    }
+
     private static Params params() {
         return new Params();
     }
@@ -602,7 +610,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 
         Goal g = new Goal();
 
-        g.setId(model.getExtGoalId());
+        g.setId(model.getExtGoalId());  // it seems this will always be null?
         g.setSubject(new Reference().setReference(patientId));
         g.setLifecycleStatus(model.getLifecycleStatus().getFhirValue());
         g.getAchievementStatus().addCoding().setCode(model.getAchievementStatus().getFhirValue())
