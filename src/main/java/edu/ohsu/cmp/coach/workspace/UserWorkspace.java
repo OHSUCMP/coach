@@ -633,6 +633,8 @@ public class UserWorkspace {
         GoalService gService = ctx.getBean(GoalService.class);
         gService.deleteAll(sessionId);
 
+        setBpGoalUpdated(false);    // if we're flushing goals, this flag needs to be reset as well
+
         CounselingService cService = ctx.getBean(CounselingService.class);
         cService.deleteAll(sessionId);
 
