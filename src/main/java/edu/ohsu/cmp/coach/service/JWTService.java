@@ -80,7 +80,9 @@ public class JWTService {
                     .sign(algorithm);
 
         } catch (Exception e) {
-            throw new ConfigurationException("could not instantiate object with iss=" + tokenAuthUrl + ", x509CertificateFile=" + x509CertificateFile + ", pkcs8PrivateKeyFile=" + pkcs8PrivateKeyFile, e);
+            throw new ConfigurationException("could not instantiate object with iss=" + tokenAuthUrl +
+                    ", x509CertificateFile=" + x509CertificateFile +
+                    ", pkcs8PrivateKeyFile=" + pkcs8PrivateKeyFile, e);
         }
     }
 
