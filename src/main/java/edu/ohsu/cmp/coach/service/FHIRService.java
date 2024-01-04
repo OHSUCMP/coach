@@ -3,10 +3,9 @@ package edu.ohsu.cmp.coach.service;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
-import edu.ohsu.cmp.coach.exception.ConfigurationException;
-import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.exception.ScopeException;
+import edu.ohsu.cmp.coach.exception.*;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
+import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.model.ResourceWithBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
@@ -35,22 +34,26 @@ public class FHIRService {
     @Value("${socket.timeout:300000}")
     private Integer socketTimeout;
 
+    @Value("${fhir.vitals-writeback-strategy}")
+    private FhirStrategy vitalsWritebackStrategy;
+
     @Value("${fhir.search.count}")
     private int searchCount;
 
     @Autowired
     private JWTService jwtService;
 
-    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, Class<T> aClass, Reference reference) {
+    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
+                                                       Reference reference) throws DataException, ConfigurationException, IOException {
         logger.info("read by reference: " + reference + " (" + aClass.getName() + ")");
 
         if (reference == null) return null;
 
         if (reference.hasReference()) {
-            return readByReference(fcc, aClass, reference.getReference());
+            return readByReference(fcc, strategy, aClass, reference.getReference());
 
         } else if (reference.hasIdentifier()) {
-            return readByIdentifier(fcc, aClass, reference.getIdentifier());
+            return readByIdentifier(fcc, strategy, aClass, reference.getIdentifier());
 
         } else {
             logger.warn("Reference does not contain reference or identifier!  returning null");
@@ -59,11 +62,13 @@ public class FHIRService {
         return null;
     }
 
-    public <T extends IBaseResource> T readByIdentifier(FHIRCredentialsWithClient fcc, Class<T> aClass, Identifier identifier) {
-        return readByIdentifier(fcc, aClass, identifier, null);
+    public <T extends IBaseResource> T readByIdentifier(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
+                                                        Identifier identifier) throws DataException, ConfigurationException, IOException {
+        return readByIdentifier(fcc, strategy, aClass, identifier, null);
     }
 
-    public <T extends IBaseResource> T readByIdentifier(FHIRCredentialsWithClient fcc, Class<T> aClass, Identifier identifier, Bundle bundle) {
+    public <T extends IBaseResource> T readByIdentifier(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
+                                                        Identifier identifier, Bundle bundle) throws DataException, ConfigurationException, IOException {
         logger.info("read by identifier: " + identifier + " (" + aClass.getName() + ")");
 
         if (bundle != null && FhirUtil.bundleContainsResourceWithIdentifier(bundle, identifier)) {
@@ -71,7 +76,7 @@ public class FHIRService {
 
         } else {
             String s = FhirUtil.toIdentifierString(identifier);
-            Bundle b = search(fcc, aClass.getSimpleName() + "/?identifier=" + s);
+            Bundle b = search(fcc, strategy, aClass.getSimpleName() + "/?identifier=" + s);
 
             if (b.getEntry().size() == 0) {
                 logger.warn("couldn't find resource with identifier=" + s);
@@ -101,13 +106,15 @@ public class FHIRService {
         }
     }
 
-    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, Class<T> aClass, String reference) {
-        return readByReference(fcc, aClass, reference, null);
+    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
+                                                       String reference) throws DataException, ConfigurationException, IOException {
+        return readByReference(fcc, strategy, aClass, reference, null);
     }
 
     // version of the read function that first queries the referenced Bundle for the referenced resource
     // only executes API service call if the referenced resource isn't found
-    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, Class<T> aClass, String reference, Bundle bundle) {
+    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
+                                                       String reference, Bundle bundle) throws DataException, ConfigurationException, IOException {
         logger.info("read: " + reference + " (" + aClass.getName() + ")");
 
         if (bundle != null && FhirUtil.bundleContainsReference(bundle, reference)) {
@@ -115,11 +122,13 @@ public class FHIRService {
 
         } else {
             String id = FhirUtil.extractIdFromReference(reference);
+            IGenericClient client = buildClient(fcc, strategy);
             try {
-                return fcc.getClient().read()
+                return client.read()
                         .resource(aClass)
                         .withId(id)
                         .execute();
+
             } catch (InvalidRequestException ire) {
                 logger.error("caught " + ire.getClass().getName() + " reading " + aClass.getName() + " with id='" + id + "' - " + ire.getMessage());
                 throw ire;
@@ -128,18 +137,24 @@ public class FHIRService {
     }
 
     // search function to facilitate getting large datasets involving multi-paginated queries
-    public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery) {
-        return search(fcc, fhirQuery, null);
+    public Bundle search(FHIRCredentialsWithClient fcc, FhirStrategy strategy, String fhirQuery) throws DataException, ConfigurationException, IOException {
+        return search(fcc, strategy, fhirQuery, null);
     }
 
-    public Bundle search(FHIRCredentialsWithClient fcc, String fhirQuery, Function<ResourceWithBundle, Boolean> validityFunction) {
-        if (StringUtils.isBlank(fhirQuery)) return null;
+    public Bundle search(FHIRCredentialsWithClient fcc, FhirStrategy strategy, String fhirQuery,
+                         Function<ResourceWithBundle, Boolean> validityFunction) throws DataException, ConfigurationException, IOException {
+
+        if (StringUtils.isBlank(fhirQuery) || strategy == FhirStrategy.DISABLED) {
+            return null;
+        }
 
         logger.info("search: executing query: " + fhirQuery);
 
+        IGenericClient client = buildClient(fcc, strategy);
+
         Bundle bundle;
         try {
-            bundle = fcc.getClient().search()
+            bundle = client.search()
                     .byUrl(fcc.getCredentials().getServerURL() + '/' + fhirQuery)
                     .count(searchCount)
                     .accept("application/fhir+json")        // required for Cerner
@@ -185,18 +200,7 @@ public class FHIRService {
     }
 
     public <T extends IDomainResource> T transact(FHIRCredentialsWithClient fcc, T resource) throws IOException, ConfigurationException, DataException {
-        IGenericClient client;
-        if (jwtService.isJWTEnabled()) {
-            String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
-            String jwt = jwtService.createToken(tokenAuthUrl);
-            AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
-
-            client = FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
-                    accessToken.getAccessToken(),
-                    socketTimeout);
-        } else {
-            client = fcc.getClient();
-        }
+        IGenericClient client = buildClient(fcc, vitalsWritebackStrategy);
 
         if (logger.isDebugEnabled()) {
             logger.debug("transacting " + resource.getClass().getSimpleName() + ": " + FhirUtil.toJson(resource));
@@ -218,30 +222,49 @@ public class FHIRService {
 
     public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle, boolean stripIfNotInScope) throws IOException, DataException, ConfigurationException, ScopeException {
         IGenericClient client;
-        if (jwtService.isJWTEnabled()) {
-            String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
-            String jwt = jwtService.createToken(tokenAuthUrl);
-            AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
 
-            Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
-            while (iter.hasNext()) {
-                Bundle.BundleEntryComponent item = iter.next();
-                Resource resource = item.getResource();
-                if ( ! accessToken.providesWriteAccess(resource.getClass()) ) {
-                    if (stripIfNotInScope) {
-                        logger.warn("stripping " + resource.getClass().getName() + " with id=" + resource.getId() + " from transaction - write permission not in scope");
-                        iter.remove();
-                    } else {
-                        throw new ScopeException("scope does not permit writing " + resource.getClass().getName());
+        // note : normally, I would reuse the buildClient() function below to build the client, but this version needs to intercept
+        //        the AccessToken between creating the JWT and creating the client if we're using the BACKEND strategy, in order to use
+        //        the AccessToken to strip unscoped Resources from the Bundle before attempting to write them (which will cause the
+        //        operation to blow out with an error).  unfortunately, we can't create the client and then grab the AccessToken from it,
+        //        otherwise we could reuse that code.  womp.  whatever.  c'est la vie.
+
+        if (vitalsWritebackStrategy == FhirStrategy.BACKEND) {
+            if (jwtService.isJWTEnabled()) {
+                String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
+                String jwt = jwtService.createToken(tokenAuthUrl);
+                AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
+
+                Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
+                while (iter.hasNext()) {
+                    Bundle.BundleEntryComponent item = iter.next();
+                    Resource resource = item.getResource();
+                    if ( ! accessToken.providesWriteAccess(resource.getClass()) ) {
+                        if (stripIfNotInScope) {
+                            logger.warn("stripping " + resource.getClass().getName() + " with id=" + resource.getId() + " from transaction - write permission not in scope");
+                            iter.remove();
+                        } else {
+                            throw new ScopeException("scope does not permit writing " + resource.getClass().getName());
+                        }
                     }
                 }
+
+                client = FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
+                        accessToken.getAccessToken(),
+                        socketTimeout);
+
+            } else {
+                throw new ConfigurationException("BACKEND context requested but JWT not defined");
             }
 
-            client = FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
-                    accessToken.getAccessToken(),
-                    socketTimeout);
-        } else {
+        } else if (vitalsWritebackStrategy == FhirStrategy.PATIENT) {
             client = fcc.getClient();
+
+        } else if (vitalsWritebackStrategy == FhirStrategy.DISABLED) {
+            throw new DisabledException("specified strategy is DISABLED");
+
+        } else {
+            throw new CaseNotHandledException("case for strategy " + vitalsWritebackStrategy + " not handled");
         }
 
         if (logger.isDebugEnabled()) {
@@ -264,6 +287,32 @@ public class FHIRService {
 //////////////////////////////////////////////////////////////////////////////////////
 // private methods
 //
+
+    private IGenericClient buildClient(FHIRCredentialsWithClient fcc, FhirStrategy strategy) throws DataException, ConfigurationException, IOException {
+        if (strategy == FhirStrategy.BACKEND) {
+            if (jwtService.isJWTEnabled()) {
+                String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
+                String jwt = jwtService.createToken(tokenAuthUrl);
+                AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
+
+                return FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
+                        accessToken.getAccessToken(),
+                        socketTimeout);
+
+            } else {
+                throw new ConfigurationException("BACKEND context requested but JWT not defined");
+            }
+
+        } else if (strategy == FhirStrategy.PATIENT) {
+            return fcc.getClient();
+
+        } else if (strategy == FhirStrategy.DISABLED) {
+            throw new DisabledException("specified strategy is DISABLED");
+
+        } else {
+            throw new CaseNotHandledException("case for strategy " + strategy + " not handled");
+        }
+    }
 
     private void filterInvalidResources(Bundle bundle, Function<ResourceWithBundle, Boolean> validityFunction) {
         if (bundle != null && bundle.hasEntry()) {
