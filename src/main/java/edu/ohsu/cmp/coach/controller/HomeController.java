@@ -4,10 +4,7 @@ import edu.ohsu.cmp.coach.entity.MyPatient;
 import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.entity.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.model.AdverseEventModel;
-import edu.ohsu.cmp.coach.model.BloodPressureModel;
-import edu.ohsu.cmp.coach.model.MedicationModel;
-import edu.ohsu.cmp.coach.model.PulseModel;
+import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.service.*;
@@ -97,6 +94,7 @@ public class HomeController extends BaseController {
                 model.addAttribute("pageScripts", new String[] { "science.js/science.v1.js", "science.js/lib/d3/d3.js", "home.js?v=2", "recommendations.js?v=1" });
                 model.addAttribute("patient", workspace.getPatient());
                 model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
+                model.addAttribute("bpGoalUpdated", workspace.getBpGoalUpdated());
                 model.addAttribute("randomizationGroup", String.valueOf(workspace.getRandomizationGroup()));
 
                 if (redCapService.isRedcapEnabled()) {

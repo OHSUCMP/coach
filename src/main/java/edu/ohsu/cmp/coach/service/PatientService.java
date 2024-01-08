@@ -1,6 +1,8 @@
 package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.entity.MyPatient;
+import edu.ohsu.cmp.coach.exception.ConfigurationException;
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.PatientModel;
 import edu.ohsu.cmp.coach.repository.PatientRepository;
 import edu.ohsu.cmp.coach.util.UUIDUtil;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.Optional;
 
@@ -28,7 +31,7 @@ public class PatientService extends AbstractService {
     @Autowired
     private EHRService ehrService;
 
-    public PatientModel buildPatient(String sessionId) {
+    public PatientModel buildPatient(String sessionId) throws DataException, ConfigurationException, IOException {
         return new PatientModel(ehrService.getPatient(sessionId));
     }
 
@@ -46,6 +49,7 @@ public class PatientService extends AbstractService {
         } else {
             p = new MyPatient(patIdHash);
             p.setRedcapId(UUIDUtil.getRandomUUID());
+            p.setBpGoalUpdated(false);
             p = repository.save(p);
         }
 
@@ -57,6 +61,15 @@ public class PatientService extends AbstractService {
         if (p.isPresent()) {
             MyPatient myPatient = p.get();
             myPatient.setOmronLastUpdated(omronLastUpdated);
+            repository.save(myPatient);
+        }
+    }
+
+    public void setBPGoalUpdated(Long internalPatientId, Boolean bpGoalUpdated) {
+        Optional<MyPatient> p = repository.findById(internalPatientId);
+        if (p.isPresent()) {
+            MyPatient myPatient = p.get();
+            myPatient.setBpGoalUpdated(bpGoalUpdated);
             repository.save(myPatient);
         }
     }

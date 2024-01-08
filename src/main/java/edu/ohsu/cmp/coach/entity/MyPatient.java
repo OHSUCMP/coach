@@ -16,6 +16,7 @@ public class MyPatient {
     private String patIdHash;
     private Date omronLastUpdated;
     private String redcapId;
+    private Boolean bpGoalUpdated;
 
     protected MyPatient() {
     }
@@ -54,5 +55,13 @@ public class MyPatient {
 
     public void setRedcapId(String redcapId) {
         this.redcapId = redcapId;
+    }
+
+    public Boolean getBpGoalUpdated() {
+        return bpGoalUpdated;
+    }
+
+    public void setBpGoalUpdated(Boolean bpGoalUpdated) {
+        this.bpGoalUpdated = bpGoalUpdated;
     }
 }

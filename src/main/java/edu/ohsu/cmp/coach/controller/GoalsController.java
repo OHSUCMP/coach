@@ -116,6 +116,11 @@ public class GoalsController extends BaseController {
                     systolicTarget, diastolicTarget));
         }
 
+        UserWorkspace workspace = userWorkspaceService.get(session.getId());
+        if ( ! workspace.getBpGoalUpdated() ) {
+            workspace.setBpGoalUpdated(true);
+        }
+
         return new ResponseEntity<>(new GoalModel(goal), HttpStatus.OK);
     }
 
