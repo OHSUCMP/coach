@@ -82,14 +82,6 @@ public class ResourcesController extends BaseController {
         return "embedded-pdf";
     }
 
-    @GetMapping("/coach-participant-faq")
-    public String coachParticipantFaq(HttpSession session, Model model) {
-        userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(model);
-        model.addAttribute("pdfUrl", "/resources/pdf/COACH_Participant_FAQ.pdf");
-        return "embedded-pdf";
-    }
-
     @GetMapping("/coach-written-instructions")
     public String coachWrittenInstructions(HttpSession session, Model model) {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
