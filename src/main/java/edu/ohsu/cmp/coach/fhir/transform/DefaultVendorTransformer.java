@@ -4,6 +4,7 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.PulseModel;
@@ -27,7 +28,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
     }
 
     @Override
-    public Bundle writeRemote(String sessionId, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
+    public Bundle writeRemote(String sessionId, FhirStrategy strategy, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
         Bundle bundleToTransact = new Bundle();
         bundleToTransact.setType(Bundle.BundleType.TRANSACTION);
 
@@ -47,7 +48,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         // write resources to the FHIR server
 
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-        Bundle responseBundle = fhirService.transact(fcc, bundleToTransact, true);
+        Bundle responseBundle = fhirService.transact(fcc, strategy, bundleToTransact, true);
 
         // remove any responses that didn't result in a 201 Created response
         Iterator<Bundle.BundleEntryComponent> iter = responseBundle.getEntry().iterator();

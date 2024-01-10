@@ -24,8 +24,8 @@ import java.util.*;
 public class PulseService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("${fhir.vitals-writeback-strategy}")
-    private FhirStrategy vitalsWritebackStrategy;
+    @Value("${fhir.pulse-writeback-strategy}")
+    private FhirStrategy writebackStrategy;
 
     @Autowired
     private EHRService ehrService;
@@ -108,12 +108,13 @@ public class PulseService extends AbstractService {
 
         PulseModel pm2 = null;
 
-        if (vitalsWritebackStrategy != FhirStrategy.DISABLED) {
+        if (writebackStrategy != FhirStrategy.DISABLED) {
+            logger.info("attempting writeback of Pulse " + pm + " using strategy " + writebackStrategy);
             try {
                 VendorTransformer transformer = workspace.getVendorTransformer();
                 Bundle outgoingBundle = transformer.transformOutgoingPulseReading(pm);
                 List<PulseModel> list = transformer.transformIncomingPulseReadings(
-                        transformer.writeRemote(sessionId, fhirService, outgoingBundle)
+                        transformer.writeRemote(sessionId, writebackStrategy, fhirService, outgoingBundle)
                 );
                 if (list.size() >= 1) {
                     pm2 = list.get(0);
