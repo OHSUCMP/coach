@@ -28,8 +28,8 @@ import java.util.Set;
 public class BloodPressureService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("${fhir.vitals-writeback-strategy}")
-    private FhirStrategy vitalsWritebackStrategy;
+    @Value("${fhir.bp-writeback-strategy}")
+    private FhirStrategy writebackStrategy;
 
     @Autowired
     private EHRService ehrService;
@@ -119,12 +119,13 @@ public class BloodPressureService extends AbstractService {
 
         BloodPressureModel bpm2 = null;
 
-        if (vitalsWritebackStrategy != FhirStrategy.DISABLED) {
+        if (writebackStrategy != FhirStrategy.DISABLED) {
+            logger.info("attempting writeback of BP " + bpm + " using strategy " + writebackStrategy);
             try {
                 VendorTransformer transformer = workspace.getVendorTransformer();
                 Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
                 List<BloodPressureModel> list = transformer.transformIncomingBloodPressureReadings(
-                        transformer.writeRemote(sessionId, fhirService, outgoingBundle)
+                        transformer.writeRemote(sessionId, writebackStrategy, fhirService, outgoingBundle)
                 );
                 if (list.size() >= 1) {
                     bpm2 = list.get(0);

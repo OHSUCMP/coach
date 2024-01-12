@@ -5,6 +5,7 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
+import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.service.FHIRService;
@@ -16,7 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class EpicVendorTransformer extends BaseVendorTransformer implements VendorTransformer {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -32,7 +36,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
     }
 
     @Override
-    public Bundle writeRemote(String sessionId, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
+    public Bundle writeRemote(String sessionId, FhirStrategy strategy, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
 
         // in Epic, we need to post resources to flowsheets one at a time
 
@@ -47,7 +51,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                 if (r instanceof IDomainResource && FhirUtil.isUUID(r.getId())) {
                     try {
                         FhirUtil.appendResourceToBundle(responseBundle,
-                                fhirService.transact(fcc, (DomainResource) r)
+                                fhirService.transact(fcc, strategy, (DomainResource) r)
                         );
 
                     } catch (Exception e) {

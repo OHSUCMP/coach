@@ -34,9 +34,6 @@ public class FHIRService {
     @Value("${socket.timeout:300000}")
     private Integer socketTimeout;
 
-    @Value("${fhir.vitals-writeback-strategy}")
-    private FhirStrategy vitalsWritebackStrategy;
-
     @Value("${fhir.search.count}")
     private int searchCount;
 
@@ -199,8 +196,8 @@ public class FHIRService {
         return bundle;
     }
 
-    public <T extends IDomainResource> T transact(FHIRCredentialsWithClient fcc, T resource) throws IOException, ConfigurationException, DataException {
-        IGenericClient client = buildClient(fcc, vitalsWritebackStrategy);
+    public <T extends IDomainResource> T transact(FHIRCredentialsWithClient fcc, FhirStrategy strategy, T resource) throws IOException, ConfigurationException, DataException {
+        IGenericClient client = buildClient(fcc, strategy);
 
         if (logger.isDebugEnabled()) {
             logger.debug("transacting " + resource.getClass().getSimpleName() + ": " + FhirUtil.toJson(resource));
@@ -220,7 +217,7 @@ public class FHIRService {
         return t;
     }
 
-    public Bundle transact(FHIRCredentialsWithClient fcc, Bundle bundle, boolean stripIfNotInScope) throws IOException, DataException, ConfigurationException, ScopeException {
+    public Bundle transact(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Bundle bundle, boolean stripIfNotInScope) throws IOException, DataException, ConfigurationException, ScopeException {
         IGenericClient client;
 
         // note : normally, I would reuse the buildClient() function below to build the client, but this version needs to intercept
@@ -229,7 +226,7 @@ public class FHIRService {
         //        operation to blow out with an error).  unfortunately, we can't create the client and then grab the AccessToken from it,
         //        otherwise we could reuse that code.  womp.  whatever.  c'est la vie.
 
-        if (vitalsWritebackStrategy == FhirStrategy.BACKEND) {
+        if (strategy == FhirStrategy.BACKEND) {
             if (jwtService.isJWTEnabled()) {
                 String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
                 String jwt = jwtService.createToken(tokenAuthUrl);
@@ -257,14 +254,14 @@ public class FHIRService {
                 throw new ConfigurationException("BACKEND context requested but JWT not defined");
             }
 
-        } else if (vitalsWritebackStrategy == FhirStrategy.PATIENT) {
+        } else if (strategy == FhirStrategy.PATIENT) {
             client = fcc.getClient();
 
-        } else if (vitalsWritebackStrategy == FhirStrategy.DISABLED) {
+        } else if (strategy == FhirStrategy.DISABLED) {
             throw new DisabledException("specified strategy is DISABLED");
 
         } else {
-            throw new CaseNotHandledException("case for strategy " + vitalsWritebackStrategy + " not handled");
+            throw new CaseNotHandledException("case for strategy " + strategy + " not handled");
         }
 
         if (logger.isDebugEnabled()) {

@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.fhir.transform;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
+import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.PulseModel;
@@ -56,8 +57,8 @@ public class CernerVendorTransformer extends BaseVendorTransformer implements Ve
     }
 
     @Override
-    public Bundle writeRemote(String sessionId, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
-        return defaultTransformer.writeRemote(sessionId, fhirService, bundle);
+    public Bundle writeRemote(String sessionId, FhirStrategy strategy, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
+        return defaultTransformer.writeRemote(sessionId, strategy, fhirService, bundle);
     }
 
     @Override
