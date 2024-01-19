@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class REDCapService {
@@ -301,8 +302,9 @@ public class REDCapService {
         if (records.isEmpty()) {
             return getAESurveyLinkForRepeatInstance(recordId, 1);
         } else {
-            Integer maxRepeatInstance = records.stream().filter(it->ADVERSE_EVENT_FORM.equals(it.get("redcap_repeat_instrument"))).map(it -> Integer.parseInt(it.get("redcap_repeat_instance"))).max(Integer::compare).get();
-            return getAESurveyLinkForRepeatInstance(recordId, maxRepeatInstance + 1);
+            Optional<Integer> maxRepeatInstance = records.stream().filter(it->ADVERSE_EVENT_FORM.equals(it.get("redcap_repeat_instrument"))).map(it -> Integer.parseInt(it.get("redcap_repeat_instance"))).max(Integer::compare);
+            Integer repeatInstance = maxRepeatInstance.isEmpty() ? 1 : maxRepeatInstance.get() + 1;
+            return getAESurveyLinkForRepeatInstance(recordId, repeatInstance);
         }
     }
 
