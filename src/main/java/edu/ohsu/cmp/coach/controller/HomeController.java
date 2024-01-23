@@ -97,10 +97,6 @@ public class HomeController extends BaseController {
                 model.addAttribute("bpGoalUpdated", workspace.getBpGoalUpdated());
                 model.addAttribute("randomizationGroup", String.valueOf(workspace.getRandomizationGroup()));
 
-                if (redCapService.isRedcapEnabled()) {
-                    model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
-                }
-
                 Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
                 model.addAttribute("showClearSupplementalData", showClearSupplementalData);
 
@@ -116,6 +112,11 @@ public class HomeController extends BaseController {
 
                 List<CDSHook> list = recommendationService.getOrderedCDSHooks(sessionId);
                 model.addAttribute("cdshooks", list);
+
+                // This sometimes fails for unknown reasons. Ask for it last so the rest of the page loads fine if there's a REDCap glitch.
+                if (redCapService.isRedcapEnabled()) {
+                    model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
+                }
 
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " building home page", e);

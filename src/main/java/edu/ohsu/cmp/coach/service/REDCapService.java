@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class REDCapService {
@@ -301,8 +302,9 @@ public class REDCapService {
         if (records.isEmpty()) {
             return getAESurveyLinkForRepeatInstance(recordId, 1);
         } else {
-            Integer maxRepeatInstance = records.stream().filter(it->ADVERSE_EVENT_FORM.equals(it.get("redcap_repeat_instrument"))).map(it -> Integer.parseInt(it.get("redcap_repeat_instance"))).max(Integer::compare).get();
-            return getAESurveyLinkForRepeatInstance(recordId, maxRepeatInstance + 1);
+            Optional<Integer> maxRepeatInstance = records.stream().filter(it->ADVERSE_EVENT_FORM.equals(it.get("redcap_repeat_instrument"))).map(it -> Integer.parseInt(it.get("redcap_repeat_instance"))).max(Integer::compare);
+            Integer repeatInstance = maxRepeatInstance.isEmpty() ? 1 : maxRepeatInstance.get() + 1;
+            return getAESurveyLinkForRepeatInstance(recordId, repeatInstance);
         }
     }
 
@@ -332,7 +334,8 @@ public class REDCapService {
     private void checkException(HttpResponse response) throws REDCapException {
         int code = response.getResponseCode();
         if (code == 400) {
-            // This is the code REDCap sends when it is offline for maintenance
+            // This is the code REDCap sends when it is offline for maintenance, but it seems to be thrown in other circumstances too.
+            logger.error("REDCap returned a 400, which usually means it's down for maintenance. The response body: " + response.getResponseBody());
             throw new REDCapException(400, "COACH is temporarily unavailable. Please try again later.", null);
         } else if (code < 200 || code > 299) {
             logger.error("REDCap ERROR: received code " + code + " - body=" + response.getResponseBody());
