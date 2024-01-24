@@ -20,13 +20,25 @@ public class AuditService {
     private AuditRepository repository;
 
     public void doAudit(String sessionId, AuditLevel level, String action) {
-        Long patId = userWorkspaceService.get(sessionId).getInternalPatientId();
-        doAudit(new Audit(patId, level, action));
+        if (userWorkspaceService.exists(sessionId)) {
+            Long patId = userWorkspaceService.get(sessionId).getInternalPatientId();
+            doAudit(new Audit(patId, level, action));
+
+        } else {
+            logger.warn("attempted to generate audit for nonexistent session " + sessionId + ": level=" + level +
+                    ", action=" + action);
+        }
     }
 
     public void doAudit(String sessionId, AuditLevel level, String action, String details) {
-        Long patId = userWorkspaceService.get(sessionId).getInternalPatientId();
-        doAudit(new Audit(patId, level, action, details));
+        if (userWorkspaceService.exists(sessionId)) {
+            Long patId = userWorkspaceService.get(sessionId).getInternalPatientId();
+            doAudit(new Audit(patId, level, action, details));
+
+        } else {
+            logger.warn("attempted to generate audit for nonexistent session " + sessionId + ": level=" + level +
+                    ", action=" + action + ", details=" + details);
+        }
     }
 
     private void doAudit(Audit audit) {
