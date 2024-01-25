@@ -113,13 +113,9 @@ public class HomeController extends BaseController {
                 List<CDSHook> list = recommendationService.getOrderedCDSHooks(sessionId);
                 model.addAttribute("cdshooks", list);
 
-                // This sometimes fails for unknown reasons. Ask for it last so the rest of the page loads fine if there's a REDCap glitch.
-                if (redCapService.isRedcapEnabled()) {
-                    if (workspace.getRedcapId() == null) {
-                        logger.error("The UserWorkspace does not contain a REDCapId for the patient with internal id " + workspace.getInternalPatientId());
-                    } else {
-                        model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
-                    }
+                // Only show the AE Survey link if REDCap is enabled and this is a patient. The link may not exist otherwise.
+                if (redCapService.isRedcapEnabled() && Audience.PATIENT.equals(workspace.getAudience())) {
+                    model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
                 }
 
             } catch (Exception e) {
