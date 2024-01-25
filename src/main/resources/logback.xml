@@ -11,10 +11,13 @@
         </encoder>
     </appender>
 
+    <!-- RollingFileAppender documentation: https://logback.qos.ch/manual/appenders.html#RollingFileAppender -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>coach.log</file>
+        <file>log/coach.log</file>
+
+        <!-- TimeBasedRollingPolicy documentation: https://logback.qos.ch/manual/appenders.html#TimeBasedRollingPolicy -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>coach.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+            <fileNamePattern>log/archive/%d{yyyy/MM, aux}/coach.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>10</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
