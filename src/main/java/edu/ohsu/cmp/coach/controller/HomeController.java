@@ -115,7 +115,11 @@ public class HomeController extends BaseController {
 
                 // This sometimes fails for unknown reasons. Ask for it last so the rest of the page loads fine if there's a REDCap glitch.
                 if (redCapService.isRedcapEnabled()) {
-                    model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
+                    if (workspace.getRedcapId() == null) {
+                        logger.error("The UserWorkspace does not contain a REDCapId for the patient with internal id " + workspace.getInternalPatientId());
+                    } else {
+                        model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
+                    }
                 }
 
             } catch (Exception e) {
@@ -136,32 +140,37 @@ public class HomeController extends BaseController {
                 RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(patient.getRedcapId());
                 if ( ! redcapParticipantInfo.getExists() ) {
                     // If they are not in REDCap yet, create them and forward them to the entry survey
+                    logger.info("REDCap workflow: Creating REDCap participant record with REDCap COACH Id " + redcapParticipantInfo.getCoachId() + " and forwarding to the entry survey");
                     String recordId = redCapService.createSubjectInfoRecord(redcapParticipantInfo.getCoachId());
                     String entrySurveyLink = redCapService.getEntrySurveyLink(recordId);
                     return "redirect:" + entrySurveyLink;
 
                 } else if ( ! redcapParticipantInfo.getIsInformationSheetComplete() ) {
                     // If they haven't gotten past the entry survey and don't have a queue yet, send them back to the entry survey
+                    logger.info("REDCap workflow: Forwarding " + redcapParticipantInfo.getCoachId() + " to the entry survey");
                     String entrySurveyLink = redCapService.getEntrySurveyLink(redcapParticipantInfo.getRecordId());
                     return "redirect:" + entrySurveyLink;
 
                 } else if (redcapParticipantInfo.getHasConsentRecord() && ! redcapParticipantInfo.getIsConsentGranted()) {
                     // If consent record exists and the answer is no, exit
+                    logger.info("REDCap workflow: Participant " + redcapParticipantInfo.getCoachId() + " denied consent. Forwarding to consent-previously-denied.");
                     setCommonViewComponents(model);
                     return "consent-previously-denied";
 
                 } else if ( ! redcapParticipantInfo.getHasConsentRecord() || ! redcapParticipantInfo.getIsRandomized()) {
                     // If there is no consent or randomization record, forward them to their survey queue
+                    logger.info("REDCap workflow: Forwarding " + redcapParticipantInfo.getCoachId() + " to the survey queue to complete enrollment.");
                     String surveyQueueLink = redCapService.getSurveyQueueLink(redcapParticipantInfo.getRecordId());
                     return "redirect:" + surveyQueueLink;                
 
                 } else if (redcapParticipantInfo.getIsWithdrawn()) {
                     // If withdrawn, exit
+                    logger.info("REDCap workflow: Participant " + redcapParticipantInfo.getCoachId() + " has withdrawn. Forwarding to withdrawn page.");
                     setCommonViewComponents(model);
                     return "withdrawn";
 
                 } else {
-                    logger.error("REDCap participant " + redcapParticipantInfo.getRecordId() + "is actively enrolled but cannot access COACH.");
+                    logger.error("REDCap workflow: Participant " + redcapParticipantInfo.getRecordId() + "is actively enrolled but cannot access COACH.");
                     return "error";
                 }
 
