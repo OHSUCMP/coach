@@ -122,6 +122,8 @@ public class HomeController extends BaseController {
                 logger.error("caught " + e.getClass().getName() + " building home page", e);
             }
 
+            auditService.doAudit(sessionId, AuditLevel.INFO, "visited home page");
+
             return "home";
 
         } else if (sessionService.existsProvisional(sessionId)) {

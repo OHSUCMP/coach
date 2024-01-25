@@ -10,6 +10,7 @@ import edu.ohsu.cmp.coach.exception.NotAuthenticatedException;
 import edu.ohsu.cmp.coach.exception.OmronException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
+import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.PulseModel;
@@ -272,6 +273,9 @@ public class OmronService extends AbstractService {
         }
         
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
+
+        auditService.doAudit(sessionId, AuditLevel.INFO, "initiated Omron synchronization");
+
         try {
             MeasurementResult result = requestMeasurements(sessionId, workspace.getOmronLastUpdated());
             if (result.hasBloodPressures()) {

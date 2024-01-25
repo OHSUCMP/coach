@@ -7,6 +7,7 @@ import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
+import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -121,9 +122,14 @@ public class PulseService extends AbstractService {
                     workspace.getRemotePulses().add(pm2);
                 }
 
+                auditService.doAudit(sessionId, AuditLevel.INFO, "wrote pulse remotely", String.valueOf(pm.getPulse()));
+
             } catch (Exception e) {
                 // remote errors are tolerable, since we will always store locally too
                 logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create Pulse remotely - " + e.getMessage(), e);
+
+                auditService.doAudit(sessionId, AuditLevel.WARN, "failed to write pulse remotely",
+                        "pulse=" + pm.getPulse() + ", message=" + e.getMessage());
             }
         }
 
@@ -135,9 +141,15 @@ public class PulseService extends AbstractService {
                 pm2 = new PulseModel(response, fcm);
             }
 
+            auditService.doAudit(sessionId, AuditLevel.INFO, "created pulse", "id=" + response.getId() +
+                    ", pulse=" + pm.getPulse());
+
         } catch (DataException de) {
             // okay if it's failing to write locally, that's a problem.
             logger.error("caught " + de.getClass().getName() + " attempting to create PulseModel " + pm);
+
+            auditService.doAudit(sessionId, AuditLevel.ERROR, "failed to create pulse",
+                    "pulse=" + pm.getPulse() + ", message=" + de.getMessage());
         }
 
         return pm2;

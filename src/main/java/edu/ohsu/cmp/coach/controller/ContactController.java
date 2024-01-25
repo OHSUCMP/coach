@@ -2,6 +2,7 @@ package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.ContactMessage;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.model.BloodPressureSummaryModel;
 import edu.ohsu.cmp.coach.model.MedicationModel;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
@@ -50,38 +51,39 @@ public class ContactController extends BaseController {
 
     @GetMapping("contact")
     public String view(HttpSession session, Model model, @RequestParam("token") String token) throws DataException {
-        if (userWorkspaceService.exists(session.getId())) {
-            logger.info("showing contact form for session " + session.getId());
+        String sessionId = session.getId();
+        logger.info("showing contact form for session " + sessionId);
 
-            setCommonViewComponents(model);
-            model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
+        setCommonViewComponents(model);
+        model.addAttribute("patient", userWorkspaceService.get(sessionId).getPatient());
 
-            ContactMessage contactMessage = contactMessageService.getMessage(token);
-            String message = "";
-            String subject = "";
-            String aboveText = "";
-            String belowText = "";
-            if (contactMessage != null) {
-                Map<String, String> tokenMap = buildTokenMap(session.getId());
-                message = replaceTokens(contactMessage.getBody(), tokenMap);
-                subject = replaceTokens(contactMessage.getSubject(), tokenMap);
-                aboveText = contactMessage.getAboveText();
-                belowText = contactMessage.getBelowText();
-            }
-            model.addAttribute("subject", subject);
-            model.addAttribute("message", message);
-            model.addAttribute("aboveText", aboveText);
-            model.addAttribute("belowText", belowText);
-
-            Map<String, String> map = new HashMap<>();
-            map.put("subject", URLEncoder.encode(subject, StandardCharsets.UTF_8));
-            String instructions = replaceTokens(contactInstructions, map);
-            if (StringUtils.isNotBlank(instructions)) {
-                model.addAttribute("instructions", instructions);
-            }
-
-            model.addAttribute("pageStyles", new String[] { "contact.css" });
+        ContactMessage contactMessage = contactMessageService.getMessage(token);
+        String message = "";
+        String subject = "";
+        String aboveText = "";
+        String belowText = "";
+        if (contactMessage != null) {
+            Map<String, String> tokenMap = buildTokenMap(sessionId);
+            message = replaceTokens(contactMessage.getBody(), tokenMap);
+            subject = replaceTokens(contactMessage.getSubject(), tokenMap);
+            aboveText = contactMessage.getAboveText();
+            belowText = contactMessage.getBelowText();
         }
+        model.addAttribute("subject", subject);
+        model.addAttribute("message", message);
+        model.addAttribute("aboveText", aboveText);
+        model.addAttribute("belowText", belowText);
+
+        Map<String, String> map = new HashMap<>();
+        map.put("subject", URLEncoder.encode(subject, StandardCharsets.UTF_8));
+        String instructions = replaceTokens(contactInstructions, map);
+        if (StringUtils.isNotBlank(instructions)) {
+            model.addAttribute("instructions", instructions);
+        }
+
+        model.addAttribute("pageStyles", new String[] { "contact.css" });
+
+        auditService.doAudit(sessionId, AuditLevel.INFO, "visited contact page", "token=" + token);
 
         return "contact";
     }

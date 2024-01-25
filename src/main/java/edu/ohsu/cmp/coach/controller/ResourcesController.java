@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.RandomizationGroup;
+import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,19 +27,31 @@ public class ResourcesController extends BaseController {
 
     @GetMapping("/faq")
     public String faq(HttpSession session, Model model) {
+        userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
         setCommonViewComponents(model);
+
+        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: faq");
+
         return "faq";
     }
 
     @GetMapping("/symptoms-911")
     public String symptoms(HttpSession session, Model model) {
+        userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
         setCommonViewComponents(model);
+
+        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: symptoms-911");
+
         return "symptoms";
     }
 
     @GetMapping("/side-effects")
     public String sideEffects(HttpSession session, Model model) {
+        userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
         setCommonViewComponents(model);
+
+        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: side-effects");
+
         return "side-effects";
     }
 
@@ -50,6 +63,9 @@ public class ResourcesController extends BaseController {
                 WELCOME_VIDEO_ID_INTERVENTION :
                 WELCOME_VIDEO_ID_CONTROL;
         model.addAttribute("videoId", videoId);
+
+        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: welcome-video");
+
         return "embedded-video";
     }
 
@@ -79,6 +95,9 @@ public class ResourcesController extends BaseController {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
         setCommonViewComponents(model);
         model.addAttribute("pdfUrl", "/resources/pdf/Risks_of_Hypertension_Study_Results.pdf");
+
+        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: risks-of-hypertension-study-results");
+
         return "embedded-pdf";
     }
 
@@ -87,6 +106,9 @@ public class ResourcesController extends BaseController {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
         setCommonViewComponents(model);
         model.addAttribute("pdfUrl", "/resources/pdf/COACH_Written_Instructions.pdf");
+
+        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: coach-written-instructions");
+
         return "embedded-pdf";
     }
 
@@ -95,6 +117,9 @@ public class ResourcesController extends BaseController {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
         setCommonViewComponents(model);
         model.addAttribute("pdfUrl", "/resources/pdf/OMRON_Instructions.pdf");
+
+        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: omron-instructions");
+
         return "embedded-pdf";
     }
 }
