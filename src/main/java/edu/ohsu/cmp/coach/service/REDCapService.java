@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -75,6 +76,7 @@ public class REDCapService {
      * @throws REDCapException
      */
     private String getRecordId(String coachId) throws IOException, REDCapException {
+        Assert.notNull(coachId, "A COACH Id must be provided to get the REDCap record.");
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
@@ -118,6 +120,7 @@ public class REDCapService {
 
         String recordId = getRecordId(coachId);
         if (recordId == null) {
+            logger.info("No record found in REDCap. Returning provisional participant info record for " + coachId);
             return RedcapParticipantInfo.buildNotExists(coachId);
         }
 
@@ -274,6 +277,7 @@ public class REDCapService {
     public String getAESurveyLink(String coachId) throws REDCapException, IOException {
         // First get the recordId from the REDCap id
         String recordId = getRecordId(coachId);
+        Assert.notNull(recordId, "No REDCap record exists for COACH id " + coachId);
 
         // Next, see if there are completed AEs and calculate the repeat instance
         Map<String, String> requestHeaders = new LinkedHashMap<>();
@@ -333,13 +337,11 @@ public class REDCapService {
 
     private void checkException(HttpResponse response) throws REDCapException {
         int code = response.getResponseCode();
-        if (code == 400) {
-            // This is the code REDCap sends when it is offline for maintenance, but it seems to be thrown in other circumstances too.
-            logger.error("REDCap returned a 400, which usually means it's down for maintenance. The response body: " + response.getResponseBody());
-            throw new REDCapException(400, "COACH is temporarily unavailable. Please try again later.", null);
-        } else if (code < 200 || code > 299) {
+        if (code < 200 || code > 299) {
             logger.error("REDCap ERROR: received code " + code + " - body=" + response.getResponseBody());
-            throw new REDCapException(code, response.getResponseBody(), null);
+            // We obscure the details of the REDCap error from the user. If the SessionController can't reach REDCap,
+            // perhaps because it's down for maintenance, the user will get this nicer message so they don't keep trying.
+            throw new REDCapException(503, "COACH is temporarily unavailable. Please try again later.", null);
         }
     }
 
