@@ -29,16 +29,14 @@ function loadBloodPressureObservations(_callback) {
         method: "POST",
         url: "/blood-pressure-observations-list"
     }).done(function(bpdata, textStatus, jqXHR) {
-        if (jqXHR.status === 200) {
-            bpdata.forEach(function(item) {
-                item.readingDate = new Date(item.readingDate);
-            });
+        bpdata.forEach(function(item) {
+            item.readingDate = new Date(item.readingDate);
+        });
 
-            bpdata.sort(function(a, b) {
-                return a.readingDate - b.readingDate;
-            });
-            _callback(bpdata);
-        }
+        bpdata.sort(function(a, b) {
+            return a.readingDate - b.readingDate;
+        });
+        _callback(bpdata);
     });
 }
 
@@ -47,9 +45,7 @@ function loadMedications(_callback) {
         method: "POST",
         url: "/medications-list"
     }).done(function(meds, textStatus, jqXHR) {
-        if (jqXHR.status === 200) {
-            _callback(meds);
-        }
+        _callback(meds);
     });
 }
 
@@ -76,9 +72,7 @@ function loadAdverseEvents(_callback) {
         method: "POST",
         url: "/adverse-events-list"
     }).done(function(adverseEvents, textStatus, jqXHR) {
-        if (jqXHR.status === 200) {
-            _callback(adverseEvents);
-        }
+        _callback(adverseEvents);
     });
 }
 
