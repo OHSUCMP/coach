@@ -10,10 +10,8 @@
             $.ajax({
                 method: "POST",
                 url: "/clear-session"
-            }).done(function(cards, textStatus, jqXHR) {
-                if (jqXHR.status === 200) {
-                    _callback();
-                }
+            }).always(function(data, textStatus, jqXHR) {
+                _callback();
             });
         }
 
