@@ -17,7 +17,7 @@ public class Audit {
     @Enumerated(EnumType.STRING)
     private AuditLevel level;
 
-    private String action;
+    private String event;
 
     private String details;
 
@@ -26,14 +26,14 @@ public class Audit {
     protected Audit() {
     }
 
-    public Audit(Long patId, AuditLevel level, String action) {
-        this(patId, level, action, null);
+    public Audit(Long patId, AuditLevel level, String event) {
+        this(patId, level, event, null);
     }
 
-    public Audit(Long patId, AuditLevel level, String action, String details) {
+    public Audit(Long patId, AuditLevel level, String event, String details) {
         this.patId = patId;
         this.level = level;
-        this.action = action;
+        this.event = event;
         this.details = details;
         this.created = new Date();
     }
@@ -44,7 +44,7 @@ public class Audit {
                 "id=" + id +
                 ", patId=" + patId +
                 ", level=" + level +
-                ", action='" + action + '\'' +
+                ", event='" + event + '\'' +
                 ", details='" + details + '\'' +
                 ", created=" + created +
                 '}';
@@ -74,12 +74,12 @@ public class Audit {
         this.level = level;
     }
 
-    public String getAction() {
-        return action;
+    public String getEvent() {
+        return event;
     }
 
-    public void setAction(String action) {
-        this.action = action;
+    public void setEvent(String event) {
+        this.event = event;
     }
 
     public String getDetails() {
