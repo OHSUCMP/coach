@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.entity.Audit;
+import edu.ohsu.cmp.coach.entity.MyPatient;
 import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.repository.AuditRepository;
 import edu.ohsu.cmp.coach.workspace.UserWorkspaceService;
@@ -40,6 +41,15 @@ public class AuditService {
                     ", action=" + action + ", details=" + details);
         }
     }
+
+    public void doAudit(MyPatient myPatient, AuditLevel level, String action) {
+        doAudit(myPatient, level, action, null);
+    }
+
+    public void doAudit(MyPatient myPatient, AuditLevel level, String action, String details) {
+        doAudit(new Audit(myPatient.getId(), level, action, details));
+    }
+
 
     private void doAudit(Audit audit) {
         try {
