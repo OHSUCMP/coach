@@ -64,6 +64,8 @@ public class UserWorkspace {
     private final Cache<String, Bundle> bundleCache;
     private final ExecutorService executorService;
 
+    private final AuditService auditService;
+
     // Omron stuff
     private MyOmronTokenData omronTokenData = null;
     private Date omronLastUpdated = null;
@@ -82,6 +84,8 @@ public class UserWorkspace {
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
         this.fqm = fqm;
         this.fcm = fcm;
+
+        this.auditService = ctx.getBean(AuditService.class);
 
         PatientService patientService = ctx.getBean(PatientService.class);
         MyPatient myPatient = patientService.getMyPatient(
@@ -556,8 +560,15 @@ public class UserWorkspace {
             for (CDSHook hook : svc.getOrderedCDSHooks(sessionId)) {
                 try {
                     map.put(hook.getId(), getCards(hook.getId()));
+
                 } catch (Exception e) {
-                    logger.error("caught " + e.getClass().getName() + " getting cards for hook=" + hook.getId() + " - " + e.getMessage(), e);
+                    logger.error("caught " + e.getClass().getName() + " getting cards for hook=" + hook.getId() + " - " +
+                            e.getMessage(), e);
+
+                    auditService.doAudit(sessionId, AuditLevel.ERROR, "recommendation exception", "encountered " +
+                            e.getClass().getSimpleName() + " getting recommendations for " + hook.getId() + " - " +
+                            e.getMessage());
+
                     throw new RuntimeException(e);
                 }
             }
