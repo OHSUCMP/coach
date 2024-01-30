@@ -4,6 +4,7 @@ import edu.ohsu.cmp.coach.entity.GoalHistory;
 import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.entity.RandomizationGroup;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
+import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.model.GoalHistoryModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.service.GoalService;
@@ -48,6 +49,8 @@ public class GoalsController extends BaseController {
         model.addAttribute("pageScripts", new String[] { "goals.js" });
         model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
 
+        auditService.doAudit(sessionId, AuditLevel.INFO, "visited goals page");
+
         return "goals";
     }
 
@@ -78,6 +81,8 @@ public class GoalsController extends BaseController {
         if (myGoal == null) {
             myGoal = new MyGoal(extGoalId, referenceSystem, referenceCode, referenceDisplay, goalText, targetDate);
             myGoal = goalService.create(session.getId(), myGoal);
+
+            auditService.doAudit(session.getId(), AuditLevel.INFO, "created goal", "id=" + myGoal.getId());
 
             // the goal was created in response to a suggestion.
             // they took the suggestion, so remove it from the list to consider
@@ -111,9 +116,15 @@ public class GoalsController extends BaseController {
             goal.setDiastolicTarget(diastolicTarget);
             goal = goalService.update(goal);
 
+            auditService.doAudit(session.getId(), AuditLevel.INFO, "updated BP goal", "id=" + goal.getId() +
+                    ", new target=" + systolicTarget + "/" + diastolicTarget);
+
         } else {
             goal = goalService.create(session.getId(), new MyGoal(fcm.getBpPanelCommonCoding(),
                     systolicTarget, diastolicTarget));
+
+            auditService.doAudit(session.getId(), AuditLevel.INFO, "created BP goal", "id=" + goal.getId() +
+                    ", target=" + systolicTarget + "/" + diastolicTarget);
         }
 
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
@@ -137,6 +148,9 @@ public class GoalsController extends BaseController {
         MyGoal g = goalService.getLocalGoal(session.getId(), extGoalId);
         GoalHistory gh = new GoalHistory(AchievementStatus.valueOf(achievementStatusStr), g);
         gh = goalService.createHistory(gh);
+
+        auditService.doAudit(session.getId(), AuditLevel.INFO, "updated goal status", "goalId=" + g.getId() +
+                ", historyId=" + gh.getId() + ", achievementStatus=" + achievementStatusStr);
 
         return new ResponseEntity<>(new GoalHistoryModel(gh), HttpStatus.OK);
     }

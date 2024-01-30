@@ -7,6 +7,7 @@ import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
+import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -132,9 +133,14 @@ public class BloodPressureService extends AbstractService {
                     workspace.getRemoteBloodPressures().add(bpm2);
                 }
 
+                auditService.doAudit(sessionId, AuditLevel.INFO, "wrote BP remotely", bpm.getSystolic() + "/" + bpm.getDiastolic());
+
             } catch (Exception e) {
                 // remote errors are tolerable, since we will always store locally too
                 logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " + e.getMessage(), e);
+
+                auditService.doAudit(sessionId, AuditLevel.WARN, "failed to write BP remotely",
+                        "BP=" + bpm.getSystolic() + "/" + bpm.getDiastolic() + ", message=" + e.getMessage());
             }
         }
 
@@ -146,9 +152,15 @@ public class BloodPressureService extends AbstractService {
                 bpm2 = new BloodPressureModel(response, fcm);
             }
 
+            auditService.doAudit(sessionId, AuditLevel.INFO, "created BP", "id=" + response.getId() +
+                    ", BP=" + bpm.getSystolic() + "/" + bpm.getDiastolic());
+
         } catch (DataException de) {
             // okay if it's failing to write locally, that's a problem.
             logger.error("caught " + de.getClass().getName() + " attempting to create BloodPressureModel " + bpm);
+
+            auditService.doAudit(sessionId, AuditLevel.ERROR, "failed to create BP",
+                    "BP=" + bpm.getSystolic() + "/" + bpm.getDiastolic() + ", message=" + de.getMessage());
         }
 
         return bpm2;

@@ -3,10 +3,7 @@ package edu.ohsu.cmp.coach.controller;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.ScopeException;
-import edu.ohsu.cmp.coach.model.AbstractVitalsModel;
-import edu.ohsu.cmp.coach.model.BloodPressureModel;
-import edu.ohsu.cmp.coach.model.ObservationSource;
-import edu.ohsu.cmp.coach.model.PulseModel;
+import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
 import edu.ohsu.cmp.coach.service.HypotensionAdverseEventService;
 import edu.ohsu.cmp.coach.service.PulseService;
@@ -27,7 +24,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 @Controller
 @RequestMapping("/vitals")
@@ -64,6 +64,8 @@ public class VitalsController extends BaseController {
         model.addAttribute("pageStyles", new String[] { "vitals.css" });
         model.addAttribute("pageScripts", new String[] { "vitals.js", "form.js" });
         model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
+
+        auditService.doAudit(session.getId(), AuditLevel.INFO, "visited vitals page");
 
         return "vitals";
     }

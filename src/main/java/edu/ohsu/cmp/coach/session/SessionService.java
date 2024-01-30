@@ -3,9 +3,10 @@ package edu.ohsu.cmp.coach.session;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import edu.ohsu.cmp.coach.entity.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
+import edu.ohsu.cmp.coach.model.Audience;
+import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
-import edu.ohsu.cmp.coach.model.Audience;
 import edu.ohsu.cmp.coach.service.AbstractService;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.quartz.*;
@@ -49,6 +50,9 @@ public class SessionService extends AbstractService {
 
         userWorkspaceService.init(sessionId, audience, randomizationGroup, fcc);
         userWorkspaceService.get(sessionId).populate();
+
+        auditService.doAudit(sessionId, AuditLevel.INFO, "session established", "sessionId=" + sessionId +
+                ", audience=" + audience + ", randomizationGroup=" + randomizationGroup);
     }
 
     public void prepareProvisionalSession(String sessionId, FHIRCredentials credentials, Audience audience) {
@@ -77,6 +81,7 @@ public class SessionService extends AbstractService {
 
     public void expireAll(String sessionId) {
         logger.info("expiring credentials for session " + sessionId);
+        auditService.doAudit(sessionId, AuditLevel.INFO, "session expired", sessionId);
         provisionalCache.remove(sessionId);
         userWorkspaceService.shutdown(sessionId);
     }

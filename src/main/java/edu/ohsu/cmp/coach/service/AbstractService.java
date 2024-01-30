@@ -16,6 +16,9 @@ public abstract class AbstractService implements Constants {
     protected UserWorkspaceService userWorkspaceService;
 
     @Autowired
+    protected AuditService auditService;
+
+    @Autowired
     protected FhirConfigManager fcm;
 
     @Autowired

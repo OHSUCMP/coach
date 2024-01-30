@@ -6,6 +6,7 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
+import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.repository.GoalHistoryRepository;
 import edu.ohsu.cmp.coach.repository.GoalRepository;
@@ -94,6 +95,7 @@ public class GoalService extends AbstractService {
                     } catch (Exception e) {
                         logger.error("caught " + e.getClass().getName() + " building BP Goal from ServiceRequest " +
                                 sr.getId() + " - " + e.getMessage(), e);
+                        logger.debug("ServiceRequest = " + FhirUtil.toJson(sr));
                     }
                 }
             }
@@ -227,10 +229,15 @@ public class GoalService extends AbstractService {
             return localBPGoal;
 
         } else {
-            return new GoalModel(create(sessionId, new MyGoal(fcm.getBpPanelCommonCoding(),
+            MyGoal defaultBPGoal = create(sessionId, new MyGoal(fcm.getBpPanelCommonCoding(),
                     GoalModel.BP_GOAL_DEFAULT_SYSTOLIC,
                     GoalModel.BP_GOAL_DEFAULT_DIASTOLIC
-            )));
+            ));
+
+            auditService.doAudit(sessionId, AuditLevel.INFO, "created default BP goal", "id=" + defaultBPGoal.getId() +
+                    ", target=" + defaultBPGoal.getSystolicTarget() + "/" + defaultBPGoal.getDiastolicTarget());
+
+            return new GoalModel(defaultBPGoal);
         }
     }
 
@@ -284,6 +291,8 @@ public class GoalService extends AbstractService {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         // todo : implement remote storage
+
+        // AUDIT NOTE : auditing of goal creation is handled by calling functions, no need to recreate that here
 
         goal.setPatId(workspace.getInternalPatientId());
         goal.setCreatedDate(new Date());

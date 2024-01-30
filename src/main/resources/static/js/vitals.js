@@ -96,7 +96,7 @@ function createVitals(vitalsData, _callback) {
         method: "POST",
         url: "/vitals/create",
         data: vitalsData
-    }).done(function(vitals, textStatus, jqXHR) {
+    }).always(function(vitals, textStatus, jqXHR) {
         _callback(jqXHR.status, vitals);
     });
 }
