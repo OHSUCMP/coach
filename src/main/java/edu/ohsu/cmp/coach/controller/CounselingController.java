@@ -32,7 +32,7 @@ public class CounselingController extends BaseController {
 
         model.addAttribute("page", page);
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "visited counseling page", "key=" + key);
+        auditService.doAudit(session.getId(), AuditLevel.INFO, "received counseling", "key=" + key);
 
         return "counseling";
     }
