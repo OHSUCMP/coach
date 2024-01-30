@@ -28,7 +28,7 @@ public class OmronController extends BaseController {
     @GetMapping("oauth")
     public String oauth(HttpSession session,
                         @RequestParam(required = false) String code,
-                        @RequestParam(required = false) String error) {
+                        @RequestParam(required = false) String error) throws Exception {
 
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
 
@@ -44,21 +44,21 @@ public class OmronController extends BaseController {
                 }
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " getting Omron access token - " + e.getMessage(), e);
-                throw new RuntimeException(e);
+                throw e;
             }
 
             try {
                 omronService.scheduleAccessTokenRefresh(session.getId());
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " scheduling Omron access token refresh - " + e.getMessage(), e);
-                throw new RuntimeException(e);
+                throw e;
             }
 
             try {
                 workspace.initiateSynchronousOmronUpdate();
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " synchronizing with Omron - " + e.getMessage(), e);
-                throw new RuntimeException(e);
+                throw e;
             }
 
         } else if (StringUtils.isNotBlank(error)) {
