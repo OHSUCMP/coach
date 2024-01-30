@@ -319,7 +319,7 @@
     {{#showClearSupplementalData}}
     $(document).on('click', '#clearSupplementalData', function() {
         doClearSupplementalData(function(msg) {
-            doRefresh(function(msg) {
+            doRefresh(function(msg) {   // only performed on success
                 window.location.href = "/";
             });
         });
