@@ -1,8 +1,8 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.service.AdverseEventService;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +31,7 @@ public class AdverseEventController extends BaseController {
         String message;
         if (actionTaken) {
             // for the purposes of this app, if action is taken, the adverse event is considered resolved
-            boolean success = adverseEventService.setOutcome(adverseEventId, Outcome.RESOLVED);
+            boolean success = adverseEventService.setOutcome(session.getId(), adverseEventId, Outcome.RESOLVED);
 
             if (success) {
                 workspace.deleteSuggestion(adverseEventId);
