@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.service;
 import edu.ohsu.cmp.coach.entity.MyPatient;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.model.PatientModel;
 import edu.ohsu.cmp.coach.repository.PatientRepository;
 import edu.ohsu.cmp.coach.util.UUIDUtil;
@@ -51,6 +52,8 @@ public class PatientService extends AbstractService {
             p.setRedcapId(UUIDUtil.getRandomUUID());
             p.setBpGoalUpdated(false);
             p = repository.save(p);
+
+            auditService.doAudit(p, AuditLevel.INFO, "created patient record");
         }
 
         return p;
