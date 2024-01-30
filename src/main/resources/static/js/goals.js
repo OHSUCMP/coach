@@ -7,9 +7,7 @@ function loadOtherGoals(_callback) {
         method: "POST",
         url: "/goals/other-goals"
     }).done(function(goals, textStatus, jqXHR) {
-        if (jqXHR.status === 200) {
-            _callback(goals);
-        }
+        _callback(goals);
     });
 }
 
@@ -77,12 +75,14 @@ function updateStatus(el, status) {
         method: "POST",
         url: "/goals/update-status",
         data: data
-    }).done(function(data, textStatus, jqXHR) {
+    }).always(function(data, textStatus, jqXHR) {
         if (jqXHR.status === 200) {
             loadOtherGoals(function(otherGoals) {
                 window.otherGoals = otherGoals;
                 populateOtherGoals();
             });
+        } else {
+            // todo : report error
         }
     });
 }
@@ -96,7 +96,7 @@ function updateBPGoal(bpGoalData, _callback) {
         method: "POST",
         url: "/goals/update-bp",
         data: bpGoalData
-    }).done(function(bpGoal, textStatus, jqXHR) {
+    }).always(function(bpGoal, textStatus, jqXHR) {
         _callback(jqXHR.status, bpGoal);
     });
 }
@@ -181,7 +181,7 @@ $(document).on('click', '#updateBPGoal', function() {
 
     updateBPGoal(bpGoalData, function (status, bpGoal) {
         let note = $('#updateNote');
-        if (status === 200) {
+        if (status === 200) {  // verified updateBPGoal executes callback 'always'
             $(container).attr('data-systolic', bpGoal.systolicTarget);
             $(container).attr('data-diastolic', bpGoal.diastolicTarget);
 
