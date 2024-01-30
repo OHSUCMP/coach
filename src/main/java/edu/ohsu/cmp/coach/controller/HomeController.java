@@ -76,7 +76,7 @@ public class HomeController extends BaseController {
 
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model,
-                       @RequestParam(name = "bandwidth", required = false) Number bandwidthOverride) {
+                       @RequestParam(name = "bandwidth", required = false) Number bandwidthOverride) throws Exception {
 
         String sessionId = session.getId();
         if (sessionService.exists(sessionId)) {
@@ -85,41 +85,43 @@ public class HomeController extends BaseController {
             UserWorkspace workspace = userWorkspaceService.get(sessionId);
             logger.info("Randomization group for user: " + workspace.getRandomizationGroup());
 
+            setCommonViewComponents(model);
+            model.addAttribute("sessionEstablished", true);
+            model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
+            model.addAttribute("pageStyles", new String[] { "home.css?v=4", "recommendations.css?v=1" });
+            model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
+            model.addAttribute("pageScripts", new String[] { "science.js/science.v1.js", "science.js/lib/d3/d3.js", "home.js?v=2", "recommendations.js?v=1" });
+            model.addAttribute("patient", workspace.getPatient());
+            model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
+            model.addAttribute("bpGoalUpdated", workspace.getBpGoalUpdated());
+            model.addAttribute("randomizationGroup", String.valueOf(workspace.getRandomizationGroup()));
+
+            Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
+            model.addAttribute("showClearSupplementalData", showClearSupplementalData);
+
+            if (workspace.getOmronTokenData() == null) {
+                model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
+            }
+
+            if (workspace.isOmronSynchronizing()) {
+                model.addAttribute("omronSynchronizing", true);
+            } else if (workspace.getOmronLastUpdated() != null) {
+                model.addAttribute("omronLastUpdated", OMRON_LAST_UPDATED.format(workspace.getOmronLastUpdated()));
+            }
+
             try {
-                setCommonViewComponents(model);
-                model.addAttribute("sessionEstablished", true);
-                model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
-                model.addAttribute("pageStyles", new String[] { "home.css?v=4", "recommendations.css?v=1" });
-                model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
-                model.addAttribute("pageScripts", new String[] { "science.js/science.v1.js", "science.js/lib/d3/d3.js", "home.js?v=2", "recommendations.js?v=1" });
-                model.addAttribute("patient", workspace.getPatient());
-                model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
-                model.addAttribute("bpGoalUpdated", workspace.getBpGoalUpdated());
-                model.addAttribute("randomizationGroup", String.valueOf(workspace.getRandomizationGroup()));
-
-                Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
-                model.addAttribute("showClearSupplementalData", showClearSupplementalData);
-
-                if (workspace.getOmronTokenData() == null) {
-                    model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
-                }
-
-                if (workspace.isOmronSynchronizing()) {
-                    model.addAttribute("omronSynchronizing", true);
-                } else if (workspace.getOmronLastUpdated() != null) {
-                    model.addAttribute("omronLastUpdated", OMRON_LAST_UPDATED.format(workspace.getOmronLastUpdated()));
-                }
-
                 List<CDSHook> list = recommendationService.getOrderedCDSHooks(sessionId);
                 model.addAttribute("cdshooks", list);
 
-                // This sometimes fails for unknown reasons. Ask for it last so the rest of the page loads fine if there's a REDCap glitch.
-                if (redCapService.isRedcapEnabled()) {
-                    model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
-                }
-
             } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " building home page", e);
+                // fail gracefully if the recommendation engine isn't running for some reason
+                logger.error("caught " + e.getClass().getName() + " getting recommendations list - " + e.getMessage(), e);
+                model.addAttribute("cdshooks", new ArrayList<CDSHook>());
+            }
+
+            // This sometimes fails for unknown reasons. Ask for it last so the rest of the page loads fine if there's a REDCap glitch.
+            if (redCapService.isRedcapEnabled()) {
+                model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
             }
 
             auditService.doAudit(sessionId, AuditLevel.INFO, "visited home page");
@@ -134,41 +136,53 @@ public class HomeController extends BaseController {
             MyPatient patient = patientService.getMyPatient(cacheData.getCredentials().getPatientId());
             sessionService.expireProvisional(sessionId);
 
-            try {
-                RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(patient.getRedcapId());
-                if ( ! redcapParticipantInfo.getExists() ) {
-                    // If they are not in REDCap yet, create them and forward them to the entry survey
-                    String recordId = redCapService.createSubjectInfoRecord(redcapParticipantInfo.getCoachId());
-                    String entrySurveyLink = redCapService.getEntrySurveyLink(recordId);
-                    return "redirect:" + entrySurveyLink;
+            RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(patient.getRedcapId());
+            if ( ! redcapParticipantInfo.getExists() ) {
+                // If they are not in REDCap yet, create them and forward them to the entry survey
+                String recordId = redCapService.createSubjectInfoRecord(redcapParticipantInfo.getCoachId());
+                String entrySurveyLink = redCapService.getEntrySurveyLink(recordId);
 
-                } else if ( ! redcapParticipantInfo.getIsInformationSheetComplete() ) {
-                    // If they haven't gotten past the entry survey and don't have a queue yet, send them back to the entry survey
-                    String entrySurveyLink = redCapService.getEntrySurveyLink(redcapParticipantInfo.getRecordId());
-                    return "redirect:" + entrySurveyLink;
+                auditService.doAudit(patient, AuditLevel.INFO, "accessed REDCap entry survey", "participant info did not exist");
 
-                } else if (redcapParticipantInfo.getHasConsentRecord() && ! redcapParticipantInfo.getIsConsentGranted()) {
-                    // If consent record exists and the answer is no, exit
-                    setCommonViewComponents(model);
-                    return "consent-previously-denied";
+                return "redirect:" + entrySurveyLink;
 
-                } else if ( ! redcapParticipantInfo.getHasConsentRecord() || ! redcapParticipantInfo.getIsRandomized()) {
-                    // If there is no consent or randomization record, forward them to their survey queue
-                    String surveyQueueLink = redCapService.getSurveyQueueLink(redcapParticipantInfo.getRecordId());
-                    return "redirect:" + surveyQueueLink;                
+            } else if ( ! redcapParticipantInfo.getIsInformationSheetComplete() ) {
+                // If they haven't gotten past the entry survey and don't have a queue yet, send them back to the entry survey
+                String entrySurveyLink = redCapService.getEntrySurveyLink(redcapParticipantInfo.getRecordId());
 
-                } else if (redcapParticipantInfo.getIsWithdrawn()) {
-                    // If withdrawn, exit
-                    setCommonViewComponents(model);
-                    return "withdrawn";
+                auditService.doAudit(patient, AuditLevel.INFO, "accessed REDCap entry survey", "information sheet was incomplete");
 
-                } else {
-                    logger.error("REDCap participant " + redcapParticipantInfo.getRecordId() + "is actively enrolled but cannot access COACH.");
-                    return "error";
-                }
+                return "redirect:" + entrySurveyLink;
 
-            } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " - " + e.getMessage(), e);
+            } else if (redcapParticipantInfo.getHasConsentRecord() && ! redcapParticipantInfo.getIsConsentGranted()) {
+                // If consent record exists and the answer is no, exit
+                setCommonViewComponents(model);
+
+                auditService.doAudit(patient, AuditLevel.INFO, "access denied", "participant did not grant consent");
+
+                return "consent-previously-denied";
+
+            } else if ( ! redcapParticipantInfo.getHasConsentRecord() || ! redcapParticipantInfo.getIsRandomized()) {
+                // If there is no consent or randomization record, forward them to their survey queue
+                String surveyQueueLink = redCapService.getSurveyQueueLink(redcapParticipantInfo.getRecordId());
+
+                auditService.doAudit(patient, AuditLevel.INFO, "accessed REDCap survey queue", "participant has no consent record, or has not been randomized");
+
+                return "redirect:" + surveyQueueLink;
+
+            } else if (redcapParticipantInfo.getIsWithdrawn()) {
+                // If withdrawn, exit
+                setCommonViewComponents(model);
+
+                auditService.doAudit(patient, AuditLevel.INFO, "access denied", "participant has withdrawn from the study");
+
+                return "withdrawn";
+
+            } else {
+                logger.error("REDCap participant " + redcapParticipantInfo.getRecordId() + "is actively enrolled but cannot access COACH.");
+
+                auditService.doAudit(patient, AuditLevel.ERROR, "enrolled but cannot access COACH");
+
                 return "error";
             }
 
@@ -210,6 +224,11 @@ public class HomeController extends BaseController {
                 } catch (RuntimeException re) {
                     logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
                             re.getMessage(), re);
+
+                    auditService.doAudit(session.getId(), AuditLevel.ERROR, "recommendation exception", "encountered " +
+                            re.getClass().getSimpleName() + " getting recommendations for " + hookId + " - " +
+                            re.getMessage());
+
                     return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             }
