@@ -37,9 +37,7 @@ function getRecommendation(id, _callback) {
         timeout: 3600000,
         data: data
     }).done(function(cards, textStatus, jqXHR) {
-        if (jqXHR.status === 200) {
-            _callback(cards);
-        }
+        _callback(cards);
     });
 }
 
@@ -503,7 +501,7 @@ function registerCounselingReceived(counselingData, _callback) {
         method: "POST",
         url: "/counseling/create",
         data: counselingData
-    }).done(function(data, textStatus, jqXHR) {
+    }).always(function(data, textStatus, jqXHR) {
         _callback(jqXHR.status);
     });
 }
@@ -513,7 +511,7 @@ function createGoal(goalData, _callback) {
         method: "POST",
         url: "/goals/create",
         data: goalData
-    }).done(function(data, textStatus, jqXHR) {
+    }).always(function(data, textStatus, jqXHR) {
         _callback(jqXHR.status);
     });
 }
@@ -523,7 +521,7 @@ function updateBPGoal(bpGoalData, _callback) {
         method: "POST",
         url: "/goals/update-bp",
         data: bpGoalData
-    }).done(function(data, textStatus, jqXHR) {
+    }).always(function(data, textStatus, jqXHR) {
         _callback(jqXHR.status, bpGoalData);
     });
 }
@@ -533,7 +531,7 @@ function updateGoal(goalUpdateData, _callback) {
         method: "POST",
         url: "/goals/update-status",
         data: goalUpdateData
-    }).done(function(data, textStatus, jqXHR) {
+    }).always(function(data, textStatus, jqXHR) {
         _callback(jqXHR.status);
     });
 }
@@ -543,7 +541,7 @@ function registerAdverseEventAction(adverseEventData, _callback) {
         method: "POST",
         url: "/adverse-event/register-action",
         data: adverseEventData
-    }).done(function(data, textStatus, jqXHR) {
+    }).always(function(data, textStatus, jqXHR) {
         _callback(jqXHR.status);
     });
 }
@@ -574,8 +572,10 @@ $(document).on('click', '.goal .commitToGoal', function() {
 
     let goalData = buildGoalData(this);
     createGoal(goalData, function(status) {
-        if (status === 200) {
+        if (status === 200) { // verified createGoal executes callback 'always'
             hide(container);
+        } else {
+            // todo : report error
         }
     });
 });
@@ -585,7 +585,7 @@ $(document).on('click', '.bpGoal .commitToGoal', function() {
 
     let bpGoalData = buildBPGoalData(this);
     updateBPGoal(bpGoalData, function(status, g) {
-        if (status === 200) {
+        if (status === 200) { // verified updateBPGoal executes callback 'always'
             let el = $('#currentBPGoal');
             $(el).attr('data-systolic', g.systolicTarget);
             $(el).attr('data-diastolic', g.diastolicTarget);
@@ -594,6 +594,8 @@ $(document).on('click', '.bpGoal .commitToGoal', function() {
             updateChart();
 
             hide(container);
+        } else {
+            // todo : report error
         }
     });
 });
@@ -603,8 +605,10 @@ $(document).on('click', '.goal .updateGoal', function() {
 
     let goalUpdateData = buildGoalUpdateData(this);
     updateGoal(goalUpdateData, function(status) {
-        if (status === 200) {
+        if (status === 200) { // verified updateBPGoal executes callback 'always'
             hide(container);
+        } else {
+            // todo : report error
         }
     });
 });
@@ -614,7 +618,11 @@ $(document).on('click', '.counseling .actions a', function(event) {
     let a = $(this);
     let counselingData = buildCounselingData(this);
     registerCounselingReceived(counselingData, function(status) {
-        window.location.href = $(a).attr('href');
+        if (status === 200) { // verified registerCounselingReceived executes callback 'always'
+            window.location.href = $(a).attr('href');
+        } else {
+            // todo : report error
+        }
     });
 });
 
@@ -623,7 +631,7 @@ $(document).on('click', '.adverseEvent .registerAdverseEventAction', function() 
 
     let adverseEventData = buildAdverseEventData(this);
     registerAdverseEventAction(adverseEventData, function(status) {
-        if (status === 200) {
+        if (status === 200) { // verified registerAdverseEventAction executes callback 'always'
             hide(container, function(el) {
                 let parent = $(el).closest('.adverseEventsContainer');
                 let anyChildrenVisible = $(parent).find('.adverseEvent:visible').length > 0;
@@ -631,6 +639,8 @@ $(document).on('click', '.adverseEvent .registerAdverseEventAction', function() 
                     hide(parent);
                 }
             });
+        } else {
+            // todo : report error
         }
     });
 });
