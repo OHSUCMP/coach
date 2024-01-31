@@ -192,7 +192,7 @@ public class HomeController extends BaseController {
             }
 
         } else {
-            logger.info("no session exists.  completing SMART-on-FHIR handshake for session " + sessionId);
+            logger.debug("no session exists.  completing SMART-on-FHIR handshake for session " + sessionId);
             setCommonViewComponents(model);
             model.addAttribute("cacheCredentials", cacheCredentials);
             model.addAttribute("patientNotActiveEndpoint", "/patient-not-active");
