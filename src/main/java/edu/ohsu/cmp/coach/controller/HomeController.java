@@ -229,6 +229,11 @@ public class HomeController extends BaseController {
                 } catch (RuntimeException re) {
                     logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
                             re.getMessage(), re);
+
+                    auditService.doAudit(session.getId(), AuditLevel.ERROR, "recommendation exception", "encountered " +
+                            re.getClass().getSimpleName() + " getting recommendations for " + hookId + " - " +
+                            re.getMessage());
+
                     return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             }
