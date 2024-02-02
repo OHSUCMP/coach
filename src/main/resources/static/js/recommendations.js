@@ -526,8 +526,10 @@ function updateBPGoal(bpGoalData, _callback) {
         method: "POST",
         url: "/goals/update-bp",
         data: bpGoalData
-    }).always(function(data, textStatus, jqXHR) {
+    }).done(function(data, textStatus, jqXHR) {
         _callback(jqXHR.status, bpGoalData);
+    }).fail(function(jqXHR) {
+        _callback(jqXHR.status);
     });
 }
 
@@ -589,10 +591,11 @@ $(document).on('click', '.goal .commitToGoal', function() {
 
 $(document).on('click', '.bpGoal .commitToGoal', function() {
     let container = $(this).closest('.bpGoal');
+    let note = $(this).siblings('.note');
 
     let bpGoalData = buildBPGoalData(this);
     updateBPGoal(bpGoalData, function(status, g) {
-        if (status === 200) { // verified updateBPGoal executes callback 'always'
+        if (status === 200) {
             let el = $('#currentBPGoal');
             $(el).attr('data-systolic', g.systolicTarget);
             $(el).attr('data-diastolic', g.diastolicTarget);
@@ -602,7 +605,8 @@ $(document).on('click', '.bpGoal .commitToGoal', function() {
 
             hide(container);
         } else {
-            // todo : report error
+            $(note).text("Error updating BP goal - see logs for details.");
+            $(note).addClass("error");
         }
     });
 });
