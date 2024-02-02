@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,6 +50,8 @@ public class REDCapService {
     // REDCap Fields
     public static final String PARTICIPANT_RECORD_ID_FIELD = "record_id";
     public static final String PARTICIPANT_COACH_ID_FIELD = "coach_id";
+    public static final String PARTICIPANT_COACH_URL_FIELD = "coach_url";
+    public static final String PARTICIPANT_RECORD_DATE_FIELD = "record_dat";
     public static final String PARTICIPANT_CONSENT_FIELD = "icf_consent_73fb68";
     public static final String PARTICIPANT_RANDOMIZATION_FIELD = "randomized_assignment";
     public static final String PARTICIPANT_RANDOMIZATION_DATE_FIELD = "randomization_date";
@@ -181,7 +184,8 @@ public class REDCapService {
         map.put("redcap_event_name", PARTICIPANT_BASELINE_EVENT);
         map.put(PARTICIPANT_INFO_FORM + "_complete", FORM_COMPLETE);
         map.put("redcap_data_access_group", redcapConfiguration.getDataAccessGroup());
-        map.put("coach_url", launchUrl);
+        map.put(PARTICIPANT_COACH_URL_FIELD, launchUrl);
+        map.put(PARTICIPANT_RECORD_DATE_FIELD, LocalDate.now().toString());
 
         List<Map<String, String>> list = new ArrayList<>();
         list.add(map);
