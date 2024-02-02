@@ -261,11 +261,13 @@ function buildGoalsHTML(suggestions) {
             } else if (s.type === 'update-goal') {
                 html += "<div class='goal p-2' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
                 html += "<span class='heading'>" + s.label + "</span>";
-                html += "<table><tr><td>";
+                html += "<div class='row'>";
+                html += "<div class='col-lg-8 mb-2'>";
 
                 let id = randomChars(5);
 
-                html += "<div><label for='achievementStatus" + id + "'>Achievement Status:</label> <select id='achievementStatus" + id + "' class='achievementStatus'>";
+                html += "<div><label for='achievementStatus" + id + "'>Achievement Status:</label>";
+                html += "<select id='achievementStatus" + id + "' class='achievementStatus'>";
 
                 let a_arr = ['IN_PROGRESS', 'ACHIEVED', 'NOT_ACHIEVED'];
 
@@ -281,13 +283,13 @@ function buildGoalsHTML(suggestions) {
                     html += ">" + toLabel(value) + "</option>";
                 });
                 html += "</select></div>";
-                html += "</td>";
-                html += "<td class='shrink'><div class='mb-3 me-3'><button class='btn btn-sm button-primary updateGoal'>Record Progress</button></div></td>";
-                html += "</td>";
-                html += "</tr><tr>";
-
-                html += "</td></tr></table>";
-                html += "</div>";
+                html += "</div>"; // col-lg-8 mb-2
+                html += "<div class='col-lg-4 mb-2'>";
+                html += "<button class='btn btn-sm button-primary updateGoal'>Record Progress</button>";
+                html += "<span class=\"note d-inline-block\"></span>";
+                html += "</div>"; // col-lg-4-mb-2
+                html += "</div>"; // row
+                html += "</div>"; // goal p-2
             }
         });
     }
@@ -538,7 +540,9 @@ function updateGoal(goalUpdateData, _callback) {
         method: "POST",
         url: "/goals/update-status",
         data: goalUpdateData
-    }).always(function(data, textStatus, jqXHR) {
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status);
+    }).fail(function(jqXHR) {
         _callback(jqXHR.status);
     });
 }
@@ -613,13 +617,15 @@ $(document).on('click', '.bpGoal .commitToGoal', function() {
 
 $(document).on('click', '.goal .updateGoal', function() {
     let container = $(this).closest('.goal');
+    let note = $(this).siblings('.note');
 
     let goalUpdateData = buildGoalUpdateData(this);
     updateGoal(goalUpdateData, function(status) {
         if (status === 200) { // verified updateBPGoal executes callback 'always'
             hide(container);
         } else {
-            // todo : report error
+            $(note).text("Error updating goal - see logs for details.");
+            $(note).addClass("error");
         }
     });
 });
