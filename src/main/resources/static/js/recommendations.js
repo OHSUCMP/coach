@@ -250,9 +250,12 @@ function buildGoalsHTML(suggestions) {
                     }
                 }
                 html += "</div>";
-                html += "<div class='col-lg-4 mt-2'><button class='btn btn-sm button-primary commitToGoal'>Commit to Goal</button></div>";
-                html += "</div>"
 
+                html += "<div class='col-lg-4 mt-2'>";
+                html += "<button class='btn btn-sm button-primary commitToGoal'>Commit to Goal</button>";
+                html += "<span class=\"note d-inline-block\"></span>";
+                html += "</div>";
+                html += "</div>"
                 html += "</div>";
 
             } else if (s.type === 'update-goal') {
@@ -511,7 +514,9 @@ function createGoal(goalData, _callback) {
         method: "POST",
         url: "/goals/create",
         data: goalData
-    }).always(function(data, textStatus, jqXHR) {
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status);
+    }).fail(function(jqXHR) {
         _callback(jqXHR.status);
     });
 }
@@ -569,13 +574,15 @@ function hide(el, _complete) {
 
 $(document).on('click', '.goal .commitToGoal', function() {
     let container = $(this).closest('.goal');
+    let note = $(this).siblings('.note');
 
     let goalData = buildGoalData(this);
     createGoal(goalData, function(status) {
-        if (status === 200) { // verified createGoal executes callback 'always'
+        if (status === 200) {
             hide(container);
         } else {
-            // todo : report error
+            $(note).text("Error creating goal - see logs for details.");
+            $(note).addClass("error");
         }
     });
 });
