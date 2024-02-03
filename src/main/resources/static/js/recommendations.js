@@ -156,6 +156,7 @@ function buildAdverseEvents(suggestions) {
         html = "<div class='adverseEventsContainer'>" +
             "<div class='heading'>Have you discussed any of these conditions with your care team?</div>" +
             html +
+            "<span class=\"note d-inline-block hidden\"></span>" +
             "</div>";
     }
 
@@ -554,7 +555,9 @@ function registerAdverseEventAction(adverseEventData, _callback) {
         method: "POST",
         url: "/adverse-event/register-action",
         data: adverseEventData
-    }).always(function(data, textStatus, jqXHR) {
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status);
+    }).fail(function(jqXHR) {
         _callback(jqXHR.status);
     });
 }
@@ -644,10 +647,11 @@ $(document).on('click', '.counseling .actions a', function(event) {
 
 $(document).on('click', '.adverseEvent .registerAdverseEventAction', function() {
     let container = $(this).closest('.adverseEvent');
+    let note = $(container).closest('.adverseEventsContainer').children('.note');
 
     let adverseEventData = buildAdverseEventData(this);
     registerAdverseEventAction(adverseEventData, function(status) {
-        if (status === 200) { // verified registerAdverseEventAction executes callback 'always'
+        if (status === 200) {
             hide(container, function(el) {
                 let parent = $(el).closest('.adverseEventsContainer');
                 let anyChildrenVisible = $(parent).find('.adverseEvent:visible').length > 0;
@@ -656,7 +660,9 @@ $(document).on('click', '.adverseEvent .registerAdverseEventAction', function() 
                 }
             });
         } else {
-            // todo : report error
+            $(note).text("Error registering adverse event - see logs for details.");
+            $(note).removeClass('hidden');
+            $(note).addClass("error");
         }
     });
 });
