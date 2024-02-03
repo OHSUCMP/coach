@@ -506,7 +506,9 @@ function registerCounselingReceived(counselingData, _callback) {
         method: "POST",
         url: "/counseling/create",
         data: counselingData
-    }).always(function(data, textStatus, jqXHR) {
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status);
+    }).fail(function(jqXHR) {
         _callback(jqXHR.status);
     });
 }
@@ -621,7 +623,7 @@ $(document).on('click', '.goal .updateGoal', function() {
 
     let goalUpdateData = buildGoalUpdateData(this);
     updateGoal(goalUpdateData, function(status) {
-        if (status === 200) { // verified updateBPGoal executes callback 'always'
+        if (status === 200) {
             hide(container);
         } else {
             $(note).text("Error updating goal - see logs for details.");
@@ -635,11 +637,8 @@ $(document).on('click', '.counseling .actions a', function(event) {
     let a = $(this);
     let counselingData = buildCounselingData(this);
     registerCounselingReceived(counselingData, function(status) {
-        if (status === 200) { // verified registerCounselingReceived executes callback 'always'
-            window.location.href = $(a).attr('href');
-        } else {
-            // todo : report error
-        }
+        // always follow the link, irrespective of return status
+        window.location.href = $(a).attr('href');
     });
 });
 
