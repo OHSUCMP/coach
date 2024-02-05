@@ -99,8 +99,10 @@ function updateBPGoal(bpGoalData, _callback) {
         method: "POST",
         url: "/goals/update-bp",
         data: bpGoalData
-    }).always(function(bpGoal, textStatus, jqXHR) {
+    }).done(function(bpGoal, textStatus, jqXHR) {
         _callback(jqXHR.status, bpGoal);
+    }).fail(function(jqXHR) {
+        _callback(jqXHR.status);
     });
 }
 
