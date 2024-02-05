@@ -507,10 +507,8 @@ function registerCounselingReceived(counselingData, _callback) {
         method: "POST",
         url: "/counseling/create",
         data: counselingData
-    }).done(function(data, textStatus, jqXHR) {
-        _callback(jqXHR.status);
-    }).fail(function(jqXHR) {
-        _callback(jqXHR.status);
+    }).always(function() {
+        _callback();
     });
 }
 
@@ -639,8 +637,7 @@ $(document).on('click', '.counseling .actions a', function(event) {
     event.preventDefault();
     let a = $(this);
     let counselingData = buildCounselingData(this);
-    registerCounselingReceived(counselingData, function(status) {
-        // always follow the link, irrespective of return status
+    registerCounselingReceived(counselingData, function() {
         window.location.href = $(a).attr('href');
     });
 });
