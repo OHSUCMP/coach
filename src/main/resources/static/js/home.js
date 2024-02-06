@@ -19,8 +19,8 @@ function doClearSupplementalData(_callback) {
     $.ajax({
         method: "POST",
         url: "/clear-supplemental-data"
-    }).done(function(msg, textStatus, jqXHR) {
-        _callback(msg);
+    }).done(function() {
+        _callback();
     });
 }
 
@@ -28,7 +28,7 @@ function loadBloodPressureObservations(_callback) {
     $.ajax({
         method: "POST",
         url: "/blood-pressure-observations-list"
-    }).done(function(bpdata, textStatus, jqXHR) {
+    }).done(function(bpdata) {
         bpdata.forEach(function(item) {
             item.readingDate = new Date(item.readingDate);
         });
@@ -44,7 +44,7 @@ function loadMedications(_callback) {
     $.ajax({
         method: "POST",
         url: "/medications-list"
-    }).done(function(meds, textStatus, jqXHR) {
+    }).done(function(meds) {
         _callback(meds);
     });
 }
@@ -71,7 +71,7 @@ function loadAdverseEvents(_callback) {
     $.ajax({
         method: "POST",
         url: "/adverse-events-list"
-    }).done(function(adverseEvents, textStatus, jqXHR) {
+    }).done(function(adverseEvents) {
         _callback(adverseEvents);
     });
 }

@@ -6,7 +6,7 @@ function loadOtherGoals(_callback) {
     $.ajax({
         method: "POST",
         url: "/goals/other-goals"
-    }).done(function(goals, textStatus, jqXHR) {
+    }).done(function(goals) {
         _callback(goals);
     });
 }
@@ -77,13 +77,13 @@ function updateStatus(el, status) {
         method: "POST",
         url: "/goals/update-status",
         data: data
-    }).done(function(data, textStatus, jqXHR) {
+    }).done(function() {
         $(note).addClass('hidden');
         loadOtherGoals(function(otherGoals) {
             window.otherGoals = otherGoals;
             populateOtherGoals();
         });
-    }).fail(function(jqXHR) {
+    }).fail(function() {
         $(note).text("Error updating status - see logs for details.");
         $(note).removeClass('hidden');
         $(note).addClass("error");

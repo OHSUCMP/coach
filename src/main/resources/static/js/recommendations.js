@@ -36,7 +36,7 @@ function getRecommendation(id, _callback) {
         url: "/recommendation",
         timeout: 3600000,
         data: data
-    }).done(function(cards, textStatus, jqXHR) {
+    }).done(function(cards) {
         _callback(cards);
     });
 }
