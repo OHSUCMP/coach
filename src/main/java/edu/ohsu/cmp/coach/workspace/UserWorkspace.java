@@ -638,6 +638,8 @@ public class UserWorkspace {
         HomeBloodPressureReadingService hbprService = ctx.getBean(HomeBloodPressureReadingService.class);
         hbprService.deleteAll(sessionId);
 
+        // todo : also clear hypotension adverse events
+
         HomePulseReadingService hprService = ctx.getBean(HomePulseReadingService.class);
         hprService.deleteAll(sessionId);
 

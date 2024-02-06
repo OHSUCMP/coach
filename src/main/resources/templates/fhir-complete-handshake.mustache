@@ -25,7 +25,7 @@
                 method: "POST",
                 url: "/prepare-session",
                 data: data
-            }).done(function(body, textStatus, jqXHR) {
+            }).done(function(body) {
                 // alert("useful debug checkpoint");
                 if (body === PATIENT_NOT_ACTIVE_RESPONSE) {
                     window.location.replace(PATIENT_NOT_ACTIVE_ENDPOINT);
@@ -33,7 +33,7 @@
                     $('.response').html("Handshake completed, redirecting ...<br/>If you are not redirected, please <a href='" + REDIRECT_URL + "'>click here</a>.")
                     window.location.replace(REDIRECT_URL);
                 }
-            }).fail(function (jqXHR, textStatus, errorThrown) {
+            }).fail(function (jqXHR) {
                 try {
                     let response = JSON.parse(jqXHR.responseText);
                     $('.response').html("Error " + jqXHR.status + ": " + (response.message ? response.message : "An error occurred. Try again later or contact study staff."));

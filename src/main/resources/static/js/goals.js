@@ -6,7 +6,7 @@ function loadOtherGoals(_callback) {
     $.ajax({
         method: "POST",
         url: "/goals/other-goals"
-    }).done(function(goals, textStatus, jqXHR) {
+    }).done(function(goals) {
         _callback(goals);
     });
 }
@@ -36,7 +36,8 @@ function populateOtherGoals() {
             } else {
                 html += "<button class='btn button-primary markInProgress'>Mark In Progress</button>";
             }
-            html += "</div>"
+            html += "</div>";
+            html += "<span class=\"note d-inline-block hidden mt-4\"></span>";
             html += "<div class='accordion mt-4' id='goalHistory'><div class='accordion-item'>";
             html += "<h2 class='accordion-header' id='flush-heading" + index + "'></h2>";
             html += "<button class='accordion-button collapsed' type='button' data-bs-toggle='collapse' data-bs-target='#flush-collapse" + index + "' aria-expanded='false' aria-controls='flush-collapse" + index + "'>Goal History</button>";
@@ -65,6 +66,7 @@ function populateOtherGoals() {
 function updateStatus(el, status) {
     let goal = $(el).closest('.goal');
     let extGoalId = $(goal).attr('data-extGoalId');
+    let note = $(goal).find('.note');
 
     let data = {
         extGoalId: extGoalId,
@@ -75,15 +77,16 @@ function updateStatus(el, status) {
         method: "POST",
         url: "/goals/update-status",
         data: data
-    }).always(function(data, textStatus, jqXHR) {
-        if (jqXHR.status === 200) {
-            loadOtherGoals(function(otherGoals) {
-                window.otherGoals = otherGoals;
-                populateOtherGoals();
-            });
-        } else {
-            // todo : report error
-        }
+    }).done(function() {
+        $(note).addClass('hidden');
+        loadOtherGoals(function(otherGoals) {
+            window.otherGoals = otherGoals;
+            populateOtherGoals();
+        });
+    }).fail(function() {
+        $(note).text("Error updating status - see logs for details.");
+        $(note).removeClass('hidden');
+        $(note).addClass("error");
     });
 }
 
@@ -96,8 +99,10 @@ function updateBPGoal(bpGoalData, _callback) {
         method: "POST",
         url: "/goals/update-bp",
         data: bpGoalData
-    }).always(function(bpGoal, textStatus, jqXHR) {
+    }).done(function(bpGoal, textStatus, jqXHR) {
         _callback(jqXHR.status, bpGoal);
+    }).fail(function(jqXHR) {
+        _callback(jqXHR.status);
     });
 }
 

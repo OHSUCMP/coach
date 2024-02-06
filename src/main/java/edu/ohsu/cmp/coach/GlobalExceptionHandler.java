@@ -24,8 +24,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Object handleException(HttpSession session, HttpServletRequest request, HttpServletResponse response, Exception e) {
         logger.error("trapped exception " + e.getClass().getName() + " at " + request.getRequestURI() +
-                " for session " + session.getId() + " - " + e.getMessage() + " (run with DEBUG for stack trace)");
-        logger.debug("stack trace: ", e);
+                " for session " + session.getId() + " - " + e.getMessage(), e);
 
         auditService.doAudit(session.getId(), AuditLevel.ERROR, "application exception", "encountered " +
                 e.getClass().getSimpleName() + " at " + request.getRequestURI() + " - " + e.getMessage());

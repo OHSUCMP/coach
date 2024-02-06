@@ -10,7 +10,7 @@
             $.ajax({
                 method: "POST",
                 url: "/clear-session"
-            }).always(function(data, textStatus, jqXHR) {
+            }).always(function() {
                 _callback();
             });
         }
