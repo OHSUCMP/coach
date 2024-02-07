@@ -23,11 +23,11 @@ function loadScript(src, callback) {
     document.head.appendChild(script);
 }
 
-function isInternetExplorer() {
-    // adapted from https://www.scratchcode.io/how-to-detect-ie-browser-in-javascript/
-    let isIE = /*@cc_on!@*/false || !!document.documentMode;
-    return isIE || navigator.userAgent.indexOf("MSIE") > 0;
-}
+// function isInternetExplorer() {
+//     // adapted from https://www.scratchcode.io/how-to-detect-ie-browser-in-javascript/
+//     let isIE = /*@cc_on!@*/false || !!document.documentMode;
+//     return isIE || navigator.userAgent.indexOf("MSIE") > 0;
+// }
 
 // function loadScript(document, url) {
 //     console.log("loading script " + url);

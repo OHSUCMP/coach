@@ -15,9 +15,9 @@
   "license": "ISC",
   "dependencies": {
     "@types/hapi": "^18.0.6",
-    "chart.js": "^3.5.1",
-    "chartjs-adapter-date-fns": "^2.0.0",
-    "chartjs-plugin-annotation": "^1.2.2",
+    "chart.js": "^4.4.1",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-plugin-annotation": "^3.0.1",
     "date-fns": "^2.21.1",
     "fhirclient": "^2.4.0",
     "grunt": "^1.5.2",
