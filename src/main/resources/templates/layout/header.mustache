@@ -86,7 +86,6 @@
         };
 
         function validateSession() {
-            console.log("validating session");
             $.ajax({
                 method: "POST",
                 url: "/validate-session",
@@ -111,7 +110,7 @@
         });
     </script>
 
-    <script type="text/javascript" src="{{req.contextPath}}/js/coach.js"></script>
+    <script type="text/javascript" src="{{req.contextPath}}/js/coach.js?v=1"></script>
 
     {{#pageScripts}}
 	  {{! Page-specific scripts can be specified in the view model }}
@@ -120,7 +119,7 @@
 
     {{#pageNodeScripts}}
 	  {{! Page-specific scripts managed by node can be specified in the view model }}
-	  <script type="text/javascript" src="{{req.contextPath}}/node_modules/inputmask/dist/{{.}}"></script>
+	  <script type="text/javascript" src="{{req.contextPath}}/node_modules/{{.}}"></script>
     {{/pageNodeScripts}}
 </head>
 <body>
