@@ -67,7 +67,7 @@ public class FhirConfigManager {
     @Value("${protocol.answer.yes}")        private String protocolAnswerYes;
     @Value("${protocol.answer.no}")         private String protocolAnswerNo;
 
-    private List<Coding> serviceRequestOrderBPGoalCustomCodings = null;
+    private List<Coding> serviceRequestOrderBPGoalCodings = null;
     private Pattern serviceRequestOrderBPGoalNoteSystolicRegex = null;
     private Pattern serviceRequestOrderBPGoalNoteDiastolicRegex = null;
 
@@ -265,11 +265,11 @@ public class FhirConfigManager {
         return pulseCustomCodings;
     }
 
-    public List<Coding> getServiceRequestOrderBPGoalCustomCodings() {
-        if (serviceRequestOrderBPGoalCustomCodings == null) {
-            serviceRequestOrderBPGoalCustomCodings = buildCodings(env.getProperty("service-request-order.bp-goal.custom-codings"));
+    public List<Coding> getServiceRequestOrderBPGoalCodings() {
+        if (serviceRequestOrderBPGoalCodings == null) {
+            serviceRequestOrderBPGoalCodings = buildCodings(env.getProperty("service-request-order.bp-goal.codings"));
         }
-        return serviceRequestOrderBPGoalCustomCodings;
+        return serviceRequestOrderBPGoalCodings;
     }
 
     public Pattern getServiceRequestOrderBPGoalNoteSystolicRegex() {
@@ -377,10 +377,10 @@ public class FhirConfigManager {
      * @param s a string of the form "system|code" or "system|code|display"
      *          Coding components may be blank; if they are, those components are ignored
      *          e.g., "system" -> Coding("system", null, null)
-     *                "system|coding" -> Coding("system", "coding", null)
-     *                "system|coding|display" -> Coding("system", "coding", "display")
-     *                "|coding" -> Coding(null, "coding", null)
-     *                "|coding|display" -> Coding(null, "coding", "display")
+     *                "system|code" -> Coding("system", "code", null)
+     *                "system|code|display" -> Coding("system", "code", "display")
+     *                "|code" -> Coding(null, "code", null)
+     *                "|code|display" -> Coding(null, "code", "display")
      *                "system||display" -> Coding("system", null, "display")
      *                "||display" -> Coding(null, null, "display")
      *

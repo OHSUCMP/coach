@@ -84,7 +84,7 @@ public class GoalService extends AbstractService {
                 if (entry.getResource() instanceof ServiceRequest) {
                     ServiceRequest sr = (ServiceRequest) entry.getResource();
                     try {
-                        if (sr.hasCode() && FhirUtil.hasCoding(sr.getCode(), fcm.getServiceRequestOrderBPGoalCustomCodings())) {
+                        if (sr.hasCode() && FhirUtil.hasCoding(sr.getCode(), fcm.getServiceRequestOrderBPGoalCodings())) {
                             Goal g = buildBPGoal(sessionId, sr);
                             if (logger.isDebugEnabled()) {
                                 logger.debug("created Goal: " + FhirUtil.toJson(g));
