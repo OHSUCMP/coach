@@ -99,16 +99,16 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 //    }
 
     @Override
-    public String getObservationCodeQuery(String patientId, String code) {
-        return getObservationCodeQuery(patientId, code, null);
+    public String getObservationQuery(String patientId, String code) {
+        return getObservationQuery(patientId, code, null);
     }
 
     @Override
-    public String getObservationCodeQuery(String patientId, String code, String lookbackPeriod) {
-        String observationCodeQuery = workspace.getFhirQueryManager().getObservationCodeQuery();
+    public String getObservationQuery(String patientId, String code, String lookbackPeriod) {
+        String observationQuery = workspace.getFhirQueryManager().getObservationQuery();
         String query = StringUtils.isNotBlank(lookbackPeriod) ?
-                addLookbackPeriodParam(observationCodeQuery, lookbackPeriod) :
-                observationCodeQuery;
+                addLookbackPeriodParam(observationQuery, lookbackPeriod) :
+                observationQuery;
 
         return buildQuery(query, params()
                 .add(TOKEN_SUBJECT, patientId)

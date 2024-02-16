@@ -13,8 +13,8 @@ public class FhirQueryManager {
     @Value("${Encounter.Strategy}")             private FhirStrategy encounterStrategy;
 //    @Value("${Observation.Category.Query}")     private String observationCategoryQuery;
 //    @Value("${Observation.Category.Strategy}")  private FhirStrategy observationCategoryStrategy;
-    @Value("${Observation.Code.Query}")         private String observationCodeQuery;
-    @Value("${Observation.Code.Strategy}")      private FhirStrategy observationCodeStrategy;
+    @Value("${Observation.Query}")              private String observationQuery;
+    @Value("${Observation.Strategy}")           private FhirStrategy observationStrategy;
     @Value("${Condition.Query}")                private String conditionQuery;
     @Value("${Condition.Strategy}")             private FhirStrategy conditionStrategy;
     @Value("${Goal.Query}")                     private String goalQuery;
@@ -54,12 +54,12 @@ public class FhirQueryManager {
 //        return observationCategoryStrategy;
 //    }
 
-    public String getObservationCodeQuery() {
-        return observationCodeQuery;
+    public String getObservationQuery() {
+        return observationQuery;
     }
 
-    public FhirStrategy getObservationCodeStrategy() {
-        return observationCodeStrategy;
+    public FhirStrategy getObservationStrategy() {
+        return observationStrategy;
     }
 
     public String getConditionQuery() {

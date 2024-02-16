@@ -132,8 +132,8 @@ public class EHRService extends AbstractService {
         logger.info("getting Observations for session=" + sessionId + " having code(s): " + code);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
-        return fhirService.search(fcc, workspace.getFhirQueryManager().getObservationCodeStrategy(),
-                workspace.getVendorTransformer().getObservationCodeQuery(fcc.getCredentials().getPatientId(), code, lookbackPeriod),
+        return fhirService.search(fcc, workspace.getFhirQueryManager().getObservationStrategy(),
+                workspace.getVendorTransformer().getObservationQuery(fcc.getCredentials().getPatientId(), code, lookbackPeriod),
                 new Function<ResourceWithBundle, Boolean>() {
                     @Override
                     public Boolean apply(ResourceWithBundle resourceWithBundle) {
