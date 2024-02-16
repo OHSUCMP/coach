@@ -18,8 +18,8 @@ public interface VendorTransformer {
     String getPatientLookup(String id);
     String getEncounterQuery(String patientId);
     String getEncounterQuery(String patientId, String lookbackPeriod);
-    String getObservationCategoryQuery(String patientId, String category);
-    String getObservationCategoryQuery(String patientId, String category, String lookbackPeriod);
+//    String getObservationCategoryQuery(String patientId, String category);
+//    String getObservationCategoryQuery(String patientId, String category, String lookbackPeriod);
     String getObservationCodeQuery(String patientId, String code);
     String getObservationCodeQuery(String patientId, String code, String lookbackPeriod);
     String getConditionQuery(String patientId, String category);

@@ -46,13 +46,13 @@ public class FhirQueryManager {
         return encounterStrategy;
     }
 
-    public String getObservationCategoryQuery() {
-        return observationCategoryQuery;
-    }
-
-    public FhirStrategy getObservationCategoryStrategy() {
-        return observationCategoryStrategy;
-    }
+//    public String getObservationCategoryQuery() {
+//        return observationCategoryQuery;
+//    }
+//
+//    public FhirStrategy getObservationCategoryStrategy() {
+//        return observationCategoryStrategy;
+//    }
 
     public String getObservationCodeQuery() {
         return observationCodeQuery;
