@@ -11,8 +11,8 @@ public class FhirQueryManager {
     @Value("${Patient.Strategy}")               private FhirStrategy patientStrategy;
     @Value("${Encounter.Query}")                private String encounterQuery;
     @Value("${Encounter.Strategy}")             private FhirStrategy encounterStrategy;
-    @Value("${Observation.Category.Query}")     private String observationCategoryQuery;
-    @Value("${Observation.Category.Strategy}")  private FhirStrategy observationCategoryStrategy;
+//    @Value("${Observation.Category.Query}")     private String observationCategoryQuery;
+//    @Value("${Observation.Category.Strategy}")  private FhirStrategy observationCategoryStrategy;
     @Value("${Observation.Code.Query}")         private String observationCodeQuery;
     @Value("${Observation.Code.Strategy}")      private FhirStrategy observationCodeStrategy;
     @Value("${Condition.Query}")                private String conditionQuery;
