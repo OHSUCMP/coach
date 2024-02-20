@@ -108,7 +108,7 @@ public class HomeController extends BaseController {
             model.addAttribute("bpGoalUpdated", workspace.getBpGoalUpdated());
             model.addAttribute("randomizationGroup", String.valueOf(workspace.getRandomizationGroup()));
 
-            Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
+            Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.clear-supplemental-data.enabled"), "true");
             model.addAttribute("showClearSupplementalData", showClearSupplementalData);
 
             if (workspace.getOmronTokenData() == null) {

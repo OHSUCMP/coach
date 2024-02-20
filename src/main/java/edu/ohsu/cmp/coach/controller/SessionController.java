@@ -223,7 +223,7 @@ public class SessionController extends BaseController {
     @PostMapping("clear-supplemental-data")
     public ResponseEntity<?> clearSupplementalData(HttpSession session) {
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
-        boolean permitClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
+        boolean permitClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.clear-supplemental-data.enabled"), "true");
         if (permitClearSupplementalData) {
             logger.info("clearing supplemental data for session=" + session.getId());
             workspace.clearSupplementalData();
