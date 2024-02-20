@@ -71,12 +71,12 @@ public class FhirConfigManager {
     private Pattern serviceRequestOrderBPGoalNoteSystolicRegex = null;
     private Pattern serviceRequestOrderBPGoalNoteDiastolicRegex = null;
 
-    public Coding getEncounterClassOfficeCoding() {   // ambulatory class to attach to crafted office visit encounters
-        if (encounterClassOfficeCoding == null) {
-            encounterClassOfficeCoding = buildCoding(env.getProperty("encounter.class.office.coding"));
-        }
-        return encounterClassOfficeCoding;
-    }
+//    public Coding getEncounterClassOfficeCoding() {   // ambulatory class to attach to crafted office visit encounters
+//        if (encounterClassOfficeCoding == null) {
+//            encounterClassOfficeCoding = buildCoding(env.getProperty("encounter.class.office.coding"));
+//        }
+//        return encounterClassOfficeCoding;
+//    }
 
     public Coding getEncounterClassHomeCoding() {   // ambulatory class to attach to crafted home encounters
         if (encounterClassHomeCoding == null) {
