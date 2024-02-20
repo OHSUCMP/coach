@@ -44,27 +44,20 @@ public class SessionController extends BaseController {
     @Autowired
     private REDCapService redCapService;
 
+    @Value("${smart.scope}")
+    private String scope;
+
+    @Value("${smart.redirectUri}")
+    private String redirectURI;
+
+    @Value("${smart.iss}")
+    private String iss;
+
     @Value("${smart.patient.clientId}")
     private String patientClientId;
 
-    @Value("${smart.patient.scope}")
-    private String patientScope;
-
-    @Value("${smart.patient.redirectUri}")
-    private String patientRedirectURI;
-
-    @Value("${smart.patient.iss}")
-    private String patientISS;
-
     @Value("${smart.ehr.clientId}")
     private String ehrClientId;
-
-    @Value("${smart.ehr.scope}")
-    private String ehrScope;
-
-    @Value("${smart.ehr.redirectUri}")
-    private String ehrRedirectURI;
-
 
     @Value("${redcap.data-access-group}")
     private String redcapDataAccessGroupStr;
@@ -79,8 +72,9 @@ public class SessionController extends BaseController {
         sessionService.expireAll(session.getId());
         setCommonViewComponents(model);
         model.addAttribute("clientId", ehrClientId);
-        model.addAttribute("scope", ehrScope);
-        model.addAttribute("redirectUri", ehrRedirectURI);
+        model.addAttribute("scope", scope);
+        model.addAttribute("redirectUri", redirectURI);
+        model.addAttribute("iss", iss);
         return "launch-ehr";
     }
 
@@ -89,9 +83,9 @@ public class SessionController extends BaseController {
         sessionService.expireAll(session.getId());
         setCommonViewComponents(model);
         model.addAttribute("clientId", patientClientId);
-        model.addAttribute("scope", patientScope);
-        model.addAttribute("redirectUri", patientRedirectURI);
-        model.addAttribute("iss", patientISS);
+        model.addAttribute("scope", scope);
+        model.addAttribute("redirectUri", redirectURI);
+        model.addAttribute("iss", iss);
         return "launch-patient";
     }
 
