@@ -108,12 +108,13 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             // ensure BP panel Observations are tagged with the common panel coding
             Observation sourceBPObservation = model.getSourceBPObservation().copy();
             appendIfMissing(sourceBPObservation, fcm.getBpPanelCommonCoding());
-            FhirUtil.appendResourceToBundle(bundle, sourceBPObservation);
 
             // CQF Ruler needs to see the Home Setting extension to positively identify the reading as Home
             if (model.isHomeReading() && ! FhirUtil.hasHomeSettingExtension(sourceBPObservation)) {
                 FhirUtil.addHomeSettingExtension(sourceBPObservation);
             }
+
+            FhirUtil.appendResourceToBundle(bundle, sourceBPObservation);
 
             if (model.getSourceEncounter() != null) {
                 FhirUtil.appendResourceToBundle(bundle, model.getSourceEncounter().copy());
@@ -126,21 +127,23 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             // ensure BP systolic and diastolic Observations are tagged with the common systolic and diastolic codings
             Observation systolicObservation = model.getSourceSystolicObservation().copy();
             appendIfMissing(systolicObservation, fcm.getBpSystolicCommonCoding());
-            FhirUtil.appendResourceToBundle(bundle,systolicObservation);
 
             // CQF Ruler needs to see the Home Setting extension to positively identify the reading as Home
             if (model.isHomeReading() && ! FhirUtil.hasHomeSettingExtension(systolicObservation)) {
                 FhirUtil.addHomeSettingExtension(systolicObservation);
             }
 
+            FhirUtil.appendResourceToBundle(bundle, systolicObservation);
+
             Observation diastolicObservation = model.getSourceDiastolicObservation().copy();
             appendIfMissing(diastolicObservation, fcm.getBpDiastolicCommonCoding());
-            FhirUtil.appendResourceToBundle(bundle, diastolicObservation);
 
             // CQF Ruler needs to see the Home Setting extension to positively identify the reading as Home
             if (model.isHomeReading() && ! FhirUtil.hasHomeSettingExtension(diastolicObservation)) {
                 FhirUtil.addHomeSettingExtension(diastolicObservation);
             }
+
+            FhirUtil.appendResourceToBundle(bundle, diastolicObservation);
 
             if (model.getSourceEncounter() != null) {
                 FhirUtil.appendResourceToBundle(bundle, model.getSourceEncounter());
