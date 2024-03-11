@@ -63,6 +63,7 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                         if      (e instanceof IOException)              throw (IOException) e;
                         else if (e instanceof ConfigurationException)   throw (ConfigurationException) e;
                         else if (e instanceof DataException)            throw (DataException) e;
+                        else if (e instanceof RuntimeException)         throw (RuntimeException) e;
                     }
                 }
             }
