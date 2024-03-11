@@ -122,14 +122,18 @@ public class PulseService extends AbstractService {
                     workspace.getRemotePulses().add(pm2);
                 }
 
-                auditService.doAudit(sessionId, AuditLevel.INFO, "wrote pulse remotely", String.valueOf(pm.getPulse()));
+                auditService.doAudit(sessionId, AuditLevel.INFO, "wrote pulse remotely", pm.getPulse() +
+                        " at " + pm.getReadingDateString());
 
             } catch (Exception e) {
                 // remote errors are tolerable, since we will always store locally too
-                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create Pulse remotely - " + e.getMessage(), e);
+                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create Pulse remotely - " +
+                        "pulse=" + pm.getPulse() + " at " + pm.getReadingDateString() +
+                        ", message=" + e.getMessage(), e);
 
                 auditService.doAudit(sessionId, AuditLevel.WARN, "failed to write pulse remotely",
-                        "pulse=" + pm.getPulse() + ", message=" + e.getMessage());
+                        "pulse=" + pm.getPulse() + " at " + pm.getReadingDateString() +
+                                ", message=" + e.getMessage());
             }
         }
 
@@ -142,14 +146,14 @@ public class PulseService extends AbstractService {
             }
 
             auditService.doAudit(sessionId, AuditLevel.INFO, "created pulse", "id=" + response.getId() +
-                    ", pulse=" + pm.getPulse());
+                    ", pulse=" + pm.getPulse() + " at " + pm.getReadingDateString());
 
         } catch (DataException de) {
             // okay if it's failing to write locally, that's a problem.
-            logger.error("caught " + de.getClass().getName() + " attempting to create PulseModel " + pm);
+            logger.error("caught " + de.getClass().getName() + " attempting to create PulseModel " + pm, de);
 
-            auditService.doAudit(sessionId, AuditLevel.ERROR, "failed to create pulse",
-                    "pulse=" + pm.getPulse() + ", message=" + de.getMessage());
+            auditService.doAudit(sessionId, AuditLevel.ERROR, "failed to create pulse", "pulse=" +
+                    pm.getPulse() + " at " + pm.getReadingDateString() + ", message=" + de.getMessage());
         }
 
         return pm2;
