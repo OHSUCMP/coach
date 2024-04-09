@@ -67,13 +67,6 @@ function renderCards(cards) {
                 html += "<span class='rationale'>" + card.rationale + "</span>";
             }
 
-            if (card.source.label !== null && card.source.url !== null) {
-                html += "<span class='source'>";
-                html += "<a href='" + card.source.url + "' target='_blank' rel='noopener noreferrer'>" +
-                    card.source.label + "</a>";
-                html += "</span>";
-            }
-
             if (card.links !== null) {
                 html += "<div class='links'>";
                 card.links.forEach(function(link) {
