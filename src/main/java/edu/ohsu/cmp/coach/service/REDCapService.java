@@ -8,6 +8,8 @@ import edu.ohsu.cmp.coach.entity.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.REDCapException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
+import edu.ohsu.cmp.coach.model.RedcapDataAccessGroup;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +55,7 @@ public class REDCapService {
     public static final String PARTICIPANT_COACH_URL_FIELD = "coach_url";
     public static final String PARTICIPANT_RECORD_DATE_FIELD = "record_dat";
     public static final String PARTICIPANT_CONSENT_FIELD = "icf_consent_73fb68";
+    public static final String PARTICIPANT_VUMC_ADDITIONAL_CONSENT = "authorize_vumc_hipaa";
     public static final String PARTICIPANT_RANDOMIZATION_FIELD = "randomized_assignment";
     public static final String PARTICIPANT_RANDOMIZATION_DATE_FIELD = "randomization_date";
     public static final String PARTICIPANT_DISPOSITION_WITHDRAW_FIELD = "withdraw";
@@ -62,6 +65,9 @@ public class REDCapService {
 
     @Value("${redcap.patient-launch-url}")
     private String launchUrl;
+
+    @Value("${redcap.data-access-group}")
+    private String redcapDataAccessGroupStr;
 
     /**
      * Return whether the REDCap flow is enabled for this application
@@ -121,6 +127,8 @@ public class REDCapService {
      */
     public RedcapParticipantInfo getParticipantInfo(String coachId) throws IOException, REDCapException {
 
+        RedcapDataAccessGroup dag = RedcapDataAccessGroup.fromTag(redcapDataAccessGroupStr);
+        
         String recordId = getRecordId(coachId);
         if (recordId == null) {
             logger.info("No record found in REDCap. Returning provisional participant info record for " + coachId);
@@ -154,15 +162,15 @@ public class REDCapService {
         List<Map<String, String>> records = gson.fromJson(response.getResponseBody(), new TypeToken<List<Map<String, String>>>(){}.getType());
 
         if (records.size() == 1) {
-            return RedcapParticipantInfo.buildFromRecord(coachId, records.get(0), new LinkedHashMap<String,String>());
+            return RedcapParticipantInfo.buildFromRecord(coachId, dag, records.get(0), new LinkedHashMap<String,String>());
         } else if (records.size() == 2) {
             // Distinguish the baseline and ongoing events.
             Map<String,String> record1 = records.get(0);
             Map<String,String> record2 = records.get(1);
             if (StringUtils.equals(record1.get("redcap_event_name"), PARTICIPANT_BASELINE_EVENT)) {
-                return RedcapParticipantInfo.buildFromRecord(coachId, record1, record2);
+                return RedcapParticipantInfo.buildFromRecord(coachId, dag, record1, record2);
             } else {
-                return RedcapParticipantInfo.buildFromRecord(coachId, record2, record1);
+                return RedcapParticipantInfo.buildFromRecord(coachId, dag, record2, record1);
             }                
         } else {
             throw new REDCapException(422, "found too many records for (" + recordId + ") - expected 1, found " + records.size(), null);
