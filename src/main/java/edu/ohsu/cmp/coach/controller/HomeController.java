@@ -13,6 +13,7 @@ import edu.ohsu.cmp.coach.session.SessionService;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -134,6 +135,10 @@ public class HomeController extends BaseController {
             // Only show the AE Survey link if REDCap is enabled and this is a patient. The link may not exist otherwise.
             if (redCapService.isRedcapEnabled() && Audience.PATIENT.equals(workspace.getAudience())) {
                 model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
+            }
+            // If this is a Care Team login and the patient needs to be enrolled, show a banner
+            if(Audience.CARE_TEAM.equals(workspace.getAudience()) && workspace.getRequiresEnrollment()) {
+                model.addAttribute("enrollmentBanner", true);
             }
 
             auditService.doAudit(sessionId, AuditLevel.INFO, "visited home page");
