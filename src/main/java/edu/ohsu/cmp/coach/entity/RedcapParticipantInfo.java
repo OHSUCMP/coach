@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.ohsu.cmp.coach.model.RedcapDataAccessGroup;
 import edu.ohsu.cmp.coach.service.REDCapService;
 
 /**
@@ -50,16 +51,24 @@ public class RedcapParticipantInfo {
      * @param ongoing
      * @return
      */
-    public static RedcapParticipantInfo buildFromRecord(String coachId, Map<String, String> baseline, Map<String,String> ongoing) {
+    public static RedcapParticipantInfo buildFromRecord(String coachId, RedcapDataAccessGroup dag, Map<String, String> baseline, Map<String,String> ongoing) {
         RedcapParticipantInfo pi = new RedcapParticipantInfo();
         pi.setRecordId(baseline.get(REDCapService.PARTICIPANT_RECORD_ID_FIELD));
         pi.setCoachId(coachId);
         pi.setExists(true);
         pi.setIsInformationSheetComplete(StringUtils.equals(baseline.get(REDCapService.PARTICIPANT_INFORMATION_SHEET_FORM + "_complete"), REDCapService.FORM_COMPLETE));
         pi.setHasConsentRecord(StringUtils.equals(baseline.get(REDCapService.PARTICIPANT_CONSENT_FORM + "_complete"), REDCapService.FORM_COMPLETE));
-        pi.setIsConsentGranted(pi.getHasConsentRecord() && 
-            StringUtils.equals(baseline.get(REDCapService.PARTICIPANT_CONSENT_FIELD), REDCapService.YES)
-        );
+        if (dag.equals(RedcapDataAccessGroup.VUMC)) {
+            pi.setIsConsentGranted(pi.getHasConsentRecord() && 
+                StringUtils.equals(baseline.get(REDCapService.PARTICIPANT_CONSENT_FIELD), REDCapService.YES) &&
+                StringUtils.equals(baseline.get(REDCapService.PARTICIPANT_VUMC_ADDITIONAL_CONSENT), REDCapService.YES)
+            );
+
+        } else {
+            pi.setIsConsentGranted(pi.getHasConsentRecord() && 
+                StringUtils.equals(baseline.get(REDCapService.PARTICIPANT_CONSENT_FIELD), REDCapService.YES)
+            );
+        }
         // Check that the randomization and randomization date fields have been filled out
         String randString = baseline.get(REDCapService.PARTICIPANT_RANDOMIZATION_FIELD);
         String randDateString = baseline.get(REDCapService.PARTICIPANT_RANDOMIZATION_DATE_FIELD);
