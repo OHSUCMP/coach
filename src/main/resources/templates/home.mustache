@@ -5,6 +5,12 @@
 <div id="LOESSBandwidth" class="hidden">{{loessBandwidth}}</div>
 
 <div class="container">
+    {{#enrollmentBanner}}
+    <div class="alert alert-danger" role="alert">
+    Note: This patient has not completed enrollment in the COACH study.
+    </div>
+    {{/enrollmentBanner}}
+
     <div class="px-2 d-flex justify-content-between">
         <span class="fs-4"><i class="fas fa-user color-primary"></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}</span>
         {{#showClearSupplementalData}}

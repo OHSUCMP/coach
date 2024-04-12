@@ -135,6 +135,10 @@ public class HomeController extends BaseController {
             if (redCapService.isRedcapEnabled() && Audience.PATIENT.equals(workspace.getAudience())) {
                 model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
             }
+            // If this is a Care Team login and the patient needs to be enrolled, show a banner
+            if(Audience.CARE_TEAM.equals(workspace.getAudience()) && workspace.getRequiresEnrollment()) {
+                model.addAttribute("enrollmentBanner", true);
+            }
 
             auditService.doAudit(sessionId, AuditLevel.INFO, "visited home page");
 

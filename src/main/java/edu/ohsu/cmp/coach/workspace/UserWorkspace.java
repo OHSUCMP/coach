@@ -53,6 +53,7 @@ public class UserWorkspace {
     private final String sessionId;
     private final Audience audience;
     private final RandomizationGroup randomizationGroup;
+    private final boolean requiresEnrollment;
     private final FHIRCredentialsWithClient fhirCredentialsWithClient;
     private final FhirQueryManager fqm;
     private final FhirConfigManager fcm;
@@ -75,12 +76,13 @@ public class UserWorkspace {
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
                             RandomizationGroup randomizationGroup,
-                            FHIRCredentialsWithClient fhirCredentialsWithClient,
+                            boolean requiresEnrollment, FHIRCredentialsWithClient fhirCredentialsWithClient,
                             FhirQueryManager fqm, FhirConfigManager fcm) {
         this.ctx = ctx;
         this.sessionId = sessionId;
         this.audience = audience;
         this.randomizationGroup = randomizationGroup;
+        this.requiresEnrollment = requiresEnrollment;
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
         this.fqm = fqm;
         this.fcm = fcm;
@@ -121,6 +123,10 @@ public class UserWorkspace {
 
     public RandomizationGroup getRandomizationGroup() {
         return randomizationGroup;
+    }
+
+    public boolean getRequiresEnrollment() {
+        return requiresEnrollment;
     }
 
     public FHIRCredentialsWithClient getFhirCredentialsWithClient() {

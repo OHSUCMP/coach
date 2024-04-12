@@ -135,7 +135,7 @@ public class SessionController extends BaseController {
                 return ResponseEntity.ok("session provisionally established");
 
             } else {
-                sessionService.prepareSession(session.getId(), credentials, audience, randomizationGroup);
+                sessionService.prepareSession(session.getId(), credentials, audience, randomizationGroup, requiresEnrollment);
                 return ResponseEntity.ok("session configured successfully");
             }
 
@@ -146,7 +146,7 @@ public class SessionController extends BaseController {
                 // for OHSU and MU, simply display the enhanced view for the patient, irrespective of the patient's
                 // randomization group, and irrespective of whether or not the patient is actively enrolled
 
-                sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED);
+                sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED, requiresEnrollment);
                 return ResponseEntity.ok("care team session established");
 
             } else if (dag == RedcapDataAccessGroup.VUMC) {
@@ -155,11 +155,11 @@ public class SessionController extends BaseController {
                 // a static "patient not active" page to the care team
 
                 if (requiresEnrollment) {
-                    // REDCap is enabled and the patient hasn't isn't actively enrolled.  display static "patient not active" page
+                    // REDCap is enabled and the patient isn't actively enrolled.  display static "patient not active" page
                     return ResponseEntity.ok(PATIENT_NOT_ACTIVE_RESPONSE);
 
                 } else {
-                    sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED);
+                    sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED, requiresEnrollment);
                     return ResponseEntity.ok("care team session established");
                 }
 

@@ -39,7 +39,7 @@ public class SessionService extends AbstractService {
         provisionalCache = new HashMap<>();
     }
 
-    public void prepareSession(String sessionId, FHIRCredentials credentials, Audience audience, RandomizationGroup randomizationGroup) throws ConfigurationException {
+    public void prepareSession(String sessionId, FHIRCredentials credentials, Audience audience, RandomizationGroup randomizationGroup, boolean requiresEnrollment) throws ConfigurationException {
         logger.debug("preparing session " + sessionId + " with credentials=" + credentials);
         IGenericClient client = FhirUtil.buildClient(
                 credentials.getServerURL(),
@@ -48,7 +48,7 @@ public class SessionService extends AbstractService {
         );
         FHIRCredentialsWithClient fcc = new FHIRCredentialsWithClient(credentials, client);
 
-        userWorkspaceService.init(sessionId, audience, randomizationGroup, fcc);
+        userWorkspaceService.init(sessionId, audience, randomizationGroup, requiresEnrollment, fcc);
         userWorkspaceService.get(sessionId).populate();
 
         auditService.doAudit(sessionId, AuditLevel.INFO, "session established", "sessionId=" + sessionId +
