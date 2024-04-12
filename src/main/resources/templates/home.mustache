@@ -128,17 +128,17 @@
         </div>
         <div id="omron">
             {{#omronAuthRequestUrl}}
-                <div>
+                <div class="alert alert-warning" role="alert">
                     <span id="omronAuthLink" class="link" data-target="{{omronAuthRequestUrl}}">Click here</span> to authenticate and synchronize with Omron.
                 </div>
             {{/omronAuthRequestUrl}}
             {{#omronSynchronizing}}
-                <div>
-                    Omron data is currently synchronizing.  Please wait...
+                <div class="alert alert-warning" role="alert">
+                    Omron data is synchronizing. Continue to use COACH as normal, but don't log out. Refresh this page to check the synchronization status.
                 </div>
             {{/omronSynchronizing}}
             {{#omronLastUpdated}}
-                <div>
+                <div class="alert alert-success" role="alert">
                     Omron data last synchronized <em>{{omronLastUpdated}}</em>
                 </div>
             {{/omronLastUpdated}}
