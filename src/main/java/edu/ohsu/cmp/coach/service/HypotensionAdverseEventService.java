@@ -45,13 +45,13 @@ public class HypotensionAdverseEventService extends AbstractService {
         // next, construct a new index of hypotension AEs based on this person's BP readings in the lookback period
         Map<String, HypotensionAdverseEvent> newMap = new LinkedHashMap<>();
         BloodPressureModel bpm1 = null;
-        List<BloodPressureModel> homeBPList = bloodPressureService.getHomeBloodPressureReadings(sessionId).stream()
+        List<BloodPressureModel> bpList = bloodPressureService.getBloodPressureReadings(sessionId).stream()
             .filter(bp -> {
                 LocalDate bpDate = bp.getReadingDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                 return bpDate.isAfter(earliestEventDate);
             }).collect(Collectors.toList());
-        homeBPList.sort(Comparator.comparing(AbstractVitalsModel::getReadingDate)); // sort oldest first
-        for (BloodPressureModel bpm : homeBPList) {
+        bpList.sort(Comparator.comparing(AbstractVitalsModel::getReadingDate)); // sort oldest first
+        for (BloodPressureModel bpm : bpList) {
             if (bpm.isLow()) {
                 if (bpm1 != null) {
                     // create AE from bpm and bpm1
