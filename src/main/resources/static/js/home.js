@@ -210,7 +210,7 @@ function populateSummaryDiv() {
         const nextMostRecentBP = bpsByDateDesc[1];
         // The two crisis BPs need to have been taken within the last 14 days
         twoCrisisBPs = crisisBP && nextMostRecentBP !== undefined && isCrisisBP(nextMostRecentBP) && within14Days(mostRecentBP) && within14Days(nextMostRecentBP);
-        twoLowCrisisBPs = lowCrisisBP && nextMostRecentBP !== undefined && isLowCrisisBP(nextMostRecentBP);
+        twoLowCrisisBPs = lowCrisisBP && nextMostRecentBP !== undefined && isLowCrisisBP(nextMostRecentBP) && within14Days(mostRecentBP) && within14Days(nextMostRecentBP);
         let avg = calculateAverageBP(window.bpdata);
         if (avg) {
             avgSystolic = Math.round(avg.systolic);
