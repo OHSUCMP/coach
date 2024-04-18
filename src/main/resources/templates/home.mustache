@@ -7,7 +7,7 @@
 <div class="container">
     {{#enrollmentBanner}}
     <div class="alert alert-danger" role="alert">
-    Note: This patient has not completed enrollment in the COACH study.
+    Note: The patient is not currently enrolled in the COACH study.
     </div>
     {{/enrollmentBanner}}
 
@@ -140,11 +140,11 @@
             {{/omronAuthRequestUrl}}
             {{#omronSynchronizing}}
                 <div class="alert alert-warning" role="alert">
-                    Omron data is synchronizing. Continue to use COACH as normal, but don't log out. Refresh this page to check the synchronization status.
+                    Omron data is synchronizing. Continue to use COACH as normal, but don't log out.
                 </div>
             {{/omronSynchronizing}}
             {{#omronLastUpdated}}
-                <div class="alert alert-success" role="alert">
+                <div class="alert alert-teal" role="alert">
                     Omron data last synchronized <em>{{omronLastUpdated}}</em>
                 </div>
             {{/omronLastUpdated}}
