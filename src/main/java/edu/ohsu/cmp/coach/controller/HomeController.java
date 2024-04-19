@@ -72,7 +72,10 @@ public class HomeController extends BaseController {
     private AdverseEventService adverseEventService;
 
     @Value("#{new Boolean('${security.browser.cache-credentials}')}")
-    Boolean cacheCredentials;
+    private Boolean cacheCredentials;
+
+    @Value("${system.status-message}")
+    private String systemStatusMessage;
 
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model,
@@ -138,6 +141,10 @@ public class HomeController extends BaseController {
             // If this is a Care Team login and the patient needs to be enrolled, show a banner
             if(Audience.CARE_TEAM.equals(workspace.getAudience()) && workspace.getRequiresEnrollment()) {
                 model.addAttribute("enrollmentBanner", true);
+            }
+
+            if (StringUtils.isNotBlank(systemStatusMessage)) {
+                model.addAttribute("systemStatusMessage", systemStatusMessage);
             }
 
             auditService.doAudit(sessionId, AuditLevel.INFO, "visited home page");

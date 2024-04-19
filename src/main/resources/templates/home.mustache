@@ -5,6 +5,17 @@
 <div id="LOESSBandwidth" class="hidden">{{loessBandwidth}}</div>
 
 <div class="container">
+    {{#systemStatusMessage}}
+        <div class="row align-items-center alert alert-teal" role="alert">
+            <div class="col-md-auto text-center">
+                <img src="/images/info-icon.png" alt="System Status" height="50px" />
+            </div>
+            <div class="col">
+                {{systemStatusMessage}}
+            </div>
+        </div>
+    {{/systemStatusMessage}}
+
     {{#enrollmentBanner}}
     <div class="alert alert-danger" role="alert">
     Note: The patient is not currently enrolled in the COACH study.
