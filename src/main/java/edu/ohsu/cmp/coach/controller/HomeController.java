@@ -114,9 +114,7 @@ public class HomeController extends BaseController {
             Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.clear-supplemental-data.enabled"), "true");
             model.addAttribute("showClearSupplementalData", showClearSupplementalData);
 
-            if (workspace.getOmronTokenData() == null) {
-                model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
-            }
+            model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
 
             if (workspace.isOmronSynchronizing()) {
                 model.addAttribute("omronSynchronizing", true);

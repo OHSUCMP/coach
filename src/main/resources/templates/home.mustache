@@ -3,6 +3,7 @@
 <div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
 <div id="randomizationGroup" class="hidden">{{randomizationGroup}}</div>
 <div id="LOESSBandwidth" class="hidden">{{loessBandwidth}}</div>
+<div id="omronAuthRequestUrl" class="hidden">{{omronAuthRequestUrl}}</div>
 
 <div class="container">
     {{#systemStatusMessage}}
@@ -290,6 +291,8 @@
             window.adverseEvents = adverseEvents;
             populateAdverseEvents();
         });
+
+        updateOmronStatus();
 
         getRecommendations(function(container, cards) {
             if (cards) {

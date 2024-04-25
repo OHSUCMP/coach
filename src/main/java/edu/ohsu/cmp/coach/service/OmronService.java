@@ -279,7 +279,13 @@ public class OmronService extends AbstractService {
         try {
             MeasurementResult result = requestMeasurements(sessionId, workspace.getOmronLastUpdated());
             if (result.hasBloodPressures()) {
-                for (OmronBloodPressureModel model : result.getBloodPressure()) {
+                List<OmronBloodPressureModel> list = result.getBloodPressure();
+                for (int i = 0; i < list.size(); i ++) {
+                    logger.debug("processing Omron record " + i + " of " + list.size());
+
+                    workspace.setOmronSynchronizationProgress(i + 1, list.size());
+
+                    OmronBloodPressureModel model = list.get(i);
 
                     // first persist the original object to local cache
                     MyOmronVitals vitals = null;
@@ -320,6 +326,7 @@ public class OmronService extends AbstractService {
             Date lastUpdated = new Date();
             patientService.setOmronLastUpdated(workspace.getInternalPatientId(), lastUpdated);
             workspace.setOmronLastUpdated(lastUpdated);
+            logger.debug("completed Omron synchronization");
 
         } catch (OmronException e) {
             logger.error("caught " + e.getClass().getName() + " updating vitals cache - " + e.getMessage(), e);
@@ -411,6 +418,8 @@ public class OmronService extends AbstractService {
             sinceTimestamp = calendar.getTime();
         }
         bodyParams.put("since", OMRON_DATE_FORMAT.format(sinceTimestamp));
+
+        logger.info("requesting Omron measurements since " + OMRON_DATE_FORMAT.format(sinceTimestamp) + " for session " + sessionId);
 
 //        bodyParams.put("limit", limit);           // optional
         bodyParams.put("type", "bloodpressure");

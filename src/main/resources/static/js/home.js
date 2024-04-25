@@ -93,6 +93,57 @@ function populateAdverseEvents() {
     }
 }
 
+function updateOmronStatus() {
+    console.log('in updateOmronStatus()');
+    loadOmronStatus(function(omronStatus) {
+        window.omronStatus = omronStatus;
+        populateOmronStatus();
+
+        if (omronStatus !== undefined && (omronStatus.status === 'INITIATING_SYNC' || omronStatus.status === 'SYNCHRONIZING')) {
+            console.log('status is ' + omronStatus.status + ' - scheduling another update in 1 second');
+            setTimeout(updateOmronStatus, 1000);
+        }
+    });
+}
+
+function loadOmronStatus(_callback) {
+    $.ajax({
+        method: "POST",
+        url: "/omron/status"
+    }).done(function(status) {
+        _callback(status);
+    });
+}
+
+function populateOmronStatus() {
+    let data = window.omronStatus;
+    let el = $('#omron');
+    let html = '';
+    if (data !== undefined && data.status !== 'DISABLED') {
+        if (data.status === 'READY') {
+            let omronAuthRequestUrl = $('#omronAuthRequestUrl').html();
+            html += '<div class="alert alert-warning" role="alert"><span id="omronAuthLink" class="link" data-target="' +
+                omronAuthRequestUrl + '">Click here</span> to authenticate and synchronize with Omron.</div>';
+            if (data.lastUpdated !== null) {
+                html += '<div class="alert alert-teal" role="alert">Omron data last synchronized <em>' + data.lastUpdated + '</em>.</div>';
+            }
+
+        } else if (data.status === 'INITIATING_SYNC') {
+            html += '<div class="alert alert-warning" role="alert">Initiating Omron synchronization.  Continue to use COACH as normal, but don\'t log out until this process is completed.</div>';
+
+        } else if (data.status === 'SYNCHRONIZING') {
+            let percentComplete = Math.floor(data.currentlyProcessing / data.totalToProcess * 100);
+
+            console.log('Omron sync status: currentlyProcessing=' + data.currentlyProcessing +
+                ', totalToProcess=' + data.totalToProcess + ', percentComplete=' + percentComplete);
+
+            html += '<div class="alert alert-warning" role="alert">Omron data is synchronizing (' + percentComplete +
+                '% complete).  Continue to use COACH as normal, but don\'t log out until this process is completed.</div>';
+        }
+    }
+    $(el).html(html);
+}
+
 // Sort blood pressures in date order, returning a new sorted array
 function sortByDateAsc(bps) {
     return bps.slice(0).sort((a, b) => Number(a.readingDate) - Number(b.readingDate));
