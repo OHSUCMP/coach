@@ -27,8 +27,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpSession;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,8 +35,6 @@ import java.util.concurrent.Callable;
 
 @Controller
 public class HomeController extends BaseController {
-    private static final DateFormat OMRON_LAST_UPDATED = new SimpleDateFormat("EEEE, MMMM d, YYYY 'at' h:mm a");
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -115,12 +111,6 @@ public class HomeController extends BaseController {
             model.addAttribute("showClearSupplementalData", showClearSupplementalData);
 
             model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
-
-            if (workspace.isOmronSynchronizing()) {
-                model.addAttribute("omronSynchronizing", true);
-            } else if (workspace.getOmronLastUpdated() != null) {
-                model.addAttribute("omronLastUpdated", OMRON_LAST_UPDATED.format(workspace.getOmronLastUpdated()));
-            }
 
             try {
                 List<CDSHook> list = recommendationService.getOrderedCDSHooks(sessionId);

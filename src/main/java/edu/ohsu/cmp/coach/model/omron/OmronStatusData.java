@@ -1,8 +1,12 @@
 package edu.ohsu.cmp.coach.model.omron;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class OmronStatusData {
+    private static final DateFormat OMRON_LAST_UPDATED = new SimpleDateFormat("EEEE, MMMM d, YYYY 'at' h:mm a");
+
     private OmronStatus status;
     private Date lastUpdated;
     private Integer currentlyProcessing;
@@ -21,6 +25,10 @@ public class OmronStatusData {
 
     public Date getLastUpdated() {
         return lastUpdated;
+    }
+
+    public String getLastUpdatedString() {
+        return OMRON_LAST_UPDATED.format(lastUpdated);
     }
 
     public Integer getCurrentlyProcessing() {

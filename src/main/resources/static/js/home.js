@@ -136,7 +136,7 @@ function populateOmronStatus(data) {
             html += '<div class="alert alert-warning" role="alert"><span id="omronAuthLink" class="link" data-target="' +
                 omronAuthRequestUrl + '">Click here</span> to authenticate and synchronize with Omron.</div>';
             if (data.lastUpdated !== null) {
-                html += '<div class="alert alert-teal" role="alert">Omron data last synchronized <em>' + data.lastUpdated + '</em>.</div>';
+                html += '<div class="alert alert-teal" role="alert">Omron data last synchronized <em>' + data.lastUpdatedString + '</em>.</div>';
             }
 
         } else if (data.status === 'INITIATING_SYNC') {
