@@ -3,6 +3,7 @@
 <div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
 <div id="randomizationGroup" class="hidden">{{randomizationGroup}}</div>
 <div id="LOESSBandwidth" class="hidden">{{loessBandwidth}}</div>
+<div id="omronAuthRequestUrl" class="hidden">{{omronAuthRequestUrl}}</div>
 
 <div class="container">
     {{#systemStatusMessage}}
@@ -125,9 +126,9 @@
                             <div class="col offset-sm-3 offset-md-4" style="font-size:0.85em;">
                                 <div id="chartTimelineContainer" class="hidden">
                                     <span>Timeline</span>
-                                    <button class="btn btn-secondary btn-sm" data-window="mr">Recent</span>
-                                    <button class="btn btn-secondary btn-sm" data-window="1y">1 year</span>
-                                    <button class="btn btn-secondary btn-sm selected" data-window="all">All</span>
+                                    <button class="btn btn-secondary btn-sm" data-window="mr">Recent</button>
+                                    <button class="btn btn-secondary btn-sm" data-window="1y">1 year</button>
+                                    <button class="btn btn-secondary btn-sm selected" data-window="all">All</button>
                                 </div>
                             </div>
                         </div>
@@ -290,6 +291,8 @@
             window.adverseEvents = adverseEvents;
             populateAdverseEvents();
         });
+
+        updateOmronStatus();
 
         getRecommendations(function(container, cards) {
             if (cards) {
