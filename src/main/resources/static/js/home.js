@@ -93,19 +93,6 @@ function populateAdverseEvents() {
     }
 }
 
-function updateOmronStatus() {
-    console.log('in updateOmronStatus()');
-    loadOmronStatus(function(omronStatus) {
-        window.omronStatus = omronStatus;
-        populateOmronStatus();
-
-        if (omronStatus !== undefined && (omronStatus.status === 'INITIATING_SYNC' || omronStatus.status === 'SYNCHRONIZING')) {
-            console.log('status is ' + omronStatus.status + ' - scheduling another update in 1 second');
-            setTimeout(updateOmronStatus, 1000);
-        }
-    });
-}
-
 function loadOmronStatus(_callback) {
     $.ajax({
         method: "POST",
@@ -115,12 +102,36 @@ function loadOmronStatus(_callback) {
     });
 }
 
-function populateOmronStatus() {
-    let data = window.omronStatus;
+function updateOmronStatus() {
+    loadOmronStatus(function(omronStatus) {
+        populateOmronStatus(omronStatus);
+
+        if (omronStatus !== undefined && (omronStatus.status === 'INITIATING_SYNC' || omronStatus.status === 'SYNCHRONIZING')) {
+            setTimeout(updateOmronStatus, 1000);
+
+        } else if (isOmronSyncCompleted(omronStatus)) {
+            setTimeout(updateOmronStatus, 5000);
+        }
+
+        window.omronStatus = omronStatus;
+    });
+}
+
+function isOmronSyncCompleted(omronStatus) {
+    return window.omronStatus !== undefined &&
+        (window.omronStatus.status === 'INITIATING_SYNC' || window.omronStatus.status === 'SYNCHRONIZING') &&
+        omronStatus !== undefined &&
+        omronStatus.status === 'READY';
+}
+
+function populateOmronStatus(data) {
     let el = $('#omron');
     let html = '';
     if (data !== undefined && data.status !== 'DISABLED') {
-        if (data.status === 'READY') {
+        if (isOmronSyncCompleted(data)) {
+            html += '<div class="alert alert-warning" role="alert">Omron data synchronization is complete.</div>';
+
+        } else if (data.status === 'READY') {
             let omronAuthRequestUrl = $('#omronAuthRequestUrl').html();
             html += '<div class="alert alert-warning" role="alert"><span id="omronAuthLink" class="link" data-target="' +
                 omronAuthRequestUrl + '">Click here</span> to authenticate and synchronize with Omron.</div>';
@@ -133,10 +144,6 @@ function populateOmronStatus() {
 
         } else if (data.status === 'SYNCHRONIZING') {
             let percentComplete = Math.floor(data.currentlyProcessing / data.totalToProcess * 100);
-
-            console.log('Omron sync status: currentlyProcessing=' + data.currentlyProcessing +
-                ', totalToProcess=' + data.totalToProcess + ', percentComplete=' + percentComplete);
-
             html += '<div class="alert alert-warning" role="alert">Omron data is synchronizing (' + percentComplete +
                 '% complete).  Continue to use COACH as normal, but don\'t log out until this process is completed.</div>';
         }

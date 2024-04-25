@@ -320,6 +320,14 @@ public class OmronService extends AbstractService {
                             }
                         }
                     }
+
+// storer : useful for debugging
+//                    try {
+//                        logger.debug("sleeping 800ms");
+//                        Thread.sleep(800);
+//                    } catch (InterruptedException e) {
+//                        throw new RuntimeException(e);
+//                    }
                 }
             }
 
