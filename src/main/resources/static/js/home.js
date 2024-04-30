@@ -24,7 +24,7 @@ function doClearSupplementalData(_callback) {
     });
 }
 
-function loadBloodPressureObservations(_callback) {
+function getBloodPressureObservations(_callback) {
     $.ajax({
         method: "POST",
         url: "/blood-pressure-observations-list"
@@ -40,7 +40,7 @@ function loadBloodPressureObservations(_callback) {
     });
 }
 
-function loadMedications(_callback) {
+function getMedications(_callback) {
     $.ajax({
         method: "POST",
         url: "/medications-list"
@@ -67,7 +67,7 @@ function populateMedications() {
     }
 }
 
-function loadAdverseEvents(_callback) {
+function getAdverseEvents(_callback) {
     $.ajax({
         method: "POST",
         url: "/adverse-events-list"
@@ -93,35 +93,15 @@ function populateAdverseEvents() {
     }
 }
 
-function loadOmronStatus(_callback) {
+function getOmronStatus(_callback) {
+    // console.log('loading Omron status -');
     $.ajax({
         method: "POST",
         url: "/omron/status"
     }).done(function(status) {
+        // console.log('got Omron status: ' + JSON.stringify(status));
         _callback(status);
     });
-}
-
-function updateOmronStatus() {
-    loadOmronStatus(function(omronStatus) {
-        populateOmronStatus(omronStatus);
-
-        if (omronStatus !== undefined && (omronStatus.status === 'INITIATING_SYNC' || omronStatus.status === 'SYNCHRONIZING')) {
-            setTimeout(updateOmronStatus, 1000);
-
-        } else if (isOmronSyncCompleted(omronStatus)) {
-            setTimeout(updateOmronStatus, 5000);
-        }
-
-        window.omronStatus = omronStatus;
-    });
-}
-
-function isOmronSyncCompleted(omronStatus) {
-    return window.omronStatus !== undefined &&
-        (window.omronStatus.status === 'INITIATING_SYNC' || window.omronStatus.status === 'SYNCHRONIZING') &&
-        omronStatus !== undefined &&
-        omronStatus.status === 'READY';
 }
 
 function populateOmronStatus(data) {
@@ -149,6 +129,83 @@ function populateOmronStatus(data) {
         }
     }
     $(el).html(html);
+}
+
+function refreshChart() {
+    // calling buildChart() without first replacing the DOM element creates wonkiness
+    $('#chart').replaceWith('<canvas id="chart"></canvas>');
+    getBloodPressureObservations(function(bpdata) {
+        window.bpdata = bpdata;
+        window.bpchart = {};
+        window.bpchart.data = window.bpdata;
+
+        populateSummaryDiv();
+        buildChart();
+    });
+}
+
+function refreshAdverseEvents() {
+    getAdverseEvents(function(adverseEvents) {
+        window.adverseEvents = adverseEvents;
+        populateAdverseEvents();
+    });
+}
+
+function refreshMedications() {
+    getMedications(function(meds) {
+        window.meds = meds;
+        populateMedications();
+    });
+}
+
+function refreshRecommendations() {
+    getRecommendations(function(container, cards) {
+        if (cards) {
+            let html = renderCards(cards);
+            $(container).html(html);
+            if (html === '') {
+                $(container).closest('.recommendation').addClass('hidden');
+
+            } else {
+                $(container).closest('.recommendation').removeClass('hidden');
+                $(container).find('.bpGoal input.systolic').inputmask({
+                    regex: "1?[0-9]{2}"
+                });
+                $(container).find('.bpGoal input.diastolic').inputmask({
+                    regex: "1?[0-9]{2}"
+                });
+            }
+        }
+    });
+}
+
+function refreshOmronStatus() {
+    getOmronStatus(function(omronStatus) {
+        populateOmronStatus(omronStatus);
+
+        if (omronStatus !== undefined && (omronStatus.status === 'INITIATING_SYNC' || omronStatus.status === 'SYNCHRONIZING')) {
+            setTimeout(refreshOmronStatus, 1000);
+
+        } else if (isOmronSyncCompleted(omronStatus)) {
+            setTimeout(refreshOmronStatusAndPageAssets, 5000);
+        }
+
+        window.omronStatus = omronStatus;
+    });
+}
+
+function refreshOmronStatusAndPageAssets() {
+    refreshOmronStatus();
+    refreshChart();
+    refreshAdverseEvents();
+    refreshRecommendations();
+}
+
+function isOmronSyncCompleted(omronStatus) {
+    return window.omronStatus !== undefined &&
+        (window.omronStatus.status === 'INITIATING_SYNC' || window.omronStatus.status === 'SYNCHRONIZING') &&
+        omronStatus !== undefined &&
+        omronStatus.status === 'READY';
 }
 
 // Sort blood pressures in date order, returning a new sorted array
