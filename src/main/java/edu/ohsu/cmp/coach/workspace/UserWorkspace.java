@@ -211,6 +211,7 @@ public class UserWorkspace {
     }
 
     public void clearCaches() {
+        logger.info("clearing caches for session=" + sessionId);
         cache.invalidateAll();
         cardCache.invalidateAll();
         bundleCache.invalidateAll();
