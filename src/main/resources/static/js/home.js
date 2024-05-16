@@ -113,8 +113,8 @@ function populateOmronStatus(data) {
 
         } else if (data.status === 'READY') {
             let omronAuthRequestUrl = $('#omronAuthRequestUrl').html();
-            html += '<div class="alert alert-warning" role="alert"><span id="omronAuthLink" class="link" data-target="' +
-                omronAuthRequestUrl + '">Click here</span> to authenticate and synchronize with Omron.</div>';
+            html += '<div id="omronAuthLink" class="alert alert-warning alert-clickable" role="alert" data-target="' + omronAuthRequestUrl + 
+                '"><span class="link" >Click here</span> to authenticate and synchronize with Omron.</div>';
             if (data.lastUpdated !== null) {
                 html += '<div class="alert alert-teal" role="alert">Omron data last synchronized <em>' + data.lastUpdatedString + '</em>.</div>';
             }

@@ -147,8 +147,8 @@
         </div>
         <div id="omron">
             {{#omronAuthRequestUrl}}
-                <div class="alert alert-warning" role="alert">
-                    <span id="omronAuthLink" class="link" data-target="{{omronAuthRequestUrl}}">Click here</span> to authenticate and synchronize with Omron.
+                <div id="omronAuthLink" class="alert alert-warning alert-clickable" data-target="{{omronAuthRequestUrl}}" role="alert">
+                    <span class="link">Click here</span> to authenticate and synchronize with Omron.
                 </div>
             {{/omronAuthRequestUrl}}
             {{#omronSynchronizing}}
