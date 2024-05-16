@@ -3,8 +3,9 @@
 <div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
 <div id="randomizationGroup" class="hidden">{{randomizationGroup}}</div>
 <div id="LOESSBandwidth" class="hidden">{{loessBandwidth}}</div>
-<div id="omronAuthRequestUrl" class="hidden">{{omronAuthRequestUrl}}</div>
-
+{{#omronAuthRequestUrl}}
+    <div id="omronAuthRequestUrl" class="hidden">{{omronAuthRequestUrl}}</div>
+{{/omronAuthRequestUrl}}
 <div class="container">
     {{#systemStatusMessage}}
         <div class="row align-items-center alert alert-teal" role="alert">
