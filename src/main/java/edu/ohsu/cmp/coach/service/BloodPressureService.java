@@ -133,14 +133,18 @@ public class BloodPressureService extends AbstractService {
                     workspace.getRemoteBloodPressures().add(bpm2);
                 }
 
-                auditService.doAudit(sessionId, AuditLevel.INFO, "wrote BP remotely", bpm.getSystolic() + "/" + bpm.getDiastolic());
+                auditService.doAudit(sessionId, AuditLevel.INFO, "wrote BP remotely", bpm.getSystolic() + "/" +
+                        bpm.getDiastolic() + " at " + bpm.getReadingDateString());
 
             } catch (Exception e) {
                 // remote errors are tolerable, since we will always store locally too
-                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " + e.getMessage(), e);
+                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " +
+                        "BP=" + bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString() +
+                        ", message=" + e.getMessage(), e);
 
-                auditService.doAudit(sessionId, AuditLevel.WARN, "failed to write BP remotely",
-                        "BP=" + bpm.getSystolic() + "/" + bpm.getDiastolic() + ", message=" + e.getMessage());
+                auditService.doAudit(sessionId, AuditLevel.WARN, "failed to write BP remotely", "BP=" +
+                        bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString() +
+                                ", message=" + e.getMessage());
             }
         }
 
@@ -153,14 +157,15 @@ public class BloodPressureService extends AbstractService {
             }
 
             auditService.doAudit(sessionId, AuditLevel.INFO, "created BP", "id=" + response.getId() +
-                    ", BP=" + bpm.getSystolic() + "/" + bpm.getDiastolic());
+                    ", BP=" + bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString());
 
         } catch (DataException de) {
             // okay if it's failing to write locally, that's a problem.
-            logger.error("caught " + de.getClass().getName() + " attempting to create BloodPressureModel " + bpm);
+            logger.error("caught " + de.getClass().getName() + " attempting to create BloodPressureModel " + bpm, de);
 
-            auditService.doAudit(sessionId, AuditLevel.ERROR, "failed to create BP",
-                    "BP=" + bpm.getSystolic() + "/" + bpm.getDiastolic() + ", message=" + de.getMessage());
+            auditService.doAudit(sessionId, AuditLevel.ERROR, "failed to create BP", "BP=" +
+                    bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString() +
+                            ", message=" + de.getMessage());
         }
 
         return bpm2;

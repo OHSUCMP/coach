@@ -12,11 +12,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class HypotensionAdverseEventService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final int LOOKBACK_DAYS = 14;
 
     @Autowired
     private HypotensionAdverseEventRepository repository;
@@ -29,18 +33,25 @@ public class HypotensionAdverseEventService extends AbstractService {
 
         boolean modified = false;
 
-        // first, catalog the list of hypotension adverse events for this person that are currently persisted
+        // first, catalog the list of hypotension adverse events for this person within the lookback period that are currently persisted
         Map<String, HypotensionAdverseEvent> currentMap = new LinkedHashMap<>();
         for (HypotensionAdverseEvent hae : getHypotensionAdverseEventList(sessionId)) {
             currentMap.put(hae.getLogicalEqualityKey(), hae);
         }
 
-        // next, construct a new index of hypotension AEs based on this person's BP readings
+        LocalDate earliestEventDate = LocalDate.now().minusDays(LOOKBACK_DAYS);
+        System.out.println("Earliest event date: " + earliestEventDate); 
+
+        // next, construct a new index of hypotension AEs based on this person's BP readings in the lookback period
         Map<String, HypotensionAdverseEvent> newMap = new LinkedHashMap<>();
         BloodPressureModel bpm1 = null;
-        List<BloodPressureModel> homeBPList = bloodPressureService.getHomeBloodPressureReadings(sessionId);
-        homeBPList.sort(Comparator.comparing(AbstractVitalsModel::getReadingDate)); // sort oldest first
-        for (BloodPressureModel bpm : homeBPList) {
+        List<BloodPressureModel> bpList = bloodPressureService.getBloodPressureReadings(sessionId).stream()
+            .filter(bp -> {
+                LocalDate bpDate = bp.getReadingDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                return bpDate.isAfter(earliestEventDate);
+            }).collect(Collectors.toList());
+        bpList.sort(Comparator.comparing(AbstractVitalsModel::getReadingDate)); // sort oldest first
+        for (BloodPressureModel bpm : bpList) {
             if (bpm.isLow()) {
                 if (bpm1 != null) {
                     // create AE from bpm and bpm1
@@ -81,9 +92,20 @@ public class HypotensionAdverseEventService extends AbstractService {
         return modified;
     }
 
+    /**
+     * This is limited to Hypotension Adverse Events that started in the last 14 days
+     * @param sessionId
+     * @return
+     */
     public List<HypotensionAdverseEvent> getHypotensionAdverseEventList(String sessionId) {
+        LocalDate earliestEventDate = LocalDate.now().minusDays(LOOKBACK_DAYS);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
-        return repository.findAllByPatId(workspace.getInternalPatientId());
+        return repository.findAllByPatId(workspace.getInternalPatientId()).stream()
+            .filter(hae -> 
+            {
+                LocalDate earliestAEDate = hae.getBp1ReadingDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                return earliestAEDate.isAfter(earliestEventDate);
+            }).collect(Collectors.toList());
     }
 
     public HypotensionAdverseEvent create(String sessionId, HypotensionAdverseEvent hae) {

@@ -19,16 +19,16 @@ function doClearSupplementalData(_callback) {
     $.ajax({
         method: "POST",
         url: "/clear-supplemental-data"
-    }).done(function(msg, textStatus, jqXHR) {
-        _callback(msg);
+    }).done(function() {
+        _callback();
     });
 }
 
-function loadBloodPressureObservations(_callback) {
+function getBloodPressureObservations(_callback) {
     $.ajax({
         method: "POST",
         url: "/blood-pressure-observations-list"
-    }).done(function(bpdata, textStatus, jqXHR) {
+    }).done(function(bpdata) {
         bpdata.forEach(function(item) {
             item.readingDate = new Date(item.readingDate);
         });
@@ -40,11 +40,11 @@ function loadBloodPressureObservations(_callback) {
     });
 }
 
-function loadMedications(_callback) {
+function getMedications(_callback) {
     $.ajax({
         method: "POST",
         url: "/medications-list"
-    }).done(function(meds, textStatus, jqXHR) {
+    }).done(function(meds) {
         _callback(meds);
     });
 }
@@ -67,11 +67,11 @@ function populateMedications() {
     }
 }
 
-function loadAdverseEvents(_callback) {
+function getAdverseEvents(_callback) {
     $.ajax({
         method: "POST",
         url: "/adverse-events-list"
-    }).done(function(adverseEvents, textStatus, jqXHR) {
+    }).done(function(adverseEvents) {
         _callback(adverseEvents);
     });
 }
@@ -91,6 +91,121 @@ function populateAdverseEvents() {
 
         $('#adverseEvents').html(html);
     }
+}
+
+function getOmronStatus(_callback) {
+    // console.log('loading Omron status -');
+    $.ajax({
+        method: "POST",
+        url: "/omron/status"
+    }).done(function(status) {
+        // console.log('got Omron status: ' + JSON.stringify(status));
+        _callback(status);
+    });
+}
+
+function populateOmronStatus(data) {
+    let el = $('#omron');
+    let html = '';
+    if (data !== undefined && data.status !== 'DISABLED') {
+        if (isOmronSyncCompleted(data)) {
+            html += '<div class="alert alert-warning" role="alert">Omron data synchronization is complete.</div>';
+
+        } else if (data.status === 'READY') {
+            let omronAuthRequestUrl = $('#omronAuthRequestUrl').html();
+            html += '<div id="omronAuthLink" class="alert alert-warning alert-clickable" role="alert" data-target="' + omronAuthRequestUrl + 
+                '"><span class="link" >Click here</span> to authenticate and synchronize with Omron.</div>';
+            if (data.lastUpdated !== null) {
+                html += '<div class="alert alert-teal" role="alert">Omron data last synchronized <em>' + data.lastUpdatedString + '</em>.</div>';
+            }
+
+        } else if (data.status === 'INITIATING_SYNC') {
+            html += '<div class="alert alert-warning" role="alert">Initiating Omron synchronization.  Continue to use COACH as normal, but don\'t log out until this process is completed.</div>';
+
+        } else if (data.status === 'SYNCHRONIZING') {
+            let percentComplete = Math.floor(data.currentlyProcessing / data.totalToProcess * 100);
+            html += '<div class="alert alert-warning" role="alert">Omron data is synchronizing (' + percentComplete +
+                '% complete).  Continue to use COACH as normal, but don\'t log out until this process is completed.</div>';
+        }
+    }
+    $(el).html(html);
+}
+
+function refreshChart() {
+    // calling buildChart() without first replacing the DOM element creates wonkiness
+    $('#chart').replaceWith('<canvas id="chart"></canvas>');
+    getBloodPressureObservations(function(bpdata) {
+        window.bpdata = bpdata;
+        window.bpchart = {};
+        window.bpchart.data = window.bpdata;
+
+        populateSummaryDiv();
+        buildChart();
+    });
+}
+
+function refreshAdverseEvents() {
+    getAdverseEvents(function(adverseEvents) {
+        window.adverseEvents = adverseEvents;
+        populateAdverseEvents();
+    });
+}
+
+function refreshMedications() {
+    getMedications(function(meds) {
+        window.meds = meds;
+        populateMedications();
+    });
+}
+
+function refreshRecommendations() {
+    getRecommendations(function(container, cards) {
+        if (cards) {
+            let html = renderCards(cards);
+            $(container).html(html);
+            if (html === '') {
+                $(container).closest('.recommendation').addClass('hidden');
+
+            } else {
+                $(container).closest('.recommendation').removeClass('hidden');
+                $(container).find('.bpGoal input.systolic').inputmask({
+                    regex: "1?[0-9]{2}"
+                });
+                $(container).find('.bpGoal input.diastolic').inputmask({
+                    regex: "1?[0-9]{2}"
+                });
+            }
+        }
+    });
+}
+
+function refreshOmronStatus() {
+    getOmronStatus(function(omronStatus) {
+        populateOmronStatus(omronStatus);
+
+        if (omronStatus !== undefined && (omronStatus.status === 'INITIATING_SYNC' || omronStatus.status === 'SYNCHRONIZING')) {
+            setTimeout(refreshOmronStatus, 1000);
+
+        } else if (isOmronSyncCompleted(omronStatus)) {
+            setTimeout(refreshOmronStatusAndPageAssets, 5000);
+        }
+
+        window.omronStatus = omronStatus;
+    });
+}
+
+function refreshOmronStatusAndPageAssets() {
+    refreshOmronStatus();
+    refreshChart();
+    refreshAdverseEvents();
+    refreshRecommendations();
+}
+
+function isOmronSyncCompleted(omronStatus) {
+    return window.omronStatus !== undefined &&
+        (window.omronStatus.status === 'INITIATING_SYNC' || window.omronStatus.status === 'SYNCHRONIZING') &&
+        omronStatus !== undefined &&
+        omronStatus.status === 'READY';
 }
 
 // Sort blood pressures in date order, returning a new sorted array
@@ -210,7 +325,7 @@ function populateSummaryDiv() {
         const nextMostRecentBP = bpsByDateDesc[1];
         // The two crisis BPs need to have been taken within the last 14 days
         twoCrisisBPs = crisisBP && nextMostRecentBP !== undefined && isCrisisBP(nextMostRecentBP) && within14Days(mostRecentBP) && within14Days(nextMostRecentBP);
-        twoLowCrisisBPs = lowCrisisBP && nextMostRecentBP !== undefined && isLowCrisisBP(nextMostRecentBP);
+        twoLowCrisisBPs = lowCrisisBP && nextMostRecentBP !== undefined && isLowCrisisBP(nextMostRecentBP) && within14Days(mostRecentBP) && within14Days(nextMostRecentBP);
         let avg = calculateAverageBP(window.bpdata);
         if (avg) {
             avgSystolic = Math.round(avg.systolic);

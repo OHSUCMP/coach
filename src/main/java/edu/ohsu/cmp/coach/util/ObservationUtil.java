@@ -51,6 +51,10 @@ public class ObservationUtil {
                 ObservationSource.UNKNOWN;
     }
 
+    // todo : getPulseSource doesn't have an implementation that takes Encounter as a parameter, as getBPSource
+    //        functions above do.  This means that the PulseModel constructor doesn't make use of a fallback strategy
+    //        in the way that BloodPressureModel does, and this should be updated
+
     public static ObservationSource getPulseSource(Observation pulseObservation) {
         return FhirUtil.hasHomeSettingExtension(pulseObservation) ?
                 ObservationSource.HOME :    // this should remain generic HOME as a more specific source is unknown

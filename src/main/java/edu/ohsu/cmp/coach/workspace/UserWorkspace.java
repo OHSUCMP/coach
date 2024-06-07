@@ -12,6 +12,8 @@ import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.model.omron.OmronStatus;
+import edu.ohsu.cmp.coach.model.omron.OmronStatusData;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.service.*;
@@ -53,6 +55,7 @@ public class UserWorkspace {
     private final String sessionId;
     private final Audience audience;
     private final RandomizationGroup randomizationGroup;
+    private final boolean requiresEnrollment;
     private final FHIRCredentialsWithClient fhirCredentialsWithClient;
     private final FhirQueryManager fqm;
     private final FhirConfigManager fcm;
@@ -72,15 +75,18 @@ public class UserWorkspace {
     private String redcapId = null;
     private Boolean bpGoalUpdated = null;
     private Boolean omronSynchronizing = false;
+    private Integer omronCurrentItem = null;
+    private Integer omronTotalItems = null;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
                             RandomizationGroup randomizationGroup,
-                            FHIRCredentialsWithClient fhirCredentialsWithClient,
+                            boolean requiresEnrollment, FHIRCredentialsWithClient fhirCredentialsWithClient,
                             FhirQueryManager fqm, FhirConfigManager fcm) {
         this.ctx = ctx;
         this.sessionId = sessionId;
         this.audience = audience;
         this.randomizationGroup = randomizationGroup;
+        this.requiresEnrollment = requiresEnrollment;
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
         this.fqm = fqm;
         this.fcm = fcm;
@@ -121,6 +127,10 @@ public class UserWorkspace {
 
     public RandomizationGroup getRandomizationGroup() {
         return randomizationGroup;
+    }
+
+    public boolean getRequiresEnrollment() {
+        return requiresEnrollment;
     }
 
     public FHIRCredentialsWithClient getFhirCredentialsWithClient() {
@@ -201,6 +211,7 @@ public class UserWorkspace {
     }
 
     public void clearCaches() {
+        logger.info("clearing caches for session=" + sessionId);
         cache.invalidateAll();
         cardCache.invalidateAll();
         bundleCache.invalidateAll();
@@ -638,6 +649,8 @@ public class UserWorkspace {
         HomeBloodPressureReadingService hbprService = ctx.getBean(HomeBloodPressureReadingService.class);
         hbprService.deleteAll(sessionId);
 
+        // todo : also clear hypotension adverse events
+
         HomePulseReadingService hprService = ctx.getBean(HomePulseReadingService.class);
         hprService.deleteAll(sessionId);
 
@@ -700,6 +713,8 @@ public class UserWorkspace {
 
                 } finally {
                     omronSynchronizing = false;
+                    omronCurrentItem = null;
+                    omronTotalItems = null;
                 }
                 logger.info("DONE Omron synchronization for session=" + sessionId +
                         " (took " + (System.currentTimeMillis() - start) + "ms)");
@@ -711,5 +726,35 @@ public class UserWorkspace {
 
     public Boolean isOmronSynchronizing() {
         return omronSynchronizing;
+    }
+
+    public void setOmronSynchronizationProgress(int current, int total) {
+        logger.debug("setting Omron sync progress: current=" + current + ", total=" + total);
+        if (omronSynchronizing) {
+            omronCurrentItem = current;
+            omronTotalItems = total;
+
+        } else {
+            logger.warn("not setting Omron sync progress (current=" + current + ", total=" + total + ") because omronSynchronizing=false");
+        }
+    }
+
+    public OmronStatusData getOmronSynchronizationStatus() {
+        OmronService omronService = ctx.getBean(OmronService.class);
+        if (omronService.isOmronEnabled()) {
+            OmronStatus status;
+            if (omronSynchronizing) {
+                status = omronCurrentItem == null && omronTotalItems == null ?
+                        OmronStatus.INITIATING_SYNC :
+                        OmronStatus.SYNCHRONIZING;
+            } else {
+                status = OmronStatus.READY;
+            }
+            return new OmronStatusData(status, omronLastUpdated, omronCurrentItem, omronTotalItems);
+
+        } else {
+            logger.warn("Omron integration is currently disabled; aborting synchronize request");
+            return new OmronStatusData(OmronStatus.DISABLED, null, null, null);
+        }
     }
 }

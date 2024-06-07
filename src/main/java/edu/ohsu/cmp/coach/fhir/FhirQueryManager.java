@@ -11,10 +11,10 @@ public class FhirQueryManager {
     @Value("${Patient.Strategy}")               private FhirStrategy patientStrategy;
     @Value("${Encounter.Query}")                private String encounterQuery;
     @Value("${Encounter.Strategy}")             private FhirStrategy encounterStrategy;
-    @Value("${Observation.Category.Query}")     private String observationCategoryQuery;
-    @Value("${Observation.Category.Strategy}")  private FhirStrategy observationCategoryStrategy;
-    @Value("${Observation.Code.Query}")         private String observationCodeQuery;
-    @Value("${Observation.Code.Strategy}")      private FhirStrategy observationCodeStrategy;
+//    @Value("${Observation.Category.Query}")     private String observationCategoryQuery;
+//    @Value("${Observation.Category.Strategy}")  private FhirStrategy observationCategoryStrategy;
+    @Value("${Observation.Query}")              private String observationQuery;
+    @Value("${Observation.Strategy}")           private FhirStrategy observationStrategy;
     @Value("${Condition.Query}")                private String conditionQuery;
     @Value("${Condition.Strategy}")             private FhirStrategy conditionStrategy;
     @Value("${Goal.Query}")                     private String goalQuery;
@@ -46,20 +46,20 @@ public class FhirQueryManager {
         return encounterStrategy;
     }
 
-    public String getObservationCategoryQuery() {
-        return observationCategoryQuery;
+//    public String getObservationCategoryQuery() {
+//        return observationCategoryQuery;
+//    }
+//
+//    public FhirStrategy getObservationCategoryStrategy() {
+//        return observationCategoryStrategy;
+//    }
+
+    public String getObservationQuery() {
+        return observationQuery;
     }
 
-    public FhirStrategy getObservationCategoryStrategy() {
-        return observationCategoryStrategy;
-    }
-
-    public String getObservationCodeQuery() {
-        return observationCodeQuery;
-    }
-
-    public FhirStrategy getObservationCodeStrategy() {
-        return observationCodeStrategy;
+    public FhirStrategy getObservationStrategy() {
+        return observationStrategy;
     }
 
     public String getConditionQuery() {

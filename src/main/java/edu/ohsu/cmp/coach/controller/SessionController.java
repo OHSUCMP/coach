@@ -44,27 +44,20 @@ public class SessionController extends BaseController {
     @Autowired
     private REDCapService redCapService;
 
+    @Value("${smart.scope}")
+    private String scope;
+
+    @Value("${smart.redirectUri}")
+    private String redirectURI;
+
+    @Value("${smart.iss}")
+    private String iss;
+
     @Value("${smart.patient.clientId}")
     private String patientClientId;
 
-    @Value("${smart.patient.scope}")
-    private String patientScope;
-
-    @Value("${smart.patient.redirectUri}")
-    private String patientRedirectURI;
-
-    @Value("${smart.patient.iss}")
-    private String patientISS;
-
     @Value("${smart.ehr.clientId}")
     private String ehrClientId;
-
-    @Value("${smart.ehr.scope}")
-    private String ehrScope;
-
-    @Value("${smart.ehr.redirectUri}")
-    private String ehrRedirectURI;
-
 
     @Value("${redcap.data-access-group}")
     private String redcapDataAccessGroupStr;
@@ -79,8 +72,9 @@ public class SessionController extends BaseController {
         sessionService.expireAll(session.getId());
         setCommonViewComponents(model);
         model.addAttribute("clientId", ehrClientId);
-        model.addAttribute("scope", ehrScope);
-        model.addAttribute("redirectUri", ehrRedirectURI);
+        model.addAttribute("scope", scope);
+        model.addAttribute("redirectUri", redirectURI);
+        model.addAttribute("iss", iss);
         return "launch-ehr";
     }
 
@@ -89,9 +83,9 @@ public class SessionController extends BaseController {
         sessionService.expireAll(session.getId());
         setCommonViewComponents(model);
         model.addAttribute("clientId", patientClientId);
-        model.addAttribute("scope", patientScope);
-        model.addAttribute("redirectUri", patientRedirectURI);
-        model.addAttribute("iss", patientISS);
+        model.addAttribute("scope", scope);
+        model.addAttribute("redirectUri", redirectURI);
+        model.addAttribute("iss", iss);
         return "launch-patient";
     }
 
@@ -141,7 +135,7 @@ public class SessionController extends BaseController {
                 return ResponseEntity.ok("session provisionally established");
 
             } else {
-                sessionService.prepareSession(session.getId(), credentials, audience, randomizationGroup);
+                sessionService.prepareSession(session.getId(), credentials, audience, randomizationGroup, requiresEnrollment);
                 return ResponseEntity.ok("session configured successfully");
             }
 
@@ -152,7 +146,7 @@ public class SessionController extends BaseController {
                 // for OHSU and MU, simply display the enhanced view for the patient, irrespective of the patient's
                 // randomization group, and irrespective of whether or not the patient is actively enrolled
 
-                sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED);
+                sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED, requiresEnrollment);
                 return ResponseEntity.ok("care team session established");
 
             } else if (dag == RedcapDataAccessGroup.VUMC) {
@@ -161,11 +155,11 @@ public class SessionController extends BaseController {
                 // a static "patient not active" page to the care team
 
                 if (requiresEnrollment) {
-                    // REDCap is enabled and the patient hasn't isn't actively enrolled.  display static "patient not active" page
+                    // REDCap is enabled and the patient isn't actively enrolled.  display static "patient not active" page
                     return ResponseEntity.ok(PATIENT_NOT_ACTIVE_RESPONSE);
 
                 } else {
-                    sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED);
+                    sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED, requiresEnrollment);
                     return ResponseEntity.ok("care team session established");
                 }
 
@@ -229,7 +223,7 @@ public class SessionController extends BaseController {
     @PostMapping("clear-supplemental-data")
     public ResponseEntity<?> clearSupplementalData(HttpSession session) {
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
-        boolean permitClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
+        boolean permitClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.clear-supplemental-data.enabled"), "true");
         if (permitClearSupplementalData) {
             logger.info("clearing supplemental data for session=" + session.getId());
             workspace.clearSupplementalData();

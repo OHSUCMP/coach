@@ -46,8 +46,11 @@ public class GoalsController extends BaseController {
         model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
         model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(sessionId));
         model.addAttribute("pageStyles", new String[] { "goals.css" });
-        model.addAttribute("pageScripts", new String[] { "goals.js" });
-        model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
+        model.addAttribute("pageScripts", new String[] { "goals.js?v=1" });
+        model.addAttribute("pageNodeScripts", new String[] {
+                "inputmask/dist/jquery.inputmask.js",
+                "inputmask/dist/bindings/inputmask.binding.js"
+        });
 
         auditService.doAudit(sessionId, AuditLevel.INFO, "visited goals page");
 

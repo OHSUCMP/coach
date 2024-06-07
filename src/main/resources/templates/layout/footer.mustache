@@ -21,12 +21,12 @@
                 $.ajax({
                     method: "POST",
                     url: "/refresh"
-                }).done(function(msg, textStatus, jqXHR) {
-                    _callback(msg);
+                }).done(function() {
+                    _callback();
                 });
             }
             $(document).on('click', '#refresh', function() {
-                doRefresh(function(msg) {
+                doRefresh(function() {
                     // Direct to home
                     window.location.href = "/";
                 });

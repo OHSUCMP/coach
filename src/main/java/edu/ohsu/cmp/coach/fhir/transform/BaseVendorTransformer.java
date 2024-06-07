@@ -80,35 +80,35 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         );
     }
 
+//    @Override
+//    public String getObservationCategoryQuery(String patientId, String category) {
+//        return getObservationCategoryQuery(patientId, category, null);
+//    }
+//
+//    @Override
+//    public String getObservationCategoryQuery(String patientId, String category, String lookbackPeriod) {
+//        String observationCategoryQuery = workspace.getFhirQueryManager().getObservationCategoryQuery();
+//        String query = lookbackPeriod != null ?
+//                addLookbackPeriodParam(observationCategoryQuery, lookbackPeriod) :
+//                observationCategoryQuery;
+//
+//        return buildQuery(query, params()
+//                .add(TOKEN_SUBJECT, patientId)
+//                .add(TOKEN_CATEGORY, category)
+//        );
+//    }
+
     @Override
-    public String getObservationCategoryQuery(String patientId, String category) {
-        return getObservationCategoryQuery(patientId, category, null);
+    public String getObservationQuery(String patientId, String code) {
+        return getObservationQuery(patientId, code, null);
     }
 
     @Override
-    public String getObservationCategoryQuery(String patientId, String category, String lookbackPeriod) {
-        String observationCategoryQuery = workspace.getFhirQueryManager().getObservationCategoryQuery();
-        String query = lookbackPeriod != null ?
-                addLookbackPeriodParam(observationCategoryQuery, lookbackPeriod) :
-                observationCategoryQuery;
-
-        return buildQuery(query, params()
-                .add(TOKEN_SUBJECT, patientId)
-                .add(TOKEN_CATEGORY, category)
-        );
-    }
-
-    @Override
-    public String getObservationCodeQuery(String patientId, String code) {
-        return getObservationCodeQuery(patientId, code, null);
-    }
-
-    @Override
-    public String getObservationCodeQuery(String patientId, String code, String lookbackPeriod) {
-        String observationCodeQuery = workspace.getFhirQueryManager().getObservationCodeQuery();
+    public String getObservationQuery(String patientId, String code, String lookbackPeriod) {
+        String observationQuery = workspace.getFhirQueryManager().getObservationQuery();
         String query = StringUtils.isNotBlank(lookbackPeriod) ?
-                addLookbackPeriodParam(observationCodeQuery, lookbackPeriod) :
-                observationCodeQuery;
+                addLookbackPeriodParam(observationQuery, lookbackPeriod) :
+                observationQuery;
 
         return buildQuery(query, params()
                 .add(TOKEN_SUBJECT, patientId)

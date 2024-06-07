@@ -27,8 +27,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpSession;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,8 +35,6 @@ import java.util.concurrent.Callable;
 
 @Controller
 public class HomeController extends BaseController {
-    private static final DateFormat OMRON_LAST_UPDATED = new SimpleDateFormat("EEEE, MMMM d, YYYY 'at' h:mm a");
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -72,7 +68,10 @@ public class HomeController extends BaseController {
     private AdverseEventService adverseEventService;
 
     @Value("#{new Boolean('${security.browser.cache-credentials}')}")
-    Boolean cacheCredentials;
+    private Boolean cacheCredentials;
+
+    @Value("${system.status-message}")
+    private String systemStatusMessage;
 
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model,
@@ -89,25 +88,29 @@ public class HomeController extends BaseController {
             model.addAttribute("sessionEstablished", true);
             model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
             model.addAttribute("pageStyles", new String[] { "home.css?v=4", "recommendations.css?v=1" });
-            model.addAttribute("pageNodeScripts", new String[] { "jquery.inputmask.js", "bindings/inputmask.binding.js" });
-            model.addAttribute("pageScripts", new String[] { "science.js/science.v1.js", "science.js/lib/d3/d3.js", "home.js?v=2", "recommendations.js?v=1" });
+            model.addAttribute("pageNodeScripts", new String[] {
+                    "inputmask/dist/jquery.inputmask.js",
+                    "inputmask/dist/bindings/inputmask.binding.js",
+                    "chart.js/dist/Chart.js",
+                    "chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.js",
+                    "chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js"
+            });
+            model.addAttribute("pageScripts", new String[] {
+                    "science.js/science.v1.js",
+                    "science.js/lib/d3/d3.js",
+                    "home.js?v=3",
+                    "recommendations.js?v=2",
+                    "bpchart.js"
+            });
             model.addAttribute("patient", workspace.getPatient());
             model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
             model.addAttribute("bpGoalUpdated", workspace.getBpGoalUpdated());
             model.addAttribute("randomizationGroup", String.valueOf(workspace.getRandomizationGroup()));
 
-            Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.button.clear-supplemental-data.show"), "true");
+            Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.clear-supplemental-data.enabled"), "true");
             model.addAttribute("showClearSupplementalData", showClearSupplementalData);
 
-            if (workspace.getOmronTokenData() == null) {
-                model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
-            }
-
-            if (workspace.isOmronSynchronizing()) {
-                model.addAttribute("omronSynchronizing", true);
-            } else if (workspace.getOmronLastUpdated() != null) {
-                model.addAttribute("omronLastUpdated", OMRON_LAST_UPDATED.format(workspace.getOmronLastUpdated()));
-            }
+            model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
 
             try {
                 List<CDSHook> list = recommendationService.getOrderedCDSHooks(sessionId);
@@ -122,6 +125,14 @@ public class HomeController extends BaseController {
             // Only show the AE Survey link if REDCap is enabled and this is a patient. The link may not exist otherwise.
             if (redCapService.isRedcapEnabled() && Audience.PATIENT.equals(workspace.getAudience())) {
                 model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
+            }
+            // If this is a Care Team login and the patient needs to be enrolled, show a banner
+            if(Audience.CARE_TEAM.equals(workspace.getAudience()) && workspace.getRequiresEnrollment()) {
+                model.addAttribute("enrollmentBanner", true);
+            }
+
+            if (StringUtils.isNotBlank(systemStatusMessage)) {
+                model.addAttribute("systemStatusMessage", systemStatusMessage);
             }
 
             auditService.doAudit(sessionId, AuditLevel.INFO, "visited home page");

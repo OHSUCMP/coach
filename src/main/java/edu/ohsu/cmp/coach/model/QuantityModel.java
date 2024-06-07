@@ -37,6 +37,6 @@ public class QuantityModel {
 
     @Override
     public String toString() {
-        return value + unit;
+        return value + " " + unit;
     }
 }

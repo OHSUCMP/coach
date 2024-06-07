@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.controller;
 import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.omron.AccessTokenResponse;
 import edu.ohsu.cmp.coach.model.omron.OmronNotifyModel;
+import edu.ohsu.cmp.coach.model.omron.OmronStatusData;
 import edu.ohsu.cmp.coach.service.OmronService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.lang3.StringUtils;
@@ -84,5 +85,11 @@ public class OmronController extends BaseController {
         workspace.initiateSynchronousOmronUpdate();
 
         return new ResponseEntity<>(HttpStatus.OK);         // returns only OK status, no body
+    }
+
+    @PostMapping("status")
+    public ResponseEntity<OmronStatusData> getStatus(HttpSession session) {
+        UserWorkspace workspace = userWorkspaceService.get(session.getId());
+        return new ResponseEntity<>(workspace.getOmronSynchronizationStatus(), HttpStatus.OK);
     }
 }

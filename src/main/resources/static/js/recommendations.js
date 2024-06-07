@@ -36,7 +36,7 @@ function getRecommendation(id, _callback) {
         url: "/recommendation",
         timeout: 3600000,
         data: data
-    }).done(function(cards, textStatus, jqXHR) {
+    }).done(function(cards) {
         _callback(cards);
     });
 }
@@ -65,13 +65,6 @@ function renderCards(cards) {
 
             if (card.rationale !== null) {
                 html += "<span class='rationale'>" + card.rationale + "</span>";
-            }
-
-            if (card.source.label !== null && card.source.url !== null) {
-                html += "<span class='source'>";
-                html += "<a href='" + card.source.url + "' target='_blank' rel='noopener noreferrer'>" +
-                    card.source.label + "</a>";
-                html += "</span>";
             }
 
             if (card.links !== null) {
@@ -156,6 +149,7 @@ function buildAdverseEvents(suggestions) {
         html = "<div class='adverseEventsContainer'>" +
             "<div class='heading'>Have you discussed any of these conditions with your care team?</div>" +
             html +
+            "<span class=\"note d-inline-block hidden\"></span>" +
             "</div>";
     }
 
@@ -250,19 +244,24 @@ function buildGoalsHTML(suggestions) {
                     }
                 }
                 html += "</div>";
-                html += "<div class='col-lg-4 mt-2'><button class='btn btn-sm button-primary commitToGoal'>Commit to Goal</button></div>";
-                html += "</div>"
 
+                html += "<div class='col-lg-4 mt-2'>";
+                html += "<button class='btn btn-sm button-primary commitToGoal'>Commit to Goal</button>";
+                html += "<span class=\"note d-inline-block\"></span>";
+                html += "</div>";
+                html += "</div>"
                 html += "</div>";
 
             } else if (s.type === 'update-goal') {
                 html += "<div class='goal p-2' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
                 html += "<span class='heading'>" + s.label + "</span>";
-                html += "<table><tr><td>";
+                html += "<div class='row'>";
+                html += "<div class='col-lg-8 mb-2'>";
 
                 let id = randomChars(5);
 
-                html += "<div><label for='achievementStatus" + id + "'>Achievement Status:</label> <select id='achievementStatus" + id + "' class='achievementStatus'>";
+                html += "<div><label for='achievementStatus" + id + "'>Achievement Status:</label>";
+                html += "<select id='achievementStatus" + id + "' class='achievementStatus'>";
 
                 let a_arr = ['IN_PROGRESS', 'ACHIEVED', 'NOT_ACHIEVED'];
 
@@ -278,13 +277,13 @@ function buildGoalsHTML(suggestions) {
                     html += ">" + toLabel(value) + "</option>";
                 });
                 html += "</select></div>";
-                html += "</td>";
-                html += "<td class='shrink'><div class='mb-3 me-3'><button class='btn btn-sm button-primary updateGoal'>Record Progress</button></div></td>";
-                html += "</td>";
-                html += "</tr><tr>";
-
-                html += "</td></tr></table>";
-                html += "</div>";
+                html += "</div>"; // col-lg-8 mb-2
+                html += "<div class='col-lg-4 mb-2'>";
+                html += "<button class='btn btn-sm button-primary updateGoal'>Record Progress</button>";
+                html += "<span class=\"note d-inline-block\"></span>";
+                html += "</div>"; // col-lg-4-mb-2
+                html += "</div>"; // row
+                html += "</div>"; // goal p-2
             }
         });
     }
@@ -501,8 +500,8 @@ function registerCounselingReceived(counselingData, _callback) {
         method: "POST",
         url: "/counseling/create",
         data: counselingData
-    }).always(function(data, textStatus, jqXHR) {
-        _callback(jqXHR.status);
+    }).always(function() {
+        _callback();
     });
 }
 
@@ -511,7 +510,9 @@ function createGoal(goalData, _callback) {
         method: "POST",
         url: "/goals/create",
         data: goalData
-    }).always(function(data, textStatus, jqXHR) {
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status);
+    }).fail(function(jqXHR) {
         _callback(jqXHR.status);
     });
 }
@@ -521,8 +522,10 @@ function updateBPGoal(bpGoalData, _callback) {
         method: "POST",
         url: "/goals/update-bp",
         data: bpGoalData
-    }).always(function(data, textStatus, jqXHR) {
+    }).done(function(data, textStatus, jqXHR) {
         _callback(jqXHR.status, bpGoalData);
+    }).fail(function(jqXHR) {
+        _callback(jqXHR.status);
     });
 }
 
@@ -531,7 +534,9 @@ function updateGoal(goalUpdateData, _callback) {
         method: "POST",
         url: "/goals/update-status",
         data: goalUpdateData
-    }).always(function(data, textStatus, jqXHR) {
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status);
+    }).fail(function(jqXHR) {
         _callback(jqXHR.status);
     });
 }
@@ -541,7 +546,9 @@ function registerAdverseEventAction(adverseEventData, _callback) {
         method: "POST",
         url: "/adverse-event/register-action",
         data: adverseEventData
-    }).always(function(data, textStatus, jqXHR) {
+    }).done(function(data, textStatus, jqXHR) {
+        _callback(jqXHR.status);
+    }).fail(function(jqXHR) {
         _callback(jqXHR.status);
     });
 }
@@ -569,23 +576,26 @@ function hide(el, _complete) {
 
 $(document).on('click', '.goal .commitToGoal', function() {
     let container = $(this).closest('.goal');
+    let note = $(this).siblings('.note');
 
     let goalData = buildGoalData(this);
     createGoal(goalData, function(status) {
-        if (status === 200) { // verified createGoal executes callback 'always'
+        if (status === 200) {
             hide(container);
         } else {
-            // todo : report error
+            $(note).text("Error creating goal - see logs for details.");
+            $(note).addClass("error");
         }
     });
 });
 
 $(document).on('click', '.bpGoal .commitToGoal', function() {
     let container = $(this).closest('.bpGoal');
+    let note = $(this).siblings('.note');
 
     let bpGoalData = buildBPGoalData(this);
     updateBPGoal(bpGoalData, function(status, g) {
-        if (status === 200) { // verified updateBPGoal executes callback 'always'
+        if (status === 200) {
             let el = $('#currentBPGoal');
             $(el).attr('data-systolic', g.systolicTarget);
             $(el).attr('data-diastolic', g.diastolicTarget);
@@ -595,20 +605,23 @@ $(document).on('click', '.bpGoal .commitToGoal', function() {
 
             hide(container);
         } else {
-            // todo : report error
+            $(note).text("Error updating BP goal - see logs for details.");
+            $(note).addClass("error");
         }
     });
 });
 
 $(document).on('click', '.goal .updateGoal', function() {
     let container = $(this).closest('.goal');
+    let note = $(this).siblings('.note');
 
     let goalUpdateData = buildGoalUpdateData(this);
     updateGoal(goalUpdateData, function(status) {
-        if (status === 200) { // verified updateBPGoal executes callback 'always'
+        if (status === 200) {
             hide(container);
         } else {
-            // todo : report error
+            $(note).text("Error updating goal - see logs for details.");
+            $(note).addClass("error");
         }
     });
 });
@@ -617,21 +630,18 @@ $(document).on('click', '.counseling .actions a', function(event) {
     event.preventDefault();
     let a = $(this);
     let counselingData = buildCounselingData(this);
-    registerCounselingReceived(counselingData, function(status) {
-        if (status === 200) { // verified registerCounselingReceived executes callback 'always'
-            window.location.href = $(a).attr('href');
-        } else {
-            // todo : report error
-        }
+    registerCounselingReceived(counselingData, function() {
+        window.location.href = $(a).attr('href');
     });
 });
 
 $(document).on('click', '.adverseEvent .registerAdverseEventAction', function() {
     let container = $(this).closest('.adverseEvent');
+    let note = $(container).closest('.adverseEventsContainer').children('.note');
 
     let adverseEventData = buildAdverseEventData(this);
     registerAdverseEventAction(adverseEventData, function(status) {
-        if (status === 200) { // verified registerAdverseEventAction executes callback 'always'
+        if (status === 200) {
             hide(container, function(el) {
                 let parent = $(el).closest('.adverseEventsContainer');
                 let anyChildrenVisible = $(parent).find('.adverseEvent:visible').length > 0;
@@ -640,7 +650,9 @@ $(document).on('click', '.adverseEvent .registerAdverseEventAction', function() 
                 }
             });
         } else {
-            // todo : report error
+            $(note).text("Error registering adverse event - see logs for details.");
+            $(note).removeClass('hidden');
+            $(note).addClass("error");
         }
     });
 });
