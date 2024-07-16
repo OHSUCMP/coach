@@ -1,6 +1,6 @@
 drop table if exists audit;
 create table audit (
-    id int not null auto_increment primary key,
+    id int not null identity(1,1) primary key,
     patId int not null,
     level varchar(10) not null,
     event varchar(100) not null,

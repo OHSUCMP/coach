@@ -47,7 +47,7 @@ go
 
 -- create the coach user and principal if they does not yet exist
 
-if not exists(select * from sys.database_principals where name = 'coach')
+if not exists(select * from sys.server_principals where name = 'coach')
 begin
   create login coach with password = 'CHANGE_THIS_in_PRODUCTION!';
   create user coach for login coach with default_schema = coach;
@@ -406,7 +406,7 @@ go
 
 alter table patient add studyClass varchar(20);
 alter table patient add redcapId varchar(36);
-alter table patient add consentGranted char(1) default null;
+alter table patient add consentGranted char(1) constraint DF_PATIENT_CONSENT_DEF default null;
 go
 
 -- 2023-04-11 - clear studyClass where consentGranted is 'N' - we don't want to set this before consent is granted

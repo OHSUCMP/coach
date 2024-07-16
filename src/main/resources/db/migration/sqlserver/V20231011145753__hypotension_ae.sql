@@ -26,11 +26,11 @@ alter table home_pulse_reading add source varchar(10);
 go
 update home_pulse_reading set source='COACH_UI' where source is null;
 go
-alter table home_pulse_reading modify source varchar(10) not null;
+alter table home_pulse_reading alter column source varchar(10) not null;
 go
 
 -- as we're now going to also be storing Omron readings in the home_bp_readings and home_pulse_readings tables,
 -- followedInstructions must allow null
-alter table home_bp_reading modify followedInstructions tinyint(1);
-alter table home_pulse_reading modify followedInstructions tinyint(1);
+alter table home_bp_reading alter column followedInstructions tinyint;
+alter table home_pulse_reading alter column followedInstructions tinyint;
 go
