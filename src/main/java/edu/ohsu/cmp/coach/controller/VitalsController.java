@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -52,7 +51,7 @@ public class VitalsController extends BaseController {
         homeReadings.addAll(bpService.getHomeBloodPressureReadings(session.getId()));
         homeReadings.addAll(pulseService.getHomePulseReadings(session.getId()));
 
-        Collections.sort(homeReadings);
+        homeReadings.sort((o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1); // sort newest first
 
         List<BloodPressureModel> allBPReadings = bpService.getBloodPressureReadings(session.getId());
         Long mostRecentTS = allBPReadings.size() > 0 ?
