@@ -123,7 +123,7 @@ function appendReadingToTable(obj) {
     let sortedData = $(unsortedData).add(html).sort(function(a,b) {
         let tsA = $(a).data('timestamp');
         let tsB = $(b).data('timestamp');
-        return (tsA > tsB) ? 1 : (tsA < tsB) ? -1 : 0;
+        return (tsA > tsB) ? -1 : (tsA < tsB) ? 1 : 0;
     });
 
     $(container).html(sortedData);
