@@ -1,16 +1,15 @@
-package edu.ohsu.cmp.coach.entity;
+package edu.ohsu.cmp.coach.model.redcap;
+
+import edu.ohsu.cmp.coach.model.RedcapDataAccessGroup;
+import edu.ohsu.cmp.coach.service.REDCapService;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import edu.ohsu.cmp.coach.model.RedcapDataAccessGroup;
-import edu.ohsu.cmp.coach.service.REDCapService;
 
 /**
  * An entity that represents the participant's current state in REDCap
@@ -29,6 +28,8 @@ public class RedcapParticipantInfo {
     private RandomizationGroup randomizationGroup;
     private Date randomizationDate;
     private boolean isWithdrawn;
+    private boolean completedPerProtocol;
+    private Date protocolCompletionDate;
 
     /**
      * Return an object representing a participant that doesn't exist in REDCap yet.
@@ -73,6 +74,10 @@ public class RedcapParticipantInfo {
         String randString = baseline.get(REDCapService.PARTICIPANT_RANDOMIZATION_FIELD);
         String randDateString = baseline.get(REDCapService.PARTICIPANT_RANDOMIZATION_DATE_FIELD);
         pi.setIsRandomized(StringUtils.isNotBlank(randString) && StringUtils.isNotBlank(randDateString));
+
+        String completedPerProtocolString = ongoing.get(REDCapService.PARTICIPANT_COMPLETED_PER_PROTOCOL_FIELD);
+        String protocolCompletionDateString = ongoing.get(REDCapService.PARTICIPANT_PROTOCOL_COMPLETION_DATE_FIELD);
+
         if (pi.getIsRandomized()) {
             try {
                 int rand = Integer.parseInt(randString);
@@ -81,7 +86,7 @@ public class RedcapParticipantInfo {
                 pi.setRandomizationGroup(RandomizationGroup.ENHANCED);
                 RedcapParticipantInfo.logger.error("Randomization Group " + randString + " is not understood. User " + coachId + " will get ENHANCED experience.");
             }
-            
+
             try {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 pi.setRandomizationDate(sdf.parse(randDateString));
@@ -89,6 +94,16 @@ public class RedcapParticipantInfo {
                 pi.setIsRandomized(false);
                 pi.setRandomizationGroup(null);
                 RedcapParticipantInfo.logger.error("Randomization date " + randDateString + " is not understood. User " + coachId + " is denied access.");
+            }
+
+            pi.setCompletedPerProtocol(StringUtils.equals(completedPerProtocolString, REDCapService.YES));
+            if (pi.isCompletedPerProtocol()) {
+                try {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    pi.setProtocolCompletionDate(sdf.parse(protocolCompletionDateString));
+                } catch (ParseException e) {
+                    RedcapParticipantInfo.logger.error("Protocol Completion Date " + protocolCompletionDateString + " is not understood.");
+                }
             }
         }
         pi.setIsWithdrawn(StringUtils.equals(ongoing.get(REDCapService.PARTICIPANT_DISPOSITION_WITHDRAW_FIELD), REDCapService.YES));
@@ -213,6 +228,27 @@ public class RedcapParticipantInfo {
      */
     public boolean getIsActivelyEnrolled() {
         return getExists() && getIsConsentGranted() && getIsRandomized() && !getIsWithdrawn();
+    }
+
+    public boolean isCompletedPerProtocol() {
+        return completedPerProtocol;
+    }
+
+    public void setCompletedPerProtocol(boolean completedPerProtocol) {
+        this.completedPerProtocol = completedPerProtocol;
+    }
+
+    public Date getProtocolCompletionDate() {
+        return protocolCompletionDate;
+    }
+
+    public void setProtocolCompletionDate(Date protocolCompletionDate) {
+        this.protocolCompletionDate = protocolCompletionDate;
+    }
+
+    public boolean getHasCompletedStudy() {
+        return isCompletedPerProtocol() &&
+                getProtocolCompletionDate() != null && getProtocolCompletionDate().before(new Date());
     }
     
 }

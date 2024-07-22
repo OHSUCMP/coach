@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.entity;
+package edu.ohsu.cmp.coach.model.redcap;
 
 public enum RandomizationGroup {
     ENHANCED(1), BASIC(2);
