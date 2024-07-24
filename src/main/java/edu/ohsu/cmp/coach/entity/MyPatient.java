@@ -18,6 +18,8 @@ public class MyPatient {
     private String redcapId;
     private Boolean bpGoalUpdated;
 
+    private Boolean confirmedEndOfStudy;
+
     protected MyPatient() {
     }
 
@@ -63,5 +65,13 @@ public class MyPatient {
 
     public void setBpGoalUpdated(Boolean bpGoalUpdated) {
         this.bpGoalUpdated = bpGoalUpdated;
+    }
+
+    public Boolean getConfirmedEndOfStudy() {
+        return confirmedEndOfStudy;
+    }
+
+    public void setConfirmedEndOfStudy(Boolean confirmedEndOfStudy) {
+        this.confirmedEndOfStudy = confirmedEndOfStudy;
     }
 }
