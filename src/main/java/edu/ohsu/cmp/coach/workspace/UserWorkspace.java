@@ -224,6 +224,7 @@ public class UserWorkspace {
     }
 
     public void shutdown() {
+        logger.info("shutting down workspace for session=" + sessionId);
         executorService.shutdown();
 
         clearCaches();
