@@ -32,19 +32,24 @@ public class RefreshTokenJob implements Job {
         String refreshToken = jobDataMap.getString(JOBDATA_REFRESHTOKEN);
 
         UserWorkspaceService userWorkspaceService = ctx.getBean(UserWorkspaceService.class);
-        OmronService omronService = ctx.getBean(OmronService.class);
+        if (userWorkspaceService.exists(sessionId)) {
+            OmronService omronService = ctx.getBean(OmronService.class);
 
-        try {
-            RefreshTokenResponse response = omronService.refreshAccessToken(refreshToken);
-            if (response != null) {
-                UserWorkspace workspace = userWorkspaceService.get(sessionId);
-                workspace.getOmronTokenData().update(response);
-                omronService.scheduleAccessTokenRefresh(sessionId);
+            try {
+                RefreshTokenResponse response = omronService.refreshAccessToken(refreshToken);
+                if (response != null) {
+                    UserWorkspace workspace = userWorkspaceService.get(sessionId);
+                    workspace.getOmronTokenData().update(response);
+                    omronService.scheduleAccessTokenRefresh(sessionId);
+                }
+
+            } catch (Exception e) {
+                throw new JobExecutionException("caught " + e.getClass().getName() + " executing job for session=" +
+                        sessionId + " - " + e.getMessage(), e);
             }
 
-        } catch (Exception e) {
-            throw new JobExecutionException("caught " + e.getClass().getName() + " executing job for session=" +
-                    sessionId + " - " + e.getMessage(), e);
+        } else {
+            logger.info("aborting job {} - user workspace for session={} does not exist", name, sessionId);
         }
     }
 }
