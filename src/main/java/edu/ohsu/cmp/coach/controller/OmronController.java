@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
+import edu.ohsu.cmp.coach.exception.SessionMissingException;
 import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.omron.AccessTokenResponse;
 import edu.ohsu.cmp.coach.model.omron.OmronNotifyModel;
@@ -71,18 +72,22 @@ public class OmronController extends BaseController {
 
     @PostMapping(value = "notify", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> notify(@RequestBody OmronNotifyModel notification) {
+        try {
+            UserWorkspace workspace = userWorkspaceService.getByOmronUserId(notification.getId());
 
-        UserWorkspace workspace = userWorkspaceService.getByOmronUserId(notification.getId());
+            // note : this endpoint will be called by Omron when an authenticated user has new data to pull
+            //        as such, this endpoint does not connect to any existing user session.  we need to look up
+            //        the user by their id
 
-        // note : this endpoint will be called by Omron when an authenticated user has new data to pull
-        //        as such, this endpoint does not connect to any existing user session.  we need to look up
-        //        the user by their id
+            logger.info("received Omron notification: {}", notification);
 
-        logger.info("received Omron notification: {}", notification);
+            // id = the id of the user who performed the upload.  received into id_token on initial user authorization
 
-        // id = the id of the user who performed the upload.  received into id_token on initial user authorization
+            workspace.initiateSynchronousOmronUpdate();
 
-        workspace.initiateSynchronousOmronUpdate();
+        } catch (SessionMissingException sme) {
+            logger.debug("notify: no workspace found for user with Omron id=" + notification.getId());
+        }
 
         return new ResponseEntity<>(HttpStatus.OK);         // returns only OK status, no body
     }
