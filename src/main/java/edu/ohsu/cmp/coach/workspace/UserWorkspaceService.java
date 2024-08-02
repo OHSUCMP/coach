@@ -1,6 +1,5 @@
 package edu.ohsu.cmp.coach.workspace;
 
-import ca.uhn.fhir.rest.server.exceptions.AuthenticationException;
 import edu.ohsu.cmp.coach.entity.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.SessionMissingException;
@@ -8,23 +7,17 @@ import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.Audience;
-import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
-import edu.ohsu.cmp.coach.service.AuditService;
-import edu.ohsu.cmp.coach.service.EHRService;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.r4.model.Patient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -48,41 +41,6 @@ public class UserWorkspaceService {
 
     public UserWorkspaceService() {
         map = new ConcurrentHashMap<>();
-    }
-
-    @Scheduled(cron = "0 0 * * * *") // top of every hour, every day
-    public void shutdownExpiredWorkspaces() {
-        if (map.isEmpty()) return;
-
-        if (map.size() == 1)    logger.info("checking for expired workspaces (1 workspace registered) -");
-        else                    logger.info("checking for expired workspaces (" + map.size() + " workspaces registered) -");
-
-        EHRService ehrService = ctx.getBean(EHRService.class);
-        AuditService auditService = ctx.getBean(AuditService.class);
-
-        Iterator<Map.Entry<String, UserWorkspace>> iter = map.entrySet().iterator();
-        while (iter.hasNext()) {
-            Map.Entry<String, UserWorkspace> entry = iter.next();
-            String sessionId = entry.getKey();
-            try {
-                // if we can get the Patient resource, the access token is still valid, and the workspace should persist
-                Patient p = ehrService.getPatient(sessionId);
-                logger.debug("successfully retrieved Patient resource with id=" + p.getId() + " for session=" + sessionId + " - workspace is valid");
-
-            } catch (AuthenticationException ae) {
-                logger.info("credentials expired for session " + sessionId + " - shutting down associated workspace -");
-                auditService.doAudit(sessionId, AuditLevel.INFO, "session expired", sessionId);
-                UserWorkspace workspace = entry.getValue();
-                workspace.shutdown();
-                iter.remove();
-
-            } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " retrieving Patient resource for session=" + sessionId + " - " + e.getMessage(), e);
-            }
-        }
-
-        if (map.size() == 1)    logger.info("done. (1 workspace remains)");
-        else                    logger.info("done. (" + map.size() + " workspaces remain)");
     }
 
     public boolean exists(String sessionId) {
