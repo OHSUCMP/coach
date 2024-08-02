@@ -28,7 +28,7 @@ public class RedcapParticipantInfo {
     private RandomizationGroup randomizationGroup;
     private Date randomizationDate;
     private boolean isWithdrawn;
-    private boolean completedPerProtocol;
+    private Boolean completedPerProtocol;
     private Date protocolCompletionDate;
 
     /**
@@ -96,13 +96,25 @@ public class RedcapParticipantInfo {
                 RedcapParticipantInfo.logger.error("Randomization date " + randDateString + " is not understood. User " + coachId + " is denied access.");
             }
 
-            pi.setCompletedPerProtocol(StringUtils.equals(completedPerProtocolString, REDCapService.YES));
-            if (pi.isCompletedPerProtocol()) {
+            Boolean completedPerProtocol = null;
+            if (StringUtils.isNotBlank(completedPerProtocolString)) {
+                if      (StringUtils.equals(completedPerProtocolString, REDCapService.YES)) completedPerProtocol = true;
+                else if (StringUtils.equals(completedPerProtocolString, REDCapService.NO))  completedPerProtocol = false;
+                else {
+                    RedcapParticipantInfo.logger.error("Completed-per-protocol value '" + completedPerProtocolString + "' is not understood.  User " + coachId + " will be considered actively enrolled.");
+                }
+            }
+            pi.setCompletedPerProtocol(completedPerProtocol);
+
+            if (completedPerProtocol != null) {
                 try {
+                    // completion date should always be set if completedPerProtocol != null
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                     pi.setProtocolCompletionDate(sdf.parse(protocolCompletionDateString));
+
                 } catch (ParseException e) {
-                    RedcapParticipantInfo.logger.error("Protocol Completion Date " + protocolCompletionDateString + " is not understood.");
+                    RedcapParticipantInfo.logger.error("Protocol Completion Date '" + protocolCompletionDateString + "' could not be parsed.  User " + coachId + " will be considered actively enrolled.");
+                    pi.setCompletedPerProtocol(null);
                 }
             }
         }
@@ -227,14 +239,19 @@ public class RedcapParticipantInfo {
      * @return
      */
     public boolean getIsActivelyEnrolled() {
-        return getExists() && getIsConsentGranted() && getIsRandomized() && !getIsWithdrawn();
+        return getExists() && getIsConsentGranted() && getIsRandomized() && !getIsWithdrawn() && !isHasCompletedStudy();
     }
 
-    public boolean isCompletedPerProtocol() {
+    /**
+     * @return null if the participant has not completed the study, true if the participant has completed the study
+     *         according to the protocol, or false if the participant has completed the study but did not adhere
+     *         to the protocol.
+     */
+    public Boolean isCompletedPerProtocol() {
         return completedPerProtocol;
     }
 
-    public void setCompletedPerProtocol(boolean completedPerProtocol) {
+    public void setCompletedPerProtocol(Boolean completedPerProtocol) {
         this.completedPerProtocol = completedPerProtocol;
     }
 
@@ -246,8 +263,8 @@ public class RedcapParticipantInfo {
         this.protocolCompletionDate = protocolCompletionDate;
     }
 
-    public boolean getHasCompletedStudy() {
-        return isCompletedPerProtocol() &&
+    public boolean isHasCompletedStudy() {
+        return isCompletedPerProtocol() != null &&
                 getProtocolCompletionDate() != null && getProtocolCompletionDate().before(new Date());
     }
     

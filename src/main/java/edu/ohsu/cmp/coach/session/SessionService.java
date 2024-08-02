@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.session;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import edu.ohsu.cmp.coach.entity.RandomizationGroup;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.model.Audience;
 import edu.ohsu.cmp.coach.model.AuditLevel;
@@ -39,7 +39,8 @@ public class SessionService extends AbstractService {
         provisionalCache = new HashMap<>();
     }
 
-    public void prepareSession(String sessionId, FHIRCredentials credentials, Audience audience, RandomizationGroup randomizationGroup, boolean requiresEnrollment) throws ConfigurationException {
+    public void prepareSession(String sessionId, FHIRCredentials credentials, Audience audience, RandomizationGroup randomizationGroup,
+                               boolean requiresEnrollment, boolean hasCompletedStudy) throws ConfigurationException {
         logger.debug("preparing session " + sessionId + " with credentials=" + credentials);
         IGenericClient client = FhirUtil.buildClient(
                 credentials.getServerURL(),
@@ -48,7 +49,7 @@ public class SessionService extends AbstractService {
         );
         FHIRCredentialsWithClient fcc = new FHIRCredentialsWithClient(credentials, client);
 
-        userWorkspaceService.init(sessionId, audience, randomizationGroup, requiresEnrollment, fcc);
+        userWorkspaceService.init(sessionId, audience, randomizationGroup, requiresEnrollment, hasCompletedStudy, fcc);
         userWorkspaceService.get(sessionId).populate();
 
         auditService.doAudit(sessionId, AuditLevel.INFO, "session established", "sessionId=" + sessionId +

@@ -5,7 +5,7 @@ import com.auth0.jwt.interfaces.Payload;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import edu.ohsu.cmp.coach.entity.MyPatient;
-import edu.ohsu.cmp.coach.entity.RandomizationGroup;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
@@ -62,6 +62,7 @@ public class UserWorkspace {
     private final Audience audience;
     private final RandomizationGroup randomizationGroup;
     private final boolean requiresEnrollment;
+    private final boolean hasCompletedStudy;
     private final FHIRCredentialsWithClient fhirCredentialsWithClient;
     private final FhirQueryManager fqm;
     private final FhirConfigManager fcm;
@@ -80,19 +81,23 @@ public class UserWorkspace {
     private Date omronLastUpdated = null;
     private String redcapId = null;
     private Boolean bpGoalUpdated = null;
+    private Boolean confirmedEndOfStudy = null;
     private Boolean omronSynchronizing = false;
     private Integer omronCurrentItem = null;
     private Integer omronTotalItems = null;
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
                             RandomizationGroup randomizationGroup,
-                            boolean requiresEnrollment, FHIRCredentialsWithClient fhirCredentialsWithClient,
+                            boolean requiresEnrollment, boolean hasCompletedStudy,
+                            FHIRCredentialsWithClient fhirCredentialsWithClient,
                             FhirQueryManager fqm, FhirConfigManager fcm) {
         this.ctx = ctx;
         this.sessionId = sessionId;
         this.audience = audience;
         this.randomizationGroup = randomizationGroup;
         this.requiresEnrollment = requiresEnrollment;
+        this.hasCompletedStudy = hasCompletedStudy;
+
         this.fhirCredentialsWithClient = fhirCredentialsWithClient;
         this.fqm = fqm;
         this.fcm = fcm;
@@ -107,6 +112,7 @@ public class UserWorkspace {
         this.omronLastUpdated = myPatient.getOmronLastUpdated();
         this.redcapId = myPatient.getRedcapId();
         this.bpGoalUpdated = myPatient.getBpGoalUpdated();
+        this.confirmedEndOfStudy = myPatient.getConfirmedEndOfStudy();
 
         cache = Caffeine.newBuilder()
                 .expireAfterWrite(6, TimeUnit.HOURS)
@@ -137,8 +143,18 @@ public class UserWorkspace {
         return randomizationGroup;
     }
 
+    public RandomizationGroup getActiveRandomizationGroup() {
+        return hasCompletedStudy ?
+                RandomizationGroup.ENHANCED :
+                randomizationGroup;
+    }
+
     public boolean getRequiresEnrollment() {
         return requiresEnrollment;
+    }
+
+    public boolean isHasCompletedStudy() {
+        return hasCompletedStudy;
     }
 
     public FHIRCredentialsWithClient getFhirCredentialsWithClient() {
@@ -177,6 +193,16 @@ public class UserWorkspace {
         this.bpGoalUpdated = bpGoalUpdated;
         PatientService patientService = ctx.getBean(PatientService.class);
         patientService.setBPGoalUpdated(internalPatientId, bpGoalUpdated);
+    }
+
+    public Boolean isConfirmedEndOfStudy() {
+        return confirmedEndOfStudy;
+    }
+
+    public void setConfirmedEndOfStudy(Boolean confirmedEndOfStudy) {
+        this.confirmedEndOfStudy = confirmedEndOfStudy;
+        PatientService patientService = ctx.getBean(PatientService.class);
+        patientService.setConfirmedEndOfStudy(internalPatientId, confirmedEndOfStudy);
     }
 
     public void populate() {
