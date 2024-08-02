@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.coach.workspace;
 
+import com.auth0.jwt.impl.JWTParser;
+import com.auth0.jwt.interfaces.Payload;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import edu.ohsu.cmp.coach.entity.MyPatient;
@@ -21,11 +23,15 @@ import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Reference;
+import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Calendar;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -115,6 +121,8 @@ public class UserWorkspace {
                 .build();
 
         executorService = Executors.newFixedThreadPool(POOL_SIZE);
+
+        setupAutoShutdownJob();
     }
 
     public String getSessionId() {
@@ -232,6 +240,68 @@ public class UserWorkspace {
         cache.cleanUp();
         cardCache.cleanUp();
         bundleCache.cleanUp();
+    }
+
+    private void setupAutoShutdownJob() {
+        Scheduler scheduler = ctx.getBean(Scheduler.class);
+        Date shutdownTimestamp = deriveExpirationTimestamp(fhirCredentialsWithClient.getCredentials().getBearerToken());
+
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put(ShutdownWorkspaceJob.JOBDATA_APPLICATIONCONTEXT, ctx);
+        jobDataMap.put(ShutdownWorkspaceJob.JOBDATA_SESSIONID, sessionId);
+
+        String id = UUID.randomUUID().toString();
+
+        JobDetail job = JobBuilder.newJob(ShutdownWorkspaceJob.class)
+                .storeDurably()
+                .withIdentity("shutdownWorkspaceJob-" + id, sessionId)
+                .withDescription("Shutdown User Workspace for session " + sessionId)
+                .usingJobData(jobDataMap)
+                .build();
+
+        JobDetailFactoryBean jobDetailFactory = new JobDetailFactoryBean();
+        jobDetailFactory.setJobClass(ShutdownWorkspaceJob.class);
+        jobDetailFactory.setDescription("Invoke Shutdown User Workspace Job service...");
+        jobDetailFactory.setDurability(true);
+
+        Trigger trigger = TriggerBuilder.newTrigger().forJob(job)
+                .withIdentity("shutdownWorkspaceTrigger-" + id, sessionId)
+                .withDescription("Shutdown Workspace trigger")
+                .startAt(shutdownTimestamp)
+                .build();
+
+        try {
+            if ( ! scheduler.isStarted() ) {
+                scheduler.start();
+            }
+
+            logger.info("scheduling automatic User Workspace shutdown for session {} at {}", sessionId, shutdownTimestamp);
+
+            scheduler.scheduleJob(job, trigger);
+
+        } catch (SchedulerException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Date deriveExpirationTimestamp(String bearerToken) {
+        try {
+            String[] parts = bearerToken.split("\\.");
+            String payloadJSON = new String(Base64.getDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+            JWTParser parser = new JWTParser();
+            Payload payload = parser.parsePayload(payloadJSON);
+            return payload.getExpiresAt();
+
+        } catch (Exception e) {
+            logger.warn("couldn't parse token for session=" + sessionId + " - will auto-shutdown workspace after 1 day");
+            logger.debug("caught " + e.getClass().getName() + " parsing bearer token for session=" + sessionId + " - " +
+                    e.getMessage(), e);
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(new Date());
+            cal.add(Calendar.DATE, 1);
+            return cal.getTime();
+        }
     }
 
 ///////////////////////////////////////////////////////////////////////////////////////
