@@ -28,8 +28,7 @@ public class RedcapParticipantInfo {
     private RandomizationGroup randomizationGroup;
     private Date randomizationDate;
     private boolean isWithdrawn;
-    private Boolean completedPerProtocol;
-    private Date protocolCompletionDate;
+    private boolean hasCompletedStudy;
 
     /**
      * Return an object representing a participant that doesn't exist in REDCap yet.
@@ -76,7 +75,6 @@ public class RedcapParticipantInfo {
         pi.setIsRandomized(StringUtils.isNotBlank(randString) && StringUtils.isNotBlank(randDateString));
 
         String completedPerProtocolString = ongoing.get(REDCapService.PARTICIPANT_COMPLETED_PER_PROTOCOL_FIELD);
-        String protocolCompletionDateString = ongoing.get(REDCapService.PARTICIPANT_PROTOCOL_COMPLETION_DATE_FIELD);
 
         if (pi.getIsRandomized()) {
             try {
@@ -95,29 +93,17 @@ public class RedcapParticipantInfo {
                 pi.setRandomizationGroup(null);
                 RedcapParticipantInfo.logger.error("Randomization date " + randDateString + " is not understood. User " + coachId + " is denied access.");
             }
-
-            Boolean completedPerProtocol = null;
-            if (StringUtils.isNotBlank(completedPerProtocolString)) {
-                if      (StringUtils.equals(completedPerProtocolString, REDCapService.YES)) completedPerProtocol = true;
-                else if (StringUtils.equals(completedPerProtocolString, REDCapService.NO))  completedPerProtocol = false;
-                else {
-                    RedcapParticipantInfo.logger.error("Completed-per-protocol value '" + completedPerProtocolString + "' is not understood.  User " + coachId + " will be considered actively enrolled.");
-                }
-            }
-            pi.setCompletedPerProtocol(completedPerProtocol);
-
-            if (completedPerProtocol != null) {
-                try {
-                    // completion date should always be set if completedPerProtocol != null
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                    pi.setProtocolCompletionDate(sdf.parse(protocolCompletionDateString));
-
-                } catch (ParseException e) {
-                    RedcapParticipantInfo.logger.error("Protocol Completion Date '" + protocolCompletionDateString + "' could not be parsed.  User " + coachId + " will be considered actively enrolled.");
-                    pi.setCompletedPerProtocol(null);
-                }
-            }
         }
+
+        // a participant has "completed the study" if they've "completed per protocol."  "completed per protocol"
+        // is null while the participant is active within the study, and will be "no" if the participant withdraws
+        // or does not grant consent during the initial consenting process.  but in either of those cases, the
+        // participant hasn't *completed* the study - they either didn't participate in it at all to begin with,
+        // or they withdrew from it, which has a different workflow.
+        boolean hasCompletedStudy = StringUtils.isNotBlank(completedPerProtocolString) &&
+                StringUtils.equals(completedPerProtocolString, REDCapService.YES);
+        pi.setHasCompletedStudy(hasCompletedStudy);
+
         pi.setIsWithdrawn(StringUtils.equals(ongoing.get(REDCapService.PARTICIPANT_DISPOSITION_WITHDRAW_FIELD), REDCapService.YES));
         return pi;
     }
@@ -242,31 +228,12 @@ public class RedcapParticipantInfo {
         return getExists() && getIsConsentGranted() && getIsRandomized() && !getIsWithdrawn() && !isHasCompletedStudy();
     }
 
-    /**
-     * @return null if the participant has not completed the study, true if the participant has completed the study
-     *         according to the protocol, or false if the participant has completed the study but did not adhere
-     *         to the protocol.
-     */
-    public Boolean isCompletedPerProtocol() {
-        return completedPerProtocol;
-    }
-
-    public void setCompletedPerProtocol(Boolean completedPerProtocol) {
-        this.completedPerProtocol = completedPerProtocol;
-    }
-
-    public Date getProtocolCompletionDate() {
-        return protocolCompletionDate;
-    }
-
-    public void setProtocolCompletionDate(Date protocolCompletionDate) {
-        this.protocolCompletionDate = protocolCompletionDate;
-    }
-
     public boolean isHasCompletedStudy() {
-        return isCompletedPerProtocol() != null &&
-                getProtocolCompletionDate() != null && getProtocolCompletionDate().before(new Date());
+        return hasCompletedStudy;
     }
-    
+
+    public void setHasCompletedStudy(boolean hasCompletedStudy) {
+        this.hasCompletedStudy = hasCompletedStudy;
+    }
 }
 

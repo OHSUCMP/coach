@@ -54,7 +54,6 @@ public class REDCapService {
     public static final String PARTICIPANT_RANDOMIZATION_DATE_FIELD = "randomization_date";
     public static final String PARTICIPANT_DISPOSITION_WITHDRAW_FIELD = "withdraw";
     public static final String PARTICIPANT_COMPLETED_PER_PROTOCOL_FIELD = "per_protocol";
-    public static final String PARTICIPANT_PROTOCOL_COMPLETION_DATE_FIELD = "protocol_completion_date";
 
     @Autowired
     RedcapConfiguration redcapConfiguration;
