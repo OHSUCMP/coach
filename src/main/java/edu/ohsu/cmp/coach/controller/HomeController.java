@@ -2,11 +2,12 @@ package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.MyPatient;
 import edu.ohsu.cmp.coach.entity.Outcome;
-import edu.ohsu.cmp.coach.entity.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
+import edu.ohsu.cmp.coach.model.redcap.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.session.ProvisionalSessionCacheData;
 import edu.ohsu.cmp.coach.session.SessionService;
@@ -27,10 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 @Controller
@@ -73,6 +71,12 @@ public class HomeController extends BaseController {
     @Value("${system.status-message}")
     private String systemStatusMessage;
 
+    @Value("${end-of-study.control-message-html}")
+    private String endOfStudyControlMessage;
+
+    @Value("${end-of-study.intervention-message-html}")
+    private String endOfStudyInterventionMessage;
+
     @GetMapping(value = {"", "/"})
     public String view(HttpSession session, Model model,
                        @RequestParam(name = "bandwidth", required = false) Number bandwidthOverride) throws Exception {
@@ -105,7 +109,7 @@ public class HomeController extends BaseController {
             model.addAttribute("patient", workspace.getPatient());
             model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
             model.addAttribute("bpGoalUpdated", workspace.getBpGoalUpdated());
-            model.addAttribute("randomizationGroup", String.valueOf(workspace.getRandomizationGroup()));
+            model.addAttribute("randomizationGroup", String.valueOf(workspace.getActiveRandomizationGroup()));
 
             Boolean showClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.clear-supplemental-data.enabled"), "true");
             model.addAttribute("showClearSupplementalData", showClearSupplementalData);
@@ -127,8 +131,17 @@ public class HomeController extends BaseController {
                 model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
             }
             // If this is a Care Team login and the patient needs to be enrolled, show a banner
-            if(Audience.CARE_TEAM.equals(workspace.getAudience()) && workspace.getRequiresEnrollment()) {
+            if (Audience.CARE_TEAM.equals(workspace.getAudience()) && workspace.getRequiresEnrollment()) {
                 model.addAttribute("enrollmentBanner", true);
+            }
+
+            if (workspace.isHasCompletedStudy() && ! workspace.isConfirmedEndOfStudy()) {
+                model.addAttribute("showEndOfStudyMessage", true);
+                if (workspace.getRandomizationGroup() == RandomizationGroup.BASIC && StringUtils.isNotBlank(endOfStudyControlMessage)) {
+                    model.addAttribute("endOfStudyMessage", endOfStudyControlMessage);
+                } else if (workspace.getRandomizationGroup() == RandomizationGroup.ENHANCED && StringUtils.isNotBlank(endOfStudyInterventionMessage)) {
+                    model.addAttribute("endOfStudyMessage", endOfStudyInterventionMessage);
+                }
             }
 
             if (StringUtils.isNotBlank(systemStatusMessage)) {
@@ -193,6 +206,25 @@ public class HomeController extends BaseController {
                 auditService.doAudit(patient, AuditLevel.INFO, "access denied", "participant has withdrawn from the study");
 
                 return "withdrawn";
+
+            } else if (redcapParticipantInfo.isHasCompletedStudy()) {
+                // if they've completed the study, and we're working with a provisional session, continued use has been prohibited,
+                // so display the end-of-study message in a static page.
+
+                logger.info("REDCap workflow: Participant " + redcapParticipantInfo.getCoachId() + " has completed the study.");
+                setCommonViewComponents(model);
+
+                if (redcapParticipantInfo.getRandomizationGroup() == RandomizationGroup.BASIC) {
+                    model.addAttribute("endOfStudyMessage", endOfStudyControlMessage);
+                } else if (redcapParticipantInfo.getRandomizationGroup() == RandomizationGroup.ENHANCED) {
+                    model.addAttribute("endOfStudyMessage", endOfStudyInterventionMessage);
+                }
+
+                patientService.setConfirmedEndOfStudy(patient.getId(), true);
+
+                auditService.doAudit(patient, AuditLevel.INFO, "access denied", "participant has completed their participation in the COACH study");
+
+                return "end-of-study";
 
             } else {
                 logger.error("REDCap workflow: Participant " + redcapParticipantInfo.getRecordId() + "is actively enrolled but cannot access COACH.");

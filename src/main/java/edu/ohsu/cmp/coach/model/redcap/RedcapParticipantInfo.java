@@ -1,16 +1,15 @@
-package edu.ohsu.cmp.coach.entity;
+package edu.ohsu.cmp.coach.model.redcap;
+
+import edu.ohsu.cmp.coach.model.RedcapDataAccessGroup;
+import edu.ohsu.cmp.coach.service.REDCapService;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import edu.ohsu.cmp.coach.model.RedcapDataAccessGroup;
-import edu.ohsu.cmp.coach.service.REDCapService;
 
 /**
  * An entity that represents the participant's current state in REDCap
@@ -29,6 +28,7 @@ public class RedcapParticipantInfo {
     private RandomizationGroup randomizationGroup;
     private Date randomizationDate;
     private boolean isWithdrawn;
+    private boolean hasCompletedStudy;
 
     /**
      * Return an object representing a participant that doesn't exist in REDCap yet.
@@ -73,6 +73,9 @@ public class RedcapParticipantInfo {
         String randString = baseline.get(REDCapService.PARTICIPANT_RANDOMIZATION_FIELD);
         String randDateString = baseline.get(REDCapService.PARTICIPANT_RANDOMIZATION_DATE_FIELD);
         pi.setIsRandomized(StringUtils.isNotBlank(randString) && StringUtils.isNotBlank(randDateString));
+
+        String completedPerProtocolString = ongoing.get(REDCapService.PARTICIPANT_COMPLETED_PER_PROTOCOL_FIELD);
+
         if (pi.getIsRandomized()) {
             try {
                 int rand = Integer.parseInt(randString);
@@ -81,7 +84,7 @@ public class RedcapParticipantInfo {
                 pi.setRandomizationGroup(RandomizationGroup.ENHANCED);
                 RedcapParticipantInfo.logger.error("Randomization Group " + randString + " is not understood. User " + coachId + " will get ENHANCED experience.");
             }
-            
+
             try {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 pi.setRandomizationDate(sdf.parse(randDateString));
@@ -91,6 +94,16 @@ public class RedcapParticipantInfo {
                 RedcapParticipantInfo.logger.error("Randomization date " + randDateString + " is not understood. User " + coachId + " is denied access.");
             }
         }
+
+        // a participant has "completed the study" if they've "completed per protocol."  "completed per protocol"
+        // is null while the participant is active within the study, and will be "no" if the participant withdraws
+        // or does not grant consent during the initial consenting process.  but in either of those cases, the
+        // participant hasn't *completed* the study - they either didn't participate in it at all to begin with,
+        // or they withdrew from it, which has a different workflow.
+        boolean hasCompletedStudy = StringUtils.isNotBlank(completedPerProtocolString) &&
+                StringUtils.equals(completedPerProtocolString, REDCapService.YES);
+        pi.setHasCompletedStudy(hasCompletedStudy);
+
         pi.setIsWithdrawn(StringUtils.equals(ongoing.get(REDCapService.PARTICIPANT_DISPOSITION_WITHDRAW_FIELD), REDCapService.YES));
         return pi;
     }
@@ -212,8 +225,15 @@ public class RedcapParticipantInfo {
      * @return
      */
     public boolean getIsActivelyEnrolled() {
-        return getExists() && getIsConsentGranted() && getIsRandomized() && !getIsWithdrawn();
+        return getExists() && getIsConsentGranted() && getIsRandomized() && !getIsWithdrawn() && !isHasCompletedStudy();
     }
-    
+
+    public boolean isHasCompletedStudy() {
+        return hasCompletedStudy;
+    }
+
+    public void setHasCompletedStudy(boolean hasCompletedStudy) {
+        this.hasCompletedStudy = hasCompletedStudy;
+    }
 }
 

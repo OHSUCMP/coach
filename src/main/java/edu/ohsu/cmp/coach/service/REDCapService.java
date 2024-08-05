@@ -2,14 +2,12 @@ package edu.ohsu.cmp.coach.service;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
 import edu.ohsu.cmp.coach.config.RedcapConfiguration;
-import edu.ohsu.cmp.coach.entity.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.REDCapException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.RedcapDataAccessGroup;
-
+import edu.ohsu.cmp.coach.model.redcap.RedcapParticipantInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +18,7 @@ import org.springframework.util.Assert;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class REDCapService {
@@ -59,6 +53,7 @@ public class REDCapService {
     public static final String PARTICIPANT_RANDOMIZATION_FIELD = "randomized_assignment";
     public static final String PARTICIPANT_RANDOMIZATION_DATE_FIELD = "randomization_date";
     public static final String PARTICIPANT_DISPOSITION_WITHDRAW_FIELD = "withdraw";
+    public static final String PARTICIPANT_COMPLETED_PER_PROTOCOL_FIELD = "per_protocol";
 
     @Autowired
     RedcapConfiguration redcapConfiguration;

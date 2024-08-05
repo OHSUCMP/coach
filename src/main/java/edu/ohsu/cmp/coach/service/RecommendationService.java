@@ -8,7 +8,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.coach.entity.Counseling;
 import edu.ohsu.cmp.coach.entity.MyGoal;
-import edu.ohsu.cmp.coach.entity.RandomizationGroup;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.transform.BaseVendorTransformer;
@@ -108,7 +108,7 @@ public class RecommendationService extends AbstractService {
 
         // for users belonging to the "basic" randomization group, filter hooks to only those permitted for that cohort
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
-        if (workspace.getRandomizationGroup() == RandomizationGroup.BASIC && basicGroupAllowFilter.size() > 0) {
+        if (workspace.getActiveRandomizationGroup() == RandomizationGroup.BASIC && basicGroupAllowFilter.size() > 0) {
             Iterator<CDSHook> iter = list.iterator();
             while (iter.hasNext()) {
                 CDSHook item = iter.next();

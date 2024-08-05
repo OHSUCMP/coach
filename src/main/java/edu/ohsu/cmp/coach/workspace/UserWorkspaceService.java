@@ -1,6 +1,5 @@
 package edu.ohsu.cmp.coach.workspace;
 
-import edu.ohsu.cmp.coach.entity.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.SessionMissingException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
@@ -9,6 +8,7 @@ import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.Audience;
 import edu.ohsu.cmp.coach.model.MyOmronTokenData;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,9 +47,10 @@ public class UserWorkspaceService {
         return map.containsKey(sessionId);
     }
 
-    public void init(String sessionId, Audience audience, RandomizationGroup randomizationGroup, boolean requiresEnrollment, FHIRCredentialsWithClient fcc) throws ConfigurationException {
+    public void init(String sessionId, Audience audience, RandomizationGroup randomizationGroup, boolean requiresEnrollment, boolean hasCompletedStudy,
+                     FHIRCredentialsWithClient fcc) throws ConfigurationException {
         try {
-            UserWorkspace workspace = new UserWorkspace(ctx, sessionId, audience, randomizationGroup, requiresEnrollment, fcc, fqm, fcm);
+            UserWorkspace workspace = new UserWorkspace(ctx, sessionId, audience, randomizationGroup, requiresEnrollment, hasCompletedStudy, fcc, fqm, fcm);
             workspace.setVendorTransformer(buildVendorTransformer(workspace));
             map.put(sessionId, workspace);
 

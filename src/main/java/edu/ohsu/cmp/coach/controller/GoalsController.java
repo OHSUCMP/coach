@@ -2,7 +2,7 @@ package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.GoalHistory;
 import edu.ohsu.cmp.coach.entity.MyGoal;
-import edu.ohsu.cmp.coach.entity.RandomizationGroup;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
 import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.model.GoalHistoryModel;
@@ -40,8 +40,8 @@ public class GoalsController extends BaseController {
         String sessionId = session.getId();
         setCommonViewComponents(model);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
-        model.addAttribute("randomizationGroup", workspace.getRandomizationGroup());
-        model.addAttribute("isEnhancedView", workspace.getRandomizationGroup() == RandomizationGroup.ENHANCED);
+        model.addAttribute("randomizationGroup", workspace.getActiveRandomizationGroup());
+        model.addAttribute("isEnhancedView", workspace.getActiveRandomizationGroup() == RandomizationGroup.ENHANCED);
         model.addAttribute("patient", workspace.getPatient());
         model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
         model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(sessionId));

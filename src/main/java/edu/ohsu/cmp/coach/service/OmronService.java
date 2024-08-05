@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.coach.entity.MyOmronVitals;
-import edu.ohsu.cmp.coach.entity.RedcapParticipantInfo;
+import edu.ohsu.cmp.coach.model.redcap.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.NotAuthenticatedException;
 import edu.ohsu.cmp.coach.exception.OmronException;

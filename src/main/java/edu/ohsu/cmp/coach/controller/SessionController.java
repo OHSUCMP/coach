@@ -1,8 +1,8 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.MyPatient;
-import edu.ohsu.cmp.coach.entity.RandomizationGroup;
-import edu.ohsu.cmp.coach.entity.RedcapParticipantInfo;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
+import edu.ohsu.cmp.coach.model.redcap.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.REDCapException;
@@ -62,6 +62,9 @@ public class SessionController extends BaseController {
     @Value("${redcap.data-access-group}")
     private String redcapDataAccessGroupStr;
 
+    @Value("#{new Boolean('${end-of-study.permit-continued-use}')}")
+    protected Boolean endOfStudyPermitContinuedUse;
+
     @GetMapping("health")
     public String health() {
         return "health";
@@ -112,12 +115,17 @@ public class SessionController extends BaseController {
         MyPatient myPatient = patientService.getMyPatient(patientId);
 
         boolean requiresEnrollment = false;
+        boolean hasCompletedStudy = false;
         RandomizationGroup randomizationGroup = RandomizationGroup.ENHANCED;
 
         if (redCapService.isRedcapEnabled()) {
             RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(myPatient.getRedcapId());
             if (redcapParticipantInfo.getIsActivelyEnrolled()) {
                 randomizationGroup = redcapParticipantInfo.getRandomizationGroup();
+
+            } else if (redcapParticipantInfo.isHasCompletedStudy()) {
+                hasCompletedStudy = true;
+
             } else {
                 requiresEnrollment = true;
             }
@@ -134,8 +142,18 @@ public class SessionController extends BaseController {
                 sessionService.prepareProvisionalSession(session.getId(), credentials, audience);
                 return ResponseEntity.ok("session provisionally established");
 
+            } else if (hasCompletedStudy) {
+                if (endOfStudyPermitContinuedUse) {
+                    sessionService.prepareSession(session.getId(), credentials, audience, randomizationGroup, false, true);
+                    return ResponseEntity.ok("session configured successfully");
+
+                } else {
+                    sessionService.prepareProvisionalSession(session.getId(), credentials, audience);
+                    return ResponseEntity.ok("session provisionally established");
+                }
+
             } else {
-                sessionService.prepareSession(session.getId(), credentials, audience, randomizationGroup, requiresEnrollment);
+                sessionService.prepareSession(session.getId(), credentials, audience, randomizationGroup, false, false);
                 return ResponseEntity.ok("session configured successfully");
             }
 
@@ -146,7 +164,7 @@ public class SessionController extends BaseController {
                 // for OHSU and MU, simply display the enhanced view for the patient, irrespective of the patient's
                 // randomization group, and irrespective of whether or not the patient is actively enrolled
 
-                sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED, requiresEnrollment);
+                sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED, requiresEnrollment, false);
                 return ResponseEntity.ok("care team session established");
 
             } else if (dag == RedcapDataAccessGroup.VUMC) {
@@ -159,7 +177,7 @@ public class SessionController extends BaseController {
                     return ResponseEntity.ok(PATIENT_NOT_ACTIVE_RESPONSE);
 
                 } else {
-                    sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED, requiresEnrollment);
+                    sessionService.prepareSession(session.getId(), credentials, audience, RandomizationGroup.ENHANCED, requiresEnrollment, false);
                     return ResponseEntity.ok("care team session established");
                 }
 
@@ -209,6 +227,12 @@ public class SessionController extends BaseController {
     public ResponseEntity<?> clearSession(HttpSession session) {
         sessionService.expireAll(session.getId());
         return ResponseEntity.ok("session cleared");
+    }
+
+    @PostMapping("confirm-end-of-study")
+    public ResponseEntity<?> confirmEndOfStudy(HttpSession session) {
+        userWorkspaceService.get(session.getId()).setConfirmedEndOfStudy(true);
+        return ResponseEntity.ok("end-of-study confirmed");
     }
 
     @PostMapping("refresh")

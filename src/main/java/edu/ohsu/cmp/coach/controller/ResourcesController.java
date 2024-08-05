@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.entity.RandomizationGroup;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.model.AuditLevel;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.slf4j.Logger;
@@ -59,7 +59,7 @@ public class ResourcesController extends BaseController {
     public String welcomeVideo(HttpSession session, Model model) {
         setCommonViewComponents(model);
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
-        String videoId = workspace.getRandomizationGroup() == RandomizationGroup.ENHANCED ?
+        String videoId = workspace.getActiveRandomizationGroup() == RandomizationGroup.ENHANCED ?
                 WELCOME_VIDEO_ID_INTERVENTION :
                 WELCOME_VIDEO_ID_CONTROL;
         model.addAttribute("videoId", videoId);
@@ -72,7 +72,7 @@ public class ResourcesController extends BaseController {
     @GetMapping("/pdf/{filename}")
     public ResponseEntity<InputStreamResource> getPdf(HttpSession session, @PathVariable("filename") String filename) {
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
-        String path = workspace.getRandomizationGroup() == RandomizationGroup.ENHANCED ?
+        String path = workspace.getActiveRandomizationGroup() == RandomizationGroup.ENHANCED ?
                 "intervention" :
                 "control";
         String resName = "static/pdf/" + path + "/" + filename;

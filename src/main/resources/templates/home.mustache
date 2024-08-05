@@ -6,6 +6,23 @@
 {{#omronAuthRequestUrl}}
     <div id="omronAuthRequestUrl" class="hidden">{{omronAuthRequestUrl}}</div>
 {{/omronAuthRequestUrl}}
+
+{{#showEndOfStudyMessage}}
+    <div id="endOfStudyContainer" class="modal">
+        <div id="endOfStudyMessage" class="modalContent">
+            {{#endOfStudyMessage}}
+                <p>{{{endOfStudyMessage}}}</p>
+            {{/endOfStudyMessage}}
+            {{^endOfStudyMessage}}
+                <p>Thank you for participating in the COACH study.  Your participation in the study has now concluded.</p>
+            {{/endOfStudyMessage}}
+            <div class="buttonContainer">
+                <button id="closeEndOfStudyMessageButton" class="btn btn-sm button-primary">Close</button>
+            </div>
+        </div>
+    </div>
+{{/showEndOfStudyMessage}}
+
 <div class="container">
     {{#systemStatusMessage}}
         <div class="row align-items-center alert alert-teal" role="alert">
@@ -270,6 +287,10 @@
             $('#currentBPGoal').attr('title', '140/90 is default. Update your BP goal only if you\'ve discussed a different goal with your care team.');
         }
 
+        {{#showEndOfStudyMessage}}
+            $('#endOfStudyContainer').show();
+        {{/showEndOfStudyMessage}}
+
         refreshChart();
         refreshMedications();
         refreshAdverseEvents();
@@ -291,6 +312,20 @@
         });
     });
     {{/showClearSupplementalData}}
+
+    {{#showEndOfStudyMessage}}
+    enableHover('#closeEndOfStudyMessageButton');
+
+    $(document).on('click', '#closeEndOfStudyMessageButton', function() {
+        $.ajax({
+            method: "POST",
+            url: "/confirm-end-of-study"
+        }).always(function() {
+            $('#endOfStudyContainer').hide();
+        });
+    });
+    {{/showEndOfStudyMessage}}
+
 </script>
 
 

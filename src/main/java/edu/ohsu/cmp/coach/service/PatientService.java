@@ -78,6 +78,15 @@ public class PatientService extends AbstractService {
         }
     }
 
+    public void setConfirmedEndOfStudy(Long internalPatientId, Boolean confirmedEndOfStudy) {
+        Optional<MyPatient> p = repository.findById(internalPatientId);
+        if (p.isPresent()) {
+            MyPatient myPatient = p.get();
+            myPatient.setConfirmedEndOfStudy(confirmedEndOfStudy);
+            repository.save(myPatient);
+        }
+    }
+
     public MyPatient update(MyPatient myPatient) {
         return repository.save(myPatient);
     }
