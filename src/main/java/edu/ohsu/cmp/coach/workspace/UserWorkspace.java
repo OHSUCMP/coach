@@ -114,6 +114,15 @@ public class UserWorkspace {
         this.bpGoalUpdated = myPatient.getBpGoalUpdated();
         this.confirmedEndOfStudy = myPatient.getConfirmedEndOfStudy();
 
+        if (this.confirmedEndOfStudy && ! hasCompletedStudy) {
+            // it should never be the case where a participant a) hasn't yet completed the study, but b) has
+            // confirmed that they've ended the study.  if this occurs, it's likely due to the participant having been
+            // marked completed, but then that status was reverted.  in any case, if hasCompletedStudy == false,
+            // isConfirmedEndOfStudy should be false too.
+            patientService.setConfirmedEndOfStudy(internalPatientId, false);
+            this.confirmedEndOfStudy = false;
+        }
+
         cache = Caffeine.newBuilder()
                 .expireAfterWrite(6, TimeUnit.HOURS)
                 .build();
