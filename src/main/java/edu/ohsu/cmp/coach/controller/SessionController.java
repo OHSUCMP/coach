@@ -56,8 +56,8 @@ public class SessionController extends BaseController {
     @Value("${smart.patient.clientId}")
     private String patientClientId;
 
-    @Value("${smart.ehr.clientId}")
-    private String ehrClientId;
+    @Value("${smart.provider.clientId}")
+    private String providerClientId;
 
     @Value("${redcap.data-access-group}")
     private String redcapDataAccessGroupStr;
@@ -70,15 +70,15 @@ public class SessionController extends BaseController {
         return "health";
     }
 
-    @GetMapping("launch-ehr")
-    public String launchEHR(HttpSession session, Model model) {
+    @GetMapping(value = {"launch-provider", "launch-ehr"}) // launch-ehr is deprecated
+    public String launchProvider(HttpSession session, Model model) {
         sessionService.expireAll(session.getId());
         setCommonViewComponents(model);
-        model.addAttribute("clientId", ehrClientId);
+        model.addAttribute("clientId", providerClientId);
         model.addAttribute("scope", scope);
         model.addAttribute("redirectUri", redirectURI);
         model.addAttribute("iss", iss);
-        return "launch-ehr";
+        return "launch-provider";
     }
 
     @GetMapping("launch-patient")
@@ -103,7 +103,7 @@ public class SessionController extends BaseController {
         Audience audience;
         if (StringUtils.equals(clientId, patientClientId)) {
             audience = Audience.PATIENT;
-        } else if (StringUtils.equals(clientId, ehrClientId)) {
+        } else if (StringUtils.equals(clientId, providerClientId)) {
             audience = Audience.CARE_TEAM;
         } else {
             throw new CaseNotHandledException("couldn't determine audience from clientId=" + clientId);
