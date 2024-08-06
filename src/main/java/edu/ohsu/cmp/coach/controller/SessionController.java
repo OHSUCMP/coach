@@ -44,20 +44,26 @@ public class SessionController extends BaseController {
     @Autowired
     private REDCapService redCapService;
 
-    @Value("${smart.scope}")
-    private String scope;
+    @Value("${smart.patient.scope}")
+    private String patientScope;
 
-    @Value("${smart.redirectUri}")
-    private String redirectURI;
-
-    @Value("${smart.iss}")
-    private String iss;
+    @Value("${smart.patient.iss}")
+    private String patientIss;
 
     @Value("${smart.patient.clientId}")
     private String patientClientId;
 
-    @Value("${smart.ehr.clientId}")
-    private String ehrClientId;
+    @Value("${smart.provider.scope}")
+    private String providerScope;
+
+    @Value("${smart.provider.iss}")
+    private String providerIss;
+
+    @Value("${smart.provider.clientId}")
+    private String providerClientId;
+
+    @Value("${smart.redirectUri}")
+    private String redirectURI;
 
     @Value("${redcap.data-access-group}")
     private String redcapDataAccessGroupStr;
@@ -70,15 +76,15 @@ public class SessionController extends BaseController {
         return "health";
     }
 
-    @GetMapping("launch-ehr")
-    public String launchEHR(HttpSession session, Model model) {
+    @GetMapping(value = {"launch-provider", "launch-ehr"}) // launch-ehr is deprecated
+    public String launchProvider(HttpSession session, Model model) {
         sessionService.expireAll(session.getId());
         setCommonViewComponents(model);
-        model.addAttribute("clientId", ehrClientId);
-        model.addAttribute("scope", scope);
+        model.addAttribute("clientId", providerClientId);
+        model.addAttribute("scope", providerScope);
         model.addAttribute("redirectUri", redirectURI);
-        model.addAttribute("iss", iss);
-        return "launch-ehr";
+        model.addAttribute("iss", providerIss);
+        return "launch-provider";
     }
 
     @GetMapping("launch-patient")
@@ -86,9 +92,9 @@ public class SessionController extends BaseController {
         sessionService.expireAll(session.getId());
         setCommonViewComponents(model);
         model.addAttribute("clientId", patientClientId);
-        model.addAttribute("scope", scope);
+        model.addAttribute("scope", patientScope);
         model.addAttribute("redirectUri", redirectURI);
-        model.addAttribute("iss", iss);
+        model.addAttribute("iss", patientIss);
         return "launch-patient";
     }
 
@@ -103,7 +109,7 @@ public class SessionController extends BaseController {
         Audience audience;
         if (StringUtils.equals(clientId, patientClientId)) {
             audience = Audience.PATIENT;
-        } else if (StringUtils.equals(clientId, ehrClientId)) {
+        } else if (StringUtils.equals(clientId, providerClientId)) {
             audience = Audience.CARE_TEAM;
         } else {
             throw new CaseNotHandledException("couldn't determine audience from clientId=" + clientId);

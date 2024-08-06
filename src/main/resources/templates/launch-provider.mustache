@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{applicationName}} - Loading</title>
+    <script type="text/javascript" src="/node_modules/jquery/dist/jquery.js"></script>
+    <script type="text/javascript" src="/node_modules/fhirclient/build/fhir-client.js"></script>
+    <script type="text/javascript">
+        function clearSession(_callback) {
+            $.ajax({
+                method: "POST",
+                url: "/clear-session"
+            }).always(function() {
+                _callback();
+            });
+        }
+
+        $(document).ready(function() {
+            clearSession(function() {
+                FHIR.oauth2.authorize({
+                    "client_id": "{{clientId}}",
+                    "scope": "{{scope}}",
+                    "redirect_uri": "{{redirectUri}}",
+                    "iss": "{{iss}}"
+                });
+            });
+        });
+    </script>
+</head>
+<body style="font-size:1.5em;">
+Loading...
+</body>
+</html>
