@@ -51,6 +51,7 @@ public class PatientService extends AbstractService {
             p = new MyPatient(patIdHash);
             p.setRedcapId(UUIDUtil.getRandomUUID());
             p.setBpGoalUpdated(false);
+            p.setConfirmedEndOfStudy(false);
             logger.info("Persisting new patient with hash " + patIdHash);
             p = repository.save(p);
 

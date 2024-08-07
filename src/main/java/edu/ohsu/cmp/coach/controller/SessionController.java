@@ -138,7 +138,7 @@ public class SessionController extends BaseController {
             logger.debug("REDCap requiresEnrollment = " + requiresEnrollment);
         }
 
-        if (audience == Audience.PATIENT) {
+        if (Audience.PATIENT.equals(audience)) {
             if (requiresEnrollment) {
                 // REDCap is enabled and the participant is not actively enrolled (for any number of reasons)
                 // cache session data somewhere well-segregated from the UserWorkspace, as a UserWorkspace must only be
@@ -163,7 +163,7 @@ public class SessionController extends BaseController {
                 return ResponseEntity.ok("session configured successfully");
             }
 
-        } else if (audience == Audience.CARE_TEAM) {
+        } else if (Audience.CARE_TEAM.equals(audience)) {
             RedcapDataAccessGroup dag = RedcapDataAccessGroup.fromTag(redcapDataAccessGroupStr);  // this is for sure a valid value at this point, see RedcapConfigurationValidator for details
 
             if (dag == RedcapDataAccessGroup.OHSU || dag == RedcapDataAccessGroup.MU) {

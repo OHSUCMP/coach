@@ -135,7 +135,7 @@ public class HomeController extends BaseController {
                 model.addAttribute("enrollmentBanner", true);
             }
 
-            if (workspace.isHasCompletedStudy() && ! workspace.isConfirmedEndOfStudy()) {
+            if (Audience.PATIENT.equals(workspace.getAudience()) && workspace.isHasCompletedStudy() && ! workspace.isConfirmedEndOfStudy()) {
                 model.addAttribute("showEndOfStudyMessage", true);
                 if (workspace.getRandomizationGroup() == RandomizationGroup.BASIC && StringUtils.isNotBlank(endOfStudyControlMessage)) {
                     model.addAttribute("endOfStudyMessage", endOfStudyControlMessage);
