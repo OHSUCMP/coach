@@ -130,6 +130,7 @@ public class SessionController extends BaseController {
                 randomizationGroup = redcapParticipantInfo.getRandomizationGroup();
 
             } else if (redcapParticipantInfo.isHasCompletedStudy()) {
+                randomizationGroup = redcapParticipantInfo.getRandomizationGroup();
                 hasCompletedStudy = true;
 
             } else {
