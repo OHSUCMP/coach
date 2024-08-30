@@ -372,47 +372,58 @@ function populateSummaryDiv() {
         bpNote.addClass('crisis');
         bpNote.show();
 
-    } else if (avgSystolic === 0) { // not enough readings to compute average
-        // Add the placeholder image and text
-        bpPlaceholder.show();
-        bpPlaceholder.append("<img src='/images/info-icon.png' class='bp-icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>");
-        bpPlaceholder.append("<div class='mt-4'>Enter more blood pressures to see average</div>");
-
     } else if (isBasic()) {
         removeBootstrapCols(bpIndicatorContainer);
         chartContainer.hide();
         bpIcon.hide();
         bpNote.hide();
-        bpPlaceholder.hide();
-        bpContainer.show();
 
-        bpLabel.html('Most Recent BP:');
-        bpLabel.show();
-        systolic.html(mostRecentBP.systolic.value);
-        systolic.removeClass('crisis');
-        diastolic.html(mostRecentBP.diastolic.value);
-        diastolic.removeClass('crisis');
+        if (mostRecentBP.systolic === undefined || mostRecentBP.diastolic === undefined) {
+            bpPlaceholder.html("<div class='mt-4'>No blood pressures to display</div>");
+            bpPlaceholder.show();
+            bpContainer.hide();
 
-    } else if (isEnhanced()) {
-        if (aboveGoal) {
-            bpIcon.html("<img src='/images/stoplight-yellow.png' class='bp-icon' alt='Above Goal' /><span class='tiptext'>Your average BP is above goal. Average is calculated based on a maximum of 12 recent readings. Check the Resources tab to learn more about what to do.</span>");
-            bpNote.html('Your BP is above your goal!');
         } else {
-            bpIcon.html("<img src='/images/stoplight-green.png' class='bp-icon' alt='At or Below Goal' /><span class='tiptext'>Your average BP is at goal. Average is calculated based on a maximum of 12 recent readings. Check the Resources tab to learn more about what to do.</span>");
-            bpNote.html('You reached your goal!');
+            bpPlaceholder.hide();
+            bpContainer.show();
+            bpLabel.html('Most Recent BP:');
+            bpLabel.show();
+            bpContainer.show();
+            systolic.html(mostRecentBP.systolic.value);
+            systolic.removeClass('crisis');
+            diastolic.html(mostRecentBP.diastolic.value);
+            diastolic.removeClass('crisis');
         }
 
-        bpIcon.show();
-        bpNote.removeClass('crisis');
-        bpNote.show();
-        bpPlaceholder.hide();
-        bpContainer.show();
+    } else if (isEnhanced()) {
+        if (avgSystolic === 0) { // not enough readings to compute average
+            // Add the placeholder image and text
+            bpPlaceholder.show();
+            bpPlaceholder.append("<img src='/images/info-icon.png' class='bp-icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>");
+            bpPlaceholder.append("<div class='mt-4'>Enter more blood pressures to see average</div>");
 
-        bpLabel.html('Recent BP Average:').attr('title', 'Average of the last several readings shaded in grey');
-        systolic.html(avgSystolic);
-        systolic.removeClass('crisis');
-        diastolic.html(avgDiastolic);
-        diastolic.removeClass('crisis');
+        } else {
+            if (aboveGoal) {
+                bpIcon.html("<img src='/images/stoplight-yellow.png' class='bp-icon' alt='Above Goal' /><span class='tiptext'>Your average BP is above goal. Average is calculated based on a maximum of 12 recent readings. Check the Resources tab to learn more about what to do.</span>");
+                bpNote.html('Your BP is above your goal!');
+            } else {
+                bpIcon.html("<img src='/images/stoplight-green.png' class='bp-icon' alt='At or Below Goal' /><span class='tiptext'>Your average BP is at goal. Average is calculated based on a maximum of 12 recent readings. Check the Resources tab to learn more about what to do.</span>");
+                bpNote.html('You reached your goal!');
+            }
+
+            bpIcon.show();
+            bpNote.removeClass('crisis');
+            bpNote.show();
+            bpPlaceholder.hide();
+            bpContainer.show();
+
+            bpLabel.html('Recent BP Average:').attr('title', 'Average of the last several readings shaded in grey');
+            systolic.html(avgSystolic);
+            systolic.removeClass('crisis');
+            diastolic.html(avgDiastolic);
+            diastolic.removeClass('crisis');
+        }
+
     } else {
         console.error("Unexpected randomization group")
     }
