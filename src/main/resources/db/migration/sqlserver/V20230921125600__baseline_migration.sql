@@ -324,8 +324,8 @@ create table vsac_valueset (
                                binding varchar(50),
                                status varchar(50),
                                revisionDate date,
-                               created datetime not null default current_timestamp,
-                               updated datetime not null default current_timestamp,
+                               created datetime not null constraint c_vsac_valueset_created1 default current_timestamp,
+                               updated datetime not null constraint c_vsac_valueset_created2 default current_timestamp,
                                constraint vv_c1 unique (oid, version)
 );
 go
@@ -346,8 +346,8 @@ create table vsac_concept (
                               codeSystemName varchar(255) not null,
                               codeSystemVersion varchar(255) not null,
                               displayName varchar(255) not null,
-                              created datetime not null default current_timestamp,
-                              updated datetime not null default current_timestamp,
+                              created datetime not null constraint c_vsac_concept_created1 default current_timestamp,
+                              updated datetime not null constraint c_vsac_concept_created2 default current_timestamp,
                               constraint vc_c1 unique (code, codeSystem, codeSystemVersion)
 );
 go
@@ -397,7 +397,7 @@ create table omron_vitals_cache (
                                     pulse int not null,
                                     pulseUnits varchar(20) not null,
                                     deviceType varchar(50) not null,
-                                    createdDate datetime not null default current_timestamp
+                                    createdDate datetime not null constraint c_omron_vitals_cache_createdDate default current_timestamp
 );
 create index idxPatId on omron_vitals_cache (patId);
 go
@@ -406,7 +406,7 @@ go
 
 alter table patient add studyClass varchar(20);
 alter table patient add redcapId varchar(36);
-alter table patient add consentGranted char(1) default null;
+alter table patient add consentGranted char(1) constraint c_patient_consentGranted default null;
 go
 
 -- 2023-04-11 - clear studyClass where consentGranted is 'N' - we don't want to set this before consent is granted
