@@ -46,7 +46,7 @@ go
 */
 
 -- create the coach user and principal if they does not yet exist
-
+/*
 if not exists(select * from sys.database_principals where name = 'coach')
 begin
   create login coach with password = 'CHANGE_THIS_in_PRODUCTION!';
@@ -54,6 +54,7 @@ begin
   alter role db_owner add member coach;
 end;
 go
+*/
 
 -- recreate and populate tables
 
