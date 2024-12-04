@@ -6,7 +6,7 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.repository.GoalHistoryRepository;
 import edu.ohsu.cmp.coach.repository.GoalRepository;
@@ -234,7 +234,7 @@ public class GoalService extends AbstractService {
                     GoalModel.BP_GOAL_DEFAULT_DIASTOLIC
             ));
 
-            auditService.doAudit(sessionId, AuditLevel.INFO, "created default BP goal", "id=" + defaultBPGoal.getId() +
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "created default BP goal", "id=" + defaultBPGoal.getId() +
                     ", target=" + defaultBPGoal.getSystolicTarget() + "/" + defaultBPGoal.getDiastolicTarget());
 
             return new GoalModel(defaultBPGoal);

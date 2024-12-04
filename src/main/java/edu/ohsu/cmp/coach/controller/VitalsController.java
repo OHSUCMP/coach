@@ -67,7 +67,7 @@ public class VitalsController extends BaseController {
                 "inputmask/dist/bindings/inputmask.binding.js"
         });
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "visited vitals page");
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "visited vitals page");
 
         return "vitals";
     }

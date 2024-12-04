@@ -7,7 +7,7 @@ import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -122,7 +122,7 @@ public class PulseService extends AbstractService {
                     workspace.getRemotePulses().add(pm2);
                 }
 
-                auditService.doAudit(sessionId, AuditLevel.INFO, "wrote pulse remotely", pm.getPulse() +
+                auditService.doAudit(sessionId, AuditSeverity.INFO, "wrote pulse remotely", pm.getPulse() +
                         " at " + pm.getReadingDateString());
 
             } catch (Exception e) {
@@ -131,7 +131,7 @@ public class PulseService extends AbstractService {
                         "pulse=" + pm.getPulse() + " at " + pm.getReadingDateString() +
                         ", message=" + e.getMessage(), e);
 
-                auditService.doAudit(sessionId, AuditLevel.WARN, "failed to write pulse remotely",
+                auditService.doAudit(sessionId, AuditSeverity.WARN, "failed to write pulse remotely",
                         "pulse=" + pm.getPulse() + " at " + pm.getReadingDateString() +
                                 ", message=" + e.getMessage());
             }
@@ -145,14 +145,14 @@ public class PulseService extends AbstractService {
                 pm2 = new PulseModel(response, fcm);
             }
 
-            auditService.doAudit(sessionId, AuditLevel.INFO, "created pulse", "id=" + response.getId() +
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "created pulse", "id=" + response.getId() +
                     ", pulse=" + pm.getPulse() + " at " + pm.getReadingDateString());
 
         } catch (DataException de) {
             // okay if it's failing to write locally, that's a problem.
             logger.error("caught " + de.getClass().getName() + " attempting to create PulseModel " + pm, de);
 
-            auditService.doAudit(sessionId, AuditLevel.ERROR, "failed to create pulse", "pulse=" +
+            auditService.doAudit(sessionId, AuditSeverity.ERROR, "failed to create pulse", "pulse=" +
                     pm.getPulse() + " at " + pm.getReadingDateString() + ", message=" + de.getMessage());
         }
 

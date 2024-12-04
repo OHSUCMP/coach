@@ -2,7 +2,7 @@ package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.entity.Audit;
 import edu.ohsu.cmp.coach.entity.MyPatient;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.repository.AuditRepository;
 import edu.ohsu.cmp.coach.workspace.UserWorkspaceService;
 import org.slf4j.Logger;
@@ -20,34 +20,34 @@ public class AuditService {
     @Autowired
     private AuditRepository repository;
 
-    public void doAudit(String sessionId, AuditLevel level, String action) {
+    public void doAudit(String sessionId, AuditSeverity severity, String action) {
         if (userWorkspaceService.exists(sessionId)) {
             Long patId = userWorkspaceService.get(sessionId).getInternalPatientId();
-            doAudit(new Audit(patId, level, action));
+            doAudit(new Audit(patId, severity, action));
 
         } else {
-            logger.warn("attempted to generate audit for nonexistent session " + sessionId + ": level=" + level +
+            logger.warn("attempted to generate audit for nonexistent session " + sessionId + ": severity=" + severity +
                     ", action=" + action);
         }
     }
 
-    public void doAudit(String sessionId, AuditLevel level, String action, String details) {
+    public void doAudit(String sessionId, AuditSeverity severity, String action, String details) {
         if (userWorkspaceService.exists(sessionId)) {
             Long patId = userWorkspaceService.get(sessionId).getInternalPatientId();
-            doAudit(new Audit(patId, level, action, details));
+            doAudit(new Audit(patId, severity, action, details));
 
         } else {
-            logger.warn("attempted to generate audit for nonexistent session " + sessionId + ": level=" + level +
+            logger.warn("attempted to generate audit for nonexistent session " + sessionId + ": severity=" + severity +
                     ", action=" + action + ", details=" + details);
         }
     }
 
-    public void doAudit(MyPatient myPatient, AuditLevel level, String action) {
-        doAudit(myPatient, level, action, null);
+    public void doAudit(MyPatient myPatient, AuditSeverity severity, String action) {
+        doAudit(myPatient, severity, action, null);
     }
 
-    public void doAudit(MyPatient myPatient, AuditLevel level, String action, String details) {
-        doAudit(new Audit(myPatient.getId(), level, action, details));
+    public void doAudit(MyPatient myPatient, AuditSeverity severity, String action, String details) {
+        doAudit(new Audit(myPatient.getId(), severity, action, details));
     }
 
 

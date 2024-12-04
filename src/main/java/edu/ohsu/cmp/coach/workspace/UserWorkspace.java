@@ -684,7 +684,7 @@ public class UserWorkspace {
                     logger.error("caught " + e.getClass().getName() + " getting cards for hook=" + hook.getId() + " - " +
                             e.getMessage(), e);
 
-                    auditService.doAudit(sessionId, AuditLevel.ERROR, "recommendation exception", "encountered " +
+                    auditService.doAudit(sessionId, AuditSeverity.ERROR, "recommendation exception", "encountered " +
                             e.getClass().getSimpleName() + " getting recommendations for " + hook.getId() + " - " +
                             e.getMessage());
 

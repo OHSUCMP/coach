@@ -7,7 +7,7 @@ import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -133,7 +133,7 @@ public class BloodPressureService extends AbstractService {
                     workspace.getRemoteBloodPressures().add(bpm2);
                 }
 
-                auditService.doAudit(sessionId, AuditLevel.INFO, "wrote BP remotely", bpm.getSystolic() + "/" +
+                auditService.doAudit(sessionId, AuditSeverity.INFO, "wrote BP remotely", bpm.getSystolic() + "/" +
                         bpm.getDiastolic() + " at " + bpm.getReadingDateString());
 
             } catch (Exception e) {
@@ -142,7 +142,7 @@ public class BloodPressureService extends AbstractService {
                         "BP=" + bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString() +
                         ", message=" + e.getMessage(), e);
 
-                auditService.doAudit(sessionId, AuditLevel.WARN, "failed to write BP remotely", "BP=" +
+                auditService.doAudit(sessionId, AuditSeverity.WARN, "failed to write BP remotely", "BP=" +
                         bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString() +
                                 ", message=" + e.getMessage());
             }
@@ -156,14 +156,14 @@ public class BloodPressureService extends AbstractService {
                 bpm2 = new BloodPressureModel(response, fcm);
             }
 
-            auditService.doAudit(sessionId, AuditLevel.INFO, "created BP", "id=" + response.getId() +
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "created BP", "id=" + response.getId() +
                     ", BP=" + bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString());
 
         } catch (DataException de) {
             // okay if it's failing to write locally, that's a problem.
             logger.error("caught " + de.getClass().getName() + " attempting to create BloodPressureModel " + bpm, de);
 
-            auditService.doAudit(sessionId, AuditLevel.ERROR, "failed to create BP", "BP=" +
+            auditService.doAudit(sessionId, AuditSeverity.ERROR, "failed to create BP", "BP=" +
                     bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString() +
                             ", message=" + de.getMessage());
         }
