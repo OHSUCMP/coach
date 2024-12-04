@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach;
 
 import edu.ohsu.cmp.coach.exception.SessionMissingException;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.service.AuditService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
             logger.error("trapped " + e.getClass().getName() + " at " + request.getRequestURI() +
                     " for session " + session.getId() + " - " + e.getMessage(), e);
 
-            auditService.doAudit(session.getId(), AuditLevel.ERROR, "application exception", "encountered " +
+            auditService.doAudit(session.getId(), AuditSeverity.ERROR, "application exception", "encountered " +
                     e.getClass().getSimpleName() + " at " + request.getRequestURI() + " - " + e.getMessage());
         }
 

@@ -6,7 +6,7 @@ import edu.ohsu.cmp.coach.entity.MyAdverseEventOutcome;
 import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.AdverseEventModel;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.repository.AdverseEventOutcomeRepository;
 import edu.ohsu.cmp.coach.repository.AdverseEventRepository;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -185,7 +185,7 @@ public class AdverseEventService extends AbstractService {
             aeo.setModifiedDate(new Date());
             outcomeRepository.save(aeo);
 
-            auditService.doAudit(sessionId, AuditLevel.INFO, "registered adverse-event outcome", "outcome=" + outcome +
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "registered adverse-event outcome", "outcome=" + outcome +
                     ", adverseEventIdHash=" + adverseEventIdHash);
 
             return true;
@@ -194,7 +194,7 @@ public class AdverseEventService extends AbstractService {
             logger.warn("attempted to set outcome=" + outcome + " for adverseEventIdHash=" + adverseEventIdHash +
                     " but no such record found!  this shouldn't happen.  skipping -");
 
-            auditService.doAudit(sessionId, AuditLevel.WARN, "failed to register adverse-event outcome",
+            auditService.doAudit(sessionId, AuditSeverity.WARN, "failed to register adverse-event outcome",
                     "record not found with adverseEventIdHash=" + adverseEventIdHash);
 
             return false;

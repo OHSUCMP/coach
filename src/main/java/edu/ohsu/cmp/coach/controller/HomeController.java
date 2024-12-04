@@ -148,7 +148,7 @@ public class HomeController extends BaseController {
                 model.addAttribute("systemStatusMessage", systemStatusMessage);
             }
 
-            auditService.doAudit(sessionId, AuditLevel.INFO, "visited home page");
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "visited home page");
 
             return "home";
 
@@ -167,7 +167,7 @@ public class HomeController extends BaseController {
                 String recordId = redCapService.createSubjectInfoRecord(redcapParticipantInfo.getCoachId());
                 String entrySurveyLink = redCapService.getEntrySurveyLink(recordId);
 
-                auditService.doAudit(patient, AuditLevel.INFO, "accessed REDCap entry survey", "participant info did not exist");
+                auditService.doAudit(patient, AuditSeverity.INFO, "accessed REDCap entry survey", "participant info did not exist");
 
                 return "redirect:" + entrySurveyLink;
 
@@ -176,7 +176,7 @@ public class HomeController extends BaseController {
                 logger.info("REDCap workflow: Forwarding " + redcapParticipantInfo.getCoachId() + " to the entry survey");
                 String entrySurveyLink = redCapService.getEntrySurveyLink(redcapParticipantInfo.getRecordId());
 
-                auditService.doAudit(patient, AuditLevel.INFO, "accessed REDCap entry survey", "information sheet was incomplete");
+                auditService.doAudit(patient, AuditSeverity.INFO, "accessed REDCap entry survey", "information sheet was incomplete");
 
                 return "redirect:" + entrySurveyLink;
 
@@ -185,7 +185,7 @@ public class HomeController extends BaseController {
                 logger.info("REDCap workflow: Participant " + redcapParticipantInfo.getCoachId() + " denied consent. Forwarding to consent-previously-denied.");
                 setCommonViewComponents(model);
 
-                auditService.doAudit(patient, AuditLevel.INFO, "access denied", "participant did not grant consent");
+                auditService.doAudit(patient, AuditSeverity.INFO, "access denied", "participant did not grant consent");
 
                 return "consent-previously-denied";
 
@@ -194,7 +194,7 @@ public class HomeController extends BaseController {
                 logger.info("REDCap workflow: Forwarding " + redcapParticipantInfo.getCoachId() + " to the survey queue to complete enrollment.");
                 String surveyQueueLink = redCapService.getSurveyQueueLink(redcapParticipantInfo.getRecordId());
 
-                auditService.doAudit(patient, AuditLevel.INFO, "accessed REDCap survey queue", "participant has no consent record, or has not been randomized");
+                auditService.doAudit(patient, AuditSeverity.INFO, "accessed REDCap survey queue", "participant has no consent record, or has not been randomized");
 
                 return "redirect:" + surveyQueueLink;
 
@@ -203,7 +203,7 @@ public class HomeController extends BaseController {
                 logger.info("REDCap workflow: Participant " + redcapParticipantInfo.getCoachId() + " has withdrawn. Forwarding to withdrawn page.");
                 setCommonViewComponents(model);
 
-                auditService.doAudit(patient, AuditLevel.INFO, "access denied", "participant has withdrawn from the study");
+                auditService.doAudit(patient, AuditSeverity.INFO, "access denied", "participant has withdrawn from the study");
 
                 return "withdrawn";
 
@@ -222,14 +222,14 @@ public class HomeController extends BaseController {
 
                 patientService.setConfirmedEndOfStudy(patient.getId(), true);
 
-                auditService.doAudit(patient, AuditLevel.INFO, "access denied", "participant has completed their participation in the COACH study");
+                auditService.doAudit(patient, AuditSeverity.INFO, "access denied", "participant has completed their participation in the COACH study");
 
                 return "end-of-study";
 
             } else {
                 logger.error("REDCap workflow: Participant " + redcapParticipantInfo.getRecordId() + "is actively enrolled but cannot access COACH.");
 
-                auditService.doAudit(patient, AuditLevel.ERROR, "enrolled but cannot access COACH");
+                auditService.doAudit(patient, AuditSeverity.ERROR, "enrolled but cannot access COACH");
 
                 return "error";
             }
@@ -273,7 +273,7 @@ public class HomeController extends BaseController {
                     logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
                             re.getMessage(), re);
 
-                    auditService.doAudit(session.getId(), AuditLevel.ERROR, "recommendation exception", "encountered " +
+                    auditService.doAudit(session.getId(), AuditSeverity.ERROR, "recommendation exception", "encountered " +
                             re.getClass().getSimpleName() + " getting recommendations for " + hookId + " - " +
                             re.getMessage());
 

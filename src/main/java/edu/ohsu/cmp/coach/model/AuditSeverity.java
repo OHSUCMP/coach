@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.model;
 
-public enum AuditLevel {
+public enum AuditSeverity {
     INFO,
     WARN,
     ERROR

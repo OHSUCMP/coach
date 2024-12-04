@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.entity;
 
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -15,7 +15,7 @@ public class Audit {
     private Long patId;
 
     @Enumerated(EnumType.STRING)
-    private AuditLevel level;
+    private AuditSeverity severity;
 
     private String event;
 
@@ -26,13 +26,13 @@ public class Audit {
     protected Audit() {
     }
 
-    public Audit(Long patId, AuditLevel level, String event) {
-        this(patId, level, event, null);
+    public Audit(Long patId, AuditSeverity severity, String event) {
+        this(patId, severity, event, null);
     }
 
-    public Audit(Long patId, AuditLevel level, String event, String details) {
+    public Audit(Long patId, AuditSeverity severity, String event, String details) {
         this.patId = patId;
-        this.level = level;
+        this.severity = severity;
         this.event = event;
         this.details = details;
         this.created = new Date();
@@ -43,7 +43,7 @@ public class Audit {
         return "Audit{" +
                 "id=" + id +
                 ", patId=" + patId +
-                ", level=" + level +
+                ", severity=" + severity +
                 ", event='" + event + '\'' +
                 ", details='" + details + '\'' +
                 ", created=" + created +
@@ -66,12 +66,12 @@ public class Audit {
         this.patId = patId;
     }
 
-    public AuditLevel getLevel() {
-        return level;
+    public AuditSeverity getSeverity() {
+        return severity;
     }
 
-    public void setLevel(AuditLevel level) {
-        this.level = level;
+    public void setSeverity(AuditSeverity severity) {
+        this.severity = severity;
     }
 
     public String getEvent() {

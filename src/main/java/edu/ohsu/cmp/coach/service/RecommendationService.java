@@ -187,7 +187,7 @@ public class RecommendationService extends AbstractService {
             if (code < 200 || code > 299) {
                 logger.error("CQF-RULER ERROR: code=" + code + ", body=" + body);
 
-                auditService.doAudit(sessionId, AuditLevel.ERROR, "recommendation engine error", "received HTTP " + code +
+                auditService.doAudit(sessionId, AuditSeverity.ERROR, "recommendation engine error", "received HTTP " + code +
                         " from recommendation engine for " + hookId + " - see logs for details");
 
                 Card card = showDevErrors ?
@@ -251,7 +251,7 @@ public class RecommendationService extends AbstractService {
                 throw (IOException) e;
 
             } else {
-                auditService.doAudit(sessionId, AuditLevel.ERROR, "recommendation exception", "caught " + e.getClass().getSimpleName() +
+                auditService.doAudit(sessionId, AuditSeverity.ERROR, "recommendation exception", "caught " + e.getClass().getSimpleName() +
                         " processing " + hookId + " - " + e.getMessage());
 
                 Card card = showDevErrors ?

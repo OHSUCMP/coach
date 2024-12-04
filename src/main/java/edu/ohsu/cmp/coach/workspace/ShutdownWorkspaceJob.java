@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.workspace;
 
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.service.AuditService;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
@@ -32,7 +32,7 @@ public class ShutdownWorkspaceJob implements Job {
         if (userWorkspaceService.exists(sessionId)) {
             logger.info("expiring credentials for session " + sessionId);
             AuditService auditService = ctx.getBean(AuditService.class);
-            auditService.doAudit(sessionId, AuditLevel.INFO, "session expired", sessionId);
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "session expired", sessionId);
             userWorkspaceService.shutdown(sessionId);
 
         } else {

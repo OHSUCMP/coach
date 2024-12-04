@@ -4,7 +4,7 @@ import edu.ohsu.cmp.coach.entity.GoalHistory;
 import edu.ohsu.cmp.coach.entity.MyGoal;
 import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.model.AchievementStatus;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.GoalHistoryModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.service.GoalService;
@@ -52,7 +52,7 @@ public class GoalsController extends BaseController {
                 "inputmask/dist/bindings/inputmask.binding.js"
         });
 
-        auditService.doAudit(sessionId, AuditLevel.INFO, "visited goals page");
+        auditService.doAudit(sessionId, AuditSeverity.INFO, "visited goals page");
 
         return "goals";
     }
@@ -85,7 +85,7 @@ public class GoalsController extends BaseController {
             myGoal = new MyGoal(extGoalId, referenceSystem, referenceCode, referenceDisplay, goalText, targetDate);
             myGoal = goalService.create(session.getId(), myGoal);
 
-            auditService.doAudit(session.getId(), AuditLevel.INFO, "created goal", "id=" + myGoal.getId());
+            auditService.doAudit(session.getId(), AuditSeverity.INFO, "created goal", "id=" + myGoal.getId());
 
             // the goal was created in response to a suggestion.
             // they took the suggestion, so remove it from the list to consider
@@ -119,14 +119,14 @@ public class GoalsController extends BaseController {
             goal.setDiastolicTarget(diastolicTarget);
             goal = goalService.update(goal);
 
-            auditService.doAudit(session.getId(), AuditLevel.INFO, "updated BP goal", "id=" + goal.getId() +
+            auditService.doAudit(session.getId(), AuditSeverity.INFO, "updated BP goal", "id=" + goal.getId() +
                     ", new target=" + systolicTarget + "/" + diastolicTarget);
 
         } else {
             goal = goalService.create(session.getId(), new MyGoal(fcm.getBpPanelCommonCoding(),
                     systolicTarget, diastolicTarget));
 
-            auditService.doAudit(session.getId(), AuditLevel.INFO, "created BP goal", "id=" + goal.getId() +
+            auditService.doAudit(session.getId(), AuditSeverity.INFO, "created BP goal", "id=" + goal.getId() +
                     ", target=" + systolicTarget + "/" + diastolicTarget);
         }
 
@@ -152,7 +152,7 @@ public class GoalsController extends BaseController {
         GoalHistory gh = new GoalHistory(AchievementStatus.valueOf(achievementStatusStr), g);
         gh = goalService.createHistory(gh);
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "updated goal status", "goalId=" + g.getId() +
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "updated goal status", "goalId=" + g.getId() +
                 ", historyId=" + gh.getId() + ", achievementStatus=" + achievementStatusStr);
 
         return new ResponseEntity<>(new GoalHistoryModel(gh), HttpStatus.OK);

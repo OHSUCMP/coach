@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ public class ResourcesController extends BaseController {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
         setCommonViewComponents(model);
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: faq");
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: faq");
 
         return "faq";
     }
@@ -40,7 +40,7 @@ public class ResourcesController extends BaseController {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
         setCommonViewComponents(model);
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: symptoms-911");
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: symptoms-911");
 
         return "symptoms";
     }
@@ -50,7 +50,7 @@ public class ResourcesController extends BaseController {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
         setCommonViewComponents(model);
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: side-effects");
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: side-effects");
 
         return "side-effects";
     }
@@ -64,7 +64,7 @@ public class ResourcesController extends BaseController {
                 WELCOME_VIDEO_ID_CONTROL;
         model.addAttribute("videoId", videoId);
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: welcome-video");
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: welcome-video");
 
         return "embedded-video";
     }
@@ -96,7 +96,7 @@ public class ResourcesController extends BaseController {
         setCommonViewComponents(model);
         model.addAttribute("pdfUrl", "/resources/pdf/Risks_of_Hypertension_Study_Results.pdf");
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: risks-of-hypertension-study-results");
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: risks-of-hypertension-study-results");
 
         return "embedded-pdf";
     }
@@ -107,7 +107,7 @@ public class ResourcesController extends BaseController {
         setCommonViewComponents(model);
         model.addAttribute("pdfUrl", "/resources/pdf/COACH_Written_Instructions.pdf");
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: coach-written-instructions");
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: coach-written-instructions");
 
         return "embedded-pdf";
     }
@@ -118,7 +118,7 @@ public class ResourcesController extends BaseController {
         setCommonViewComponents(model);
         model.addAttribute("pdfUrl", "/resources/pdf/OMRON_Instructions.pdf");
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "viewed resources: omron-instructions");
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: omron-instructions");
 
         return "embedded-pdf";
     }

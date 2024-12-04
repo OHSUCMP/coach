@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.MedicationModel;
 import edu.ohsu.cmp.coach.service.MedicationService;
 import org.apache.commons.lang3.StringUtils;
@@ -40,7 +40,7 @@ public class MedicationsController extends BaseController {
         model.addAttribute("antihypertensiveMedications", antihypertensiveMedications);
         model.addAttribute("otherMedications", otherMedications);
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "visited medications page");
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "visited medications page");
 
         return "medications";
     }

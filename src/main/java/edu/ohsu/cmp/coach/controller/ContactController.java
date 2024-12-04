@@ -2,7 +2,7 @@ package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.ContactMessage;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.BloodPressureSummaryModel;
 import edu.ohsu.cmp.coach.model.MedicationModel;
 import edu.ohsu.cmp.coach.service.BloodPressureService;
@@ -83,7 +83,7 @@ public class ContactController extends BaseController {
 
         model.addAttribute("pageStyles", new String[] { "contact.css" });
 
-        auditService.doAudit(sessionId, AuditLevel.INFO, "visited contact page", "token=" + token);
+        auditService.doAudit(sessionId, AuditSeverity.INFO, "visited contact page", "token=" + token);
 
         return "contact";
     }

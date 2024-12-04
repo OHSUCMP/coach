@@ -3,7 +3,7 @@ package edu.ohsu.cmp.coach.service;
 import edu.ohsu.cmp.coach.entity.HypotensionAdverseEvent;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.AbstractVitalsModel;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.repository.HypotensionAdverseEventRepository;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
@@ -115,7 +115,7 @@ public class HypotensionAdverseEventService extends AbstractService {
         hae.setCreatedDate(new Date());
         HypotensionAdverseEvent hae2 = repository.save(hae);
 
-        auditService.doAudit(sessionId, AuditLevel.INFO, "created hypotension adverse event", "id=" + hae2.getId());
+        auditService.doAudit(sessionId, AuditSeverity.INFO, "created hypotension adverse event", "id=" + hae2.getId());
 
         return hae2;
     }
@@ -125,6 +125,6 @@ public class HypotensionAdverseEventService extends AbstractService {
                 sessionId + " - " + hae.getLogicalEqualityKey());
         repository.delete(hae);
 
-        auditService.doAudit(sessionId, AuditLevel.INFO, "deleted hypotension adverse event", "id=" + hae.getId());
+        auditService.doAudit(sessionId, AuditSeverity.INFO, "deleted hypotension adverse event", "id=" + hae.getId());
     }
 }

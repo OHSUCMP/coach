@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.Counseling;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.CounselingPageModel;
 import edu.ohsu.cmp.coach.service.CounselingService;
 import org.slf4j.Logger;
@@ -32,7 +32,7 @@ public class CounselingController extends BaseController {
 
         model.addAttribute("page", page);
 
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "received counseling", "key=" + key);
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "received counseling", "key=" + key);
 
         return "counseling";
     }
@@ -50,7 +50,7 @@ public class CounselingController extends BaseController {
             c = counselingService.create(session.getId(),
                     new Counseling(extCounselingId, referenceSystem, referenceCode, counselingText));
 
-            auditService.doAudit(session.getId(), AuditLevel.INFO, "created counseling record", "id=" + c.getId());
+            auditService.doAudit(session.getId(), AuditSeverity.INFO, "created counseling record", "id=" + c.getId());
 
             return new ResponseEntity<>(c, HttpStatus.OK);
 

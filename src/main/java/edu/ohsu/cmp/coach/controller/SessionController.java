@@ -7,7 +7,7 @@ import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.REDCapException;
 import edu.ohsu.cmp.coach.model.Audience;
-import edu.ohsu.cmp.coach.model.AuditLevel;
+import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.RedcapDataAccessGroup;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.service.PatientService;
@@ -218,14 +218,14 @@ public class SessionController extends BaseController {
 
     @GetMapping("logout")
     public String logout(HttpSession session) {
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "logged out"); // must occur before expire action
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out"); // must occur before expire action
         sessionService.expireAll(session.getId());
         return "logout";
     }
 
     @GetMapping("inactivity-logout")
     public String inactivityLogout(HttpSession session) {
-        auditService.doAudit(session.getId(), AuditLevel.INFO, "logged out due to inactivity"); // must occur before expire action
+        auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out due to inactivity"); // must occur before expire action
         sessionService.expireAll(session.getId());
         return "inactivity-logout";
     }
@@ -259,14 +259,14 @@ public class SessionController extends BaseController {
             logger.info("clearing supplemental data for session=" + session.getId());
             workspace.clearSupplementalData();
 
-            auditService.doAudit(session.getId(), AuditLevel.INFO, "cleared supplemental data");
+            auditService.doAudit(session.getId(), AuditSeverity.INFO, "cleared supplemental data");
 
             return ResponseEntity.ok("supplemental data cleared");
 
         } else {
             logger.warn("attempted to clear supplemental data for session=" + session.getId() + ", but this action is not permitted.");
 
-            auditService.doAudit(session.getId(), AuditLevel.WARN, "unauthorized attempt to clear supplemental data");
+            auditService.doAudit(session.getId(), AuditSeverity.WARN, "unauthorized attempt to clear supplemental data");
 
             return ResponseEntity.badRequest().build();
         }
