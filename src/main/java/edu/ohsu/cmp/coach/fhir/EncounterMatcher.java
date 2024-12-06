@@ -59,7 +59,7 @@ public class EncounterMatcher {
     }
 
     private boolean encounterMatches(StringBuilder sb, Encounter e, List<Coding> classIn, List<Coding> classNotIn, List<Coding> typeIn, List<Coding> typeNotIn) {
-        if (classIn != null) {
+        if (classIn != null && ! classIn.isEmpty()) {
             if (sb != null) sb.append("classInMatch? ");
             boolean match = e.hasClass_() && inClass(sb, e.getClass_(), classIn);
             if ( ! match ) {
@@ -70,12 +70,12 @@ public class EncounterMatcher {
             }
         }
 
-        if (classNotIn != null) {
+        if (classNotIn != null && ! classNotIn.isEmpty()) {
             if (sb != null) sb.append("classNotInMatch? ");
             boolean match = ! e.hasClass_() || ! inClass(sb, e.getClass_(), classNotIn);
             if ( ! match ) {
                 if (sb != null) sb.append("*NO* (class='")
-                        .append(FhirUtil.toCodingString(e.getClass_()))
+                        .append(toCodingDebugString(e.getClass_()))
                         .append("')");
                 return false;
             } else if (sb != null) {
@@ -89,7 +89,7 @@ public class EncounterMatcher {
             }
         }
 
-        if (typeIn != null) {
+        if (typeIn != null && ! typeIn.isEmpty()) {
             if (sb != null) sb.append("typeInMatch? ");
             boolean match = e.hasType() && inType(sb, e.getType(), typeIn);
             if ( ! match ) {
@@ -100,7 +100,7 @@ public class EncounterMatcher {
             }
         }
 
-        if (typeNotIn != null) {
+        if (typeNotIn != null && ! typeNotIn.isEmpty()) {
             if (sb != null) sb.append("typeNotInMatch? ");
             boolean match = ! e.hasType() || ! inType(sb, e.getType(), typeNotIn);
             if ( ! match ) {
