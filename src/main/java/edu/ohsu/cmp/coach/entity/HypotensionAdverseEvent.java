@@ -2,7 +2,7 @@ package edu.ohsu.cmp.coach.entity;
 
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;

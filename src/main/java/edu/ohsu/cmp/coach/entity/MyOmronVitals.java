@@ -2,7 +2,7 @@ package edu.ohsu.cmp.coach.entity;
 
 import edu.ohsu.cmp.coach.model.omron.OmronBloodPressureModel;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
 
 @Entity
