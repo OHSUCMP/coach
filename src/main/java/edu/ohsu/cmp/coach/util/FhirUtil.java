@@ -488,9 +488,9 @@ public class FhirUtil {
         if (spec.hasCode()) {
             boolean codeMatches = c.hasCode() && c.getCode().equals(spec.getCode());
             if (codeMatches) {
-                if (sb != null) sb.append("MATCH code='").append(spec.getSystem()).append("' ");
+                if (sb != null) sb.append("MATCH code='").append(spec.getCode()).append("' ");
             } else {
-                if (sb != null) sb.append("DOES NOT MATCH code='").append(spec.getSystem()).append("' ");
+                if (sb != null) sb.append("DOES NOT MATCH code='").append(spec.getCode()).append("' ");
                 return false;
             }
         }
@@ -502,9 +502,9 @@ public class FhirUtil {
             if (spec.hasDisplay()) {
                 boolean displayMatches = c.hasDisplay() && c.getDisplay().equals(spec.getDisplay());
                 if (displayMatches) {
-                    if (sb != null) sb.append("MATCH display='").append(spec.getSystem()).append("' ");
+                    if (sb != null) sb.append("MATCH display='").append(spec.getDisplay()).append("' ");
                 } else {
-                    if (sb != null) sb.append("DOES NOT MATCH display='").append(spec.getSystem()).append("' ");
+                    if (sb != null) sb.append("DOES NOT MATCH display='").append(spec.getDisplay()).append("' ");
                     return false;
                 }
             }
