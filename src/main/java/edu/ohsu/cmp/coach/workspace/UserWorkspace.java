@@ -344,7 +344,15 @@ public class UserWorkspace {
 ///////////////////////////////////////////////////////////////////////////////////////
 
     public List<Encounter> getEncounters() {
-        return List.copyOf(getEncounterMap().values());
+        List<Encounter> list = new ArrayList<>();
+        Set<String> foundIds = new HashSet<>();
+        for (Encounter encounter : getEncounterMap().values()) {
+            if ( ! foundIds.contains(encounter.getId()) ) {
+                list.add(encounter);
+                foundIds.add(encounter.getId());
+            }
+        }
+        return list;
     }
 
     public Encounter getEncounter(Reference encounterReference) {
