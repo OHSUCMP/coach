@@ -650,13 +650,21 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
     protected List<Encounter> getAllEncounters(Bundle bundle) {
         List<Encounter> list = new ArrayList<>();
 
-        list.addAll(workspace.getEncounters());
+        Set<String> foundIds = new HashSet<>();
+        for (Encounter encounter : workspace.getEncounters()) {
+            list.add(encounter);
+            foundIds.add(encounter.getId());
+        }
 
         if (bundle != null && bundle.hasEntry()) {
             for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
                 if (entry.hasResource()) {
                     if (entry.getResource() instanceof Encounter) {
-                        list.add((Encounter) entry.getResource());
+                        Encounter encounter = (Encounter) entry.getResource();
+                        if ( ! foundIds.contains(encounter.getId()) ) {
+                            list.add(encounter);
+                            foundIds.add(encounter.getId());
+                        }
                     }
                 }
             }
