@@ -249,12 +249,42 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
     public List<BloodPressureModel> transformIncomingBloodPressureReadings(Bundle bundle) throws DataException {
         if (bundle == null) return null;
 
-        Map<String, List<Observation>> encounterObservationsMap = buildEncounterObservationsMap(bundle);
         FhirConfigManager fcm = workspace.getFhirConfigManager();
 
         List<Coding> bpPanelCodings = fcm.getBpPanelCodings();
         List<Coding> systolicCodings = fcm.getBpSystolicCodings();
         List<Coding> diastolicCodings = fcm.getBpDiastolicCodings();
+
+        if (logger.isDebugEnabled()) {
+            try {
+                logger.debug("in transformIncomingBloodPressureReadings()");
+                logger.debug("bundle contains the following resources:");
+                int i = 0;
+                for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+                    if (entry.hasResource()) {
+                        logger.debug(i + " : " + entry.getResource().getClass().getSimpleName() + " (" + entry.getResource().getId() + ")");
+                        i++;
+                    }
+                }
+                logger.debug("bpPanelCodings:");
+                for (Coding c : bpPanelCodings) {
+                    logger.debug("- system=" + c.getSystem() + ", code=" + c.getCode() + ", display=" + c.getDisplay());
+                }
+                logger.debug("systolicCodings:");
+                for (Coding c : systolicCodings) {
+                    logger.debug("- system=" + c.getSystem() + ", code=" + c.getCode() + ", display=" + c.getDisplay());
+                }
+                logger.debug("diastolicCodings:");
+                for (Coding c : diastolicCodings) {
+                    logger.debug("- system=" + c.getSystem() + ", code=" + c.getCode() + ", display=" + c.getDisplay());
+                }
+
+            } catch (Exception e) {
+                logger.error("caught " + e.getClass().getName() + " writing debug logs - " + e.getMessage(), e);
+            }
+        }
+
+        Map<String, List<Observation>> encounterObservationsMap = buildEncounterObservationsMap(bundle);
 
         List<BloodPressureModel> list = new ArrayList<>();
 
@@ -269,18 +299,21 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 continue;
             }
 
-            logger.debug("building Observations for Encounter " + encounter.getId());
+            logger.debug("found " + encounterObservations.size() + " Observations for Encounter " + encounter.getId());
 
             List<Observation> bpObservationList = new ArrayList<>();            // potentially many per encounter
             Map<String, SystolicDiastolicPair> map = new LinkedHashMap<>();     // potentially many per encounter
             Observation protocol = null;
 
             for (Observation o : encounterObservations) {
+                logger.debug("processing Observation " + o.getId() + " for Encounter " + encounter.getId());
+
                 if ( ! o.hasCode() ) {
-                    logger.warn("observation " + o.getId() + " missing code - skipping -");
+                    logger.warn("observation " + o.getId() + " missing code, this is unexpected - skipping -");
 
                 } else if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
                     bpObservationList.add(o);
+                    logger.debug("observation " + o.getId() + " has panel coding; expecting both systolic and diastolic to be present");
 
                 } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
                     String key = getObservationMatchKey(o);
@@ -288,6 +321,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                         map.put(key, new SystolicDiastolicPair());
                     }
                     map.get(key).setSystolicObservation(o);
+                    logger.debug("observation " + o.getId() + " has systolic coding; added to SystolicDiastolicPair map with key=" + key);
 
                 } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
                     String key = getObservationMatchKey(o);
@@ -295,11 +329,15 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                         map.put(key, new SystolicDiastolicPair());
                     }
                     map.get(key).setDiastolicObservation(o);
+                    logger.debug("observation " + o.getId() + " has diastolic coding; added to SystolicDiastolicPair map with key=" + key);
 
                 } else if (protocol == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
-                    logger.debug("protocolObservation = " + o.getId() + " (encounter=" + encounter.getId() +
-                            ") (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                     protocol = o;
+                    logger.debug("observation " + o.getId() + " has protocol coding; will associate with encounter " +
+                            encounter.getId());
+
+                } else {
+                    logger.warn("observation " + o.getId() + " has a code but did not match any codings, this is unexpected - skipping -");
                 }
             }
 
@@ -491,15 +529,33 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                     if (observation.hasEncounter()) {
                         List<String> keys = buildKeys(observation.getEncounter());
 
+                        // IMPORTANT:
                         // we want to associate THE SAME list with each key, NOT separate instances of identical lists
 
                         List<Observation> list = null;
+
+                        // first, see if the map already contains a list for this key
                         for (String key : keys) {
                             if (map.containsKey(key)) {
                                 list = map.get(key);
                                 break;
                             }
                         }
+
+                        // if a list was found, it COULD BE the case that there are new keys with which to associate
+                        // this list, defined on this Observation.  we KNOW that the list is associated with at least one
+                        // of these keys, so it should be safe to assume they all refer to the same logical Encounter.
+                        // do that now
+                        if (list != null) {
+                            for (String key : keys) {
+                                if ( ! map.containsKey(key) ) {
+                                    map.put(key, list);
+                                }
+                            }
+                        }
+
+                        // otherwise, if no list was found for any keys, create a new list and associate it with each
+                        // of the keys
                         if (list == null) {
                             list = new ArrayList<>();
                             for (String key : keys) {

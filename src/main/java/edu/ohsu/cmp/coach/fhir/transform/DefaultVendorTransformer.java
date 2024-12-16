@@ -250,17 +250,28 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
             if (entry.getValue() != null) {
                 for (Observation o : entry.getValue()) {
-                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getPulseCodings())) {
-                        logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
-                        try {
-                            list.add(new PulseModel(o, fcm));
-                        } catch (DataException e) {
-                            logger.warn("caught " + e.getClass().getName() +
-                                    " building Pulse from Observation with id=" + o.getId() + " - " +
-                                    e.getMessage() + " - skipping -");
+                    try {
+                        if (o.hasCode()) {
+                            if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCodings())) {
+                                logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                                try {
+                                    list.add(new PulseModel(o, fcm));
+                                } catch (DataException e) {
+                                    logger.warn("caught " + e.getClass().getName() +
+                                            " building Pulse from Observation with id=" + o.getId() + " - " +
+                                            e.getMessage() + " - skipping -");
+                                }
+
+                            } else {
+                                logger.debug("did not process Observation " + o.getId() + " - invalid coding");
+                            }
+
+                        } else {
+                            logger.debug("did not process Observation " + o.getId() + " - no coding");
                         }
-                    } else {
-                        logger.debug("did not process Observation " + o.getId());
+
+                    } catch (Exception e) {
+                        logger.error("caught " + e.getClass().getName() + " processing Observation with id=" + o.getId() + " - " + e.getMessage(), e);
                     }
                 }
             }
