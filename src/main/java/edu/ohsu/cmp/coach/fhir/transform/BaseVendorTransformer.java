@@ -311,10 +311,6 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 if ( ! o.hasCode() ) {
                     logger.warn("observation " + o.getId() + " missing code, this is unexpected - skipping -");
 
-                } else if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
-                    bpObservationList.add(o);
-                    logger.debug("observation " + o.getId() + " has panel coding; expecting both systolic and diastolic to be present");
-
                 } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
                     String key = getObservationMatchKey(o);
                     if ( ! map.containsKey(key) ) {
@@ -330,6 +326,10 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                     }
                     map.get(key).setDiastolicObservation(o);
                     logger.debug("observation " + o.getId() + " has diastolic coding; added to SystolicDiastolicPair map with key=" + key);
+
+                } else if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
+                    bpObservationList.add(o);
+                    logger.debug("observation " + o.getId() + " has panel coding; expecting both systolic and diastolic to be present");
 
                 } else if (protocol == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
                     protocol = o;
