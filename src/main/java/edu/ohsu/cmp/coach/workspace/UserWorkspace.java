@@ -869,7 +869,6 @@ public class UserWorkspace {
             return new OmronStatusData(status, omronLastUpdated, omronCurrentItem, omronTotalItems);
 
         } else {
-            logger.warn("Omron integration is currently disabled; aborting synchronize request");
             return new OmronStatusData(OmronStatus.DISABLED, null, null, null);
         }
     }
