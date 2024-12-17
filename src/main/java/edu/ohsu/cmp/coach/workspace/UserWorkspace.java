@@ -344,7 +344,15 @@ public class UserWorkspace {
 ///////////////////////////////////////////////////////////////////////////////////////
 
     public List<Encounter> getEncounters() {
-        return List.copyOf(getEncounterMap().values());
+        List<Encounter> list = new ArrayList<>();
+        Set<String> foundIds = new HashSet<>();
+        for (Encounter encounter : getEncounterMap().values()) {
+            if ( ! foundIds.contains(encounter.getId()) ) {
+                list.add(encounter);
+                foundIds.add(encounter.getId());
+            }
+        }
+        return list;
     }
 
     public Encounter getEncounter(Reference encounterReference) {
@@ -861,7 +869,6 @@ public class UserWorkspace {
             return new OmronStatusData(status, omronLastUpdated, omronCurrentItem, omronTotalItems);
 
         } else {
-            logger.warn("Omron integration is currently disabled; aborting synchronize request");
             return new OmronStatusData(OmronStatus.DISABLED, null, null, null);
         }
     }
