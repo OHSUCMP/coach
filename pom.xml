@@ -15,7 +15,7 @@
     <description>The COACH FHIR application</description>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <hapi-fhir.version>7.6.1</hapi-fhir.version>
     </properties>
 
