@@ -181,10 +181,10 @@
         </dependency>
 
         <dependency>
-			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-core</artifactId>
-			<version>11.0.1</version>
-		</dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>11.0.1</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.flywaydb/flyway-mysql -->
         <dependency>
@@ -201,10 +201,10 @@
         </dependency>
 
         <dependency>
-			<groupId>org.webjars</groupId>
-			<artifactId>webjars-locator</artifactId>
-			<version>0.42</version>
-		</dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>webjars-locator</artifactId>
+            <version>0.42</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.webjars/bootstrap -->
         <dependency>
