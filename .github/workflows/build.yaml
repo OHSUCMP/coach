@@ -21,7 +21,7 @@ jobs:
       - name: Set up Java build environment
         uses: actions/setup-java@v4
         with:
-          distribution: 'oracle'
+          distribution: 'temurin'
           java-version: '17'
           cache: 'maven'
 
