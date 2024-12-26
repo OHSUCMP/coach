@@ -18,11 +18,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Java build environmant
+      - name: Set up Java build environment
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: '17'
           cache: 'maven'
 
       - name: Build with Maven
