@@ -24,11 +24,11 @@ jobs:
       run: |
           echo ${{ steps.latestrelease.outputs.releasetag }}
     - name: tagcheckout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
           ref: ${{ steps.latestrelease.outputs.releasetag }}
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
