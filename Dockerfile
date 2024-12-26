@@ -1,4 +1,4 @@
-FROM eclipse-temurin:11
+FROM eclipse-temurin:17
 
 # Continue with your application deployment
 RUN groupadd coach -g 9999 && \
