@@ -16,13 +16,13 @@ jobs:
       contents: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Java build environmant
-        uses: actions/setup-java@v2
+      - name: Set up Java build environment
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
           cache: 'maven'
 
       - name: Build with Maven
