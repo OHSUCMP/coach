@@ -5,7 +5,6 @@ import com.auth0.jwt.interfaces.Payload;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import edu.ohsu.cmp.coach.entity.MyPatient;
-import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
@@ -18,12 +17,14 @@ import edu.ohsu.cmp.coach.model.omron.OmronStatus;
 import edu.ohsu.cmp.coach.model.omron.OmronStatusData;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Reference;
 import org.quartz.*;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -277,6 +278,28 @@ public class UserWorkspace {
         cache.cleanUp();
         cardCache.cleanUp();
         bundleCache.cleanUp();
+
+        shutdownJobs();
+    }
+
+    private void shutdownJobs() {
+        logger.info("clearing triggers and jobs for session=" + sessionId);
+        Scheduler scheduler = ctx.getBean(Scheduler.class);
+        try {
+            for (TriggerKey triggerKey : scheduler.getTriggerKeys(GroupMatcher.groupEquals(sessionId))) {
+                logger.debug("unscheduling trigger: " + triggerKey.getName());
+                scheduler.unscheduleJob(triggerKey);
+            }
+
+            for (JobKey jobKey : scheduler.getJobKeys(GroupMatcher.groupEquals(sessionId))) {
+                logger.debug("deleting job: " + jobKey.getName());
+                scheduler.deleteJob(jobKey);
+            }
+
+        } catch (SchedulerException e) {
+            logger.error("caught " + e.getClass().getName() + " shutting down jobs for session " + sessionId + " - " +
+                    e.getMessage(), e);
+        }
     }
 
     private void setupAutoShutdownJob() {
@@ -287,12 +310,11 @@ public class UserWorkspace {
         jobDataMap.put(ShutdownWorkspaceJob.JOBDATA_APPLICATIONCONTEXT, ctx);
         jobDataMap.put(ShutdownWorkspaceJob.JOBDATA_SESSIONID, sessionId);
 
-        String id = UUID.randomUUID().toString();
-
+        JobKey jobKey = new JobKey("shutdownWorkspaceJob-" + sessionId, sessionId);
         JobDetail job = JobBuilder.newJob(ShutdownWorkspaceJob.class)
                 .storeDurably()
-                .withIdentity("shutdownWorkspaceJob-" + id, sessionId)
-                .withDescription("Shutdown User Workspace for session " + sessionId)
+                .withIdentity(jobKey)
+                .withDescription("Auto-shutdown User Workspace for session " + sessionId + " at " + shutdownTimestamp)
                 .usingJobData(jobDataMap)
                 .build();
 
@@ -302,7 +324,7 @@ public class UserWorkspace {
         jobDetailFactory.setDurability(true);
 
         Trigger trigger = TriggerBuilder.newTrigger().forJob(job)
-                .withIdentity("shutdownWorkspaceTrigger-" + id, sessionId)
+                .withIdentity("shutdownWorkspaceTrigger-" + sessionId, sessionId)
                 .withDescription("Shutdown Workspace trigger")
                 .startAt(shutdownTimestamp)
                 .build();
@@ -312,8 +334,15 @@ public class UserWorkspace {
                 scheduler.start();
             }
 
-            logger.info("scheduling automatic User Workspace shutdown for session {} at {}", sessionId, shutdownTimestamp);
+            if (scheduler.checkExists(jobKey)) {
+                JobDetail jobDetail = scheduler.getJobDetail(jobKey);
+                logger.warn("found pre-existing auto-shutdown job for session " + sessionId +
+                        ", but this should have been cleared earlier, it shouldn't have gotten this far.  ???");
+                logger.info("deleting job: " + jobDetail.getDescription());
+                scheduler.deleteJob(jobKey);
+            }
 
+            logger.info("scheduling job: " + job.getDescription());
             scheduler.scheduleJob(job, trigger);
 
         } catch (SchedulerException e) {

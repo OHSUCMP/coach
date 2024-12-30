@@ -50,6 +50,11 @@ public class UserWorkspaceService {
     public void init(String sessionId, Audience audience, RandomizationGroup randomizationGroup, boolean requiresEnrollment, boolean hasCompletedStudy,
                      FHIRCredentialsWithClient fcc) throws ConfigurationException {
         try {
+            if (shutdown(sessionId)) {
+                logger.warn("found pre-existing User Workspace for session=" + sessionId +
+                        " during init, which we shut down.  this is weird, as this should have been cleared earlier.  ???");
+            }
+
             UserWorkspace workspace = new UserWorkspace(ctx, sessionId, audience, randomizationGroup, requiresEnrollment, hasCompletedStudy, fcc, fqm, fcm);
             workspace.setVendorTransformer(buildVendorTransformer(workspace));
             map.put(sessionId, workspace);
