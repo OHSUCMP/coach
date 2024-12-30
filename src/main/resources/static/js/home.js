@@ -399,7 +399,7 @@ function populateSummaryDiv() {
         if (avgSystolic === 0) { // not enough readings to compute average
             // Add the placeholder image and text
             bpPlaceholder.show();
-            bpPlaceholder.append("<img src='/images/info-icon.png' class='bp-icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>");
+            bpPlaceholder.html("<img src='/images/info-icon.png' class='bp-icon' alt='Enter more blood pressures to see average' title='Enter more blood pressures to see average'/>");
             bpPlaceholder.append("<div class='mt-4'>Enter more blood pressures to see average</div>");
 
         } else {
