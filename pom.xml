@@ -17,6 +17,7 @@
     <properties>
         <java.version>17</java.version>
         <hapi-fhir.version>7.6.1</hapi-fhir.version>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
     </properties>
 
     <dependencies>
