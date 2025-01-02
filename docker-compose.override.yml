@@ -28,7 +28,7 @@ services:
       - MYSQL_PASSWORD
       - MYSQL_ROOT_PASSWORD
   cqfruler:
-    image: alphora/cqf-ruler:0.5.0
+    image: alphora/cqf-ruler:0.13.0
     ports:
       - "8080:8080"
     volumes:

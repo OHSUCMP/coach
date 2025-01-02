@@ -1,6 +1,6 @@
 package edu.ohsu.cmp.coach.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "adverse_event")

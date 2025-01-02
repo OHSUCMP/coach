@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{{applicationName}} - Completing Handshake</title>
-    <script type="text/javascript" src="/node_modules/jquery/dist/jquery.js"></script>
+    <script type="text/javascript" src="/node_modules/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="/node_modules/fhirclient/build/fhir-client.js"></script>
     <script type="text/javascript">
         const REDIRECT_URL = "/";
@@ -15,11 +15,11 @@
                 clientId: client.state.clientId,
                 serverUrl: client.state.serverUrl,
                 bearerToken: client.state.tokenResponse.access_token,
-                patientId: client.getPatientId(),
-                userId: client.getUserId()
+                patientId: client.patient.id,
+                userId: client.user.id
             };
 
-            // alert("useful development breakpoint");
+//            alert("useful development breakpoint");
 
             $.ajax({
                 method: "POST",
@@ -51,12 +51,15 @@
         // - http://docs.smarthealthit.org/client-js/request.html
 
         $(document).ready(function () {
-            FHIR.oauth2.ready(function (client) {
-                if ( ! {{cacheCredentials}} ) {
-                    sessionStorage.clear(); // flush credentials stored here by SMART on FHIR
-                }
-                prepareSession(client);
-            });
+            FHIR.oauth2.ready()
+                .then(function(client) {
+//                    alert("useful development breakpoint");
+                    if ( ! {{cacheCredentials}} ) {
+                        sessionStorage.clear(); // flush credentials stored here by SMART on FHIR
+                    }
+                    prepareSession(client);
+                })
+                .catch(console.error);
         });
     </script>
 </head>
