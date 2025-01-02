@@ -4,7 +4,7 @@ import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.ObservationSource;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
 
 @Entity

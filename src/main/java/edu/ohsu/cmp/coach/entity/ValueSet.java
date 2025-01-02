@@ -3,7 +3,7 @@ package edu.ohsu.cmp.coach.entity;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.*;
 
 @Entity
@@ -30,12 +30,9 @@ public class ValueSet {
     // see: https://attacomsian.com/blog/spring-data-jpa-many-to-many-mapping
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "vsac_valueset_concept",
-            joinColumns = {
-                    @JoinColumn(name = "valueSetId", referencedColumnName = "id",
-                            nullable = false, updatable = false)},
-            inverseJoinColumns = {
-                    @JoinColumn(name = "conceptId", referencedColumnName = "id",
-                            nullable = false, updatable = false)})
+            joinColumns =        { @JoinColumn(name = "valueSetId", referencedColumnName = "id", nullable = false) },
+            inverseJoinColumns = { @JoinColumn(name = "conceptId",  referencedColumnName = "id", nullable = false) }
+    )
     private Set<Concept> concepts;
 
     public ValueSet() {

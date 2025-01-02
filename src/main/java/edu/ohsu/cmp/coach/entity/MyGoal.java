@@ -5,7 +5,7 @@ import edu.ohsu.cmp.coach.model.GoalModel;
 import edu.ohsu.cmp.coach.model.LifecycleStatus;
 import org.hl7.fhir.r4.model.Coding;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
 import java.util.Set;
 
