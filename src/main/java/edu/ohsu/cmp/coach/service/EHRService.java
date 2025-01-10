@@ -434,10 +434,30 @@ public class EHRService extends AbstractService {
                 if (entry.getResource() instanceof MedicationRequest) {
                     MedicationRequest mr = (MedicationRequest) entry.getResource();
                     if (mr.hasMedicationReference()) {
-                        if ( ! FhirUtil.bundleContainsReference(bundle, mr.getMedicationReference()) ) {
-                            Medication m = fhirService.readByReference(fcc, workspace.getFhirQueryManager().getMedicationStrategy(),
-                                    Medication.class, mr.getMedicationReference());
-                            medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
+                        try {
+                            if (FhirUtil.isContainedReference(mr.getMedicationReference()) && mr.hasContained()) {
+                                // note: using FhirUtil.getContainedResourceByReference(...) instead of
+                                //       DomainResource.getContained(reference), as there appears to be a bug in the
+                                //       HAPI-FHIR libraries that causes that call to always fail.
+                                //       see: https://github.com/hapifhir/hapi-fhir/issues/6612 for details.
+                                Medication m = FhirUtil.getContainedResourceByReference(Medication.class, mr.getContained(),
+                                        mr.getMedicationReference().getReference());
+                                if (m != null) {
+                                    medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
+
+                                } else {
+                                    logger.warn("couldn't find an expected contained Medication resource for MedicationRequest " + mr.getId());
+                                }
+
+                            } else if ( ! FhirUtil.bundleContainsReference(bundle, mr.getMedicationReference()) ) {
+                                Medication m = fhirService.readByReference(fcc, workspace.getFhirQueryManager().getMedicationStrategy(),
+                                        Medication.class, mr.getMedicationReference());
+                                medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
+                            }
+
+                        } catch (Exception e) {
+                            logger.error("caught " + e.getClass().getName() + " attempting to obtain Medication for MedicationRequest " +
+                                    mr.getId() + " - " + e.getMessage(), e);
                         }
                     }
                 }

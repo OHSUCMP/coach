@@ -20,6 +20,7 @@ public class FhirUtil {
     private static final Logger logger = LoggerFactory.getLogger(FhirUtil.class);
 
     private static final String URN_UUID = "urn:uuid:";
+    private static final String CONTAINED_PREFIX = "#";
     private static final String EXTENSION_HOME_SETTING_URL = "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt";
     private static final String EXTENSION_HOME_SETTING_CODE = "264362003";
     private static final String EXTENSION_HOME_SETTING_SYSTEM = "http://snomed.info/sct";
@@ -207,10 +208,10 @@ public class FhirUtil {
         if (reference == null) return null;
 
         if (reference.startsWith(URN_UUID)) {
-            return reference.substring(URN_UUID.length() + 1);
+            return reference.substring(URN_UUID.length());
 
         } else {
-            int index = reference.indexOf('/');
+            int index = reference.lastIndexOf('/');
             return index >= 0 ?
                     reference.substring(index + 1) :
                     reference;
@@ -571,5 +572,47 @@ public class FhirUtil {
 
     public static boolean isUUID(String s) {
         return s != null && UUID_REGEX.matcher(s).matches();
+    }
+
+    public static boolean isContainedReference(Reference reference) {
+        return reference != null &&
+                reference.hasReference() &&
+                reference.getReference().startsWith(CONTAINED_PREFIX);
+    }
+
+    /**
+     * getContainedResourceByReference
+     * Replaces DomainResource.getContained(String reference) as that function is buggy.
+     * See https://github.com/hapifhir/hapi-fhir/issues/6612 for details.
+     * @param aClass the type of resource that is expected for the specified reference
+     * @param containedList a list of resources that are expected to come from a resource's getContained() function
+     * @param reference a reference to a contained resource, which is expected to begin with "#"
+     * @return a resource of type specified by aClass from containedList with an id that matches the specified reference
+     * @param <T>
+     */
+    @SuppressWarnings("unchecked")
+    public static <T extends IBaseResource> T getContainedResourceByReference(Class<T> aClass, List<Resource> containedList, String reference) {
+        if (containedList == null || containedList.isEmpty()) return null;
+        if (reference == null) return null;
+
+        if (reference.startsWith(CONTAINED_PREFIX) && reference.length() > CONTAINED_PREFIX.length()) {
+            for (Resource r : containedList) {
+                if (r.getId().startsWith(CONTAINED_PREFIX) && StringUtils.equals(reference, r.getId())) {
+                    if (r.getClass().isAssignableFrom(aClass)) {
+                        return (T) r;
+
+                    } else {
+                        logger.warn("found contained resource with id=" + r.getId() + ", but it is a " + r.getClass().getSimpleName() +
+                                ", not " + aClass.getSimpleName() + " as expected.");
+                        throw new ClassCastException("attempted to cast " + r.getClass().getSimpleName() + " to " + aClass.getSimpleName());
+                    }
+                }
+            }
+
+        } else {
+            logger.warn("invalid contained reference: " + reference);
+        }
+
+        return null;
     }
 }
