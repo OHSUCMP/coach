@@ -292,7 +292,7 @@ public class EHRService extends AbstractService {
         final List<Coding> validRouteCodings = getValidMedicationRouteCodings();
         final List<Coding> validFormCodings = getValidMedicationFormCodings();
 
-        return fhirService.search(fcc, workspace.getFhirQueryManager().getMedicationStatementStrategy(),
+        Bundle bundle = fhirService.search(fcc, workspace.getFhirQueryManager().getMedicationStatementStrategy(),
                 workspace.getVendorTransformer().getMedicationStatementQuery(fcc.getCredentials().getPatientId()),
                 new Function<ResourceWithBundle, Boolean>() {
                     @Override
@@ -320,17 +320,20 @@ public class EHRService extends AbstractService {
                             if ( ! hasGoodRoute && ms.hasMedicationReference()) {
                                 logger.debug("invalid or missing route for MedicationStatement " + ms.getId() + " - checking medication form");
                                 Bundle bundle = resourceWithBundle.getBundle();
-                                Medication m = FhirUtil.getResourceFromBundleByReference(bundle, Medication.class, ms.getMedicationReference().getReference());
-                                if (m == null) {
-                                    logger.warn("couldn't find Medication with reference=" + ms.getMedicationReference().getReference() +
-                                            " - attempting to read from FHIR server - ");
-                                    try {
+
+                                Medication m = null;
+                                try {
+                                    m = FhirUtil.getResourceFromContainedOrBundleByReference(ms, bundle, Medication.class, ms.getMedicationReference());
+                                    if (m == null) {
                                         m = fhirService.readByReference(fcc, workspace.getFhirQueryManager().getMedicationStrategy(),
                                                 Medication.class, ms.getMedicationReference());
-                                    } catch (Exception e) {
-                                        throw new RuntimeException(e);
                                     }
+
+                                } catch (Exception e) {
+                                    logger.error("caught " + e.getClass().getName() + " attempting to obtain Medication for MedicationStatement " +
+                                            ms.getId() + " - " + e.getMessage(), e);
                                 }
+
                                 if (m != null && m.hasForm() && FhirUtil.hasCoding(m.getForm(), validFormCodings)) {
                                     hasGoodForm = true;
                                 }
@@ -345,6 +348,42 @@ public class EHRService extends AbstractService {
                     }
                 }
         );
+
+        if (bundle == null) return null;    // optional considering MedicationRequest
+
+        if (bundle.hasEntry()) {
+            // creating a separate bundle for Medications, instead of adding them directly to the main
+            // bundle while iterating over it (below).  this prevents ConcurrentModificationException
+            Bundle medicationBundle = new Bundle();
+            medicationBundle.setType(Bundle.BundleType.COLLECTION);
+
+            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+                if (entry.getResource() instanceof MedicationStatement) {
+                    MedicationStatement ms = (MedicationStatement) entry.getResource();
+                    if (ms.hasMedicationReference()) {
+                        try {
+                            if ( ! FhirUtil.resourceOrBundleContainsReference(ms, bundle, ms.getMedicationReference()) ) {
+                                Medication m = fhirService.readByReference(fcc, workspace.getFhirQueryManager().getMedicationStrategy(),
+                                        Medication.class, ms.getMedicationReference());
+                                if (m != null) {
+                                    medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
+                                }
+                            }
+
+                        } catch (Exception e) {
+                            logger.error("caught " + e.getClass().getName() + " attempting to obtain Medication for MedicationStatement " +
+                                    ms.getId() + " - " + e.getMessage(), e);
+                        }
+                    }
+                }
+            }
+
+            if (medicationBundle.hasEntry()) {
+                bundle.getEntry().addAll(medicationBundle.getEntry());
+            }
+        }
+
+        return bundle;
     }
 
     public Bundle getMedicationRequests(String sessionId) throws DataException, ConfigurationException, IOException {
@@ -392,20 +431,23 @@ public class EHRService extends AbstractService {
                                 }
                             }
 
-                            if ( ! hasGoodRoute && mr.hasMedicationReference()) {
+                            if ( ! hasGoodRoute && mr.hasMedicationReference() ) {
                                 logger.debug("invalid or missing route for MedicationRequest " + mr.getId() + " - checking medication form");
                                 Bundle bundle = resourceWithBundle.getBundle();
-                                Medication m = FhirUtil.getResourceFromBundleByReference(bundle, Medication.class, mr.getMedicationReference().getReference());
-                                if (m == null) {
-                                    logger.warn("couldn't find Medication with reference=" + mr.getMedicationReference().getReference() +
-                                            " - attempting to read from FHIR server - ");
-                                    try {
+
+                                Medication m = null;
+                                try {
+                                    m = FhirUtil.getResourceFromContainedOrBundleByReference(mr, bundle, Medication.class, mr.getMedicationReference());
+                                    if (m == null) {
                                         m = fhirService.readByReference(fcc, workspace.getFhirQueryManager().getMedicationStrategy(),
                                                 Medication.class, mr.getMedicationReference());
-                                    } catch (Exception e) {
-                                        throw new RuntimeException(e);
                                     }
+
+                                } catch (Exception e) {
+                                    logger.error("caught " + e.getClass().getName() + " attempting to obtain Medication for MedicationRequest " +
+                                            mr.getId() + " - " + e.getMessage(), e);
                                 }
+
                                 if (m != null && m.hasForm() && FhirUtil.hasCoding(m.getForm(), validFormCodings)) {
                                     hasGoodForm = true;
                                 }
@@ -435,24 +477,12 @@ public class EHRService extends AbstractService {
                     MedicationRequest mr = (MedicationRequest) entry.getResource();
                     if (mr.hasMedicationReference()) {
                         try {
-                            if (FhirUtil.isContainedReference(mr.getMedicationReference()) && mr.hasContained()) {
-                                // note: using FhirUtil.getContainedResourceByReference(...) instead of
-                                //       DomainResource.getContained(reference), as there appears to be a bug in the
-                                //       HAPI-FHIR libraries that causes that call to always fail.
-                                //       see: https://github.com/hapifhir/hapi-fhir/issues/6612 for details.
-                                Medication m = FhirUtil.getContainedResourceByReference(Medication.class, mr.getContained(),
-                                        mr.getMedicationReference().getReference());
-                                if (m != null) {
-                                    medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
-
-                                } else {
-                                    logger.warn("couldn't find an expected contained Medication resource for MedicationRequest " + mr.getId());
-                                }
-
-                            } else if ( ! FhirUtil.bundleContainsReference(bundle, mr.getMedicationReference()) ) {
+                            if ( ! FhirUtil.resourceOrBundleContainsReference(mr, bundle, mr.getMedicationReference()) ) {
                                 Medication m = fhirService.readByReference(fcc, workspace.getFhirQueryManager().getMedicationStrategy(),
                                         Medication.class, mr.getMedicationReference());
-                                medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
+                                if (m != null) {
+                                    medicationBundle.addEntry(new Bundle.BundleEntryComponent().setResource(m));
+                                }
                             }
 
                         } catch (Exception e) {

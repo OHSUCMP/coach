@@ -130,6 +130,7 @@ public class FhirUtil {
         for (Resource r : collection) {
             appendResourceToBundle(bundle, r);
         }
+
         return bundle;
     }
 
@@ -218,6 +219,11 @@ public class FhirUtil {
         }
     }
 
+    public static boolean resourceOrBundleContainsReference(DomainResource resource, Bundle bundle, Reference reference) {
+        return resourceContainsReference(resource, reference) ||
+                bundleContainsReference(bundle, reference);
+    }
+
     public static boolean bundleContainsReference(Bundle b, Reference reference) {
         if (b == null || reference == null) return false;
 
@@ -233,12 +239,13 @@ public class FhirUtil {
         }
     }
 
-    public static boolean bundleContainsReference(Bundle b, String reference) {
+    public static boolean bundleContainsReference(Bundle bundle, String reference) {
+        if (bundle == null) return false;
         if (reference == null) return false;
 
         String referenceId = extractIdFromReference(reference);
 
-        for (Bundle.BundleEntryComponent entry : b.getEntry()) {
+        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
             Resource r = entry.getResource();
             if (r.hasId()) {
                 try {
@@ -255,6 +262,7 @@ public class FhirUtil {
                 }
             }
         }
+
         return false;
     }
 
@@ -278,7 +286,110 @@ public class FhirUtil {
                 }
             }
         }
+
         return false;
+    }
+
+    public static <T extends IBaseResource> T getResourceFromContainedOrBundleByReference(DomainResource resource, Bundle bundle, Class<T> aClass, Reference reference) {
+        if (reference == null) return null;
+        if ( ! reference.hasReference() ) return null;
+
+        T t = getResourceFromContainedOrBundleByReference(resource, bundle, aClass, reference.getReference());
+        if (t == null && reference.hasIdentifier()) {
+            t = getResourceFromBundleByIdentifier(bundle, aClass, reference.getIdentifier());
+        }
+
+        return t;
+    }
+
+    public static <T extends IBaseResource> T getResourceFromContainedOrBundleByReference(DomainResource resource, Bundle bundle, Class<T> aClass, String reference) {
+        if (resource == null) return null;
+
+        if (resourceContainsReference(resource, reference)) {
+            return getContainedResourceByReference(resource, aClass, reference);
+
+        } else if (bundleContainsReference(bundle, reference)) {
+            return getResourceFromBundleByReference(bundle, aClass, reference);
+
+        } else {
+            logger.debug("reference " + reference + " not found in contained or bundle");
+            return null;
+        }
+    }
+
+    public static boolean isContainedReference(String reference) {
+        return reference != null && reference.startsWith(CONTAINED_PREFIX) && reference.length() > CONTAINED_PREFIX.length();
+    }
+
+    public static boolean resourceContainsReference(DomainResource resource, Reference reference) {
+        if (resource == null || reference == null) return false;
+
+        // pretty sure that a contained reference has to be by reference/id, and not by identifier
+
+        if (reference.hasReference()) {
+            return resourceContainsReference(resource, reference.getReference());
+
+        } else {
+            logger.warn("Reference does not contain a reference!  returning false");
+            return false;
+        }
+    }
+
+    public static boolean resourceContainsReference(DomainResource resource, String reference) {
+        if (resource == null) return false;
+        if ( ! resource.hasContained() ) return false;
+        if (StringUtils.isBlank(reference)) return false;
+
+        if (isContainedReference(reference)) {
+            for (Resource r : resource.getContained()) {
+                if (StringUtils.equals(reference, r.getId())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * getContainedResourceByReference
+     * Replaces DomainResource.getContained(String reference) as that function is buggy.
+     * See https://github.com/hapifhir/hapi-fhir/issues/6612 for details.
+     * @param resource the DomainResource object that is expected to contain the referenced resource
+     * @param aClass the type of resource that is expected for the specified reference
+     * @param reference a reference to a contained resource, which is expected to begin with "#"
+     * @return a resource of type specified by aClass from containedList with an id that matches the specified reference
+     * @param <T>
+     */
+    @SuppressWarnings("unchecked")
+    public static <T extends IBaseResource> T getContainedResourceByReference(DomainResource resource, Class<T> aClass, String reference) {
+        Resource r = getContainedResourceByReference(resource, reference);
+        if (r.getClass().isAssignableFrom(aClass)) {
+            return (T) r;
+
+        } else {
+            logger.warn("found contained resource with id=" + r.getId() + ", but it is a " + r.getClass().getSimpleName() +
+                    ", not " + aClass.getSimpleName() + " as expected.");
+            throw new ClassCastException("attempted to cast " + r.getClass().getSimpleName() + " to " + aClass.getSimpleName());
+        }
+    }
+
+    public static Resource getContainedResourceByReference(DomainResource resource, String reference) {
+        if (resource == null) return null;
+        if ( ! resource.hasContained() ) return null;
+
+        if (isContainedReference(reference)) {
+            for (Resource r : resource.getContained()) {
+                if (StringUtils.equals(reference, r.getId())) {
+                    return r;
+                }
+            }
+
+        } else {
+            logger.warn("invalid contained reference: " + reference);
+        }
+
+        return null;
     }
 
     public static <T extends IBaseResource> T getResourceFromBundleByReference(Bundle b, Class<T> aClass, String reference) {
@@ -300,10 +411,14 @@ public class FhirUtil {
                 }
             }
         }
+
         return null;
     }
 
     public static <T extends IBaseResource> T getResourceFromBundleByIdentifier(Bundle b, Class<T> aClass, Identifier identifier) {
+        if (b == null) return null;
+        if (identifier == null) return null;
+
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (entry.hasResource()) {
                 Resource r = entry.getResource();
@@ -325,6 +440,7 @@ public class FhirUtil {
                 }
             }
         }
+
         return null;
     }
 
@@ -522,6 +638,7 @@ public class FhirUtil {
                 return coding.is(EXTENSION_HOME_SETTING_SYSTEM, EXTENSION_HOME_SETTING_CODE);
             }
         }
+
         return false;
     }
 
@@ -578,41 +695,5 @@ public class FhirUtil {
         return reference != null &&
                 reference.hasReference() &&
                 reference.getReference().startsWith(CONTAINED_PREFIX);
-    }
-
-    /**
-     * getContainedResourceByReference
-     * Replaces DomainResource.getContained(String reference) as that function is buggy.
-     * See https://github.com/hapifhir/hapi-fhir/issues/6612 for details.
-     * @param aClass the type of resource that is expected for the specified reference
-     * @param containedList a list of resources that are expected to come from a resource's getContained() function
-     * @param reference a reference to a contained resource, which is expected to begin with "#"
-     * @return a resource of type specified by aClass from containedList with an id that matches the specified reference
-     * @param <T>
-     */
-    @SuppressWarnings("unchecked")
-    public static <T extends IBaseResource> T getContainedResourceByReference(Class<T> aClass, List<Resource> containedList, String reference) {
-        if (containedList == null || containedList.isEmpty()) return null;
-        if (reference == null) return null;
-
-        if (reference.startsWith(CONTAINED_PREFIX) && reference.length() > CONTAINED_PREFIX.length()) {
-            for (Resource r : containedList) {
-                if (r.getId().startsWith(CONTAINED_PREFIX) && StringUtils.equals(reference, r.getId())) {
-                    if (r.getClass().isAssignableFrom(aClass)) {
-                        return (T) r;
-
-                    } else {
-                        logger.warn("found contained resource with id=" + r.getId() + ", but it is a " + r.getClass().getSimpleName() +
-                                ", not " + aClass.getSimpleName() + " as expected.");
-                        throw new ClassCastException("attempted to cast " + r.getClass().getSimpleName() + " to " + aClass.getSimpleName());
-                    }
-                }
-            }
-
-        } else {
-            logger.warn("invalid contained reference: " + reference);
-        }
-
-        return null;
     }
 }

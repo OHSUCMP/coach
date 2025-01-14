@@ -13,10 +13,7 @@ import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IDomainResource;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Identifier;
-import org.hl7.fhir.r4.model.Reference;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,90 +43,68 @@ public class FHIRService {
 
         if (reference == null) return null;
 
+        T t;
         if (reference.hasReference()) {
-            return readByReference(fcc, strategy, aClass, reference.getReference());
-
-        } else if (reference.hasIdentifier()) {
-            return readByIdentifier(fcc, strategy, aClass, reference.getIdentifier());
-
-        } else {
-            logger.warn("Reference does not contain reference or identifier!  returning null");
+            t = readByReference(fcc, strategy, aClass, reference.getReference());
+            if (t != null) return t;
         }
+
+        if (reference.hasIdentifier()) {
+            t = readByIdentifier(fcc, strategy, aClass, reference.getIdentifier());
+            if (t != null) return t;
+        }
+
+        logger.warn("Reference does not contain reference or identifier!  returning null");
 
         return null;
     }
 
     public <T extends IBaseResource> T readByIdentifier(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
                                                         Identifier identifier) throws DataException, ConfigurationException, IOException {
-        return readByIdentifier(fcc, strategy, aClass, identifier, null);
-    }
+        String s = FhirUtil.toIdentifierString(identifier);
+        Bundle b = search(fcc, strategy, aClass.getSimpleName() + "/?identifier=" + s);
 
-    public <T extends IBaseResource> T readByIdentifier(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
-                                                        Identifier identifier, Bundle bundle) throws DataException, ConfigurationException, IOException {
-        logger.info("read by identifier: " + identifier + " (" + aClass.getName() + ")");
+        if (b.getEntry().isEmpty()) {
+            logger.warn("couldn't find resource with identifier=" + s);
+            return null;
+        }
 
-        if (bundle != null && FhirUtil.bundleContainsResourceWithIdentifier(bundle, identifier)) {
-            return FhirUtil.getResourceFromBundleByIdentifier(bundle, aClass, identifier);
+        Resource r = null;
 
-        } else {
-            String s = FhirUtil.toIdentifierString(identifier);
-            Bundle b = search(fcc, strategy, aClass.getSimpleName() + "/?identifier=" + s);
+        try {
+            r = b.getEntryFirstRep().getResource();
 
-            if (b.getEntry().size() == 0) {
-                logger.warn("couldn't find resource with identifier=" + s);
-                return null;
+            if (b.getEntry().size() == 1) {
+                logger.debug("found " + r.getClass().getName() + " with identifier=" + s);
+
+            } else {
+                logger.warn("found " + b.getEntry().size() + " resources associated with identifier=" + s +
+                        "!  returning first match (" + r.getClass().getName() + ") -");
             }
 
-            Resource r = null;
+            return aClass.cast(r);
 
-            try {
-                r = b.getEntryFirstRep().getResource();
-
-                if (b.getEntry().size() == 1) {
-                    logger.debug("found " + r.getClass().getName() + " with identifier=" + s);
-
-                } else {
-                    logger.warn("found " + b.getEntry().size() + " resources associated with identifier=" + s +
-                            "!  returning first match (" + r.getClass().getName() + ") -");
-                }
-
-                return aClass.cast(r);
-
-            } catch (ClassCastException cce) {
-                logger.error("caught " + cce.getClass().getName() + " attempting to cast " + r.getClass().getName() + " to " + aClass.getName());
-                logger.debug(r.getClass().getName() + " : " + FhirUtil.toJson(r));
-                throw cce;
-            }
+        } catch (ClassCastException cce) {
+            logger.error("caught " + cce.getClass().getName() + " attempting to cast " + r.getClass().getName() + " to " + aClass.getName());
+            logger.debug(r.getClass().getName() + " : " + FhirUtil.toJson(r));
+            throw cce;
         }
     }
 
     public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
                                                        String reference) throws DataException, ConfigurationException, IOException {
-        return readByReference(fcc, strategy, aClass, reference, null);
-    }
-
-    // version of the read function that first queries the referenced Bundle for the referenced resource
-    // only executes API service call if the referenced resource isn't found
-    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
-                                                       String reference, Bundle bundle) throws DataException, ConfigurationException, IOException {
         logger.info("read: " + reference + " (" + aClass.getName() + ")");
+        String id = FhirUtil.extractIdFromReference(reference);
+        IGenericClient client = buildClient(fcc, strategy);
+        try {
+            return client.read()
+                    .resource(aClass)
+                    .withId(id)
+                    .execute();
 
-        if (bundle != null && FhirUtil.bundleContainsReference(bundle, reference)) {
-            return FhirUtil.getResourceFromBundleByReference(bundle, aClass, reference);
-
-        } else {
-            String id = FhirUtil.extractIdFromReference(reference);
-            IGenericClient client = buildClient(fcc, strategy);
-            try {
-                return client.read()
-                        .resource(aClass)
-                        .withId(id)
-                        .execute();
-
-            } catch (InvalidRequestException ire) {
-                logger.error("caught " + ire.getClass().getName() + " reading " + aClass.getName() + " with id='" + id + "' - " + ire.getMessage());
-                throw ire;
-            }
+        } catch (InvalidRequestException ire) {
+            logger.error("caught " + ire.getClass().getName() + " reading " + aClass.getName() + " with id='" + id + "' - " + ire.getMessage());
+            throw ire;
         }
     }
 
