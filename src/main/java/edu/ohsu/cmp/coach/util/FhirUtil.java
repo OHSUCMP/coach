@@ -204,24 +204,31 @@ public class FhirUtil {
         }
     }
 
-    // converts e.g. "Patient/12345" to just "12345"
-    public static String extractIdFromReference(String reference) {
-        if (reference == null) return null;
-
-        if (reference.startsWith(URN_UUID)) {
-            return reference.substring(URN_UUID.length());
-
-        } else {
-            int index = reference.lastIndexOf('/');
-            return index >= 0 ?
-                    reference.substring(index + 1) :
-                    reference;
-        }
-    }
-
     public static boolean resourceOrBundleContainsReference(DomainResource resource, Bundle bundle, Reference reference) {
         return resourceContainsReference(resource, reference) ||
                 bundleContainsReference(bundle, reference);
+    }
+
+    public static boolean resourceContainsReference(DomainResource resource, Reference reference) {
+        if (resource == null || reference == null) return false;
+
+        return reference.hasReference() && resourceContainsReference(resource, reference.getReference());
+    }
+
+    public static boolean resourceContainsReference(DomainResource resource, String reference) {
+        if (resource == null) return false;
+        if ( ! resource.hasContained() ) return false;
+        if (StringUtils.isBlank(reference)) return false;
+
+        if (isContainedReference(reference)) {
+            for (Resource r : resource.getContained()) {
+                if (StringUtils.equals(reference, r.getId())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public static boolean bundleContainsReference(Bundle b, Reference reference) {
@@ -316,40 +323,6 @@ public class FhirUtil {
         }
     }
 
-    public static boolean isContainedReference(Reference reference) {
-        return reference != null &&
-                reference.hasReference() &&
-                isContainedReference(reference.getReference());
-    }
-
-    public static boolean isContainedReference(String reference) {
-        return reference != null &&
-                reference.startsWith(CONTAINED_PREFIX) &&
-                reference.length() > CONTAINED_PREFIX.length();
-    }
-
-    public static boolean resourceContainsReference(DomainResource resource, Reference reference) {
-        if (resource == null || reference == null) return false;
-
-        return reference.hasReference() && resourceContainsReference(resource, reference.getReference());
-    }
-
-    public static boolean resourceContainsReference(DomainResource resource, String reference) {
-        if (resource == null) return false;
-        if ( ! resource.hasContained() ) return false;
-        if (StringUtils.isBlank(reference)) return false;
-
-        if (isContainedReference(reference)) {
-            for (Resource r : resource.getContained()) {
-                if (StringUtils.equals(reference, r.getId())) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     /**
      * getContainedResourceByReference
      * Replaces DomainResource.getContained(String reference) as that function is buggy.
@@ -389,6 +362,18 @@ public class FhirUtil {
         }
 
         return null;
+    }
+
+    public static boolean isContainedReference(Reference reference) {
+        return reference != null &&
+                reference.hasReference() &&
+                isContainedReference(reference.getReference());
+    }
+
+    public static boolean isContainedReference(String reference) {
+        return reference != null &&
+                reference.startsWith(CONTAINED_PREFIX) &&
+                reference.length() > CONTAINED_PREFIX.length();
     }
 
     public static <T extends IBaseResource> T getResourceFromBundleByReference(Bundle b, Class<T> aClass, String reference) {
@@ -441,6 +426,21 @@ public class FhirUtil {
         }
 
         return null;
+    }
+
+    // converts e.g. "Patient/12345" to just "12345"
+    public static String extractIdFromReference(String reference) {
+        if (reference == null) return null;
+
+        if (reference.startsWith(URN_UUID)) {
+            return reference.substring(URN_UUID.length());
+
+        } else {
+            int index = reference.lastIndexOf('/');
+            return index >= 0 ?
+                    reference.substring(index + 1) :
+                    reference;
+        }
     }
 
     private static boolean identifiersMatch(Identifier a, Identifier b) {
