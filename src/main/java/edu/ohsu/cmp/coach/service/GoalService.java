@@ -94,7 +94,8 @@ public class GoalService extends AbstractService {
 
                     } catch (Exception e) {
                         logger.error("caught " + e.getClass().getName() + " building BP Goal from ServiceRequest " +
-                                sr.getId() + " - " + e.getMessage(), e);
+                                sr.getId() + " - " + e.getMessage());
+                        logger.debug("exception: ", e);
                         logger.debug("ServiceRequest = " + FhirUtil.toJson(sr));
                     }
                 }
