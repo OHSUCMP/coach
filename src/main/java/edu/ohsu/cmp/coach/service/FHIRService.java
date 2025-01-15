@@ -39,8 +39,6 @@ public class FHIRService {
 
     public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
                                                        Reference reference) throws DataException, ConfigurationException, IOException {
-        logger.info("read by reference: " + reference + " (" + aClass.getName() + ")");
-
         if (reference == null) return null;
 
         T t;
@@ -61,11 +59,11 @@ public class FHIRService {
 
     public <T extends IBaseResource> T readByIdentifier(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
                                                         Identifier identifier) throws DataException, ConfigurationException, IOException {
-        String s = FhirUtil.toIdentifierString(identifier);
-        Bundle b = search(fcc, strategy, aClass.getSimpleName() + "/?identifier=" + s);
+        String identifierString = FhirUtil.toIdentifierString(identifier);
+        Bundle b = search(fcc, strategy, aClass.getSimpleName() + "/?identifier=" + identifierString);
 
         if (b.getEntry().isEmpty()) {
-            logger.warn("couldn't find resource with identifier=" + s);
+            logger.warn("couldn't find resource with identifier=" + identifierString);
             return null;
         }
 
@@ -75,10 +73,10 @@ public class FHIRService {
             r = b.getEntryFirstRep().getResource();
 
             if (b.getEntry().size() == 1) {
-                logger.debug("found " + r.getClass().getName() + " with identifier=" + s);
+                logger.debug("found " + r.getClass().getName() + " with identifier=" + identifierString);
 
             } else {
-                logger.warn("found " + b.getEntry().size() + " resources associated with identifier=" + s +
+                logger.warn("found " + b.getEntry().size() + " resources associated with identifier=" + identifierString +
                         "!  returning first match (" + r.getClass().getName() + ") -");
             }
 
@@ -93,7 +91,7 @@ public class FHIRService {
 
     public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
                                                        String reference) throws DataException, ConfigurationException, IOException {
-        logger.info("read: " + reference + " (" + aClass.getName() + ")");
+        logger.info("read: " + reference + " (" + aClass.getSimpleName() + ")");
         String id = FhirUtil.extractIdFromReference(reference);
         IGenericClient client = buildClient(fcc, strategy);
         try {

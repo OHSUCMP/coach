@@ -234,7 +234,6 @@ public class FhirUtil {
             return bundleContainsResourceWithIdentifier(b, reference.getIdentifier());
 
         } else {
-            logger.warn("Reference does not contain reference or identifier!  returning false");
             return false;
         }
     }
@@ -292,18 +291,23 @@ public class FhirUtil {
 
     public static <T extends IBaseResource> T getResourceFromContainedOrBundleByReference(DomainResource resource, Bundle bundle, Class<T> aClass, Reference reference) {
         if (reference == null) return null;
-        if ( ! reference.hasReference() ) return null;
 
-        T t = getResourceFromContainedOrBundleByReference(resource, bundle, aClass, reference.getReference());
-        if (t == null && reference.hasIdentifier()) {
-            t = getResourceFromBundleByIdentifier(bundle, aClass, reference.getIdentifier());
+        if (reference.hasReference()) {
+            T t = getResourceFromContainedOrBundleByReference(resource, bundle, aClass, reference.getReference());
+            if (t != null) return t;
         }
 
-        return t;
+        if (reference.hasIdentifier()) {
+            T t = getResourceFromBundleByIdentifier(bundle, aClass, reference.getIdentifier());
+            if (t != null) return t;
+        }
+
+        return null;
     }
 
     public static <T extends IBaseResource> T getResourceFromContainedOrBundleByReference(DomainResource resource, Bundle bundle, Class<T> aClass, String reference) {
         if (resource == null) return null;
+        if (StringUtils.isBlank(reference)) return null;
 
         if (resourceContainsReference(resource, reference)) {
             return getContainedResourceByReference(resource, aClass, reference);
@@ -317,8 +321,16 @@ public class FhirUtil {
         }
     }
 
+    public static boolean isContainedReference(Reference reference) {
+        return reference != null &&
+                reference.hasReference() &&
+                isContainedReference(reference.getReference());
+    }
+
     public static boolean isContainedReference(String reference) {
-        return reference != null && reference.startsWith(CONTAINED_PREFIX) && reference.length() > CONTAINED_PREFIX.length();
+        return reference != null &&
+                reference.startsWith(CONTAINED_PREFIX) &&
+                reference.length() > CONTAINED_PREFIX.length();
     }
 
     public static boolean resourceContainsReference(DomainResource resource, Reference reference) {
@@ -689,11 +701,5 @@ public class FhirUtil {
 
     public static boolean isUUID(String s) {
         return s != null && UUID_REGEX.matcher(s).matches();
-    }
-
-    public static boolean isContainedReference(Reference reference) {
-        return reference != null &&
-                reference.hasReference() &&
-                reference.getReference().startsWith(CONTAINED_PREFIX);
     }
 }
