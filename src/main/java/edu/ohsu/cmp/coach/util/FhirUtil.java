@@ -208,7 +208,7 @@ public class FhirUtil {
     public static String extractIdFromReference(String reference) {
         if (reference == null) return null;
 
-        if (reference.startsWith(URN_UUID)) {
+        if (reference.startsWith(URN_UUID) && reference.length() > URN_UUID.length()) {
             return reference.substring(URN_UUID.length());
 
         } else {
@@ -227,37 +227,30 @@ public class FhirUtil {
     public static boolean bundleContainsReference(Bundle b, Reference reference) {
         if (b == null || reference == null) return false;
 
-        if (reference.hasReference()) {
-            return bundleContainsReference(b, reference.getReference());
-
-        } else if (reference.hasIdentifier()) {
-            return bundleContainsResourceWithIdentifier(b, reference.getIdentifier());
-
-        } else {
-            return false;
-        }
+        return (reference.hasReference() && bundleContainsReference(b, reference.getReference())) ||
+                (reference.hasIdentifier() && bundleContainsResourceWithIdentifier(b, reference.getIdentifier()));
     }
 
     public static boolean bundleContainsReference(Bundle bundle, String reference) {
         if (bundle == null) return false;
-        if (reference == null) return false;
+        if (StringUtils.isBlank(reference)) return false;
 
         String referenceId = extractIdFromReference(reference);
+        if (StringUtils.isBlank(referenceId)) {
+            logger.warn("extracted blank id component from reference: '" + reference + "'");
+            return false;
+        }
 
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            Resource r = entry.getResource();
-            if (r.hasId()) {
-                try {
+            if (entry.hasResource()) {
+                Resource r = entry.getResource();
+                if (r.hasId()) {
                     if (Pattern.matches("(.*\\/)?" + referenceId + "(\\/.*)?", r.getId())) {
                         logger.debug("matched: '" + r.getId() + "' contains '" + reference + "'");
                         return true;
                     } else {
                         logger.debug("did not match: '" + r.getId() + "' does not contain '" + referenceId + "'");
                     }
-                } catch (NullPointerException npe) {
-                    logger.error("caught " + npe.getClass().getName() + " matching reference '" + referenceId +
-                            "' against id '" + r.getId() + "'", npe);
-                    throw npe;
                 }
             }
         }
@@ -266,6 +259,8 @@ public class FhirUtil {
     }
 
     public static boolean bundleContainsResourceWithIdentifier(Bundle b, Identifier identifier) {
+        if (identifier == null) return false;
+
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (entry.hasResource()) {
                 Resource r = entry.getResource();
@@ -336,15 +331,7 @@ public class FhirUtil {
     public static boolean resourceContainsReference(DomainResource resource, Reference reference) {
         if (resource == null || reference == null) return false;
 
-        // pretty sure that a contained reference has to be by reference/id, and not by identifier
-
-        if (reference.hasReference()) {
-            return resourceContainsReference(resource, reference.getReference());
-
-        } else {
-            logger.warn("Reference does not contain a reference!  returning false");
-            return false;
-        }
+        return reference.hasReference() && resourceContainsReference(resource, reference.getReference());
     }
 
     public static boolean resourceContainsReference(DomainResource resource, String reference) {
