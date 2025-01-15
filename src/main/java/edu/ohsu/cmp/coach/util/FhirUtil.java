@@ -208,7 +208,7 @@ public class FhirUtil {
     public static String extractIdFromReference(String reference) {
         if (reference == null) return null;
 
-        if (reference.startsWith(URN_UUID) && reference.length() > URN_UUID.length()) {
+        if (reference.startsWith(URN_UUID)) {
             return reference.substring(URN_UUID.length());
 
         } else {
