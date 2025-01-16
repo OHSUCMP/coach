@@ -79,10 +79,10 @@ public class MedicationModel {
             cc = mr.getMedicationCodeableConcept();
 
         } else if (mr.hasMedicationReference()) {
-            String reference = mr.getMedicationReference().getReference();
-            Medication m = FhirUtil.getResourceFromBundleByReference(bundle, Medication.class, reference);
+            Reference reference = mr.getMedicationReference();
+            Medication m = FhirUtil.getResourceFromContainedOrBundleByReference(mr, bundle, Medication.class, reference);
             if (m == null) {
-                throw new DataException("Medication not found in bundle: " + reference);
+                throw new DataException("Medication not found contained or in bundle: " + reference);
 
             } else if (m.hasCode()) {
                 sourceMedicationRequestMedication = m;

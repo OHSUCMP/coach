@@ -20,6 +20,7 @@ public class FhirUtil {
     private static final Logger logger = LoggerFactory.getLogger(FhirUtil.class);
 
     private static final String URN_UUID = "urn:uuid:";
+    private static final String CONTAINED_PREFIX = "#";
     private static final String EXTENSION_HOME_SETTING_URL = "http://hl7.org/fhir/us/vitals/StructureDefinition/MeasurementSettingExt";
     private static final String EXTENSION_HOME_SETTING_CODE = "264362003";
     private static final String EXTENSION_HOME_SETTING_SYSTEM = "http://snomed.info/sct";
@@ -129,6 +130,7 @@ public class FhirUtil {
         for (Resource r : collection) {
             appendResourceToBundle(bundle, r);
         }
+
         return bundle;
     }
 
@@ -202,62 +204,70 @@ public class FhirUtil {
         }
     }
 
-    // converts e.g. "Patient/12345" to just "12345"
-    public static String extractIdFromReference(String reference) {
-        if (reference == null) return null;
+    public static boolean resourceOrBundleContainsReference(DomainResource resource, Bundle bundle, Reference reference) {
+        return resourceContainsReference(resource, reference) ||
+                bundleContainsReference(bundle, reference);
+    }
 
-        if (reference.startsWith(URN_UUID)) {
-            return reference.substring(URN_UUID.length() + 1);
+    public static boolean resourceContainsReference(DomainResource resource, Reference reference) {
+        if (resource == null || reference == null) return false;
 
-        } else {
-            int index = reference.indexOf('/');
-            return index >= 0 ?
-                    reference.substring(index + 1) :
-                    reference;
+        return reference.hasReference() && resourceContainsReference(resource, reference.getReference());
+    }
+
+    public static boolean resourceContainsReference(DomainResource resource, String reference) {
+        if (resource == null) return false;
+        if ( ! resource.hasContained() ) return false;
+        if (StringUtils.isBlank(reference)) return false;
+
+        if (isContainedReference(reference)) {
+            for (Resource r : resource.getContained()) {
+                if (StringUtils.equals(reference, r.getId())) {
+                    return true;
+                }
+            }
         }
+
+        return false;
     }
 
     public static boolean bundleContainsReference(Bundle b, Reference reference) {
         if (b == null || reference == null) return false;
 
-        if (reference.hasReference()) {
-            return bundleContainsReference(b, reference.getReference());
-
-        } else if (reference.hasIdentifier()) {
-            return bundleContainsResourceWithIdentifier(b, reference.getIdentifier());
-
-        } else {
-            logger.warn("Reference does not contain reference or identifier!  returning false");
-            return false;
-        }
+        return (reference.hasReference() && bundleContainsReference(b, reference.getReference())) ||
+                (reference.hasIdentifier() && bundleContainsResourceWithIdentifier(b, reference.getIdentifier()));
     }
 
-    public static boolean bundleContainsReference(Bundle b, String reference) {
-        if (reference == null) return false;
+    public static boolean bundleContainsReference(Bundle bundle, String reference) {
+        if (bundle == null) return false;
+        if (StringUtils.isBlank(reference)) return false;
 
         String referenceId = extractIdFromReference(reference);
+        if (StringUtils.isBlank(referenceId)) {
+            logger.warn("extracted blank id component from reference: '" + reference + "'");
+            return false;
+        }
 
-        for (Bundle.BundleEntryComponent entry : b.getEntry()) {
-            Resource r = entry.getResource();
-            if (r.hasId()) {
-                try {
+        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+            if (entry.hasResource()) {
+                Resource r = entry.getResource();
+                if (r.hasId()) {
                     if (Pattern.matches("(.*\\/)?" + referenceId + "(\\/.*)?", r.getId())) {
                         logger.debug("matched: '" + r.getId() + "' contains '" + reference + "'");
                         return true;
                     } else {
                         logger.debug("did not match: '" + r.getId() + "' does not contain '" + referenceId + "'");
                     }
-                } catch (NullPointerException npe) {
-                    logger.error("caught " + npe.getClass().getName() + " matching reference '" + referenceId +
-                            "' against id '" + r.getId() + "'", npe);
-                    throw npe;
                 }
             }
         }
+
         return false;
     }
 
     public static boolean bundleContainsResourceWithIdentifier(Bundle b, Identifier identifier) {
+        if (identifier == null) return false;
+
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (entry.hasResource()) {
                 Resource r = entry.getResource();
@@ -277,7 +287,93 @@ public class FhirUtil {
                 }
             }
         }
+
         return false;
+    }
+
+    public static <T extends IBaseResource> T getResourceFromContainedOrBundleByReference(DomainResource resource, Bundle bundle, Class<T> aClass, Reference reference) {
+        if (reference == null) return null;
+
+        if (reference.hasReference()) {
+            T t = getResourceFromContainedOrBundleByReference(resource, bundle, aClass, reference.getReference());
+            if (t != null) return t;
+        }
+
+        if (reference.hasIdentifier()) {
+            T t = getResourceFromBundleByIdentifier(bundle, aClass, reference.getIdentifier());
+            if (t != null) return t;
+        }
+
+        return null;
+    }
+
+    public static <T extends IBaseResource> T getResourceFromContainedOrBundleByReference(DomainResource resource, Bundle bundle, Class<T> aClass, String reference) {
+        if (resource == null) return null;
+        if (StringUtils.isBlank(reference)) return null;
+
+        if (resourceContainsReference(resource, reference)) {
+            return getContainedResourceByReference(resource, aClass, reference);
+
+        } else if (bundleContainsReference(bundle, reference)) {
+            return getResourceFromBundleByReference(bundle, aClass, reference);
+
+        } else {
+            logger.debug("reference " + reference + " not found in contained or bundle");
+            return null;
+        }
+    }
+
+    /**
+     * getContainedResourceByReference
+     * Replaces DomainResource.getContained(String reference) as that function is buggy.
+     * See https://github.com/hapifhir/hapi-fhir/issues/6612 for details.
+     * @param resource the DomainResource object that is expected to contain the referenced resource
+     * @param aClass the type of resource that is expected for the specified reference
+     * @param reference a reference to a contained resource, which is expected to begin with "#"
+     * @return a resource of type specified by aClass from containedList with an id that matches the specified reference
+     * @param <T>
+     */
+    @SuppressWarnings("unchecked")
+    public static <T extends IBaseResource> T getContainedResourceByReference(DomainResource resource, Class<T> aClass, String reference) {
+        Resource r = getContainedResourceByReference(resource, reference);
+        if (r.getClass().isAssignableFrom(aClass)) {
+            return (T) r;
+
+        } else {
+            logger.warn("found contained resource with id=" + r.getId() + ", but it is a " + r.getClass().getSimpleName() +
+                    ", not " + aClass.getSimpleName() + " as expected.");
+            throw new ClassCastException("attempted to cast " + r.getClass().getSimpleName() + " to " + aClass.getSimpleName());
+        }
+    }
+
+    public static Resource getContainedResourceByReference(DomainResource resource, String reference) {
+        if (resource == null) return null;
+        if ( ! resource.hasContained() ) return null;
+
+        if (isContainedReference(reference)) {
+            for (Resource r : resource.getContained()) {
+                if (StringUtils.equals(reference, r.getId())) {
+                    return r;
+                }
+            }
+
+        } else {
+            logger.warn("invalid contained reference: " + reference);
+        }
+
+        return null;
+    }
+
+    public static boolean isContainedReference(Reference reference) {
+        return reference != null &&
+                reference.hasReference() &&
+                isContainedReference(reference.getReference());
+    }
+
+    public static boolean isContainedReference(String reference) {
+        return reference != null &&
+                reference.startsWith(CONTAINED_PREFIX) &&
+                reference.length() > CONTAINED_PREFIX.length();
     }
 
     public static <T extends IBaseResource> T getResourceFromBundleByReference(Bundle b, Class<T> aClass, String reference) {
@@ -299,10 +395,14 @@ public class FhirUtil {
                 }
             }
         }
+
         return null;
     }
 
     public static <T extends IBaseResource> T getResourceFromBundleByIdentifier(Bundle b, Class<T> aClass, Identifier identifier) {
+        if (b == null) return null;
+        if (identifier == null) return null;
+
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (entry.hasResource()) {
                 Resource r = entry.getResource();
@@ -324,7 +424,23 @@ public class FhirUtil {
                 }
             }
         }
+
         return null;
+    }
+
+    // converts e.g. "Patient/12345" to just "12345"
+    public static String extractIdFromReference(String reference) {
+        if (reference == null) return null;
+
+        if (reference.startsWith(URN_UUID)) {
+            return reference.substring(URN_UUID.length());
+
+        } else {
+            int index = reference.lastIndexOf('/');
+            return index >= 0 ?
+                    reference.substring(index + 1) :
+                    reference;
+        }
     }
 
     private static boolean identifiersMatch(Identifier a, Identifier b) {
@@ -521,6 +637,7 @@ public class FhirUtil {
                 return coding.is(EXTENSION_HOME_SETTING_SYSTEM, EXTENSION_HOME_SETTING_CODE);
             }
         }
+
         return false;
     }
 

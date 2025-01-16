@@ -143,7 +143,7 @@ public class JWTService {
         } else {
             Gson gson = new GsonBuilder().create();
             AccessToken accessToken = gson.fromJson(responseBody, new TypeToken<AccessToken>() {}.getType());
-            logger.info("received access token " + accessToken);
+            logger.debug("received access token " + accessToken);
             return accessToken;
         }
     }
