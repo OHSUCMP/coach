@@ -1,3 +1,5 @@
-*
-!docker-image-files/**/*
-!target/coach*jar
+.git
+
+# Generated files
+**/*.jar
+target/
