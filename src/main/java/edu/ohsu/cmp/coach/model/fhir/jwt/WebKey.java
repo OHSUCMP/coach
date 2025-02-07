@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.model.jwks;
+package edu.ohsu.cmp.coach.model.fhir.jwt;
 
 import com.nimbusds.jose.util.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
