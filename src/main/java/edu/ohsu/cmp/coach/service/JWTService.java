@@ -6,13 +6,16 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.nimbusds.jose.util.Base64;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.MyHttpException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
+import edu.ohsu.cmp.coach.model.WebKey;
+import edu.ohsu.cmp.coach.model.WebKeySet;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.CryptoUtil;
-import edu.ohsu.cmp.coach.util.UUIDUtil;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -25,15 +28,13 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class JWTService {
@@ -54,6 +55,23 @@ public class JWTService {
                 StringUtils.isNotBlank(pkcs8PrivateKeyFilename);
     }
 
+    public WebKeySet getWebKeySet() throws ConfigurationException {
+        if ( ! isJWTEnabled() ) return null;
+
+        WebKeySet webKeySet = new WebKeySet();
+        File x509CertificateFile = new File(x509CertificateFilename);
+
+        try {
+            X509Certificate certificate = CryptoUtil.readCertificate(x509CertificateFile);
+            webKeySet.add(new WebKey(certificate));
+
+        } catch (Exception e) {
+            throw new ConfigurationException("could not read x509CertificateFile=" + x509CertificateFilename, e);
+        }
+
+        return webKeySet;
+    }
+
     public String createToken(String tokenAuthUrl) throws ConfigurationException {
         if ( ! isJWTEnabled() ) return null;
 
@@ -67,7 +85,10 @@ public class JWTService {
         File pkcs8PrivateKeyFile = new File(pkcs8PrivateKeyFilename);
 
         try {
-            RSAPublicKey publicKey = (RSAPublicKey) CryptoUtil.readPublicKeyFromCertificate(x509CertificateFile);
+            X509Certificate certificate = CryptoUtil.readCertificate(x509CertificateFile);
+            String jwtId = Base64.encode(DigestUtils.sha256(certificate.getEncoded())).toString();
+
+            RSAPublicKey publicKey = (RSAPublicKey) certificate.getPublicKey();
             RSAPrivateKey privateKey = (RSAPrivateKey) CryptoUtil.readPrivateKey(pkcs8PrivateKeyFile);
             Algorithm algorithm = Algorithm.RSA384(publicKey, privateKey);
 
@@ -75,7 +96,7 @@ public class JWTService {
                     .withIssuer(clientId)
                     .withSubject(clientId)
                     .withAudience(tokenAuthUrl)
-                    .withJWTId(UUIDUtil.getRandomUUID())
+                    .withJWTId(jwtId)
                     .withExpiresAt(buildExpiresAt())
                     .sign(algorithm);
 
