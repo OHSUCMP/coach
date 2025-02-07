@@ -4,7 +4,9 @@ import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.security.KeyFactory;
@@ -14,7 +16,8 @@ import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.spec.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 
 
 public class CryptoUtil {
@@ -24,12 +27,15 @@ public class CryptoUtil {
     private static final String PKCS8_FOOTER = "-----END PRIVATE KEY-----";
 
 
-    public static PublicKey readPublicKeyFromCertificate(File certFile) throws IOException, CertificateException {
+    public static X509Certificate readCertificate(File certFile) throws IOException, CertificateException {
         try (FileInputStream fis = new FileInputStream(certFile)) {
             CertificateFactory factory = CertificateFactory.getInstance("X.509");
-            X509Certificate certificate = (X509Certificate) factory.generateCertificate(fis);
-            return certificate.getPublicKey();
+            return (X509Certificate) factory.generateCertificate(fis);
         }
+    }
+
+    public static PublicKey readPublicKeyFromCertificate(File certFile) throws IOException, CertificateException {
+        return readCertificate(certFile).getPublicKey();
     }
 
     public static PrivateKey readPrivateKey(File pemFile) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
