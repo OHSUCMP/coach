@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.model;
+package edu.ohsu.cmp.coach.model.jwks;
 
 import java.util.HashSet;
 import java.util.Set;

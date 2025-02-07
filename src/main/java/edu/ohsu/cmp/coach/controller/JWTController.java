@@ -2,7 +2,7 @@ package edu.ohsu.cmp.coach.controller;
 
 import com.google.gson.Gson;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
-import edu.ohsu.cmp.coach.model.WebKeySet;
+import edu.ohsu.cmp.coach.model.jwks.WebKeySet;
 import edu.ohsu.cmp.coach.service.JWTService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

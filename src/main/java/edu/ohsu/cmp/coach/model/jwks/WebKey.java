@@ -1,4 +1,4 @@
-package edu.ohsu.cmp.coach.model;
+package edu.ohsu.cmp.coach.model.jwks;
 
 import com.nimbusds.jose.util.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
