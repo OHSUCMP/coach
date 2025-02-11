@@ -1,5 +1,11 @@
 .git
+.mvn
 
 # Generated files
 **/*.jar
 target/
+
+
+.dockerignore
+Dockerfile
+docker*.yml
