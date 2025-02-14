@@ -232,7 +232,7 @@ public class RecommendationService extends AbstractService {
                                         // pull clinic contact info from clinic_contact table, if any present
                                         for (ClinicContact cc: ccList) {
                                             // NOTE: the "|" delimiter is used in recommendations.js to identify
-                                            //       that
+                                            //       that the clinic contacts should be treated differently
                                             String label = cc.getName() + "|" + cc.getPrimaryPhone();
                                             if (StringUtils.isNotBlank(cc.getAfterHoursPhone())) {
                                                 label += " (after hours, call " + cc.getAfterHoursPhone() + ")";
@@ -246,10 +246,13 @@ public class RecommendationService extends AbstractService {
                                         // pull generic contact info from application.properties, if DB not populated
                                         Action callClinic = new Action();
                                         callClinic.setLabel(clinicContact);
-                                        Action callAfterHours = new Action();
-                                        callAfterHours.setLabel(clinicAfterHours);
                                         actions.add(callClinic);
-                                        actions.add(callAfterHours);
+
+                                        if (StringUtils.isNotBlank(clinicAfterHours)) {
+                                            Action callAfterHours = new Action();
+                                            callAfterHours.setLabel(clinicAfterHours);
+                                            actions.add(callAfterHours);
+                                        }
                                     }
 
                                     s.setActions(actions);

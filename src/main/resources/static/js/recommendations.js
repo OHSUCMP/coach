@@ -387,8 +387,10 @@ function buildClinicContactHTML(suggestions) {
                     html += "</table>";
 
                 } else {
-                    html += "<span class='heading ps-2'>Clinic Contact: " + s.actions[0].label + "</span>";
-                    html += "<span class='heading ps-2'>After Hours Line: " + s.actions[1].label + "</span>";
+                    html += "<span class='heading p-1 ps-2'>Clinic Contact: " + s.actions[0].label + "</span>";
+                    if (s.actions.length > 1) {
+                        html += "<span class='heading p-1 ps-2'>After Hours Line: " + s.actions[1].label + "</span>";
+                    }
                 }
 
                 html += "<span class='heading p-1 ps-2'>or</span>";
