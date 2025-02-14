@@ -131,18 +131,18 @@ public class ResourceController extends BaseController {
         return "embedded-pdf";
     }
 
-    @GetMapping("/site-pdf/{hash}")
-    public String getSiteSpecificResource(HttpSession session, Model model, @PathVariable("hash") String hash) {
+    @GetMapping("/site-pdf/{key}")
+    public String getSiteSpecificResource(HttpSession session, Model model, @PathVariable("key") String key) {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
         setCommonViewComponents(model);
-        model.addAttribute("pdfUrl", "/resources/site-pdf-raw/" + hash);
+        model.addAttribute("pdfUrl", "/resources/site-pdf-raw/" + key);
         return "embedded-pdf";
     }
 
-    @GetMapping("/site-pdf-raw/{hash}")
-    public ResponseEntity<InputStreamResource> getSitePdf(HttpSession session, @PathVariable("hash") String hash) throws FileNotFoundException {
+    @GetMapping("/site-pdf-raw/{key}")
+    public ResponseEntity<InputStreamResource> getSitePdf(HttpSession session, @PathVariable("key") String key) throws FileNotFoundException {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        SiteSpecificResource resource = resourceService.getSiteSpecificResource(hash);
+        SiteSpecificResource resource = resourceService.getSiteSpecificResource(key);
         if (resource != null) {
             FileInputStream inputStream = new FileInputStream(resource.getFile());
             InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
@@ -154,7 +154,7 @@ public class ResourceController extends BaseController {
 
             return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
         } else {
-            logger.warn("requested site-specific resource hash does not exist: " + hash);
+            logger.warn("requested site-specific resource hash does not exist: " + key);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }

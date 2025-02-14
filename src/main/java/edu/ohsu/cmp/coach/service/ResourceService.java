@@ -40,12 +40,12 @@ public class ResourceService {
         return getSiteSpecificResourcesMap().values();
     }
 
-    public boolean siteSpecificResourceExists(String hash) {
-        return getSiteSpecificResourcesMap().containsKey(hash);
+    public boolean siteSpecificResourceExists(String key) {
+        return getSiteSpecificResourcesMap().containsKey(key);
     }
 
-    public SiteSpecificResource getSiteSpecificResource(String hash) {
-        return getSiteSpecificResourcesMap().get(hash);
+    public SiteSpecificResource getSiteSpecificResource(String key) {
+        return getSiteSpecificResourcesMap().get(key);
     }
 
 
@@ -71,7 +71,7 @@ public class ResourceService {
                     for (File file : files) {
                         if (file.isFile() && file.canRead()) {
                             SiteSpecificResource resource = new SiteSpecificResource(file);
-                            map.put(resource.getHash(), resource);
+                            map.put(resource.getKey(), resource);
                         }
                     }
                 }
