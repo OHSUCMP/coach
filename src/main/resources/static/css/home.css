@@ -144,3 +144,16 @@ img.bp-icon {
     box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24),0 17px 50px 0 rgba(0,0,0,0.19);
   }
 
+table.clinicContact {
+    width: 100%;
+    font-weight: bold;
+}
+
+table.clinicContact thead th {
+    text-align: left;
+    border-bottom: 1px solid black;
+}
+
+table.clinicContact tbody tr:nth-child(even) {
+    background-color: #cce0ff;
+}

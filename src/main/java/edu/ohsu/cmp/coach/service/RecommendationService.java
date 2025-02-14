@@ -6,9 +6,9 @@ import com.github.mustachejava.MustacheFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import edu.ohsu.cmp.coach.entity.ClinicContact;
 import edu.ohsu.cmp.coach.entity.Counseling;
 import edu.ohsu.cmp.coach.entity.MyGoal;
-import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.transform.BaseVendorTransformer;
@@ -23,12 +23,13 @@ import edu.ohsu.cmp.coach.model.cqfruler.CDSHookResponse;
 import edu.ohsu.cmp.coach.model.cqfruler.HookRequest;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.recommendation.Action;
-import edu.ohsu.cmp.coach.model.Audience;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import io.micrometer.common.util.StringUtils;
 import org.hl7.fhir.r4.model.*;
 import org.hl7.fhir.r4.model.codesystems.ConditionCategory;
 import org.hl7.fhir.r4.model.codesystems.ConditionClinical;
@@ -77,6 +78,9 @@ public class RecommendationService extends AbstractService {
 
     @Autowired
     private AdverseEventService adverseEventService;
+
+    @Autowired
+    private ClinicContactService clinicContactService;
 
     @Value("${contact.clinic}")
     private String clinicContact;
@@ -222,12 +226,32 @@ public class RecommendationService extends AbstractService {
                                 }
                                 if (s.getType().equals(Suggestion.TYPE_CLINIC_CONTACT)) {
                                     List<Action> actions = new ArrayList<>();
-                                    Action callClinic = new Action();
-                                    callClinic.setLabel(clinicContact);
-                                    Action callAfterHours = new Action();
-                                    callAfterHours.setLabel(clinicAfterHours);
-                                    actions.add(callClinic);
-                                    actions.add(callAfterHours);
+
+                                    List<ClinicContact> ccList = clinicContactService.getClinicContactList();
+                                    if ( ! ccList.isEmpty() ) {
+                                        // pull clinic contact info from clinic_contact table, if any present
+                                        for (ClinicContact cc: ccList) {
+                                            // NOTE: the "|" delimiter is used in recommendations.js to identify
+                                            //       that
+                                            String label = cc.getName() + "|" + cc.getPrimaryPhone();
+                                            if (StringUtils.isNotBlank(cc.getAfterHoursPhone())) {
+                                                label += " (after hours, call " + cc.getAfterHoursPhone() + ")";
+                                            }
+                                            Action action = new Action();
+                                            action.setLabel(label);
+                                            actions.add(action);
+                                        }
+
+                                    } else {
+                                        // pull generic contact info from application.properties, if DB not populated
+                                        Action callClinic = new Action();
+                                        callClinic.setLabel(clinicContact);
+                                        Action callAfterHours = new Action();
+                                        callAfterHours.setLabel(clinicAfterHours);
+                                        actions.add(callClinic);
+                                        actions.add(callAfterHours);
+                                    }
+
                                     s.setActions(actions);
                                 }
                             }
