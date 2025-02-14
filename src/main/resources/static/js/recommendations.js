@@ -374,10 +374,25 @@ function buildClinicContactHTML(suggestions) {
     if (suggestions !== null) {
         suggestions.forEach(function(s) {
             if (s.type === 'clinic-contact') {
-                html += "<span class='heading slink ps-2'>Clinic Contact: " + s.actions[0].label + "</span>";
-                html += "<span class='heading slink ps-2'>After Hours Line: " + s.actions[1].label + "</span>";
-                html += "<span class='heading slink p-1 ps-2'>or</span>";
-                html += "<span class='heading slink p-1 ps-2'>Call 911</span>";
+                if (s.actions[0].label.includes('|')) {
+                    html += "<table class='clinicContact'>";
+                    html += "<thead><tr><th class='p-1 ps-2'>Clinic</th><th class='p-1 ps-2'>Phone</th></tr></thead>";
+                    s.actions.forEach(function(a) {
+                        let parts = a.label.split('|');
+                        html += "<tr>";
+                        html += "<td class='p-1 ps-2'>" + parts[0] + "</td>";
+                        html += "<td class='p-1 ps-2'>" + parts[1] + "</td>";
+                        html += "</tr>";
+                    });
+                    html += "</table>";
+
+                } else {
+                    html += "<span class='heading ps-2'>Clinic Contact: " + s.actions[0].label + "</span>";
+                    html += "<span class='heading ps-2'>After Hours Line: " + s.actions[1].label + "</span>";
+                }
+
+                html += "<span class='heading p-1 ps-2'>or</span>";
+                html += "<span class='heading p-1 ps-2'>Call 911</span>";
             }
         });
     }
