@@ -1,0 +1,7 @@
+update counseling_page 
+set body="<p>Being overweight or obese increases your risk for high blood pressure. If you are overweight, losing as little as 5 to 10 pounds can help reduce your blood pressure.</p><p>The two essentials to maintaining a healthy weight are:<ul><li>Eating well</li><li>Moving often</li></ul></p><p>If you need to lose weight, talk to your healthcare professional about a healthy approach. Your doctor can help you figure out how many calories you need for weight loss and advise you on which types of activities are best.</p>
+<p>To determine whether your weight is in a healthy range, doctors often calculate your <a href='https://www.cdc.gov/bmi/about/' target='_blank'>body mass index (BMI)</a>. If you know your weight and height, you can <a href='https://www.cdc.gov/bmi/adult-calculator/index.html' target='_blank'>calculate your BMI at CDC's Adult BMI Calculator website</a>. Doctors sometimes also use waist and hip measurements to assess body fat.</p>
+<p>Talk with your health care team about ways to reach a healthy weight, including choosing healthy foods and getting regular physical activity.</p>
+<p><a href='https://www.heart.org/-/media/files/health-topics/answers-by-heart/why-should-i-lose-weight.pdf' target='_blank'>Why should I lose weight?</a>
+<br/><a href='https://www.heart.org/-/media/files/health-topics/answers-by-heart/how-can-i-manage-my-weight.pdf' target='_blank'>How can I manage my weight?</a></p>"
+where id=2;
