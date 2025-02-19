@@ -135,3 +135,7 @@ img.icon {
     margin-top: .8em;
     width: 100%;
 }
+
+div.links a {
+    display: block;
+}
