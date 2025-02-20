@@ -91,7 +91,7 @@ public class HomeController extends BaseController {
             setCommonViewComponents(model);
             model.addAttribute("sessionEstablished", true);
             model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
-            model.addAttribute("pageStyles", new String[] { "home.css?v=4", "recommendations.css?v=1" });
+            model.addAttribute("pageStyles", new String[] { "home.css?v=4", "recommendations.css?v=2" });
             model.addAttribute("pageNodeScripts", new String[] {
                     "inputmask/dist/jquery.inputmask.js",
                     "inputmask/dist/bindings/inputmask.binding.js",
