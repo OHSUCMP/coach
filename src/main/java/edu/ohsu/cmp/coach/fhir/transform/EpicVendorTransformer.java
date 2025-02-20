@@ -58,7 +58,8 @@ public class EpicVendorTransformer extends BaseVendorTransformer implements Vend
                         logger.error("caught " + e.getClass().getSimpleName() + " attempting to transact " +
                                 r.getClass().getSimpleName() + " - " + e.getMessage() + " - skipping -", e);
                         if (logger.isDebugEnabled()) {
-                            logger.debug(r.getClass().getSimpleName() + " resource : " + FhirUtil.toJson(r));
+                            logger.debug("EXCEPTION DETAILS: using strategy=" + strategy + ", credentials=" + fcc.getCredentials() +
+                                    ", resourceType=" + r.getClass().getSimpleName() + ", json=" + FhirUtil.toJson(r));
                         }
                         if      (e instanceof IOException)              throw (IOException) e;
                         else if (e instanceof ConfigurationException)   throw (ConfigurationException) e;
