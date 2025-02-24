@@ -52,6 +52,9 @@ public class JWTService {
     @Value("${fhir.security.jwt.pkcs8-private-key-file:}")
     private String pkcs8PrivateKeyFilename;
 
+    @Value("${fhir.security.jwt.scope}")
+    private String scope;
+
     public boolean isJWTEnabled() {
         return StringUtils.isNotBlank(clientId) &&
                 StringUtils.isNotBlank(x509CertificateFilename) &&
@@ -103,6 +106,7 @@ public class JWTService {
                     .withKeyId(keyId)
                     .withJWTId(jwtId)
                     .withExpiresAt(buildExpiresAt())
+                    .withClaim("scope", scope)
                     .sign(algorithm);
 
         } catch (Exception e) {
