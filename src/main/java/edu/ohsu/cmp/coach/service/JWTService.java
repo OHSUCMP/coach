@@ -11,9 +11,9 @@ import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.MyHttpException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
+import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.model.fhir.jwt.WebKey;
 import edu.ohsu.cmp.coach.model.fhir.jwt.WebKeySet;
-import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.CryptoUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +34,10 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class JWTService {
@@ -86,7 +89,8 @@ public class JWTService {
 
         try {
             X509Certificate certificate = CryptoUtil.readCertificate(x509CertificateFile);
-            String jwtId = Base64.encode(DigestUtils.sha256(certificate.getEncoded())).toString();
+            String keyId = Base64.encode(DigestUtils.sha256(certificate.getEncoded())).toString();
+            String jwtId = Base64.encode(DigestUtils.sha256(CryptoUtil.randomBytes(32))).toString();
 
             RSAPublicKey publicKey = (RSAPublicKey) certificate.getPublicKey();
             RSAPrivateKey privateKey = (RSAPrivateKey) CryptoUtil.readPrivateKey(pkcs8PrivateKeyFile);
@@ -96,6 +100,7 @@ public class JWTService {
                     .withIssuer(clientId)
                     .withSubject(clientId)
                     .withAudience(tokenAuthUrl)
+                    .withKeyId(keyId)
                     .withJWTId(jwtId)
                     .withExpiresAt(buildExpiresAt())
                     .sign(algorithm);

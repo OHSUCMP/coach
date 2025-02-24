@@ -9,10 +9,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -47,5 +44,11 @@ public class CryptoUtil {
         byte[] content = Base64.decodeBase64(s2);
         PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(content);
         return factory.generatePrivate(privKeySpec);
+    }
+
+    public static byte[] randomBytes(int length) {
+        byte[] b = new byte[length];
+        new SecureRandom().nextBytes(b);
+        return b;
     }
 }
