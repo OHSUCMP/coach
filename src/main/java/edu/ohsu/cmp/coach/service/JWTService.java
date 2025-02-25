@@ -1,6 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.google.gson.Gson;
@@ -8,13 +9,16 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.nimbusds.jose.util.Base64;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
+import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.MyHttpException;
 import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
+import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.model.fhir.jwt.WebKey;
 import edu.ohsu.cmp.coach.model.fhir.jwt.WebKeySet;
 import edu.ohsu.cmp.coach.util.CryptoUtil;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
@@ -55,6 +59,9 @@ public class JWTService {
     @Value("${fhir.security.jwt.scope}")
     private String scope;
 
+    @Value("${fhir.security.jwt.token-auth-url}")
+    private String overrideTokenAuthUrl;
+
     public boolean isJWTEnabled() {
         return StringUtils.isNotBlank(clientId) &&
                 StringUtils.isNotBlank(x509CertificateFilename) &&
@@ -76,44 +83,6 @@ public class JWTService {
         }
 
         return webKeySet;
-    }
-
-    public String createToken(String tokenAuthUrl) throws ConfigurationException {
-        if ( ! isJWTEnabled() ) return null;
-
-        // iss: clientId
-        // sub: clientId (same as iss)
-        // aud: tokenAuthUrl
-        // jti: uuid, max 151 chars
-        // exp: 5 minutes in the future, expressed as an integer 5 minutes in the future
-
-        File x509CertificateFile = new File(x509CertificateFilename);
-        File pkcs8PrivateKeyFile = new File(pkcs8PrivateKeyFilename);
-
-        try {
-            X509Certificate certificate = CryptoUtil.readCertificate(x509CertificateFile);
-            String keyId = Base64.encode(DigestUtils.sha256(certificate.getEncoded())).toString();
-            String jwtId = Base64.encode(DigestUtils.sha256(CryptoUtil.randomBytes(32))).toString();
-
-            RSAPublicKey publicKey = (RSAPublicKey) certificate.getPublicKey();
-            RSAPrivateKey privateKey = (RSAPrivateKey) CryptoUtil.readPrivateKey(pkcs8PrivateKeyFile);
-            Algorithm algorithm = Algorithm.RSA384(publicKey, privateKey);
-
-            return JWT.create()
-                    .withIssuer(clientId)
-                    .withSubject(clientId)
-                    .withAudience(tokenAuthUrl)
-                    .withKeyId(keyId)
-                    .withJWTId(jwtId)
-                    .withExpiresAt(buildExpiresAt())
-                    .withClaim("scope", scope)
-                    .sign(algorithm);
-
-        } catch (Exception e) {
-            throw new ConfigurationException("could not instantiate object with iss=" + tokenAuthUrl +
-                    ", x509CertificateFile=" + x509CertificateFile +
-                    ", pkcs8PrivateKeyFile=" + pkcs8PrivateKeyFile, e);
-        }
     }
 
     public boolean isTokenValid(String token, String iss) {
@@ -141,12 +110,14 @@ public class JWTService {
     /**
      * generate an Epic access token per specifications documented at
      * https://apporchard.epic.com/Article?docId=oauth2&section=Backend-Oauth2_Getting-Access-Token
-     * @param tokenAuthUrl
-     * @param jwt
+     * @param fcc
      * @return
      */
-    public AccessToken getAccessToken(String tokenAuthUrl, String jwt) throws IOException {
+    public AccessToken getAccessToken(FHIRCredentialsWithClient fcc) throws IOException, DataException, ConfigurationException {
         if ( ! isJWTEnabled() ) return null;
+
+        String tokenAuthUrl = getTokenAuthUrl(fcc);
+        String jwt = createToken(tokenAuthUrl);
 
         logger.debug("requesting JWT access token from tokenAuthUrl=" + tokenAuthUrl + ", jwt=" + jwt);
 
@@ -182,6 +153,56 @@ public class JWTService {
 ////////////////////////////////////////////////////////////////////////////
 // private methods
 //
+
+    private String createToken(String tokenAuthUrl) throws ConfigurationException {
+        if ( ! isJWTEnabled() ) return null;
+
+        // iss: clientId
+        // sub: clientId (same as iss)
+        // aud: tokenAuthUrl
+        // kid: key ID, for JWKS association
+        // jti: JWT ID, max 151 chars
+        // exp: 5 minutes in the future, expressed as an integer 5 minutes in the future
+        // scope: additional claim to specify requested scope
+
+        File x509CertificateFile = new File(x509CertificateFilename);
+        File pkcs8PrivateKeyFile = new File(pkcs8PrivateKeyFilename);
+
+        try {
+            X509Certificate certificate = CryptoUtil.readCertificate(x509CertificateFile);
+            String keyId = Base64.encode(DigestUtils.sha256(certificate.getEncoded())).toString();
+            String jwtId = Base64.encode(DigestUtils.sha256(CryptoUtil.randomBytes(32))).toString();
+
+            RSAPublicKey publicKey = (RSAPublicKey) certificate.getPublicKey();
+            RSAPrivateKey privateKey = (RSAPrivateKey) CryptoUtil.readPrivateKey(pkcs8PrivateKeyFile);
+            Algorithm algorithm = Algorithm.RSA384(publicKey, privateKey);
+
+            JWTCreator.Builder builder = JWT.create()
+                    .withIssuer(clientId)
+                    .withSubject(clientId)
+                    .withAudience(tokenAuthUrl)
+                    .withKeyId(keyId)
+                    .withJWTId(jwtId)
+                    .withExpiresAt(buildExpiresAt());
+
+            if (StringUtils.isNotBlank(scope)) {
+                builder = builder.withClaim("scope", scope);
+            }
+
+            return builder.sign(algorithm);
+
+        } catch (Exception e) {
+            throw new ConfigurationException("could not instantiate object with iss=" + tokenAuthUrl +
+                    ", x509CertificateFile=" + x509CertificateFile +
+                    ", pkcs8PrivateKeyFile=" + pkcs8PrivateKeyFile, e);
+        }
+    }
+
+    private String getTokenAuthUrl(FHIRCredentialsWithClient fcc) throws DataException {
+        return StringUtils.isNotBlank(overrideTokenAuthUrl) ?
+                overrideTokenAuthUrl :
+                FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
+    }
 
     private Instant buildExpiresAt() {
         return LocalDateTime.now()

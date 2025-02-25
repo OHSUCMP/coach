@@ -201,9 +201,7 @@ public class FHIRService {
 
         if (strategy == FhirStrategy.BACKEND) {
             if (jwtService.isJWTEnabled()) {
-                String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
-                String jwt = jwtService.createToken(tokenAuthUrl);
-                AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
+                AccessToken accessToken = jwtService.getAccessToken(fcc);
 
                 Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
                 while (iter.hasNext()) {
@@ -261,9 +259,7 @@ public class FHIRService {
     private IGenericClient buildClient(FHIRCredentialsWithClient fcc, FhirStrategy strategy) throws DataException, ConfigurationException, IOException {
         if (strategy == FhirStrategy.BACKEND) {
             if (jwtService.isJWTEnabled()) {
-                String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
-                String jwt = jwtService.createToken(tokenAuthUrl);
-                AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
+                AccessToken accessToken = jwtService.getAccessToken(fcc);
 
                 return FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
                         accessToken.getAccessToken(),
