@@ -90,7 +90,7 @@ public class AccessTokenService {
         return webKeySet;
     }
 
-    public boolean isTokenValid(String token, String iss) {
+    public boolean isJWTValid(String token) {
         if ( ! isAccessTokenEnabled() ) return false;
 
         File x509CertificateFile = new File(x509CertificateFilename);
@@ -101,7 +101,7 @@ public class AccessTokenService {
             RSAPrivateKey privateKey = (RSAPrivateKey) CryptoUtil.readPrivateKey(pkcs8PrivateKeyFile);
             Algorithm algorithm = Algorithm.RSA384(publicKey, privateKey);
             JWTVerifier verifier = JWT.require(algorithm)
-                    .withIssuer(iss)
+                    .withIssuer(clientId)
                     .build();
             verifier.verify(token);
             return true;
@@ -136,7 +136,7 @@ public class AccessTokenService {
 
             logger.debug("requesting access token from tokenAuthUrl=" + tokenAuthUrl + " with jwt=" + jwt);
             if (logger.isDebugEnabled()) {
-                logger.debug("jwt is valid for tokenAuthUrl=" + tokenAuthUrl + "? " + isTokenValid(jwt, tokenAuthUrl));
+                logger.debug("jwt is valid for tokenAuthUrl=" + tokenAuthUrl + "? " + isJWTValid(jwt));
             }
 
             params.add(new BasicNameValuePair("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
