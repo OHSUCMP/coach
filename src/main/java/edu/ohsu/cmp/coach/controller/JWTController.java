@@ -3,7 +3,7 @@ package edu.ohsu.cmp.coach.controller;
 import com.google.gson.Gson;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.model.fhir.jwt.WebKeySet;
-import edu.ohsu.cmp.coach.service.JWTService;
+import edu.ohsu.cmp.coach.service.AccessTokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +19,11 @@ public class JWTController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private JWTService jwtService;
+    private AccessTokenService accessTokenService;
 
     @GetMapping(value="jwks", produces="application/json")
     public ResponseEntity<String> getJSONWebKeySet() throws ConfigurationException {
-        WebKeySet webKeySet = jwtService.getWebKeySet();
+        WebKeySet webKeySet = accessTokenService.getWebKeySet();
 
         if (webKeySet == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

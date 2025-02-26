@@ -6,8 +6,10 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.nimbusds.jose.util.Base64;
+import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.exception.MyHttpException;
@@ -38,34 +40,37 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
-public class JWTService {
+public class AccessTokenService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("${fhir.security.jwt.client-id}")
+    @Value("${smart.backend.clientId}")
     private String clientId;
 
-    @Value("${fhir.security.jwt.x509-certificate-file:}")
-    private String x509CertificateFilename;
-
-    @Value("${fhir.security.jwt.pkcs8-private-key-file:}")
-    private String pkcs8PrivateKeyFilename;
-
-    @Value("${fhir.security.jwt.scope}")
+    @Value("${smart.backend.scope}")
     private String scope;
 
-    @Value("${fhir.security.jwt.token-auth-url}")
+    @Value("${smart.backend.iss}")
+    private String backendIss;
+
+    @Value("${smart.backend.jwt.x509-certificate-file:}")
+    private String x509CertificateFilename;
+
+    @Value("${smart.backend.jwt.pkcs8-private-key-file:}")
+    private String pkcs8PrivateKeyFilename;
+
+    @Value("${smart.backend.override-token-auth-url}")
     private String overrideTokenAuthUrl;
 
-    public boolean isJWTEnabled() {
-        return StringUtils.isNotBlank(clientId) &&
-                StringUtils.isNotBlank(x509CertificateFilename) &&
-                StringUtils.isNotBlank(pkcs8PrivateKeyFilename);
+    @Value("${smart.backend.basic-auth.secret}")
+    private String basicAuthSecret;
+
+    private final Map<String, String> tokenAuthUrlMap = new HashMap<>();
+
+    public boolean isAccessTokenEnabled() {
+        return isJWTEnabled() || isBasicAuthEnabled();
     }
 
     public WebKeySet getWebKeySet() throws ConfigurationException {
@@ -86,7 +91,7 @@ public class JWTService {
     }
 
     public boolean isTokenValid(String token, String iss) {
-        if ( ! isJWTEnabled() ) return false;
+        if ( ! isAccessTokenEnabled() ) return false;
 
         File x509CertificateFile = new File(x509CertificateFilename);
         File pkcs8PrivateKeyFile = new File(pkcs8PrivateKeyFilename);
@@ -114,20 +119,42 @@ public class JWTService {
      * @return
      */
     public AccessToken getAccessToken(FHIRCredentialsWithClient fcc) throws IOException, DataException, ConfigurationException {
-        if ( ! isJWTEnabled() ) return null;
-
-        String tokenAuthUrl = getTokenAuthUrl(fcc);
-        String jwt = createToken(tokenAuthUrl);
-
-        logger.debug("requesting JWT access token from tokenAuthUrl=" + tokenAuthUrl + ", jwt=" + jwt);
+        if ( ! isAccessTokenEnabled() ) return null;
 
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
+        requestHeaders.put("cache-control", "no-cache");
+        requestHeaders.put("Accept", "application/json");
 
         List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("grant_type", "client_credentials"));
-        params.add(new BasicNameValuePair("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
-        params.add(new BasicNameValuePair("client_assertion", jwt));
+
+        String tokenAuthUrl = getTokenAuthUrl(fcc);
+
+        if (isJWTEnabled()) {
+            String jwt = createJWT(tokenAuthUrl);
+
+            logger.debug("requesting access token from tokenAuthUrl=" + tokenAuthUrl + " with jwt=" + jwt);
+
+            params.add(new BasicNameValuePair("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
+            params.add(new BasicNameValuePair("client_assertion", jwt));
+
+        } else if (isBasicAuthEnabled()) {
+            String authorization = "Basic " + Base64.encode(clientId + ":" + basicAuthSecret);
+
+            logger.debug("requesting access token from tokenAuthUrl=" + tokenAuthUrl + " with authorization=" + authorization);
+
+            requestHeaders.put("Authorization", authorization);
+
+        } else {
+            throw new CaseNotHandledException("unhandled case where both JWT and Basic authorization are disabled");
+        }
+
+        // I think this is required here for Oracle?
+        if (StringUtils.isNotBlank(scope)) {
+            params.add(new BasicNameValuePair("scope", scope));
+        }
+
         String requestBody = URLEncodedUtils.format(params, StandardCharsets.UTF_8);
 
         HttpResponse httpResponse = new HttpRequest().post(tokenAuthUrl, null, requestHeaders, requestBody);
@@ -136,7 +163,8 @@ public class JWTService {
         String responseBody = httpResponse.getResponseBody();
 
         if (code < 200 || code > 299) {
-            logger.error("received non-successful response to request for a JWT access token for tokenAuthUrl=" + tokenAuthUrl + " with code " + code);
+            logger.error("received non-successful response to request for a access token from  url=" + tokenAuthUrl +
+                    " with code " + code);
             logger.debug("requestBody=" + requestBody);
             logger.debug("responseBody=" + responseBody);
             throw new MyHttpException(code, responseBody);
@@ -154,8 +182,25 @@ public class JWTService {
 // private methods
 //
 
-    private String createToken(String tokenAuthUrl) throws ConfigurationException {
-        if ( ! isJWTEnabled() ) return null;
+    private boolean isJWTEnabled() {
+        return StringUtils.isNotBlank(clientId) &&
+                StringUtils.isNotBlank(x509CertificateFilename) &&
+                StringUtils.isNotBlank(pkcs8PrivateKeyFilename);
+    }
+
+    private boolean isBasicAuthEnabled() {
+        return StringUtils.isNotBlank(clientId) &&
+                StringUtils.isNotBlank(basicAuthSecret);
+    }
+
+    private String getBackendServerURL(FHIRCredentialsWithClient fcc) {
+        return StringUtils.isNotBlank(backendIss) ?
+                backendIss :
+                fcc.getCredentials().getServerURL();
+    }
+
+    private String createJWT(String tokenAuthUrl) throws ConfigurationException {
+        if ( ! isAccessTokenEnabled() ) return null;
 
         // iss: clientId
         // sub: clientId (same as iss)
@@ -170,12 +215,15 @@ public class JWTService {
 
         try {
             X509Certificate certificate = CryptoUtil.readCertificate(x509CertificateFile);
-            String keyId = Base64.encode(DigestUtils.sha256(certificate.getEncoded())).toString();
-            String jwtId = Base64.encode(DigestUtils.sha256(CryptoUtil.randomBytes(32))).toString();
 
             RSAPublicKey publicKey = (RSAPublicKey) certificate.getPublicKey();
             RSAPrivateKey privateKey = (RSAPrivateKey) CryptoUtil.readPrivateKey(pkcs8PrivateKeyFile);
             Algorithm algorithm = Algorithm.RSA384(publicKey, privateKey);
+
+            String keyId = Base64.encode(DigestUtils.sha256(publicKey.getEncoded())).toString();
+            String jwtId = Base64.encode(DigestUtils.sha256(CryptoUtil.randomBytes(32))).toString();
+
+            // see: https://vendorservices.epic.com/Article?docId=oauth2&section=Creating-JWTs
 
             JWTCreator.Builder builder = JWT.create()
                     .withIssuer(clientId)
@@ -184,6 +232,9 @@ public class JWTService {
                     .withKeyId(keyId)
                     .withJWTId(jwtId)
                     .withExpiresAt(buildExpiresAt());
+
+            // todo : also set "jku" header that contains a URL to the active COACH /jwt/jwks endpoint
+            //        see https://www.rfc-editor.org/rfc/rfc7515#section-4.1.2 for details
 
             if (StringUtils.isNotBlank(scope)) {
                 builder = builder.withClaim("scope", scope);
@@ -198,15 +249,59 @@ public class JWTService {
         }
     }
 
-    private String getTokenAuthUrl(FHIRCredentialsWithClient fcc) throws DataException {
-        return StringUtils.isNotBlank(overrideTokenAuthUrl) ?
-                overrideTokenAuthUrl :
-                FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
+    private String getTokenAuthUrl(FHIRCredentialsWithClient fcc) throws DataException, IOException {
+        if (StringUtils.isNotBlank(overrideTokenAuthUrl)) {
+            return overrideTokenAuthUrl;
+
+        } else {
+            String wellKnownTokenAuthUrl = getWellKnownTokenAuthUrl(fcc);
+            if (StringUtils.isNotBlank(wellKnownTokenAuthUrl)) {
+                return wellKnownTokenAuthUrl;
+
+            } else {
+                return FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
+            }
+        }
+    }
+
+    private String getWellKnownTokenAuthUrl(FHIRCredentialsWithClient fcc) throws IOException {
+        final String backendServerUrl = getBackendServerURL(fcc);
+
+        if ( ! tokenAuthUrlMap.containsKey(backendServerUrl) ) {
+            String smartConfigurationUrl = backendServerUrl.endsWith("/") ?
+                    backendServerUrl + ".well-known/smart-configuration" :
+                    backendServerUrl + "/.well-known/smart-configuration";
+
+            Map<String, String> requestHeaders = new LinkedHashMap<>();
+            requestHeaders.put("Accept", "application/json");
+
+            HttpResponse httpResponse = new HttpRequest().get(smartConfigurationUrl, null, requestHeaders);
+
+            int code = httpResponse.getResponseCode();
+            String responseBody = httpResponse.getResponseBody();
+
+            if (code < 200 || code > 299) {
+                logger.error("received non-successful response to request for SMART configuration for url=" + smartConfigurationUrl + " with code " + code);
+                logger.debug("responseBody=" + responseBody);
+                throw new MyHttpException(code, responseBody);
+
+            } else {
+                Gson gson = new GsonBuilder().create();
+                JsonObject obj = gson.fromJson(responseBody, new TypeToken<JsonObject>() {}.getType());
+                if (obj.has("token_endpoint")) {
+                    String tokenAuthUrl = obj.get("token_endpoint").getAsString();
+                    logger.debug("found token endpoint " + tokenAuthUrl);
+                    tokenAuthUrlMap.put(backendServerUrl, tokenAuthUrl);
+                }
+            }
+        }
+
+        return tokenAuthUrlMap.get(backendServerUrl);
     }
 
     private Instant buildExpiresAt() {
         return LocalDateTime.now()
-                .plusMinutes(5)
+                .plusSeconds(30)
                 .atZone(ZoneId.systemDefault())
                 .toInstant();
     }

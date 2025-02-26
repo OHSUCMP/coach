@@ -34,8 +34,11 @@ public class FHIRService {
     @Value("${fhir.search.count}")
     private int searchCount;
 
+    @Value("${smart.backend.iss}")
+    private String backendIss;
+
     @Autowired
-    private JWTService jwtService;
+    private AccessTokenService accessTokenService;
 
     public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
                                                        Reference reference) throws DataException, ConfigurationException, IOException {
@@ -200,8 +203,8 @@ public class FHIRService {
         //        otherwise we could reuse that code.  womp.  whatever.  c'est la vie.
 
         if (strategy == FhirStrategy.BACKEND) {
-            if (jwtService.isJWTEnabled()) {
-                AccessToken accessToken = jwtService.getAccessToken(fcc);
+            if (accessTokenService.isAccessTokenEnabled()) {
+                AccessToken accessToken = accessTokenService.getAccessToken(fcc);
 
                 Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
                 while (iter.hasNext()) {
@@ -217,7 +220,7 @@ public class FHIRService {
                     }
                 }
 
-                client = FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
+                client = FhirUtil.buildClient(getBackendServerURL(fcc),
                         accessToken.getAccessToken(),
                         socketTimeout);
 
@@ -256,12 +259,18 @@ public class FHIRService {
 // private methods
 //
 
+    private String getBackendServerURL(FHIRCredentialsWithClient fcc) {
+        return StringUtils.isNotBlank(backendIss) ?
+                backendIss :
+                fcc.getCredentials().getServerURL();
+    }
+
     private IGenericClient buildClient(FHIRCredentialsWithClient fcc, FhirStrategy strategy) throws DataException, ConfigurationException, IOException {
         if (strategy == FhirStrategy.BACKEND) {
-            if (jwtService.isJWTEnabled()) {
-                AccessToken accessToken = jwtService.getAccessToken(fcc);
+            if (accessTokenService.isAccessTokenEnabled()) {
+                AccessToken accessToken = accessTokenService.getAccessToken(fcc);
 
-                return FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
+                return FhirUtil.buildClient(getBackendServerURL(fcc),
                         accessToken.getAccessToken(),
                         socketTimeout);
 
