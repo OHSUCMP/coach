@@ -23,7 +23,7 @@ public class FhirConfigManager {
     private static final String BP_VALUE_SYSTEM = "http://unitsofmeasure.org";
     private static final String BP_VALUE_UNIT = "mmHg";
     private static final String BP_LOOKBACK_PERIOD = "2y";
-    private static final Coding PULSE_COMMON_CODING = new Coding("http://loinc.org", "8867-4", "Heart rate");
+    public static final Coding PULSE_COMMON_CODING = new Coding("http://loinc.org", "8867-4", "Heart rate");
     private static final String PULSE_VALUE_CODE = "/min";
     private static final String PULSE_VALUE_SYSTEM = "http://unitsofmeasure.org";
     private static final String PULSE_VALUE_UNIT = "beats/minute";
