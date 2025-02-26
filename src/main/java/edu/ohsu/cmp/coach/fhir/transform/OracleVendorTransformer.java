@@ -7,9 +7,8 @@ import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 
-public class EpicVendorTransformer extends NonStandardVendorTransformer implements VendorTransformer {
-
-    public EpicVendorTransformer(UserWorkspace workspace) {
+public class OracleVendorTransformer extends NonStandardVendorTransformer implements VendorTransformer {
+    public OracleVendorTransformer(UserWorkspace workspace) {
         super(workspace);
     }
 
@@ -33,9 +32,7 @@ public class EpicVendorTransformer extends NonStandardVendorTransformer implemen
         if (type == ResourceType.SYSTOLIC) {
             if (model.getSystolic() != null) {
                 for (Coding c : fcm.getBpSystolicCustomCodings()) {
-                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // Epic flowsheet observations may only include urn:oid Codings
-                        o.getCode().addCoding(c);
-                    }
+                    o.getCode().addCoding(c);
                 }
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getSystolic(), fcm);
@@ -47,9 +44,7 @@ public class EpicVendorTransformer extends NonStandardVendorTransformer implemen
         } else if (type == ResourceType.DIASTOLIC) {
             if (model.getDiastolic() != null) {
                 for (Coding c : fcm.getBpDiastolicCustomCodings()) {
-                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // Epic flowsheet observations may only include urn:oid Codings
-                        o.getCode().addCoding(c);
-                    }
+                    o.getCode().addCoding(c);
                 }
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getDiastolic(), fcm);
