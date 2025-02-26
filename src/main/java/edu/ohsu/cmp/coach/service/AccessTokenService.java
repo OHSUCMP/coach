@@ -61,9 +61,6 @@ public class AccessTokenService {
     @Value("${smart.backend.jwt.pkcs8-private-key-file:}")
     private String pkcs8PrivateKeyFilename;
 
-    @Value("${smart.backend.override-token-auth-url}")
-    private String overrideTokenAuthUrl;
-
     @Value("${smart.backend.basic-auth.secret}")
     private String basicAuthSecret;
 
@@ -253,17 +250,12 @@ public class AccessTokenService {
     }
 
     private String getTokenAuthUrl(FHIRCredentialsWithClient fcc) throws DataException, IOException {
-        if (StringUtils.isNotBlank(overrideTokenAuthUrl)) {
-            return overrideTokenAuthUrl;
+        String wellKnownTokenAuthUrl = getWellKnownTokenAuthUrl(fcc);
+        if (StringUtils.isNotBlank(wellKnownTokenAuthUrl)) {
+            return wellKnownTokenAuthUrl;
 
         } else {
-            String wellKnownTokenAuthUrl = getWellKnownTokenAuthUrl(fcc);
-            if (StringUtils.isNotBlank(wellKnownTokenAuthUrl)) {
-                return wellKnownTokenAuthUrl;
-
-            } else {
-                return FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
-            }
+            return FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
         }
     }
 
