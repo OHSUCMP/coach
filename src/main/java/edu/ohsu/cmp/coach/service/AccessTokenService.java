@@ -136,7 +136,7 @@ public class AccessTokenService {
 
             logger.debug("requesting access token from tokenAuthUrl=" + tokenAuthUrl + " with jwt=" + jwt);
             if (logger.isDebugEnabled()) {
-                logger.debug("jwt is valid for tokenAuthUrl=" + tokenAuthUrl + "? " + isJWTValid(jwt));
+                logger.debug("JWT is valid? " + isJWTValid(jwt));
             }
 
             params.add(new BasicNameValuePair("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
