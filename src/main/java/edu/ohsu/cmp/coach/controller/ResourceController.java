@@ -154,7 +154,7 @@ public class ResourceController extends BaseController {
 
             return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
         } else {
-            logger.warn("requested site-specific resource hash does not exist: " + key);
+            logger.warn("requested site-specific resource key does not exist: " + key);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
