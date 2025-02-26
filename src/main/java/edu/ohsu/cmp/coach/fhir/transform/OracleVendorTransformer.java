@@ -31,9 +31,10 @@ public class OracleVendorTransformer extends NonStandardVendorTransformer implem
 
         if (type == ResourceType.SYSTOLIC) {
             if (model.getSystolic() != null) {
-                for (Coding c : fcm.getBpSystolicCustomCodings()) {
-                    o.getCode().addCoding(c);
-                }
+                o.getCode().addCoding(FhirConfigManager.BP_SYSTOLIC_COMMON_CODING);
+//                for (Coding c : fcm.getBpSystolicCustomCodings()) {
+//                    o.getCode().addCoding(c);
+//                }
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getSystolic(), fcm);
 
@@ -43,9 +44,10 @@ public class OracleVendorTransformer extends NonStandardVendorTransformer implem
 
         } else if (type == ResourceType.DIASTOLIC) {
             if (model.getDiastolic() != null) {
-                for (Coding c : fcm.getBpDiastolicCustomCodings()) {
-                    o.getCode().addCoding(c);
-                }
+                o.getCode().addCoding(FhirConfigManager.BP_DIASTOLIC_COMMON_CODING);
+//                for (Coding c : fcm.getBpDiastolicCustomCodings()) {
+//                    o.getCode().addCoding(c);
+//                }
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getDiastolic(), fcm);
 
