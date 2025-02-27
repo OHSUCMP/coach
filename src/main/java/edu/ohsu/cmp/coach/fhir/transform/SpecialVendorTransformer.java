@@ -37,7 +37,7 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
     @Override
     public Bundle writeRemote(String sessionId, FhirStrategy strategy, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
 
-        // in Epic, we need to post resources to flowsheets one at a time
+        // for "special" vendors, we want to post resources one at a time
 
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
 
@@ -77,8 +77,9 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
         FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(encounter, bpObservation, protocolObservation, fcm);
 
-        // Epic hack to set protocol information from custom-serialized note in the Observation resource
-        // if no protocol resource is found
+        // "special" vendors generally restrict the types of resources that can be written back, usually just one Observation
+        // for systolic, and one for diastolic.  auxiliary resources are not generally supported.  as such, we implement this hack
+        // to set protocol information from custom-serialized note in the Observation resource if no protocol resource is found
 
         if (protocolObservation == null) {
             Boolean followedProtocol = getFollowedProtocolFromNote(bpObservation, fcm);
@@ -95,8 +96,9 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
         FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(encounter, systolicObservation, diastolicObservation, protocolObservation, fcm);
 
-        // Epic hack to set protocol information from custom-serialized note in the Observation resource
-        // if no protocol resource is found
+        // "special" vendors generally restrict the types of resources that can be written back, usually just one Observation
+        // for systolic, and one for diastolic.  auxiliary resources are not generally supported.  as such, we implement this hack
+        // to set protocol information from custom-serialized note in the Observation resource if no protocol resource is found
 
         if (protocolObservation == null) {
             Boolean followedProtocol = getFollowedProtocolFromNote(systolicObservation, fcm);
@@ -116,8 +118,9 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
         FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(o, fcm);
 
-        // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
-        // if no Observation resource for the protocol exists
+        // "special" vendors generally restrict the types of resources that can be written back, usually just one Observation
+        // for systolic, and one for diastolic.  auxiliary resources are not generally supported.  as such, we implement this hack
+        // to set protocol information from custom-serialized note in the Observation resource if no protocol resource is found
 
         Boolean followedProtocol = getFollowedProtocolFromNote(o, fcm);
         if (followedProtocol != null) {
@@ -131,6 +134,10 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
     protected BloodPressureModel buildBloodPressureModel(Observation systolicObservation, Observation diastolicObservation) throws DataException {
         FhirConfigManager fcm = workspace.getFhirConfigManager();
         BloodPressureModel bpm = new BloodPressureModel(systolicObservation, diastolicObservation, fcm);
+
+        // "special" vendors generally restrict the types of resources that can be written back, usually just one Observation
+        // for systolic, and one for diastolic.  auxiliary resources are not generally supported.  as such, we implement this hack
+        // to set protocol information from custom-serialized note in the Observation resource if no protocol resource is found
 
         Boolean followedProtocol = getFollowedProtocolFromNote(systolicObservation, fcm);
         if (followedProtocol == null) {
@@ -154,10 +161,11 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
 
         // if a source Observation exists as a panel, split it into two, one for systolic and another for diastolic
         if (model.getSourceBPObservation() != null) {
-            // note : do not include Encounter for Epic
-            //        also, combine protocol info into the bp observation if it exists
-            //        also, the BP observation needs to be split into separate systolic and diastolic resources
+            // note : do not include Encounter for "special" vendors
+            //        also, combine protocol info into the BP Observation if it exists
+            //        also, the BP Observation needs to be split into separate systolic and diastolic resources
             //        also, link the resultant Observations together using a UUID in the note field, so we can reliably recombine them later
+            //        resultant Observations will have the same effective time, which can also be used to rejoin them later
 
             String uuid = genTemporaryId();
 
@@ -182,11 +190,17 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
             String patientId = workspace.getPatient().getSourcePatient().getId(); //workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
 
-            // When transforming a BP model to be used in Epic, we need to set a custom serialized note that
-            // contains protocol information since we can't store that record separately in its own flowsheet record
+            // when transforming a BP model to be sent to "special" vendors, we need to set a custom serialized note that
+            // contains protocol information since the target server generally will not permit resources to be posted that
+            // aren't directly related to vitals
 
-            // in Epic context, BP Observations do not have Encounters, but instead use timestamp as a mechanism
-            // to associated resources together
+            // for "special" vendors, we do not include Encounters with BP Observations, but instead use a UUID in a note
+            // field to explicitly link resources together.  we also set the same effective timestamp on both, which can
+            // also be used to associated resources together
+
+            // "special" vendors generally restrict the types of resources that can be written back, and auxiliary
+            // resources are not generally supported.  as such, we implement this hack to set protocol information from
+            // custom-serialized note in the Observation resource if no protocol resource is found
 
             String uuid = genTemporaryId();
 
@@ -242,8 +256,8 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
                 for (Observation pulseObservation : pulseObservationList) {
                     PulseModel pm = new PulseModel(encounter, pulseObservation, protocolObservation, fcm);
 
-                    // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
-                    // if no Observation resource for the protocol exists
+                    // for "special" vendors, protocol information is represented in a custom-serialized note on the
+                    // Observation resource if no Observation resource for the protocol exists
 
                     if (protocolObservation == null) {
                         Boolean followedProtocol = getFollowedProtocolFromNote(pulseObservation, fcm);
@@ -262,8 +276,8 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
             }
         }
 
-        // there may be pulse observations in the system that aren't tied to any encounters.  we still want to capture these
-        // of course, we can't associate any other observations with them (e.g. protocol), but whatever.  better than nothing
+        // there may be pulse Observations in the system that aren't tied to any Encounters.  we still want to capture these
+        // of course, we can't associate any other Observations with them (e.g. protocol), but whatever.  better than nothing
 
         for (Map.Entry<String, List<Observation>> entry : encounterObservationsMap.entrySet()) {
             if (entry.getValue() != null) {
@@ -272,8 +286,8 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
                         logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
                         PulseModel pm = new PulseModel(o, fcm);
 
-                        // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
-                        // if no Observation resource for the protocol exists
+                        // for "special" vendors, protocol information is represented in a custom-serialized note on the
+                        // Observation resource if no Observation resource for the protocol exists
 
                         Boolean followedProtocol = getFollowedProtocolFromNote(o, fcm);
                         if (followedProtocol != null) {
@@ -300,7 +314,7 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
         FhirConfigManager fcm = workspace.getFhirConfigManager();
 
         if (model.getSourcePulseObservation() != null) {
-            // note : do not include Encounter for Epic
+            // note : do not include Encounter for "special" vendors
             //        also, combine protocol info into the pulse observation if it exists
             Observation pulseObservation = model.getSourcePulseObservation().copy();
             appendProtocolAnswerToObservationIfNeeded(pulseObservation, model, fcm);
@@ -310,11 +324,9 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
             String patientId = workspace.getPatient().getSourcePatient().getId(); //workspace.getFhirCredentialsWithClient().getCredentials().getPatientId();
             String patientIdRef = FhirUtil.toRelativeReference(patientId);
 
-            // in Epic context, Pulse Observations do not have Encounters, but instead use timestamp as a mechanism
-            // to associated resources together
-
-            // in Epic, protocol information is represented in a custom-serialized note on the Observation resource
-            // if no Observation resource for the protocol exists
+            // "special" vendors generally restrict the types of resources that can be written back, and auxiliary
+            // resources are not generally supported.  as such, we implement this hack to set protocol information from
+            // custom-serialized note in the Observation resource if no protocol resource is found
 
             Observation pulseObservation = buildPulseObservation(model, patientIdRef, fcm);
             appendProtocolAnswerToObservationIfNeeded(pulseObservation, model, fcm);
