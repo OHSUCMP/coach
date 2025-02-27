@@ -21,7 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public abstract class NonStandardVendorTransformer extends BaseVendorTransformer {
+public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected static final String PROTOCOL_NOTE_TAG = "COACH_PROTOCOL::";
@@ -29,7 +29,7 @@ public abstract class NonStandardVendorTransformer extends BaseVendorTransformer
 
     protected final DefaultVendorTransformer defaultTransformer;
 
-    public NonStandardVendorTransformer(UserWorkspace workspace) {
+    public SpecialVendorTransformer(UserWorkspace workspace) {
         super(workspace);
         defaultTransformer = new DefaultVendorTransformer(workspace);
     }

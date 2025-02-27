@@ -9,7 +9,7 @@ import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 
-public class EpicVendorTransformer extends NonStandardVendorTransformer implements VendorTransformer {
+public class EpicVendorTransformer extends SpecialVendorTransformer implements VendorTransformer {
 
     public EpicVendorTransformer(UserWorkspace workspace) {
         super(workspace);

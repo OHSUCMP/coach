@@ -9,7 +9,7 @@ import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 
-public class OracleVendorTransformer extends NonStandardVendorTransformer implements VendorTransformer {
+public class OracleVendorTransformer extends SpecialVendorTransformer implements VendorTransformer {
     public OracleVendorTransformer(UserWorkspace workspace) {
         super(workspace);
     }
