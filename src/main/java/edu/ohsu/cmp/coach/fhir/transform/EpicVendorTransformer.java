@@ -41,7 +41,8 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
             CodeableConcept code = bpObservation.getCode();
             if (type == ResourceType.SYSTOLIC && FhirUtil.hasCoding(code, fcm.getBpSystolicCodings())) {
                 for (Coding c : fcm.getBpSystolicCustomCodings()) {
-                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // include only urn:oid Codings in Epic-destined Observations
+                    // Epic flowsheet Observations may only include urn:oid Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
                         o.getCode().addCoding(c);
                     }
                 }
@@ -49,7 +50,8 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
 
             } else if (type == ResourceType.DIASTOLIC && FhirUtil.hasCoding(code, fcm.getBpDiastolicCodings())) {
                 for (Coding c : fcm.getBpDiastolicCustomCodings()) {
-                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // include only urn:oid Codings in Epic-destined Observations
+                    // Epic flowsheet Observations may only include urn:oid Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
                         o.getCode().addCoding(c);
                     }
                 }
@@ -104,7 +106,8 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
         if (type == ResourceType.SYSTOLIC) {
             if (model.getSystolic() != null) {
                 for (Coding c : fcm.getBpSystolicCustomCodings()) {
-                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // Epic flowsheet observations may only include urn:oid Codings
+                    // Epic flowsheet Observations may only include urn:oid Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
                         o.getCode().addCoding(c);
                     }
                 }
@@ -118,7 +121,8 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
         } else if (type == ResourceType.DIASTOLIC) {
             if (model.getDiastolic() != null) {
                 for (Coding c : fcm.getBpDiastolicCustomCodings()) {
-                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // Epic flowsheet observations may only include urn:oid Codings
+                    // Epic flowsheet Observations may only include urn:oid Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
                         o.getCode().addCoding(c);
                     }
                 }
@@ -146,8 +150,7 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
 
         o.setSubject(new Reference().setReference(patientId));
 
-        // Epic doesn't use encounters for user-generated records, but if it came in with one, add it
-
+        // Epic doesn't use Encounters for user-generated records, but if it came in with one, add it
         if (model.getSourceEncounter() != null) {
             o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(model.getSourceEncounter())));
         }
@@ -160,7 +163,8 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
                 .setDisplay("vital-signs");
 
         for (Coding c : fcm.getPulseCustomCodings()) {
-            if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // Epic flowsheet observations may only include urn:oid Codings
+            // Epic flowsheet Observations may only include urn:oid Codings
+            if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
                 o.getCode().addCoding(c);
             }
         }

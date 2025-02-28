@@ -39,21 +39,15 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
         if (bpObservation.hasCode()) {
             CodeableConcept code = bpObservation.getCode();
             if (type == ResourceType.SYSTOLIC && FhirUtil.hasCoding(code, fcm.getBpSystolicCodings())) {
+                // for Oracle, add just the one common coding for Systolic.  multiple codes mess things up
                 o.getCode().addCoding(FhirConfigManager.BP_SYSTOLIC_COMMON_CODING);
-//                for (Coding c : fcm.getBpSystolicCustomCodings()) {
-//                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // include only urn:oid Codings in Epic-destined Observations
-//                        o.getCode().addCoding(c);
-//                    }
-//                }
+
                 o.setValue(bpObservation.getValueQuantity());
 
             } else if (type == ResourceType.DIASTOLIC && FhirUtil.hasCoding(code, fcm.getBpDiastolicCodings())) {
+                // for Oracle, add just the one common coding for Diastolic.  multiple codes mess things up
                 o.getCode().addCoding(FhirConfigManager.BP_DIASTOLIC_COMMON_CODING);
-//                for (Coding c : fcm.getBpDiastolicCustomCodings()) {
-//                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) { // include only urn:oid Codings in Epic-destined Observations
-//                        o.getCode().addCoding(c);
-//                    }
-//                }
+
                 o.setValue(bpObservation.getValueQuantity());
 
             } else if (FhirUtil.hasCoding(code, fcm.getBpPanelCodings())) {
@@ -78,7 +72,7 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
             throw new DataException("missing coding");
         }
 
-        o.getValueQuantity().setUnit(null);         // Epic doesn't allow units to be specified
+//        o.getValueQuantity().setUnit(null);         // Epic doesn't allow units to be specified // todo: but maybe Oracle is cool with them?
 
         o.setEffective(bpObservation.getEffective());
 
@@ -104,10 +98,9 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
 
         if (type == ResourceType.SYSTOLIC) {
             if (model.getSystolic() != null) {
+                // for Oracle, add just the one common coding for Systolic.  multiple codes mess things up
                 o.getCode().addCoding(FhirConfigManager.BP_SYSTOLIC_COMMON_CODING);
-//                for (Coding c : fcm.getBpSystolicCustomCodings()) {
-//                    o.getCode().addCoding(c);
-//                }
+
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getSystolic(), fcm);
 
@@ -117,10 +110,9 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
 
         } else if (type == ResourceType.DIASTOLIC) {
             if (model.getDiastolic() != null) {
+                // for Oracle, add just the one common coding for Diastolic.  multiple codes mess things up
                 o.getCode().addCoding(FhirConfigManager.BP_DIASTOLIC_COMMON_CODING);
-//                for (Coding c : fcm.getBpDiastolicCustomCodings()) {
-//                    o.getCode().addCoding(c);
-//                }
+
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getDiastolic(), fcm);
 
@@ -145,8 +137,7 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
 
         o.setSubject(new Reference().setReference(patientId));
 
-        // Oracle doesn't use encounters for user-generated records, but if it came in with one, add it
-
+        // Oracle doesn't use Encounters for user-generated records, but if it came in with one, add it
         if (model.getSourceEncounter() != null) {
             o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(model.getSourceEncounter())));
         }
@@ -158,10 +149,8 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
+        // for Oracle, add just the one common coding for Pulse.  multiple codes mess things up
         o.getCode().addCoding(FhirConfigManager.PULSE_COMMON_CODING);
-//        for (Coding c : fcm.getPulseCustomCodings()) {
-//            o.getCode().addCoding(c);
-//        }
 
         FhirUtil.addHomeSettingExtension(o);
 
@@ -171,7 +160,7 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
         o.getValueQuantity()
                 .setCode(fcm.getPulseValueCode())
                 .setSystem(fcm.getPulseValueSystem())
-//                .setUnit(fcm.getPulseValueUnit())     // Epic doesn't like units
+                .setUnit(fcm.getPulseValueUnit())     // Epic doesn't like units // todo: but maybe Oracle is cool with them?  test!
                 .setValue(model.getPulse().getValue().intValue());
 
         return o;
