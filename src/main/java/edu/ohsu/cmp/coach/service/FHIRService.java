@@ -188,16 +188,17 @@ public class FHIRService {
         try {
             t = (T) outcome.getResource();
 
+            if (logger.isDebugEnabled()) {
+                logger.debug("received response " + t.getClass().getSimpleName() + ": " + FhirUtil.toJson(t));
+            }
+
         } catch (NullPointerException npe) {
             logger.error("Outcome contained a null resource in response to " + resource.getClass().getSimpleName() + " creation!");
             if (logger.isDebugEnabled()) {
                 logger.debug("response status code=" + outcome.getResponseStatusCode() +
                         ", operationOutcome=" + FhirUtil.toJson(outcome.getOperationOutcome()));
             }
-        }
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("received response " + t.getClass().getSimpleName() + ": " + FhirUtil.toJson(t));
+            throw npe;
         }
 
         return t;
