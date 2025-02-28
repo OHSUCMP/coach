@@ -13,7 +13,10 @@ import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IDomainResource;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +25,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 @Service
@@ -197,6 +202,12 @@ public class FHIRService {
             if (logger.isDebugEnabled()) {
                 logger.debug("outcome=" + outcome);
                 if (outcome != null) logger.debug("response status code=" + outcome.getResponseStatusCode());
+                if (outcome != null && outcome.getResponseHeaders() != null) {
+                    logger.debug("outcome response headers:");
+                    for (Map.Entry<String, List<String>> entry : outcome.getResponseHeaders().entrySet() ) {
+                        logger.debug(entry.getKey() + "=" + StringUtils.join(entry.getValue(), ","));
+                    }
+                }
                 if (outcome != null && outcome.getOperationOutcome() != null) {
                     logger.debug("response operation outcome=" + FhirUtil.toJson(outcome.getOperationOutcome()));
                 }
