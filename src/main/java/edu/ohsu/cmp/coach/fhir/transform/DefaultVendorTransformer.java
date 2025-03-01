@@ -1,8 +1,6 @@
 package edu.ohsu.cmp.coach.fhir.transform;
 
-import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
@@ -17,7 +15,6 @@ import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 
 public class DefaultVendorTransformer extends BaseVendorTransformer implements VendorTransformer {
@@ -28,7 +25,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
     }
 
     @Override
-    public Bundle writeRemote(String sessionId, FhirStrategy strategy, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
+    public Bundle writeRemote(String sessionId, FhirStrategy strategy, FHIRService fhirService, Bundle bundle) throws Exception {
         Bundle bundleToTransact = new Bundle();
         bundleToTransact.setType(Bundle.BundleType.TRANSACTION);
 

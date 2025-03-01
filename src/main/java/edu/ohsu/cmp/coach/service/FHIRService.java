@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.service;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import edu.ohsu.cmp.coach.exception.*;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirStrategy;
@@ -10,6 +11,7 @@ import edu.ohsu.cmp.coach.model.ResourceWithBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IDomainResource;
@@ -97,7 +99,7 @@ public class FHIRService {
         }
     }
 
-    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
+    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, @NotNull Class<T> aClass,
                                                        String reference) throws DataException, ConfigurationException, IOException {
         logger.info("read: " + reference + " (" + aClass.getSimpleName() + ")");
         String id = FhirUtil.extractIdFromReference(reference);
@@ -177,7 +179,8 @@ public class FHIRService {
         return bundle;
     }
 
-    public <T extends IDomainResource> T transact(FHIRCredentialsWithClient fcc, FhirStrategy strategy, T resource) throws IOException, ConfigurationException, DataException {
+    @SuppressWarnings("unchecked")
+    public <T extends IDomainResource> T transact(FHIRCredentialsWithClient fcc, FhirStrategy strategy, T resource) throws Exception {
         IGenericClient client = buildClient(fcc, strategy);
 
         if (logger.isDebugEnabled()) {
@@ -191,14 +194,33 @@ public class FHIRService {
 
         T t = null;
         try {
-            t = (T) outcome.getResource();
+            if (outcome.getResource() != null) {
+                t = (T) outcome.getResource();
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("received response " + t.getClass().getSimpleName() + ": " + FhirUtil.toJson(t));
+            } else {
+                // if a FHIR server doesn't return a resource on the create call itself, it should provide a 'location'
+                // header in the response that points to the newly created resource.
+
+                String location = outcome.getResponseHeaders() != null ?
+                        outcome.getResponseHeaders().get("location").get(0) :
+                        null;
+
+                if (StringUtils.isNotBlank(location)) {
+                    String reference = FhirUtil.toRelativeReference(location);
+                    t = (T) readByReference(fcc, strategy, resource.getClass(), reference);
+                    if (t == null) {
+                        throw new ResourceNotFoundException("couldn't find " + reference);
+                    }
+
+                } else {
+                    throw new ResourceNotFoundException("create did not return a resource, and 'location' not found in response headers");
+                }
             }
 
-        } catch (NullPointerException npe) {
-            logger.error("Outcome contained a null resource in response to " + resource.getClass().getSimpleName() + " creation!");
+        } catch (Exception e) {
+            logger.error("caught " + e.getClass().getName() + " transacting " + resource.getClass().getSimpleName() +
+                    ": " + FhirUtil.toJson(resource), e);
+
             if (logger.isDebugEnabled()) {
                 logger.debug("outcome=" + outcome);
                 if (outcome != null) logger.debug("response status code=" + outcome.getResponseStatusCode());
@@ -213,13 +235,13 @@ public class FHIRService {
                 }
             }
 
-            throw npe;
+            throw e;
         }
 
         return t;
     }
 
-    public Bundle transact(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Bundle bundle, boolean stripIfNotInScope) throws IOException, DataException, ConfigurationException, ScopeException {
+    public Bundle transact(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Bundle bundle, boolean stripIfNotInScope) throws Exception {
         IGenericClient client;
 
         // note : normally, I would reuse the buildClient() function below to build the client, but this version needs to intercept

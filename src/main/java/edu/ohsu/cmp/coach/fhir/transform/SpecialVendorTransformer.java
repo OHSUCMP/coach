@@ -2,7 +2,6 @@ package edu.ohsu.cmp.coach.fhir.transform;
 
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.model.*;
@@ -35,7 +34,7 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
     }
 
     @Override
-    public Bundle writeRemote(String sessionId, FhirStrategy strategy, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException {
+    public Bundle writeRemote(String sessionId, FhirStrategy strategy, FHIRService fhirService, Bundle bundle) throws Exception {
 
         // for "special" vendors, we want to post resources one at a time
 
