@@ -10,6 +10,7 @@ import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 
 public class EpicVendorTransformer extends SpecialVendorTransformer implements VendorTransformer {
+    private static final String URN_OID_PREFIX = "urn:oid:";
 
     public EpicVendorTransformer(UserWorkspace workspace) {
         super(workspace);
@@ -40,7 +41,7 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
         if (bpObservation.hasCode()) {
             CodeableConcept code = bpObservation.getCode();
             if (type == ResourceType.SYSTOLIC && FhirUtil.hasCoding(code, fcm.getBpSystolicCodings())) {
-                for (Coding c : fcm.getBpSystolicCustomCodings()) {
+                for (Coding c : fcm.getBpSystolicCodings()) {
                     // Epic flowsheet Observations may only include urn:oid Codings
                     if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
                         o.getCode().addCoding(c);
@@ -49,7 +50,7 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
                 o.setValue(bpObservation.getValueQuantity());
 
             } else if (type == ResourceType.DIASTOLIC && FhirUtil.hasCoding(code, fcm.getBpDiastolicCodings())) {
-                for (Coding c : fcm.getBpDiastolicCustomCodings()) {
+                for (Coding c : fcm.getBpDiastolicCodings()) {
                     // Epic flowsheet Observations may only include urn:oid Codings
                     if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
                         o.getCode().addCoding(c);
@@ -60,21 +61,37 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
             } else if (FhirUtil.hasCoding(code, fcm.getBpPanelCodings())) {
                 if (bpObservation.hasComponent()) {
                     if (type == ResourceType.SYSTOLIC) {
+                        for (Coding c : fcm.getBpSystolicCodings()) {
+                            // Epic flowsheet Observations may only include urn:oid Codings
+                            if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
+                                o.getCode().addCoding(c);
+                            }
+                        }
                         Observation.ObservationComponentComponent component = getComponentHavingCoding(bpObservation, fcm.getBpSystolicCodings());
                         o.setValue(component.getValueQuantity());
 
                     } else if (type == ResourceType.DIASTOLIC) {
+                        for (Coding c : fcm.getBpDiastolicCodings()) {
+                            // Epic flowsheet Observations may only include urn:oid Codings
+                            if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
+                                o.getCode().addCoding(c);
+                            }
+                        }
                         Observation.ObservationComponentComponent component = getComponentHavingCoding(bpObservation, fcm.getBpDiastolicCodings());
                         o.setValue(component.getValueQuantity());
 
                     } else {
-                        throw new CaseNotHandledException("invalid type");
+                        throw new CaseNotHandledException("cannot handle case where type=" + type);
                     }
+
+                } else {
+                    throw new DataException("missing component");
                 }
 
             } else {
                 throw new DataException("invalid coding");
             }
+
         } else {
             throw new DataException("missing coding");
         }
@@ -105,7 +122,7 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
 
         if (type == ResourceType.SYSTOLIC) {
             if (model.getSystolic() != null) {
-                for (Coding c : fcm.getBpSystolicCustomCodings()) {
+                for (Coding c : fcm.getBpSystolicCodings()) {
                     // Epic flowsheet Observations may only include urn:oid Codings
                     if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
                         o.getCode().addCoding(c);
@@ -120,7 +137,7 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
 
         } else if (type == ResourceType.DIASTOLIC) {
             if (model.getDiastolic() != null) {
-                for (Coding c : fcm.getBpDiastolicCustomCodings()) {
+                for (Coding c : fcm.getBpDiastolicCodings()) {
                     // Epic flowsheet Observations may only include urn:oid Codings
                     if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
                         o.getCode().addCoding(c);
@@ -134,7 +151,7 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
             }
 
         } else {
-            throw new DataException("type must be SYSTOLIC or DIASTOLIC");
+            throw new CaseNotHandledException("cannot handle case where type=" + type);
         }
 
         o.setEffective(new DateTimeType(model.getReadingDate()));
@@ -162,7 +179,7 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
-        for (Coding c : fcm.getPulseCustomCodings()) {
+        for (Coding c : fcm.getPulseCodings()) {
             // Epic flowsheet Observations may only include urn:oid Codings
             if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
                 o.getCode().addCoding(c);

@@ -24,7 +24,6 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected static final String PROTOCOL_NOTE_TAG = "COACH_PROTOCOL::";
-    protected static final String URN_OID_PREFIX = "urn:oid:";
 
     protected final DefaultVendorTransformer defaultTransformer;
 

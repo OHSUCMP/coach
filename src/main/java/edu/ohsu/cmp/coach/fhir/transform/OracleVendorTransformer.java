@@ -10,6 +10,8 @@ import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 
 public class OracleVendorTransformer extends SpecialVendorTransformer implements VendorTransformer {
+        private static final String FHIR_CERNER_COM_PREFIX = "https://fhir.cerner.com/";
+
     public OracleVendorTransformer(UserWorkspace workspace) {
         super(workspace);
     }
@@ -39,30 +41,59 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
         if (bpObservation.hasCode()) {
             CodeableConcept code = bpObservation.getCode();
             if (type == ResourceType.SYSTOLIC && FhirUtil.hasCoding(code, fcm.getBpSystolicCodings())) {
-                // for Oracle, add just the one common coding for Systolic.  multiple codes mess things up
-                o.getCode().addCoding(FhirConfigManager.BP_SYSTOLIC_COMMON_CODING);
+                for (Coding c : fcm.getBpSystolicCodings()) {
+                    // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
+                        o.getCode().addCoding(c);
+                        break;  // Oracle requires one and only one coding to be added
+                    }
+                }
 
                 o.setValue(bpObservation.getValueQuantity());
 
             } else if (type == ResourceType.DIASTOLIC && FhirUtil.hasCoding(code, fcm.getBpDiastolicCodings())) {
-                // for Oracle, add just the one common coding for Diastolic.  multiple codes mess things up
-                o.getCode().addCoding(FhirConfigManager.BP_DIASTOLIC_COMMON_CODING);
+                for (Coding c : fcm.getBpDiastolicCodings()) {
+                    // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
+                        o.getCode().addCoding(c);
+                        break;  // Oracle requires one and only one coding to be added
+                    }
+                }
 
                 o.setValue(bpObservation.getValueQuantity());
 
             } else if (FhirUtil.hasCoding(code, fcm.getBpPanelCodings())) {
                 if (bpObservation.hasComponent()) {
                     if (type == ResourceType.SYSTOLIC) {
+                        for (Coding c : fcm.getBpSystolicCodings()) {
+                            // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                            if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
+                                o.getCode().addCoding(c);
+                                break;  // Oracle requires one and only one coding to be added
+                            }
+                        }
+
                         Observation.ObservationComponentComponent component = getComponentHavingCoding(bpObservation, fcm.getBpSystolicCodings());
                         o.setValue(component.getValueQuantity());
 
                     } else if (type == ResourceType.DIASTOLIC) {
+                        for (Coding c : fcm.getBpDiastolicCodings()) {
+                            // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                            if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
+                                o.getCode().addCoding(c);
+                                break;  // Oracle requires one and only one coding to be added
+                            }
+                        }
+
                         Observation.ObservationComponentComponent component = getComponentHavingCoding(bpObservation, fcm.getBpDiastolicCodings());
                         o.setValue(component.getValueQuantity());
 
                     } else {
-                        throw new CaseNotHandledException("invalid type");
+                        throw new CaseNotHandledException("cannot handle case where type=" + type);
                     }
+
+                } else {
+                    throw new DataException("missing component");
                 }
 
             } else {
@@ -98,8 +129,13 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
 
         if (type == ResourceType.SYSTOLIC) {
             if (model.getSystolic() != null) {
-                // for Oracle, add just the one common coding for Systolic.  multiple codes mess things up
-                o.getCode().addCoding(FhirConfigManager.BP_SYSTOLIC_COMMON_CODING);
+                for (Coding c : fcm.getBpSystolicCodings()) {
+                    // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
+                        o.getCode().addCoding(c);
+                        break;  // Oracle requires one and only one coding to be added
+                    }
+                }
 
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getSystolic(), fcm);
@@ -110,8 +146,13 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
 
         } else if (type == ResourceType.DIASTOLIC) {
             if (model.getDiastolic() != null) {
-                // for Oracle, add just the one common coding for Diastolic.  multiple codes mess things up
-                o.getCode().addCoding(FhirConfigManager.BP_DIASTOLIC_COMMON_CODING);
+                for (Coding c : fcm.getBpDiastolicCodings()) {
+                    // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
+                        o.getCode().addCoding(c);
+                        break;  // Oracle requires one and only one coding to be added
+                    }
+                }
 
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getDiastolic(), fcm);
@@ -149,8 +190,13 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
-        // for Oracle, add just the one common coding for Pulse.  multiple codes mess things up
-        o.getCode().addCoding(FhirConfigManager.PULSE_COMMON_CODING);
+        for (Coding c : fcm.getBpDiastolicCodings()) {
+            // Oracle Observations may only include https://fhir.cerner.com/ Codings
+            if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
+                o.getCode().addCoding(c);
+                break;  // Oracle requires one and only one coding to be added
+            }
+        }
 
         FhirUtil.addHomeSettingExtension(o);
 
