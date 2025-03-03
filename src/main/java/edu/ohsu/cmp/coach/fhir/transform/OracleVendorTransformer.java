@@ -10,7 +10,8 @@ import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 
 public class OracleVendorTransformer extends SpecialVendorTransformer implements VendorTransformer {
-        private static final String FHIR_CERNER_COM_PREFIX = "https://fhir.cerner.com/";
+    private static final String FHIR_CERNER_COM_PREFIX = "https://fhir.cerner.com/";
+    private static final String PULSE_VALUE_CODE = "{Beats}/min";
 
     public OracleVendorTransformer(UserWorkspace workspace) {
         super(workspace);
@@ -190,7 +191,7 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
-        for (Coding c : fcm.getBpDiastolicCodings()) {
+        for (Coding c : fcm.getPulseCodings()) {
             // Oracle Observations may only include https://fhir.cerner.com/ Codings
             if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
                 o.getCode().addCoding(c);
@@ -204,7 +205,7 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
 
         o.setValue(new Quantity());
         o.getValueQuantity()
-                .setCode(fcm.getPulseValueCode())
+                .setCode(PULSE_VALUE_CODE)            // Oracle requires that a special code be put here
                 .setSystem(fcm.getPulseValueSystem())
                 .setUnit(fcm.getPulseValueUnit())     // Epic doesn't like units // todo: but maybe Oracle is cool with them?  test!
                 .setValue(model.getPulse().getValue().intValue());
