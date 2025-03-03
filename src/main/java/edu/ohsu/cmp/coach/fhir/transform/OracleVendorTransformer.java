@@ -104,8 +104,6 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
             throw new DataException("missing coding");
         }
 
-//        o.getValueQuantity().setUnit(null);         // Epic doesn't allow units to be specified // todo: but maybe Oracle is cool with them?
-
         o.setEffective(bpObservation.getEffective());
 
         return o;
@@ -207,7 +205,7 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
         o.getValueQuantity()
                 .setCode(PULSE_VALUE_CODE)            // Oracle requires that a special code be put here
                 .setSystem(fcm.getPulseValueSystem())
-                .setUnit(fcm.getPulseValueUnit())     // Epic doesn't like units // todo: but maybe Oracle is cool with them?  test!
+                .setUnit(fcm.getPulseValueUnit())
                 .setValue(model.getPulse().getValue().intValue());
 
         return o;
