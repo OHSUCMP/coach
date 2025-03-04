@@ -88,7 +88,7 @@ public class AccessTokenService {
     }
 
     public boolean isJWTValid(String token) {
-        if ( ! isAccessTokenEnabled() ) return false;
+        if ( ! isJWTEnabled() ) return false;
 
         File x509CertificateFile = new File(x509CertificateFilename);
         File pkcs8PrivateKeyFile = new File(pkcs8PrivateKeyFilename);
@@ -163,7 +163,7 @@ public class AccessTokenService {
         String responseBody = httpResponse.getResponseBody();
 
         if (code < 200 || code > 299) {
-            logger.error("received non-successful response to request for a access token from  url=" + tokenAuthUrl +
+            logger.error("received non-successful response to request for a access token from url=" + tokenAuthUrl +
                     " with code " + code);
             logger.debug("requestBody=" + requestBody);
             logger.debug("responseBody=" + responseBody);
