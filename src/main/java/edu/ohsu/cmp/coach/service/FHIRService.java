@@ -3,6 +3,7 @@ package edu.ohsu.cmp.coach.service;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import edu.ohsu.cmp.coach.exception.*;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirStrategy;
@@ -10,10 +11,14 @@ import edu.ohsu.cmp.coach.model.ResourceWithBundle;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.jwt.AccessToken;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IDomainResource;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +27,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 @Service
@@ -34,8 +41,11 @@ public class FHIRService {
     @Value("${fhir.search.count}")
     private int searchCount;
 
+    @Value("${smart.backend.iss}")
+    private String backendIss;
+
     @Autowired
-    private JWTService jwtService;
+    private AccessTokenService accessTokenService;
 
     public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
                                                        Reference reference) throws DataException, ConfigurationException, IOException {
@@ -89,7 +99,7 @@ public class FHIRService {
         }
     }
 
-    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
+    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, @NotNull Class<T> aClass,
                                                        String reference) throws DataException, ConfigurationException, IOException {
         logger.info("read: " + reference + " (" + aClass.getSimpleName() + ")");
         String id = FhirUtil.extractIdFromReference(reference);
@@ -169,7 +179,8 @@ public class FHIRService {
         return bundle;
     }
 
-    public <T extends IDomainResource> T transact(FHIRCredentialsWithClient fcc, FhirStrategy strategy, T resource) throws IOException, ConfigurationException, DataException {
+    @SuppressWarnings("unchecked")
+    public <T extends IDomainResource> T transact(FHIRCredentialsWithClient fcc, FhirStrategy strategy, T resource) throws Exception {
         IGenericClient client = buildClient(fcc, strategy);
 
         if (logger.isDebugEnabled()) {
@@ -181,16 +192,56 @@ public class FHIRService {
                 .withAdditionalHeader("Prefer", "return=representation")
                 .execute();
 
-        T t = (T) outcome.getResource();
+        T t = null;
+        try {
+            if (outcome.getResource() != null) {
+                t = (T) outcome.getResource();
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("received response " + t.getClass().getSimpleName() + ": " + FhirUtil.toJson(t));
+            } else {
+                // if a FHIR server doesn't return a resource on the create call itself, it should provide a 'location'
+                // header in the response that points to the newly created resource.
+
+                String location = outcome.getResponseHeaders() != null ?
+                        outcome.getResponseHeaders().get("location").get(0) :
+                        null;
+
+                if (StringUtils.isNotBlank(location)) {
+                    String reference = FhirUtil.toRelativeReference(location);
+                    t = (T) readByReference(fcc, strategy, resource.getClass(), reference);
+                    if (t == null) {
+                        throw new ResourceNotFoundException("couldn't find " + reference);
+                    }
+
+                } else {
+                    throw new ResourceNotFoundException("create did not return a resource, and 'location' not found in response headers");
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error("caught " + e.getClass().getName() + " transacting " + resource.getClass().getSimpleName() +
+                    ": " + FhirUtil.toJson(resource), e);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("outcome=" + outcome);
+                if (outcome != null) logger.debug("response status code=" + outcome.getResponseStatusCode());
+                if (outcome != null && outcome.getResponseHeaders() != null) {
+                    logger.debug("outcome response headers:");
+                    for (Map.Entry<String, List<String>> entry : outcome.getResponseHeaders().entrySet() ) {
+                        logger.debug(entry.getKey() + "=" + StringUtils.join(entry.getValue(), ","));
+                    }
+                }
+                if (outcome != null && outcome.getOperationOutcome() != null) {
+                    logger.debug("response operation outcome=" + FhirUtil.toJson(outcome.getOperationOutcome()));
+                }
+            }
+
+            throw e;
         }
 
         return t;
     }
 
-    public Bundle transact(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Bundle bundle, boolean stripIfNotInScope) throws IOException, DataException, ConfigurationException, ScopeException {
+    public Bundle transact(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Bundle bundle, boolean stripIfNotInScope) throws Exception {
         IGenericClient client;
 
         // note : normally, I would reuse the buildClient() function below to build the client, but this version needs to intercept
@@ -200,10 +251,8 @@ public class FHIRService {
         //        otherwise we could reuse that code.  womp.  whatever.  c'est la vie.
 
         if (strategy == FhirStrategy.BACKEND) {
-            if (jwtService.isJWTEnabled()) {
-                String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
-                String jwt = jwtService.createToken(tokenAuthUrl);
-                AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
+            if (accessTokenService.isAccessTokenEnabled()) {
+                AccessToken accessToken = accessTokenService.getAccessToken(fcc);
 
                 Iterator<Bundle.BundleEntryComponent> iter = bundle.getEntry().iterator();
                 while (iter.hasNext()) {
@@ -219,7 +268,7 @@ public class FHIRService {
                     }
                 }
 
-                client = FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
+                client = FhirUtil.buildClient(getBackendServerURL(fcc),
                         accessToken.getAccessToken(),
                         socketTimeout);
 
@@ -258,14 +307,18 @@ public class FHIRService {
 // private methods
 //
 
+    private String getBackendServerURL(FHIRCredentialsWithClient fcc) {
+        return StringUtils.isNotBlank(backendIss) ?
+                backendIss :
+                fcc.getCredentials().getServerURL();
+    }
+
     private IGenericClient buildClient(FHIRCredentialsWithClient fcc, FhirStrategy strategy) throws DataException, ConfigurationException, IOException {
         if (strategy == FhirStrategy.BACKEND) {
-            if (jwtService.isJWTEnabled()) {
-                String tokenAuthUrl = FhirUtil.getTokenAuthenticationURL(fcc.getMetadata());
-                String jwt = jwtService.createToken(tokenAuthUrl);
-                AccessToken accessToken = jwtService.getAccessToken(tokenAuthUrl, jwt);
+            if (accessTokenService.isAccessTokenEnabled()) {
+                AccessToken accessToken = accessTokenService.getAccessToken(fcc);
 
-                return FhirUtil.buildClient(fcc.getCredentials().getServerURL(),
+                return FhirUtil.buildClient(getBackendServerURL(fcc),
                         accessToken.getAccessToken(),
                         socketTimeout);
 

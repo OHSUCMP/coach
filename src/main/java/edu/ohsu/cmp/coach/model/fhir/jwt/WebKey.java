@@ -17,7 +17,7 @@ public class WebKey {
     private String x5t;
 
     public WebKey(X509Certificate certificate) throws CertificateEncodingException {
-        this.kid = Base64.encode(DigestUtils.sha256(certificate.getEncoded())).toString();
+        this.kid = Base64.encode(DigestUtils.sha256(certificate.getPublicKey().getEncoded())).toString();
 
         RSAPublicKey publicKey = (RSAPublicKey) certificate.getPublicKey();
         this.kty = publicKey.getAlgorithm();

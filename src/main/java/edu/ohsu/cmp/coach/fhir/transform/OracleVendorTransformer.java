@@ -9,10 +9,11 @@ import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.hl7.fhir.r4.model.*;
 
-public class EpicVendorTransformer extends SpecialVendorTransformer implements VendorTransformer {
-    private static final String URN_OID_PREFIX = "urn:oid:";
+public class OracleVendorTransformer extends SpecialVendorTransformer implements VendorTransformer {
+    private static final String FHIR_CERNER_COM_PREFIX = "https://fhir.cerner.com/";
+    private static final String PULSE_VALUE_CODE = "{Beats}/min";
 
-    public EpicVendorTransformer(UserWorkspace workspace) {
+    public OracleVendorTransformer(UserWorkspace workspace) {
         super(workspace);
     }
 
@@ -42,41 +43,49 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
             CodeableConcept code = bpObservation.getCode();
             if (type == ResourceType.SYSTOLIC && FhirUtil.hasCoding(code, fcm.getBpSystolicCodings())) {
                 for (Coding c : fcm.getBpSystolicCodings()) {
-                    // Epic flowsheet Observations may only include urn:oid Codings
-                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
+                    // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
                         o.getCode().addCoding(c);
+                        break;  // Oracle requires one and only one coding to be added
                     }
                 }
+
                 o.setValue(bpObservation.getValueQuantity());
 
             } else if (type == ResourceType.DIASTOLIC && FhirUtil.hasCoding(code, fcm.getBpDiastolicCodings())) {
                 for (Coding c : fcm.getBpDiastolicCodings()) {
-                    // Epic flowsheet Observations may only include urn:oid Codings
-                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
+                    // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
                         o.getCode().addCoding(c);
+                        break;  // Oracle requires one and only one coding to be added
                     }
                 }
+
                 o.setValue(bpObservation.getValueQuantity());
 
             } else if (FhirUtil.hasCoding(code, fcm.getBpPanelCodings())) {
                 if (bpObservation.hasComponent()) {
                     if (type == ResourceType.SYSTOLIC) {
                         for (Coding c : fcm.getBpSystolicCodings()) {
-                            // Epic flowsheet Observations may only include urn:oid Codings
-                            if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
+                            // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                            if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
                                 o.getCode().addCoding(c);
+                                break;  // Oracle requires one and only one coding to be added
                             }
                         }
+
                         Observation.ObservationComponentComponent component = getComponentHavingCoding(bpObservation, fcm.getBpSystolicCodings());
                         o.setValue(component.getValueQuantity());
 
                     } else if (type == ResourceType.DIASTOLIC) {
                         for (Coding c : fcm.getBpDiastolicCodings()) {
-                            // Epic flowsheet Observations may only include urn:oid Codings
-                            if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
+                            // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                            if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
                                 o.getCode().addCoding(c);
+                                break;  // Oracle requires one and only one coding to be added
                             }
                         }
+
                         Observation.ObservationComponentComponent component = getComponentHavingCoding(bpObservation, fcm.getBpDiastolicCodings());
                         o.setValue(component.getValueQuantity());
 
@@ -91,12 +100,9 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
             } else {
                 throw new DataException("invalid coding");
             }
-
         } else {
             throw new DataException("missing coding");
         }
-
-        o.getValueQuantity().setUnit(null);         // Epic doesn't allow units to be specified
 
         o.setEffective(bpObservation.getEffective());
 
@@ -123,11 +129,13 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
         if (type == ResourceType.SYSTOLIC) {
             if (model.getSystolic() != null) {
                 for (Coding c : fcm.getBpSystolicCodings()) {
-                    // Epic flowsheet Observations may only include urn:oid Codings
-                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
+                    // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
                         o.getCode().addCoding(c);
+                        break;  // Oracle requires one and only one coding to be added
                     }
                 }
+
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getSystolic(), fcm);
 
@@ -138,11 +146,13 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
         } else if (type == ResourceType.DIASTOLIC) {
             if (model.getDiastolic() != null) {
                 for (Coding c : fcm.getBpDiastolicCodings()) {
-                    // Epic flowsheet Observations may only include urn:oid Codings
-                    if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
+                    // Oracle Observations may only include https://fhir.cerner.com/ Codings
+                    if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
                         o.getCode().addCoding(c);
+                        break;  // Oracle requires one and only one coding to be added
                     }
                 }
+
                 o.setValue(new Quantity());
                 setBPValue(o.getValueQuantity(), model.getDiastolic(), fcm);
 
@@ -151,7 +161,7 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
             }
 
         } else {
-            throw new CaseNotHandledException("cannot handle case where type=" + type);
+            throw new DataException("type must be SYSTOLIC or DIASTOLIC");
         }
 
         o.setEffective(new DateTimeType(model.getReadingDate()));
@@ -167,7 +177,7 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
 
         o.setSubject(new Reference().setReference(patientId));
 
-        // Epic doesn't use Encounters for user-generated records, but if it came in with one, add it
+        // Oracle doesn't use Encounters for user-generated records, but if it came in with one, add it
         if (model.getSourceEncounter() != null) {
             o.setEncounter(new Reference().setReference(FhirUtil.toRelativeReference(model.getSourceEncounter())));
         }
@@ -180,9 +190,10 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
                 .setDisplay("vital-signs");
 
         for (Coding c : fcm.getPulseCodings()) {
-            // Epic flowsheet Observations may only include urn:oid Codings
-            if (c.hasSystem() && c.getSystem().startsWith(URN_OID_PREFIX)) {
+            // Oracle Observations may only include https://fhir.cerner.com/ Codings
+            if (c.hasSystem() && c.getSystem().startsWith(FHIR_CERNER_COM_PREFIX)) {
                 o.getCode().addCoding(c);
+                break;  // Oracle requires one and only one coding to be added
             }
         }
 
@@ -192,9 +203,9 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
 
         o.setValue(new Quantity());
         o.getValueQuantity()
-                .setCode(fcm.getPulseValueCode())
+                .setCode(PULSE_VALUE_CODE)            // Oracle requires that a special code be put here
                 .setSystem(fcm.getPulseValueSystem())
-//                .setUnit(fcm.getPulseValueUnit())     // Epic doesn't like units
+                .setUnit(fcm.getPulseValueUnit())
                 .setValue(model.getPulse().getValue().intValue());
 
         return o;

@@ -1,8 +1,6 @@
 package edu.ohsu.cmp.coach.fhir.transform;
 
-import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
-import edu.ohsu.cmp.coach.exception.ScopeException;
 import edu.ohsu.cmp.coach.fhir.FhirStrategy;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
 import edu.ohsu.cmp.coach.model.GoalModel;
@@ -10,7 +8,6 @@ import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.service.FHIRService;
 import org.hl7.fhir.r4.model.Bundle;
 
-import java.io.IOException;
 import java.util.List;
 
 public interface VendorTransformer {
@@ -29,7 +26,7 @@ public interface VendorTransformer {
     String getProcedureQuery(String patientId);
     String getServiceRequestQuery(String patientId);
 
-    Bundle writeRemote(String sessionId, FhirStrategy strategy, FHIRService fhirService, Bundle bundle) throws DataException, IOException, ConfigurationException, ScopeException;
+    Bundle writeRemote(String sessionId, FhirStrategy strategy, FHIRService fhirService, Bundle bundle) throws Exception;
 
     List<BloodPressureModel> transformIncomingBloodPressureReadings(Bundle bundle) throws DataException;
     Bundle transformOutgoingBloodPressureReading(BloodPressureModel model) throws DataException;

@@ -17,13 +17,13 @@ import java.util.regex.Pattern;
 public class FhirConfigManager {
     private static final String ENCOUNTER_LOOKBACK_PERIOD = "2y";
     private static final Coding BP_PANEL_COMMON_CODING = new Coding("http://loinc.org", "55284-4", "Blood pressure systolic and diastolic");
-    private static final Coding BP_SYSTOLIC_COMMON_CODING = new Coding("http://loinc.org", "8480-6", "Systolic blood pressure");
-    private static final Coding BP_DIASTOLIC_COMMON_CODING = new Coding("http://loinc.org", "8462-4", "Diastolic blood pressure");
+    public static final Coding BP_SYSTOLIC_COMMON_CODING = new Coding("http://loinc.org", "8480-6", "Systolic blood pressure");
+    public static final Coding BP_DIASTOLIC_COMMON_CODING = new Coding("http://loinc.org", "8462-4", "Diastolic blood pressure");
     private static final String BP_VALUE_CODE = "mm[Hg]";
     private static final String BP_VALUE_SYSTEM = "http://unitsofmeasure.org";
     private static final String BP_VALUE_UNIT = "mmHg";
     private static final String BP_LOOKBACK_PERIOD = "2y";
-    private static final Coding PULSE_COMMON_CODING = new Coding("http://loinc.org", "8867-4", "Heart rate");
+    public static final Coding PULSE_COMMON_CODING = new Coding("http://loinc.org", "8867-4", "Heart rate");
     private static final String PULSE_VALUE_CODE = "/min";
     private static final String PULSE_VALUE_SYSTEM = "http://unitsofmeasure.org";
     private static final String PULSE_VALUE_UNIT = "beats/minute";
