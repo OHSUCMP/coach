@@ -14,14 +14,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/jwt")
-public class JWTController {
+@RequestMapping("/.well-known")
+public class WellKnownController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private AccessTokenService accessTokenService;
 
-    @GetMapping(value="jwks", produces="application/json")
+    @GetMapping(value="jwks.json", produces="application/json")
     public ResponseEntity<String> getJSONWebKeySet() throws ConfigurationException {
         WebKeySet webKeySet = accessTokenService.getWebKeySet();
 
