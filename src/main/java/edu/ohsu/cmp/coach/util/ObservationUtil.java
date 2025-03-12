@@ -43,6 +43,22 @@ public class ObservationUtil {
 
             } else if (FhirUtil.hasCoding(code, fcm.getBpOfficeCodings())) {
                 source = ObservationSource.OFFICE;
+
+            } else if (FhirUtil.hasCoding(code, fcm.getBpPanelCodings()) && bpObservation.hasComponent()) {
+                // okay, so we couldn't determine the context of this Observation from its code element.  perhaps
+                // if this is a panel, there may be a component that can tell us
+                for (Observation.ObservationComponentComponent component : bpObservation.getComponent()) {
+                    if (component.hasCode()) {
+                        if (FhirUtil.hasCoding(component.getCode(), fcm.getBpHomeCodings())) {
+                            source = ObservationSource.HOME;
+                            break;
+
+                        } else if (FhirUtil.hasCoding(component.getCode(), fcm.getBpOfficeCodings())) {
+                            source = ObservationSource.OFFICE;
+                            break;
+                        }
+                    }
+                }
             }
         }
 
