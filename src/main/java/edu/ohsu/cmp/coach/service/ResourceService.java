@@ -68,9 +68,12 @@ public class ResourceService {
             if (path.isDirectory()) {
                 File[] files = path.listFiles(PDF_FILTER);
                 if (files != null) {
+                    logger.info("build site-specific resources -");
                     for (File file : files) {
                         if (file.isFile() && file.canRead()) {
                             SiteSpecificResource resource = new SiteSpecificResource(file);
+                            logger.info("adding site-specific resource with key '" + resource.getKey() + "': " +
+                                    resource.getFilename());
                             map.put(resource.getKey(), resource);
                         }
                     }
