@@ -555,9 +555,11 @@ public class FhirUtil {
     public static boolean hasCoding(CodeableConcept cc, Coding specificationCoding) {
         if (cc == null || specificationCoding == null) return false;
 
-        for (Coding c : cc.getCoding()) {
-            if (codingMatches(c, specificationCoding)) {
-                return true;
+        if (cc.hasCoding()) {
+            for (Coding c : cc.getCoding()) {
+                if (codingMatches(c, specificationCoding)) {
+                    return true;
+                }
             }
         }
 
