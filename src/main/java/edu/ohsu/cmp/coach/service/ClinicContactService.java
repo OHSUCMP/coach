@@ -14,6 +14,6 @@ public class ClinicContactService {
     private ClinicContactRepository clinicContactRepository;
 
     public List<ClinicContact> getClinicContactList() {
-        return clinicContactRepository.findAll();
+        return clinicContactRepository.findAllActive();
     }
 }
