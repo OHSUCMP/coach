@@ -12,6 +12,7 @@ public class ClinicContact {
     private String name;
     private String primaryPhone;
     private String afterHoursPhone;
+    private Boolean active;
 
     protected ClinicContact() {
     }
@@ -46,5 +47,13 @@ public class ClinicContact {
 
     public void setAfterHoursPhone(String afterHoursPhone) {
         this.afterHoursPhone = afterHoursPhone;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 }

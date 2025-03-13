@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface ClinicContactRepository extends JpaRepository<ClinicContact, Long> {
-    @Query("select c from ClinicContact c order by c.name")
-    List<ClinicContact> findAll();
+    @Query("select c from ClinicContact c where c.active=true order by c.name")
+    List<ClinicContact> findAllActive();
 }
