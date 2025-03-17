@@ -43,7 +43,6 @@ public class FhirConfigManager {
     @Autowired
     private Environment env;
 
-    private Coding encounterClassOfficeCoding = null;
     private Coding encounterClassHomeCoding = null;
     private List<Coding> encounterOfficeClassInCodings = null;
     private List<Coding> encounterOfficeClassNotInCodings = null;
@@ -70,13 +69,6 @@ public class FhirConfigManager {
     private List<Coding> serviceRequestOrderBPGoalCodings = null;
     private Pattern serviceRequestOrderBPGoalNoteSystolicRegex = null;
     private Pattern serviceRequestOrderBPGoalNoteDiastolicRegex = null;
-
-//    public Coding getEncounterClassOfficeCoding() {   // ambulatory class to attach to crafted office visit encounters
-//        if (encounterClassOfficeCoding == null) {
-//            encounterClassOfficeCoding = buildCoding(env.getProperty("encounter.class.office.coding"));
-//        }
-//        return encounterClassOfficeCoding;
-//    }
 
     public Coding getEncounterClassHomeCoding() {   // ambulatory class to attach to crafted home encounters
         if (encounterClassHomeCoding == null) {
