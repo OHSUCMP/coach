@@ -35,8 +35,9 @@ public class FhirConfigManager {
     private static final String BMI_LOOKBACK_PERIOD = "2y";
     private static final Coding SMOKING_CODING = new Coding("http://loinc.org", "72166-2", "Tobacco smoking status");
     private static final String SMOKING_LOOKBACK_PERIOD = "5y";
-    private static final Coding DRINKS_CODING = new Coding("http://loinc.org", "11287-0", "Alcoholic drinks/drinking D Reported");
-    private static final String DRINKS_LOOKBACK_PERIOD = "5y";
+    private static final Coding ALCOHOL_DAILY_CODING = new Coding("http://loinc.org", "11287-0", "Alcoholic drinks per drinking day - Reported");
+    private static final Coding ALCOHOL_WEEKLY_CODING = new Coding("http://loinc.org", "44940-5", "Alcoholic drinks per week - Reported");
+    private static final String ALCOHOL_LOOKBACK_PERIOD = "5y";
     private static final Coding PROCEDURE_COUNSELING_CODING = new Coding("http://snomed.info/sct", "409063005", "Counseling (procedure)");
 
 
@@ -69,6 +70,11 @@ public class FhirConfigManager {
     private List<Coding> serviceRequestOrderBPGoalCodings = null;
     private Pattern serviceRequestOrderBPGoalNoteSystolicRegex = null;
     private Pattern serviceRequestOrderBPGoalNoteDiastolicRegex = null;
+
+    private List<Coding> alcoholDailyCustomCodings = null;
+    private List<Coding> alcoholWeeklyCustomCodings = null;
+    private List<Coding> alcoholMonthlyCodings = null;
+    private List<Coding> alcoholYearlyCodings = null;
 
     public Coding getEncounterClassHomeCoding() {   // ambulatory class to attach to crafted home encounters
         if (encounterClassHomeCoding == null) {
@@ -336,12 +342,67 @@ public class FhirConfigManager {
         return SMOKING_LOOKBACK_PERIOD;
     }
 
-    public Coding getDrinksCoding() {
-        return DRINKS_CODING;
+    public List<Coding> getAlcoholCodings() {
+        List<Coding> list = new ArrayList<>();
+        list.addAll(getAlcoholDailyCodings());
+        list.addAll(getAlcoholWeeklyCodings());
+        list.addAll(getAlcoholMonthlyCodings());
+        list.addAll(getAlcoholYearlyCodings());
+        return list;
     }
 
-    public String getDrinksLookbackPeriod() {
-        return DRINKS_LOOKBACK_PERIOD;
+    public List<Coding> getAlcoholDailyCodings() {
+        List<Coding> list = new ArrayList<>();
+        list.add(getAlcoholDailyCommonCoding());               // generic alcohol daily coding
+        list.addAll(getAlcoholDailyCustomCodings());           // any other alcohol daily codings specified by the user
+        return list;
+    }
+
+    public Coding getAlcoholDailyCommonCoding() {
+        return ALCOHOL_DAILY_CODING;
+    }
+
+    public List<Coding> getAlcoholDailyCustomCodings() {
+        if (alcoholDailyCustomCodings == null) {
+            alcoholDailyCustomCodings = buildCodings(env.getProperty("alcohol-use.daily.custom-codings"));
+        }
+        return alcoholDailyCustomCodings;
+    }
+
+    public List<Coding> getAlcoholWeeklyCodings() {
+        List<Coding> list = new ArrayList<>();
+        list.add(getAlcoholWeeklyCommonCoding());               // generic alcohol weekly coding
+        list.addAll(getAlcoholWeeklyCustomCodings());           // any other alcohol weekly codings specified by the user
+        return list;
+    }
+
+    public Coding getAlcoholWeeklyCommonCoding() {
+        return ALCOHOL_WEEKLY_CODING;
+    }
+
+    public List<Coding> getAlcoholWeeklyCustomCodings() {
+        if (alcoholWeeklyCustomCodings == null) {
+            alcoholWeeklyCustomCodings = buildCodings(env.getProperty("alcohol-use.weekly.custom-codings"));
+        }
+        return alcoholWeeklyCustomCodings;
+    }
+
+    public List<Coding> getAlcoholMonthlyCodings() {
+        if (alcoholMonthlyCodings == null) {
+            alcoholMonthlyCodings = buildCodings(env.getProperty("alcohol-use.monthly.codings"));
+        }
+        return alcoholMonthlyCodings;
+    }
+
+    public List<Coding> getAlcoholYearlyCodings() {
+        if (alcoholYearlyCodings == null) {
+            alcoholYearlyCodings = buildCodings(env.getProperty("alcohol-use.yearly.codings"));
+        }
+        return alcoholYearlyCodings;
+    }
+
+    public String getAlcoholLookbackPeriod() {
+        return ALCOHOL_LOOKBACK_PERIOD;
     }
 
     public Coding getProcedureCounselingCoding() {

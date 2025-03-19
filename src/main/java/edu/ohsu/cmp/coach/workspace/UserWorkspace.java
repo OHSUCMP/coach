@@ -56,6 +56,7 @@ public class UserWorkspace {
 
     private static final String CACHE_CONDITION_ENCOUNTER_DIAGNOSIS = "EncounterDiagnosisCondition";
     private static final String CACHE_PROBLEM_LIST_CONDITION = "ProblemListCondition";
+    private static final String CACHE_ALCOHOL_USE_RESOURCES = "AlcoholUseResources";
     private static final String CACHE_OTHER_SUPPLEMENTAL_RESOURCES = "OtherSupplementalResources";
 
     private final ApplicationContext ctx;
@@ -235,6 +236,7 @@ public class UserWorkspace {
                 getRemoteAdverseEvents();
                 getMedications();
                 getProblemListConditions();
+                getAlcoholUseResources();
                 getOtherSupplementalResources();
                 refreshHypotensionAdverseEvents();
                 getAllCards();
@@ -667,6 +669,30 @@ public class UserWorkspace {
         });
     }
 
+    public Bundle getAlcoholUseResources() {
+        return bundleCache.get(CACHE_ALCOHOL_USE_RESOURCES, new Function<String, Bundle>() {
+            @Override
+            public Bundle apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Alcohol Use Resources for session=" + sessionId);
+
+                EHRService svc = ctx.getBean(EHRService.class);
+                CompositeBundle compositeBundle = new CompositeBundle();
+
+                try {
+                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getAlcoholCodings()), fcm.getAlcoholLookbackPeriod(),null));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                logger.info("DONE building Alcohol Use Resources for session=" + sessionId +
+                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return compositeBundle.getBundle();
+            }
+        });
+    }
+
     public Bundle getOtherSupplementalResources() {
         return bundleCache.get(CACHE_OTHER_SUPPLEMENTAL_RESOURCES, new Function<String, Bundle>() {
             @Override
@@ -683,7 +709,6 @@ public class UserWorkspace {
                 try {
                     compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getBmiCoding()), fcm.getBmiLookbackPeriod(),null));
                     compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getSmokingCoding()), fcm.getSmokingLookbackPeriod(),null));
-                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getDrinksCoding()), fcm.getDrinksLookbackPeriod(),null));
                     compositeBundle.consume(svc.getCounselingProcedures(sessionId));
                 } catch (Exception e) {
                     throw new RuntimeException(e);

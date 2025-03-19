@@ -27,6 +27,7 @@ import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import io.micrometer.common.util.StringUtils;
@@ -149,6 +150,7 @@ public class RecommendationService extends AbstractService {
             compositeBundle.consume(buildAdverseEventsBundle(sessionId, p.getId()));
             compositeBundle.consume(buildConditionsBundle(sessionId, p.getId()));
             compositeBundle.consume(buildMedicationsBundle(sessionId));
+            compositeBundle.consume(buildAlcoholDailyUseBundle(sessionId));
             compositeBundle.consume(workspace.getOtherSupplementalResources());
 
             HookRequest hookRequest = new HookRequest(fcc.getCredentials(), compositeBundle.getBundle());
@@ -521,6 +523,41 @@ public class RecommendationService extends AbstractService {
             bundle.consume(buildFakeMedicationRequest(workspace.getPatient().getSourcePatient().getId()));
         }
         return bundle.getBundle();
+    }
+
+    private enum AlcoholUseContextWindow {
+        DAILY,
+        WEEKLY,
+        MONTHLY,
+        YEARLY
+    }
+
+    private Bundle buildAlcoholDailyUseBundle(String sessionId) {
+        CompositeBundle bundle = new CompositeBundle();
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        Bundle sourceBundle = workspace.getAlcoholUseResources();
+        if (sourceBundle != null && sourceBundle.hasEntry()) {
+            for (Bundle.BundleEntryComponent entry : sourceBundle.getEntry()) {
+                Observation o = (Observation) entry.getResource();
+                if (o.hasCode()) {
+                    if (FhirUtil.hasCoding(o.getCode(), fcm.getAlcoholDailyCodings())) {
+                        bundle.consume(o);
+                    } else if (FhirUtil.hasCoding(o.getCode(), fcm.getAlcoholWeeklyCodings())) {
+                        bundle.consume(toDailyAlcoholUseObservation(o, AlcoholUseContextWindow.WEEKLY));
+                    } else if (FhirUtil.hasCoding(o.getCode(), fcm.getAlcoholMonthlyCodings())) {
+                        bundle.consume(toDailyAlcoholUseObservation(o, AlcoholUseContextWindow.MONTHLY));
+                    } else if (FhirUtil.hasCoding(o.getCode(), fcm.getAlcoholYearlyCodings())) {
+                        bundle.consume(toDailyAlcoholUseObservation(o, AlcoholUseContextWindow.YEARLY));
+                    }
+                }
+            }
+        }
+        return bundle.getBundle();
+    }
+
+    private Observation toDailyAlcoholUseObservation(Observation o, AlcoholUseContextWindow window) {
+        // todo : complete this
+        return o;
     }
 
     private MedicationRequest buildFakeMedicationRequest(String patientId) {
