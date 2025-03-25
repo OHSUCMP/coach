@@ -33,7 +33,6 @@ public class FhirConfigManager {
     private static final String PROTOCOL_LOOKBACK_PERIOD = "2y";
     private static final Coding BMI_CODING = new Coding("http://loinc.org", "39156-5", "Body mass index");
     private static final String BMI_LOOKBACK_PERIOD = "2y";
-    private static final Coding SMOKING_CODING = new Coding("http://loinc.org", "72166-2", "Tobacco smoking status");
     private static final String SMOKING_LOOKBACK_PERIOD = "5y";
     private static final Coding DRINKS_CODING = new Coding("http://loinc.org", "11287-0", "Alcoholic drinks/drinking D Reported");
     private static final String DRINKS_LOOKBACK_PERIOD = "5y";
@@ -71,12 +70,9 @@ public class FhirConfigManager {
     private Pattern serviceRequestOrderBPGoalNoteSystolicRegex = null;
     private Pattern serviceRequestOrderBPGoalNoteDiastolicRegex = null;
 
-//    public Coding getEncounterClassOfficeCoding() {   // ambulatory class to attach to crafted office visit encounters
-//        if (encounterClassOfficeCoding == null) {
-//            encounterClassOfficeCoding = buildCoding(env.getProperty("encounter.class.office.coding"));
-//        }
-//        return encounterClassOfficeCoding;
-//    }
+    private List<Coding> smokingCodings = null;
+    private Boolean smokingGetValueFromComponent = null;
+    private Coding smokingComponentCoding = null;
 
     public Coding getEncounterClassHomeCoding() {   // ambulatory class to attach to crafted home encounters
         if (encounterClassHomeCoding == null) {
@@ -336,8 +332,25 @@ public class FhirConfigManager {
         return BMI_LOOKBACK_PERIOD;
     }
 
-    public Coding getSmokingCoding() {
-        return SMOKING_CODING;
+    public List<Coding> getSmokingCodings() {
+        if (smokingCodings == null) {
+            smokingCodings = buildCodings(env.getProperty("smoking.codings"));
+        }
+        return smokingCodings;
+    }
+
+    public Boolean isSmokingGetValueFromComponent() {
+        if (smokingGetValueFromComponent == null) {
+            smokingGetValueFromComponent = Boolean.valueOf(env.getProperty("smoking.get-value-from-component"));
+        }
+        return smokingGetValueFromComponent;
+    }
+
+    public Coding getSmokingComponentCoding() {
+        if (smokingComponentCoding == null) {
+            smokingComponentCoding = buildCoding(env.getProperty("smoking.component-coding"));
+        }
+        return smokingComponentCoding;
     }
 
     public String getSmokingLookbackPeriod() {

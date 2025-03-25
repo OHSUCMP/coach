@@ -27,6 +27,7 @@ import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.recommendation.Suggestion;
 import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;
+import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import io.micrometer.common.util.StringUtils;
@@ -149,6 +150,7 @@ public class RecommendationService extends AbstractService {
             compositeBundle.consume(buildAdverseEventsBundle(sessionId, p.getId()));
             compositeBundle.consume(buildConditionsBundle(sessionId, p.getId()));
             compositeBundle.consume(buildMedicationsBundle(sessionId));
+            compositeBundle.consume(buildNormalizedSmokingObservations(sessionId));
             compositeBundle.consume(workspace.getOtherSupplementalResources());
 
             HookRequest hookRequest = new HookRequest(fcc.getCredentials(), compositeBundle.getBundle());
@@ -537,5 +539,91 @@ public class RecommendationService extends AbstractService {
         mr.setSubject(new Reference().setReference(patientId));
 
         return mr;
+    }
+
+    private Bundle buildNormalizedSmokingObservations(String sessionId) {
+        CompositeBundle bundle = new CompositeBundle();
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+
+        Bundle sourceBundle = workspace.getSmokingObservations();
+        if (sourceBundle.hasEntry()) {
+            for (Bundle.BundleEntryComponent entry : workspace.getSmokingObservations().getEntry()) {
+                if (entry.hasResource()) {
+                    Observation o = (Observation) entry.getResource();
+                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getSmokingCodings())) {
+                        try {
+                            Observation normalized = normalizeSmokingObservation(o);
+                            bundle.consume(normalized);
+
+                        } catch (Exception e) {
+                            logger.error("caught " + e.getClass().getSimpleName() + " building normalized smoking Observation from resource with id=" + o.getId(), e);
+                        }
+                    }
+                }
+            }
+        }
+
+        return bundle.getBundle();
+    }
+
+    private static final Coding SMOKING_OBSERVATION_CODING = new Coding("http://loinc.org", "72166-2", "Tobacco smoking status");
+    private static final Coding TOBACCO_USER_CODING = new Coding("http://snomed.info/sct", "110483000", "Tobacco user (finding)");
+    private static final Coding SMOKING_COMPONENT_CODING = new Coding("http://loinc.org", "8663-7", "Cigarettes smoked current (pack per day) - Reported");
+    private static final String PACKS_PER_DAY = "Packs/Day";
+
+    private Observation normalizeSmokingObservation(Observation o) throws DataException {
+        Observation normalized = new Observation();
+        normalized.setId(o.getId() + "-normalized");
+        normalized.setSubject(o.getSubject());
+        normalized.setStatus(o.getStatus());
+        normalized.setEffective(o.getEffective());
+        normalized.setIssued(o.getIssued());
+
+        normalized.getCode().addCoding(SMOKING_OBSERVATION_CODING);
+
+        if (o.hasValueCodeableConcept()) {
+            normalized.setValue(o.getValueCodeableConcept());
+        } else {
+            normalized.setValue(new CodeableConcept().addCoding(TOBACCO_USER_CODING));
+        }
+
+        Quantity valueQuantity = null;
+        if (fcm.isSmokingGetValueFromComponent()) {
+            if (o.hasComponent()) {
+                for (Observation.ObservationComponentComponent component : o.getComponent()) {
+                    if (component.hasCode() && FhirUtil.hasCoding(component.getCode(), fcm.getSmokingComponentCoding())) {
+                        if (component.hasValueQuantity()) {
+                            valueQuantity = component.getValueQuantity();
+                            break;
+                        } else {
+                            throw new DataException("expected component to have a valueQuantity, but none found");
+                        }
+                    }
+                }
+            } else {
+                throw new DataException("expected observation to have a component, but none found");
+            }
+
+        } else if (o.hasValueQuantity()) {
+            valueQuantity = o.getValueQuantity();
+
+        } else {
+            throw new DataException("expected observation to have a valueQuantity, but none found");
+        }
+
+        if (valueQuantity != null && valueQuantity.hasValue()) {
+            Observation.ObservationComponentComponent component = new Observation.ObservationComponentComponent();
+            component.setCode(new CodeableConcept().addCoding(SMOKING_COMPONENT_CODING));
+            component.setValue(new Quantity()
+                    .setValue(valueQuantity.getValue())
+                    .setUnit(PACKS_PER_DAY)
+            );
+            normalized.addComponent(component);
+
+        } else {
+            throw new DataException("valueQuantity not found or does not contain a value");
+        }
+
+        return normalized;
     }
 }
