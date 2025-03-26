@@ -29,6 +29,7 @@ import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.util.CDSHooksUtil;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.util.MustacheUtil;
+import edu.ohsu.cmp.coach.util.UUIDUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import io.micrometer.common.util.StringUtils;
 import org.hl7.fhir.r4.model.*;
@@ -573,7 +574,9 @@ public class RecommendationService extends AbstractService {
 
     private Observation normalizeSmokingObservation(Observation o) throws DataException {
         Observation normalized = new Observation();
-        normalized.setId(o.getId() + "-normalized");
+        normalized.setId(UUIDUtil.getRandomUUID());
+        if ( ! normalized.hasMeta() ) normalized.setMeta(new Meta());
+        normalized.getMeta().setSource(o.getId());
         normalized.setSubject(o.getSubject());
         normalized.setStatus(o.getStatus());
         normalized.setEffective(o.getEffective());
