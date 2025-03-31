@@ -34,8 +34,7 @@ public class FhirConfigManager {
     private static final Coding BMI_CODING = new Coding("http://loinc.org", "39156-5", "Body mass index");
     private static final String BMI_LOOKBACK_PERIOD = "2y";
     private static final String SMOKING_LOOKBACK_PERIOD = "5y";
-    private static final Coding DRINKS_CODING = new Coding("http://loinc.org", "11287-0", "Alcoholic drinks/drinking D Reported");
-    private static final String DRINKS_LOOKBACK_PERIOD = "5y";
+    private static final String DRINKING_LOOKBACK_PERIOD = "5y";
     private static final Coding PROCEDURE_COUNSELING_CODING = new Coding("http://snomed.info/sct", "409063005", "Counseling (procedure)");
 
 
@@ -73,6 +72,8 @@ public class FhirConfigManager {
     private List<Coding> smokingCodings = null;
     private Boolean smokingGetValueFromComponent = null;
     private Coding smokingComponentCoding = null;
+
+    private List<Coding> drinkingCodings = null;
 
     public Coding getEncounterClassHomeCoding() {   // ambulatory class to attach to crafted home encounters
         if (encounterClassHomeCoding == null) {
@@ -357,12 +358,15 @@ public class FhirConfigManager {
         return SMOKING_LOOKBACK_PERIOD;
     }
 
-    public Coding getDrinksCoding() {
-        return DRINKS_CODING;
+    public List<Coding> getDrinkingCodings() {
+        if (drinkingCodings == null) {
+            drinkingCodings = buildCodings(env.getProperty("drinking.codings"));
+        }
+        return drinkingCodings;
     }
 
-    public String getDrinksLookbackPeriod() {
-        return DRINKS_LOOKBACK_PERIOD;
+    public String getDrinkingLookbackPeriod() {
+        return DRINKING_LOOKBACK_PERIOD;
     }
 
     public Coding getProcedureCounselingCoding() {

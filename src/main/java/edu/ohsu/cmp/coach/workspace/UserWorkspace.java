@@ -57,6 +57,7 @@ public class UserWorkspace {
     private static final String CACHE_CONDITION_ENCOUNTER_DIAGNOSIS = "EncounterDiagnosisCondition";
     private static final String CACHE_PROBLEM_LIST_CONDITION = "ProblemListCondition";
     private static final String CACHE_SMOKING_OBSERVATIONS = "SmokingObservations";
+    private static final String CACHE_DRINKING_OBSERVATIONS = "DrinkingObservations";
     private static final String CACHE_OTHER_SUPPLEMENTAL_RESOURCES = "OtherSupplementalResources";
 
     private final ApplicationContext ctx;
@@ -237,6 +238,7 @@ public class UserWorkspace {
                 getMedications();
                 getProblemListConditions();
                 getSmokingObservations();
+                getDrinkingObservations();
                 getOtherSupplementalResources();
                 refreshHypotensionAdverseEvents();
                 getAllCards();
@@ -693,6 +695,30 @@ public class UserWorkspace {
         });
     }
 
+    public Bundle getDrinkingObservations() {
+        return bundleCache.get(CACHE_DRINKING_OBSERVATIONS, new Function<String, Bundle>() {
+            @Override
+            public Bundle apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build Alcohol Drinking Observations for session=" + sessionId);
+
+                EHRService svc = ctx.getBean(EHRService.class);
+                CompositeBundle compositeBundle = new CompositeBundle();
+
+                try {
+                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getDrinkingCodings()), fcm.getDrinkingLookbackPeriod(), null));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                logger.info("DONE building Alcohol Drinking Observations for session=" + sessionId +
+                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return compositeBundle.getBundle();
+            }
+        });
+    }
+
     public Bundle getOtherSupplementalResources() {
         return bundleCache.get(CACHE_OTHER_SUPPLEMENTAL_RESOURCES, new Function<String, Bundle>() {
             @Override
@@ -703,12 +729,8 @@ public class UserWorkspace {
                 EHRService svc = ctx.getBean(EHRService.class);
                 CompositeBundle compositeBundle = new CompositeBundle();
 
-// moved to its own function so that we can identify if any were present without any complicated introspection into the Bundle
-//                compositeBundle.consume(svc.getProblemListConditions(sessionId));
-
                 try {
                     compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getBmiCoding()), fcm.getBmiLookbackPeriod(),null));
-                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getDrinksCoding()), fcm.getDrinksLookbackPeriod(),null));
                     compositeBundle.consume(svc.getCounselingProcedures(sessionId));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
