@@ -44,6 +44,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Service
@@ -152,6 +154,7 @@ public class RecommendationService extends AbstractService {
             compositeBundle.consume(buildConditionsBundle(sessionId, p.getId()));
             compositeBundle.consume(buildMedicationsBundle(sessionId));
             compositeBundle.consume(buildNormalizedSmokingObservations(sessionId));
+            compositeBundle.consume(buildNormalizedDrinkingObservations(sessionId));
             compositeBundle.consume(workspace.getOtherSupplementalResources());
 
             HookRequest hookRequest = new HookRequest(fcc.getCredentials(), compositeBundle.getBundle());
@@ -233,7 +236,7 @@ public class RecommendationService extends AbstractService {
                                     List<ClinicContact> ccList = clinicContactService.getClinicContactList();
                                     if ( ! ccList.isEmpty() ) {
                                         // pull clinic contact info from clinic_contact table, if any present
-                                        for (ClinicContact cc: ccList) {
+                                        for (ClinicContact cc : ccList) {
                                             // NOTE: the "|" delimiter is used in recommendations.js to identify
                                             //       that the clinic contacts should be treated differently
                                             String label = cc.getName() + "|" + cc.getPrimaryPhone();
@@ -548,13 +551,12 @@ public class RecommendationService extends AbstractService {
 
         Bundle sourceBundle = workspace.getSmokingObservations();
         if (sourceBundle.hasEntry()) {
-            for (Bundle.BundleEntryComponent entry : workspace.getSmokingObservations().getEntry()) {
+            for (Bundle.BundleEntryComponent entry : sourceBundle.getEntry()) {
                 if (entry.hasResource()) {
                     Observation o = (Observation) entry.getResource();
                     if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getSmokingCodings())) {
                         try {
-                            Observation normalized = normalizeSmokingObservation(o);
-                            bundle.consume(normalized);
+                            bundle.consume(normalizeSmokingObservation(o));
 
                         } catch (Exception e) {
                             logger.error("caught " + e.getClass().getSimpleName() + " building normalized smoking Observation from resource with id=" + o.getId(), e);
@@ -626,6 +628,94 @@ public class RecommendationService extends AbstractService {
         } else {
             throw new DataException("valueQuantity not found or does not contain a value");
         }
+
+        return normalized;
+    }
+
+    private Bundle buildNormalizedDrinkingObservations(String sessionId) {
+        CompositeBundle bundle = new CompositeBundle();
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+
+        Bundle sourceBundle = workspace.getDrinkingObservations();
+        if (sourceBundle.hasEntry()) {
+            for (Bundle.BundleEntryComponent entry : sourceBundle.getEntry()) {
+                if (entry.hasResource()) {
+                    Observation o = (Observation) entry.getResource();
+                    if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getDrinkingCodings())) {
+                        try {
+                            bundle.consume(normalizeDrinkingObservation(o));
+
+                        } catch (Exception e) {
+                            logger.error("caught " + e.getClass().getSimpleName() + " building normalized drinking Observation from resource with id=" + o.getId(), e);
+                        }
+                    }
+                }
+            }
+        }
+
+        return bundle.getBundle();
+    }
+
+    private static final Coding DRINKS_PER_DAY_CODING = new Coding("http://loinc.org", "11287-0", "Alcoholic drinks per drinking day - Reported");
+    private static final Coding DRINKS_PER_WEEK_CODING = new Coding("http://loinc.org", "44940-5", "Alcoholic drinks per week - Reported");
+    private static final Coding DRINKS_SHX_1_TO_2_PER_DAY = new Coding("http://loinc.org", "LA15694-5", "SAMHSA-drinks a day - 1 or 2");
+    private static final Coding DRINKS_SHX_3_OR_4_PER_DAY = new Coding("http://loinc.org", "LA15695-2", "SAMHSA-drinks a day - 3 or 4");
+    private static final Coding DRINKS_SHX_5_OR_6_PER_DAY = new Coding("http://loinc.org", "LA18930-0", "SAMHSA-drinks a day - 5 or 6");
+    private static final Coding DRINKS_SHX_7_TO_9_PER_DAY = new Coding("http://loinc.org", "LA18931-8", "SAMHSA-drinks a day - 7 to 9");
+    private static final Coding DRINKS_SHX_10_OR_MORE_PER_DAY = new Coding("http://loinc.org", "LA18932-6", "SAMHSA-drinks a day - 10 or more");
+    private static final String DRINKS_PER_DAY = "Drinks/Day";
+
+    private Observation normalizeDrinkingObservation(Observation o) throws DataException {
+        Observation normalized = new Observation();
+        normalized.setId(UUIDUtil.getRandomUUID());
+        if (!normalized.hasMeta()) normalized.setMeta(new Meta());
+        normalized.getMeta().setSource(o.getId());
+        normalized.setSubject(o.getSubject());
+        normalized.setStatus(o.getStatus());
+        normalized.setEffective(o.getEffective());
+        normalized.setIssued(o.getIssued());
+
+        BigDecimal perDrinkingDayValue;
+        if (o.hasValueQuantity() && o.getValueQuantity().hasValue()) {
+            if (o.hasCode()) {
+                if (FhirUtil.hasCoding(o.getCode(), DRINKS_PER_DAY_CODING)) {
+                    perDrinkingDayValue = o.getValueQuantity().getValue();
+
+                } else if (FhirUtil.hasCoding(o.getCode(), DRINKS_PER_WEEK_CODING)) {
+                    perDrinkingDayValue = o.getValueQuantity().getValue().divide(new BigDecimal(7), 1, RoundingMode.HALF_UP);
+
+                } else {
+                    throw new DataException("expected per-day or per-week coding on Observation with id=" + o.getId() + ", but none found");
+                }
+
+            } else {
+                throw new DataException("expected Observation with id=" + o.getId() + " to have a code, but none found");
+            }
+
+        } else if (o.hasValueCodeableConcept()) {
+            if (FhirUtil.hasCoding(o.getValueCodeableConcept(), DRINKS_SHX_1_TO_2_PER_DAY)) {
+                perDrinkingDayValue = new BigDecimal("1.5");
+            } else if (FhirUtil.hasCoding(o.getValueCodeableConcept(), DRINKS_SHX_3_OR_4_PER_DAY)) {
+                perDrinkingDayValue = new BigDecimal("3.5");
+            } else if (FhirUtil.hasCoding(o.getValueCodeableConcept(), DRINKS_SHX_5_OR_6_PER_DAY)) {
+                perDrinkingDayValue = new BigDecimal("5.5");
+            } else if (FhirUtil.hasCoding(o.getValueCodeableConcept(), DRINKS_SHX_7_TO_9_PER_DAY)) {
+                perDrinkingDayValue = new BigDecimal(8);
+            } else if (FhirUtil.hasCoding(o.getValueCodeableConcept(), DRINKS_SHX_10_OR_MORE_PER_DAY)) {
+                perDrinkingDayValue = new BigDecimal(10);
+            } else {
+                throw new DataException("expected Observation with id=" + o.getId() + " to have a valueCodeableConcept with a coding, but none found");
+            }
+
+        } else {
+            throw new DataException("expected Observation with id=" + o.getId() + " to have a valueQuantity or valueCodeableConcept, but none found");
+        }
+
+        normalized.getCode().addCoding(DRINKS_PER_DAY_CODING);
+        normalized.setValue(new Quantity()
+                .setValue(perDrinkingDayValue)
+                .setUnit(DRINKS_PER_DAY)
+        );
 
         return normalized;
     }
