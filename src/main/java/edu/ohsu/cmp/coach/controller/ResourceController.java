@@ -36,7 +36,7 @@ public class ResourceController extends BaseController {
     @GetMapping("/faq")
     public String faq(HttpSession session, Model model) {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(model);
+        setCommonViewComponents(session.getId(), model);
 
         auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: faq");
 
@@ -46,7 +46,7 @@ public class ResourceController extends BaseController {
     @GetMapping("/symptoms-911")
     public String symptoms(HttpSession session, Model model) {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(model);
+        setCommonViewComponents(session.getId(), model);
 
         auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: symptoms-911");
 
@@ -56,7 +56,7 @@ public class ResourceController extends BaseController {
     @GetMapping("/side-effects")
     public String sideEffects(HttpSession session, Model model) {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(model);
+        setCommonViewComponents(session.getId(), model);
 
         auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: side-effects");
 
@@ -65,7 +65,7 @@ public class ResourceController extends BaseController {
 
     @GetMapping("/welcome-video")
     public String welcomeVideo(HttpSession session, Model model) {
-        setCommonViewComponents(model);
+        setCommonViewComponents(session.getId(), model);
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
         String videoId = workspace.getActiveRandomizationGroup() == RandomizationGroup.ENHANCED ?
                 WELCOME_VIDEO_ID_INTERVENTION :
@@ -80,9 +80,12 @@ public class ResourceController extends BaseController {
     @GetMapping("/pdf/{filename}")
     public ResponseEntity<InputStreamResource> getPdf(HttpSession session, @PathVariable("filename") String filename) {
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
-        String path = workspace.getActiveRandomizationGroup() == RandomizationGroup.ENHANCED ?
-                "intervention" :
-                "control";
+
+        String path = switch (workspace.getActiveRandomizationGroup()) {
+            case BASIC -> "control";
+            case ENHANCED -> "intervention";
+        };
+
         String resName = "static/pdf/" + path + "/" + filename;
         ClassLoader classLoader = ResourceController.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(resName);
@@ -101,7 +104,7 @@ public class ResourceController extends BaseController {
     @GetMapping("/risks-of-hypertension-study-results")
     public String risksOfHypertensionStudyResults(HttpSession session, Model model) {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(model);
+        setCommonViewComponents(session.getId(), model);
         model.addAttribute("pdfUrl", "/resources/pdf/Risks_of_Hypertension_Study_Results.pdf");
 
         auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: risks-of-hypertension-study-results");
@@ -112,7 +115,7 @@ public class ResourceController extends BaseController {
     @GetMapping("/coach-written-instructions")
     public String coachWrittenInstructions(HttpSession session, Model model) {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(model);
+        setCommonViewComponents(session.getId(), model);
         model.addAttribute("pdfUrl", "/resources/pdf/COACH_Written_Instructions.pdf");
 
         auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: coach-written-instructions");
@@ -123,7 +126,7 @@ public class ResourceController extends BaseController {
     @GetMapping("/omron-instructions")
     public String omronInstructions(HttpSession session, Model model) {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(model);
+        setCommonViewComponents(session.getId(), model);
         model.addAttribute("pdfUrl", "/resources/pdf/OMRON_Instructions.pdf");
 
         auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: omron-instructions");
@@ -134,7 +137,7 @@ public class ResourceController extends BaseController {
     @GetMapping("/site-pdf/{key}")
     public String getSiteSpecificResource(HttpSession session, Model model, @PathVariable("key") String key) {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(model);
+        setCommonViewComponents(session.getId(), model);
         model.addAttribute("pdfUrl", "/resources/site-pdf-raw/" + key);
         return "embedded-pdf";
     }
@@ -142,7 +145,7 @@ public class ResourceController extends BaseController {
     @GetMapping("/site-pdf-raw/{key}")
     public ResponseEntity<InputStreamResource> getSitePdf(HttpSession session, @PathVariable("key") String key) throws FileNotFoundException {
         userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        SiteSpecificResource resource = resourceService.getSiteSpecificResource(key);
+        SiteSpecificResource resource = resourceService.getSiteSpecificResource(session.getId(), key);
         if (resource != null) {
             FileInputStream inputStream = new FileInputStream(resource.getFile());
             InputStreamResource inputStreamResource = new InputStreamResource(inputStream);

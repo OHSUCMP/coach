@@ -54,7 +54,7 @@ public class ContactController extends BaseController {
         String sessionId = session.getId();
         logger.info("showing contact form for session " + sessionId);
 
-        setCommonViewComponents(model);
+        setCommonViewComponents(sessionId, model);
         model.addAttribute("patient", userWorkspaceService.get(sessionId).getPatient());
 
         ContactMessage contactMessage = contactMessageService.getMessage(token);

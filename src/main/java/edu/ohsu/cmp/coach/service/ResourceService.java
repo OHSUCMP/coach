@@ -1,6 +1,8 @@
 package edu.ohsu.cmp.coach.service;
 
 import edu.ohsu.cmp.coach.model.SiteSpecificResource;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
+import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import io.micrometer.common.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,13 +16,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
-public class ResourceService {
+public class ResourceService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${site-specific-resources.pdf-folder.path}")
     private String pathStr;
 
-    private Map<String, SiteSpecificResource> siteSpecificResources = null;
+    private Map<RandomizationGroup, Map<String, SiteSpecificResource>> siteSpecificResources = null;
 
     private static final FilenameFilter PDF_FILTER = new FilenameFilter() {
         @Override
@@ -36,16 +38,19 @@ public class ResourceService {
         }
     }
 
-    public Collection<SiteSpecificResource> getSiteSpecificResources() {
-        return getSiteSpecificResourcesMap().values();
+    public Collection<SiteSpecificResource> getSiteSpecificResources(String sessionId) {
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        return getSiteSpecificResourcesMap(workspace.getActiveRandomizationGroup()).values();
     }
 
-    public boolean siteSpecificResourceExists(String key) {
-        return getSiteSpecificResourcesMap().containsKey(key);
+    public boolean siteSpecificResourceExists(String sessionId, String key) {
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        return getSiteSpecificResourcesMap(workspace.getActiveRandomizationGroup()).containsKey(key);
     }
 
-    public SiteSpecificResource getSiteSpecificResource(String key) {
-        return getSiteSpecificResourcesMap().get(key);
+    public SiteSpecificResource getSiteSpecificResource(String sessionId, String key) {
+        UserWorkspace workspace = userWorkspaceService.get(sessionId);
+        return getSiteSpecificResourcesMap(workspace.getActiveRandomizationGroup()).get(key);
     }
 
 
@@ -53,27 +58,40 @@ public class ResourceService {
 // private methods
 //
 
-    private Map<String, SiteSpecificResource> getSiteSpecificResourcesMap() {
+    private Map<String, SiteSpecificResource> getSiteSpecificResourcesMap(RandomizationGroup randomizationGroup) {
         if (siteSpecificResources == null) {
-            siteSpecificResources = buildSiteSpecificResources();
+            siteSpecificResources = new LinkedHashMap<>();
         }
-        return siteSpecificResources;
+
+        if ( ! siteSpecificResources.containsKey(randomizationGroup) ) {
+            siteSpecificResources.put(randomizationGroup, buildSiteSpecificResources(randomizationGroup));
+        }
+
+        return siteSpecificResources.get(randomizationGroup);
     }
 
-    private Map<String, SiteSpecificResource> buildSiteSpecificResources() {
+    private Map<String, SiteSpecificResource> buildSiteSpecificResources(RandomizationGroup randomizationGroup) {
         Map<String, SiteSpecificResource> map = new LinkedHashMap<>();
 
         if (StringUtils.isNotBlank(pathStr)) {
-            File path = new File(pathStr);
+            String randomizationGroupPath = switch (randomizationGroup) {
+                case BASIC -> "control";
+                case ENHANCED -> "intervention";
+            };
+
+            File path = pathStr.endsWith(File.separator) ?
+                    new File(pathStr + randomizationGroupPath) :
+                    new File(pathStr + File.separator + randomizationGroupPath);
+
             if (path.isDirectory()) {
                 File[] files = path.listFiles(PDF_FILTER);
                 if (files != null) {
-                    logger.info("build site-specific resources -");
+                    logger.info("build site-specific " + randomizationGroup + " resources from " + path.getAbsolutePath() + " -");
                     for (File file : files) {
                         if (file.isFile() && file.canRead()) {
                             SiteSpecificResource resource = new SiteSpecificResource(file);
-                            logger.info("adding site-specific resource with key '" + resource.getKey() + "': " +
-                                    resource.getFilename());
+                            logger.info("adding site-specific " + randomizationGroup + " resource with key '" +
+                                    resource.getKey() + "': " + resource.getFilename());
                             map.put(resource.getKey(), resource);
                         }
                     }

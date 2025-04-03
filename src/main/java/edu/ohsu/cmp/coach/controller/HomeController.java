@@ -88,7 +88,7 @@ public class HomeController extends BaseController {
             UserWorkspace workspace = userWorkspaceService.get(sessionId);
             logger.info("Randomization group for user: " + workspace.getRandomizationGroup());
 
-            setCommonViewComponents(model);
+            setCommonViewComponents(sessionId, model);
             model.addAttribute("sessionEstablished", true);
             model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
             model.addAttribute("pageStyles", new String[] { "home.css?v=4", "recommendations.css?v=2" });

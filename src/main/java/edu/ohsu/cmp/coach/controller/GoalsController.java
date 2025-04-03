@@ -38,7 +38,7 @@ public class GoalsController extends BaseController {
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
         String sessionId = session.getId();
-        setCommonViewComponents(model);
+        setCommonViewComponents(sessionId, model);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         model.addAttribute("randomizationGroup", workspace.getActiveRandomizationGroup());
         model.addAttribute("isEnhancedView", workspace.getActiveRandomizationGroup() == RandomizationGroup.ENHANCED);
