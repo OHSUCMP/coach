@@ -96,6 +96,9 @@ public class ResourceService extends AbstractService {
                         }
                     }
                 }
+
+            } else {
+                logger.warn("directory not found: " + path.getAbsolutePath());
             }
         }
 
