@@ -552,7 +552,7 @@ public class RecommendationService extends AbstractService {
         Bundle sourceBundle = workspace.getSmokingObservations();
         if (sourceBundle.hasEntry()) {
             for (Bundle.BundleEntryComponent entry : sourceBundle.getEntry()) {
-                if (entry.hasResource()) {
+                if (entry.hasResource() && entry.getResource() instanceof Observation) {
                     Observation o = (Observation) entry.getResource();
                     if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getSmokingCodings())) {
                         try {
@@ -639,7 +639,7 @@ public class RecommendationService extends AbstractService {
         Bundle sourceBundle = workspace.getDrinkingObservations();
         if (sourceBundle.hasEntry()) {
             for (Bundle.BundleEntryComponent entry : sourceBundle.getEntry()) {
-                if (entry.hasResource()) {
+                if (entry.hasResource() && entry.getResource() instanceof Observation) {
                     Observation o = (Observation) entry.getResource();
                     if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getDrinkingCodings())) {
                         try {

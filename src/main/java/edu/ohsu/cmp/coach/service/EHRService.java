@@ -358,7 +358,7 @@ public class EHRService extends AbstractService {
             medicationBundle.setType(Bundle.BundleType.COLLECTION);
 
             for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-                if (entry.getResource() instanceof MedicationStatement) {
+                if (entry.hasResource() && entry.getResource() instanceof MedicationStatement) {
                     MedicationStatement ms = (MedicationStatement) entry.getResource();
                     if (ms.hasMedicationReference()) {
                         try {
@@ -473,7 +473,7 @@ public class EHRService extends AbstractService {
             medicationBundle.setType(Bundle.BundleType.COLLECTION);
 
             for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-                if (entry.getResource() instanceof MedicationRequest) {
+                if (entry.hasResource() && entry.getResource() instanceof MedicationRequest) {
                     MedicationRequest mr = (MedicationRequest) entry.getResource();
                     if (mr.hasMedicationReference()) {
                         try {

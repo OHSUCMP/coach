@@ -346,7 +346,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         List<GoalModel> list = new ArrayList<>();
 
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            if (entry.getResource() instanceof Goal) {
+            if (entry.hasResource() && entry.getResource() instanceof Goal) {
                 Goal g = (Goal) entry.getResource();
                 list.add(new GoalModel(g, fcm));
             }
