@@ -81,7 +81,7 @@ public class GoalService extends AbstractService {
         Bundle serviceRequestBundle = userWorkspaceService.get(sessionId).getOrderServiceRequests();
         if (serviceRequestBundle != null) {
             for (Bundle.BundleEntryComponent entry : serviceRequestBundle.getEntry()) {
-                if (entry.getResource() instanceof ServiceRequest) {
+                if (entry.hasResource() && entry.getResource() instanceof ServiceRequest) {
                     ServiceRequest sr = (ServiceRequest) entry.getResource();
                     try {
                         if (sr.hasCode() && FhirUtil.hasCoding(sr.getCode(), fcm.getServiceRequestOrderBPGoalCodings())) {

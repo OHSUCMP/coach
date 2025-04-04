@@ -65,7 +65,7 @@ public class AdverseEventService extends AbstractService {
         if (b == null) return null;
 
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
-            if (entry.getResource() instanceof Condition) {
+            if (entry.hasResource() && entry.getResource() instanceof Condition) {
                 Condition c = (Condition) entry.getResource();
                 AdverseEvent ae = buildAdverseEvent(sessionId, c);
                 list.add(new AdverseEventModel(ae));
@@ -221,7 +221,7 @@ public class AdverseEventService extends AbstractService {
         while (iter.hasNext()) {
             Bundle.BundleEntryComponent entry = iter.next();
             boolean exists = false;
-            if (entry.getResource() instanceof Condition) {
+            if (entry.hasResource() && entry.getResource() instanceof Condition) {
                 Condition c = (Condition) entry.getResource();
                 if (c.getCode().hasCoding()) {
                     for (Coding coding : c.getCode().getCoding()) {
