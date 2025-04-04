@@ -30,7 +30,8 @@ public class GlobalExceptionHandler {
 
         } else {
             logger.error("trapped " + e.getClass().getName() + " at " + request.getRequestURI() +
-                    " for session " + session.getId() + " - " + e.getMessage(), e);
+                    " for session " + session.getId() + " - " + e.getMessage() + " (enable DEBUG logging for stack trace)");
+            logger.debug("stack trace: ", e);
 
             auditService.doAudit(session.getId(), AuditSeverity.ERROR, "application exception", "encountered " +
                     e.getClass().getSimpleName() + " at " + request.getRequestURI() + " - " + e.getMessage());
