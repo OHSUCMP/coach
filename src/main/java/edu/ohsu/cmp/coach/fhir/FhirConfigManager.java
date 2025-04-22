@@ -74,6 +74,8 @@ public class FhirConfigManager {
     private Coding smokingComponentCoding = null;
 
     private List<Coding> drinkingCodings = null;
+    private Boolean drinkingGetValueFromComponent = null;
+    private Coding drinkingComponentCoding = null;
 
     public Coding getEncounterClassHomeCoding() {   // ambulatory class to attach to crafted home encounters
         if (encounterClassHomeCoding == null) {
@@ -363,6 +365,20 @@ public class FhirConfigManager {
             drinkingCodings = buildCodings(env.getProperty("drinking.codings"));
         }
         return drinkingCodings;
+    }
+
+    public Boolean isDrinkingGetValueFromComponent() {
+        if (drinkingGetValueFromComponent == null) {
+            drinkingGetValueFromComponent = Boolean.valueOf(env.getProperty("drinking.get-value-from-component"));
+        }
+        return drinkingGetValueFromComponent;
+    }
+
+    public Coding getDrinkingComponentCoding() {
+        if (drinkingComponentCoding == null) {
+            drinkingComponentCoding = buildCoding(env.getProperty("drinking.component-coding"));
+        }
+        return drinkingComponentCoding;
     }
 
     public String getDrinkingLookbackPeriod() {
