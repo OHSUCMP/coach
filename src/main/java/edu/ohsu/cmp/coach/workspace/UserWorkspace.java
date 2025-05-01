@@ -706,7 +706,10 @@ public class UserWorkspace {
                 CompositeBundle compositeBundle = new CompositeBundle();
 
                 try {
-                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getDrinkingCodings()), fcm.getDrinkingLookbackPeriod(), null));
+                    String lookback = fcm.isDrinkingIncludeLookbackInQuery() ?
+                            fcm.getDrinkingLookbackPeriod() :
+                            null;
+                    compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getDrinkingCodings()), lookback, null));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

@@ -672,24 +672,48 @@ public class RecommendationService extends AbstractService {
         normalized.getMeta().setSource(o.getId());
         normalized.setSubject(o.getSubject());
         normalized.setStatus(o.getStatus());
-        normalized.setEffective(o.getEffective());
+        if      (o.hasEffective())  normalized.setEffective(o.getEffective());
+        else if (o.hasIssued())     normalized.setEffective(new DateTimeType(o.getIssued()));
         normalized.setIssued(o.getIssued());
 
-        BigDecimal perDrinkingDayValue;
-        if (o.hasValueQuantity() && o.getValueQuantity().hasValue()) {
-            if (o.hasCode()) {
-                if (FhirUtil.hasCoding(o.getCode(), DRINKS_PER_DAY_CODING)) {
-                    perDrinkingDayValue = o.getValueQuantity().getValue();
-
-                } else if (FhirUtil.hasCoding(o.getCode(), DRINKS_PER_WEEK_CODING)) {
-                    perDrinkingDayValue = o.getValueQuantity().getValue().divide(new BigDecimal(7), 1, RoundingMode.HALF_UP);
-
-                } else {
-                    throw new DataException("expected per-day or per-week coding on Observation with id=" + o.getId() + ", but none found");
+        Quantity valueQuantity = null;
+        if (fcm.isDrinkingGetValueFromComponent()) {
+            if (o.hasComponent()) {
+                for (Observation.ObservationComponentComponent component : o.getComponent()) {
+                    if (component.hasCode() && FhirUtil.hasCoding(component.getCode(), fcm.getDrinkingComponentCoding())) {
+                        if (component.hasValueQuantity()) {
+                            valueQuantity = component.getValueQuantity();
+                            break;
+                        } else {
+                            throw new DataException("expected component to have a valueQuantity, but none found");
+                        }
+                    }
                 }
+            } else {
+                throw new DataException("expected observation to have a component, but none found");
+            }
+
+        } else if (o.hasValueQuantity()) {
+            valueQuantity = o.getValueQuantity();
+        }
+
+        BigDecimal perDrinkingDayValue;
+        if (valueQuantity != null && valueQuantity.hasValue()) {
+            if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), DRINKS_PER_DAY_CODING)) {
+                perDrinkingDayValue = valueQuantity.getValue();
+
+            } else if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), DRINKS_PER_WEEK_CODING)) {
+                perDrinkingDayValue = valueQuantity.getValue().divide(new BigDecimal(7), 1, RoundingMode.HALF_UP);
+
+            } else if (valueQuantity.hasUnit() && valueQuantity.getUnit().toLowerCase().endsWith("/day")) {
+                perDrinkingDayValue = valueQuantity.getValue();
+
+            } else if (valueQuantity.hasUnit() && valueQuantity.getUnit().toLowerCase().endsWith("/week")) {
+                perDrinkingDayValue = valueQuantity.getValue().divide(new BigDecimal(7), 1, RoundingMode.HALF_UP);
 
             } else {
-                throw new DataException("expected Observation with id=" + o.getId() + " to have a code, but none found");
+                throw new DataException("expected a per-day or per-week code, or for the unit to end with '/day' or '/week', but found " +
+                        valueQuantity.getUnit() + " on Observation with id=" + o.getId());
             }
 
         } else if (o.hasValueCodeableConcept()) {
