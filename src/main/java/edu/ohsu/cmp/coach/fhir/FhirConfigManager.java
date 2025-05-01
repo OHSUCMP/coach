@@ -74,6 +74,7 @@ public class FhirConfigManager {
     private Coding smokingComponentCoding = null;
 
     private List<Coding> drinkingCodings = null;
+    private Boolean drinkingIncludeLookbackInQuery = null;
     private Boolean drinkingGetValueFromComponent = null;
     private Coding drinkingComponentCoding = null;
 
@@ -365,6 +366,13 @@ public class FhirConfigManager {
             drinkingCodings = buildCodings(env.getProperty("drinking.codings"));
         }
         return drinkingCodings;
+    }
+
+    public Boolean isDrinkingIncludeLookbackInQuery() {
+        if (drinkingIncludeLookbackInQuery == null) {
+            drinkingIncludeLookbackInQuery = Boolean.valueOf(env.getProperty("drinking.include-lookback-in-query"));
+        }
+        return drinkingIncludeLookbackInQuery;
     }
 
     public Boolean isDrinkingGetValueFromComponent() {

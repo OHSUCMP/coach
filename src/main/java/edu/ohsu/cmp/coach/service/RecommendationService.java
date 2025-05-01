@@ -672,7 +672,8 @@ public class RecommendationService extends AbstractService {
         normalized.getMeta().setSource(o.getId());
         normalized.setSubject(o.getSubject());
         normalized.setStatus(o.getStatus());
-        normalized.setEffective(o.getEffective());
+        if      (o.hasEffective())  normalized.setEffective(o.getEffective());
+        else if (o.hasIssued())     normalized.setEffective(new DateTimeType(o.getIssued()));
         normalized.setIssued(o.getIssued());
 
         Quantity valueQuantity = null;
