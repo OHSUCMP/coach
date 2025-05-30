@@ -412,7 +412,11 @@ public class OmronService extends AbstractService {
             Date date;
             if (redCapService.isRedcapEnabled()) {
                 RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(workspace.getRedcapId());
-                date = redcapParticipantInfo.getRandomizationDate();
+                if (redCapService.isRedcapNewUsersBypassStudyEnabled() && ! redcapParticipantInfo.getExists()) {
+                    date = new Date();
+                } else {
+                    date = redcapParticipantInfo.getRandomizationDate();
+                }
             } else {
                 date = new Date();
             }
