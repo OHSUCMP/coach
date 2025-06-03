@@ -129,7 +129,7 @@ public class HomeController extends BaseController {
             // Only show the AE Survey link if REDCap is enabled and this is a patient. The link may not exist otherwise.
             if (redCapService.isRedcapEnabled() && Audience.PATIENT.equals(workspace.getAudience())) {
                 RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(workspace.getRedcapId());
-                if (redCapService.isRedcapNewUsersBypassStudyEnabled() && ! redcapParticipantInfo.getExists()) {
+                if (redCapService.isUsersWithoutRedcapRecordBypassStudyEnabled() && ! redcapParticipantInfo.getExists()) {
                     // this is fine.  do not add AE survey link
                     logger.debug("not adding AE survey link for session " + sessionId + ", user is not in study");
 

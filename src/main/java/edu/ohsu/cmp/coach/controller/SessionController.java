@@ -126,7 +126,7 @@ public class SessionController extends BaseController {
 
         if (redCapService.isRedcapEnabled()) {
             RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(myPatient.getRedcapId());
-            if (redCapService.isRedcapNewUsersBypassStudyEnabled() && ! redcapParticipantInfo.getExists()) {
+            if (redCapService.isUsersWithoutRedcapRecordBypassStudyEnabled() && ! redcapParticipantInfo.getExists()) {
                 // literally do nothing; behave as if REDCap is not enabled.  retain all defaults from above
                 logger.debug("user does not have a REDCap record, and bypass is enabled.  permitting full access for session " +
                         session.getId() + " -");
