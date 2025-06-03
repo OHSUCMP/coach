@@ -128,7 +128,8 @@ public class SessionController extends BaseController {
             RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(myPatient.getRedcapId());
             if (redCapService.isRedcapNewUsersBypassStudyEnabled() && ! redcapParticipantInfo.getExists()) {
                 // literally do nothing; behave as if REDCap is not enabled.  retain all defaults from above
-                logger.debug("user does not have a REDCap record, and bypass is enabled.  permitting full access -");
+                logger.debug("user does not have a REDCap record, and bypass is enabled.  permitting full access for session " +
+                        session.getId() + " -");
 
             } else if (redcapParticipantInfo.getIsActivelyEnrolled()) {
                 randomizationGroup = redcapParticipantInfo.getRandomizationGroup();

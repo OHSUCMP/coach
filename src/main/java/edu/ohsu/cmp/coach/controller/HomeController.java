@@ -128,7 +128,14 @@ public class HomeController extends BaseController {
 
             // Only show the AE Survey link if REDCap is enabled and this is a patient. The link may not exist otherwise.
             if (redCapService.isRedcapEnabled() && Audience.PATIENT.equals(workspace.getAudience())) {
-                model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
+                RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(workspace.getRedcapId());
+                if (redCapService.isRedcapNewUsersBypassStudyEnabled() && ! redcapParticipantInfo.getExists()) {
+                    // this is fine.  do not add AE survey link
+                    logger.debug("not adding AE survey link for session " + sessionId + ", user is not in study");
+
+                } else {
+                    model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
+                }
             }
             // If this is a Care Team login and the patient needs to be enrolled, show a banner
             if (Audience.CARE_TEAM.equals(workspace.getAudience()) && workspace.getRequiresEnrollment()) {
