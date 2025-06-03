@@ -412,7 +412,12 @@ public class OmronService extends AbstractService {
             Date date;
             if (redCapService.isRedcapEnabled()) {
                 RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(workspace.getRedcapId());
-                date = redcapParticipantInfo.getRandomizationDate();
+                if (redCapService.isUsersWithoutRedcapRecordBypassStudyEnabled() && ! redcapParticipantInfo.getExists()) {
+                    // this is fine, just use right now as a starting date instead of when the user was randomized
+                    date = new Date();
+                } else {
+                    date = redcapParticipantInfo.getRandomizationDate();
+                }
             } else {
                 date = new Date();
             }

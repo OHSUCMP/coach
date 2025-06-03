@@ -64,12 +64,19 @@ public class REDCapService {
     @Value("${redcap.data-access-group}")
     private String redcapDataAccessGroupStr;
 
+    @Value("#{new Boolean('${redcap.users-without-redcap-record-bypass-study.enabled}')}")
+    private Boolean usersWithoutRedcapRecordBypassStudyEnabled;
+
     /**
      * Return whether the REDCap flow is enabled for this application
      * @return
      */
     public boolean isRedcapEnabled() {
         return redcapConfiguration.getEnabled();
+    }
+
+    public boolean isUsersWithoutRedcapRecordBypassStudyEnabled() {
+        return usersWithoutRedcapRecordBypassStudyEnabled;
     }
 
     /**
