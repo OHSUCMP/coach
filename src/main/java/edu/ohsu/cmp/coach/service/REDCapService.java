@@ -133,7 +133,7 @@ public class REDCapService {
     }
 
     public void removeCachedParticipantRecord(String coachId) {
-        logger.debug("clearing REDCap Participant Info cache for coachId=" + coachId);
+        logger.debug("clearing RedcapParticipantInfo cache for coachId=" + coachId);
         participantInfoCache.invalidate(coachId);
     }
 
@@ -142,7 +142,7 @@ public class REDCapService {
             @Override
             public RedcapParticipantInfo apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build REDCapParticipantInfo for coachId=" + s);
+                logger.info("BEGIN build RedcapParticipantInfo for coachId=" + s);
 
                 RedcapParticipantInfo participantInfo = null;
                 try {
@@ -152,7 +152,7 @@ public class REDCapService {
                     throw new RuntimeException(e);
                 }
 
-                logger.info("DONE building REDCapParticipantInfo for coachId=" + s +
+                logger.info("DONE building RedcapParticipantInfo for coachId=" + s +
                         " (took " + (System.currentTimeMillis() - start) + "ms)");
 
                 return participantInfo;
