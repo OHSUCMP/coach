@@ -265,6 +265,18 @@ public class UserWorkspace {
         cache.invalidateAll();
         cardCache.invalidateAll();
         bundleCache.invalidateAll();
+        clearRedcapParticipantInfoCache();
+    }
+
+    private void clearRedcapParticipantInfoCache() {
+        try {
+            REDCapService redCapService = ctx.getBean(REDCapService.class);
+            redCapService.removeCachedParticipantRecord(redcapId);
+
+        } catch (Exception e) {
+            logger.warn("caught " + e.getClass().getName() + " attempting to clear REDCap participant info cache for redcapId=" +
+                    redcapId + " - " + e.getMessage(), e);
+        }
     }
 
     public void clearVitalsCaches() {
