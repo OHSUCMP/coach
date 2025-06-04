@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.coach.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import edu.ohsu.cmp.coach.config.RedcapConfiguration;
@@ -19,10 +21,14 @@ import org.springframework.util.Assert;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 @Service
 public class REDCapService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private final Cache<String, RedcapParticipantInfo> participantInfoCache;
 
     /* Standard REDCap Values */
     public static final String YES = "1";
@@ -66,6 +72,12 @@ public class REDCapService {
 
     @Value("#{new Boolean('${redcap.users-without-redcap-record-bypass-study.enabled}')}")
     private Boolean usersWithoutRedcapRecordBypassStudyEnabled;
+
+    public REDCapService() {
+        participantInfoCache = Caffeine.newBuilder()
+                .expireAfterWrite(6, TimeUnit.HOURS)
+                .build();
+    }
 
     /**
      * Return whether the REDCap flow is enabled for this application
@@ -120,6 +132,34 @@ public class REDCapService {
         }
     }
 
+    public void removeCachedParticipantRecord(String coachId) {
+        logger.debug("clearing RedcapParticipantInfo cache for coachId=" + coachId);
+        participantInfoCache.invalidate(coachId);
+    }
+
+    public RedcapParticipantInfo getParticipantInfo(String coachId) throws IOException, REDCapException {
+        return participantInfoCache.get(coachId, new Function<String, RedcapParticipantInfo>() {
+            @Override
+            public RedcapParticipantInfo apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build RedcapParticipantInfo for coachId=" + s);
+
+                RedcapParticipantInfo participantInfo = null;
+                try {
+                    participantInfo = buildParticipantInfo(s);
+
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                logger.info("DONE building RedcapParticipantInfo for coachId=" + s +
+                        " (took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return participantInfo;
+            }
+        });
+    }
+
     /**
      * Return a summary of the participant's status in the study
      * @param coachId The uuid COACH generates and stores to map to REDCap
@@ -127,7 +167,7 @@ public class REDCapService {
      * @throws IOException
      * @throws REDCapException
      */
-    public RedcapParticipantInfo getParticipantInfo(String coachId) throws IOException, REDCapException {
+    private RedcapParticipantInfo buildParticipantInfo(String coachId) throws IOException, REDCapException {
 
         RedcapDataAccessGroup dag = RedcapDataAccessGroup.fromTag(redcapDataAccessGroupStr);
         

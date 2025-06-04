@@ -125,6 +125,7 @@ public class SessionController extends BaseController {
         RandomizationGroup randomizationGroup = RandomizationGroup.ENHANCED;
 
         if (redCapService.isRedcapEnabled()) {
+            redCapService.removeCachedParticipantRecord(myPatient.getRedcapId());
             RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(myPatient.getRedcapId());
             if (redCapService.isUsersWithoutRedcapRecordBypassStudyEnabled() && ! redcapParticipantInfo.getExists()) {
                 // literally do nothing; behave as if REDCap is not enabled.  retain all defaults from above
