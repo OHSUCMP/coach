@@ -133,6 +133,8 @@ public class REDCapService {
      * @throws REDCapException
      */
     private String buildRecordId(String coachId) throws IOException, REDCapException {
+        logger.debug("buildRecordId for coachId=" + coachId);
+
         Assert.notNull(coachId, "A COACH Id must be provided to get the REDCap record.");
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
@@ -197,6 +199,7 @@ public class REDCapService {
      * @throws REDCapException
      */
     private RedcapParticipantInfo buildParticipantInfo(String coachId) throws IOException, REDCapException {
+        logger.debug("buildParticipantInfo for coachId=" + coachId);
 
         RedcapDataAccessGroup dag = RedcapDataAccessGroup.fromTag(redcapDataAccessGroupStr);
         
@@ -257,6 +260,8 @@ public class REDCapService {
      * @throws REDCapException
      */
     public String createSubjectInfoRecord(String coachId) throws IOException, REDCapException {
+        logger.debug("createSubjectInfoRecord for coachId=" + coachId);
+
         Map<String, String> map = new LinkedHashMap<>();
         map.put(PARTICIPANT_RECORD_ID_FIELD, coachId);
         map.put(PARTICIPANT_COACH_ID_FIELD, coachId);
@@ -302,6 +307,8 @@ public class REDCapService {
      * @throws IOException
      */
     public String getEntrySurveyLink(String recordId) throws REDCapException, IOException {
+        logger.debug("getEntrySurveyLink for recordId=" + recordId);
+
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
@@ -331,6 +338,8 @@ public class REDCapService {
      * @throws IOException
      */
     public String getSurveyQueueLink(String recordId) throws REDCapException, IOException {
+        logger.debug("getSurveyQueueLink for recordId=" + recordId);
+
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
@@ -359,6 +368,8 @@ public class REDCapService {
      */
     public String getAESurveyLink(String coachId) throws REDCapException, IOException {
         // First get the recordId from the REDCap id
+        logger.debug("getAESurveyLink for coachId=" + coachId);
+
         String recordId = getRecordId(coachId);
         Assert.notNull(recordId, "No REDCap record exists for COACH id " + coachId);
 
