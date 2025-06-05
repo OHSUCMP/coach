@@ -265,13 +265,13 @@ public class UserWorkspace {
         cache.invalidateAll();
         cardCache.invalidateAll();
         bundleCache.invalidateAll();
-        clearRedcapParticipantInfoCache();
+        clearRedcapCaches();
     }
 
-    private void clearRedcapParticipantInfoCache() {
+    private void clearRedcapCaches() {
         try {
             REDCapService redCapService = ctx.getBean(REDCapService.class);
-            redCapService.removeCachedParticipantRecord(redcapId);
+            redCapService.clearCaches(redcapId);
 
         } catch (Exception e) {
             logger.warn("caught " + e.getClass().getName() + " attempting to clear REDCap participant info cache for redcapId=" +

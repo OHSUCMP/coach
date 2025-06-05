@@ -28,6 +28,7 @@ import java.util.function.Function;
 public class REDCapService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    private final Cache<String, String> recordIdCache;
     private final Cache<String, RedcapParticipantInfo> participantInfoCache;
 
     /* Standard REDCap Values */
@@ -74,6 +75,10 @@ public class REDCapService {
     private Boolean usersWithoutRedcapRecordBypassStudyEnabled;
 
     public REDCapService() {
+        recordIdCache = Caffeine.newBuilder()
+                .expireAfterWrite(6, TimeUnit.HOURS)
+                .build();
+
         participantInfoCache = Caffeine.newBuilder()
                 .expireAfterWrite(6, TimeUnit.HOURS)
                 .build();
@@ -91,6 +96,35 @@ public class REDCapService {
         return usersWithoutRedcapRecordBypassStudyEnabled;
     }
 
+    public void clearCaches(String coachId) {
+        logger.debug("clearing REDCap caches for coachId=" + coachId);
+        recordIdCache.invalidate(coachId);
+        participantInfoCache.invalidate(coachId);
+    }
+
+    private String getRecordId(String coachId) throws IOException, REDCapException {
+        return recordIdCache.get(coachId, new Function<String, String>() {
+            @Override
+            public String apply(String s) {
+                long start = System.currentTimeMillis();
+                logger.info("BEGIN build REDCap record ID for coachId=" + s);
+
+                String recordId = null;
+                try {
+                    recordId = buildRecordId(s);
+
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                logger.info("DONE building REDCap record ID for coachId=" + s +
+                        " (took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return recordId;
+            }
+        });
+    }
+
     /**
      * Using the coach uuid, get the record id in REDCap
      * @param coachId
@@ -98,7 +132,9 @@ public class REDCapService {
      * @throws IOException
      * @throws REDCapException
      */
-    private String getRecordId(String coachId) throws IOException, REDCapException {
+    private String buildRecordId(String coachId) throws IOException, REDCapException {
+        logger.debug("buildRecordId for coachId=" + coachId);
+
         Assert.notNull(coachId, "A COACH Id must be provided to get the REDCap record.");
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
@@ -132,11 +168,6 @@ public class REDCapService {
         }
     }
 
-    public void removeCachedParticipantRecord(String coachId) {
-        logger.debug("clearing RedcapParticipantInfo cache for coachId=" + coachId);
-        participantInfoCache.invalidate(coachId);
-    }
-
     public RedcapParticipantInfo getParticipantInfo(String coachId) throws IOException, REDCapException {
         return participantInfoCache.get(coachId, new Function<String, RedcapParticipantInfo>() {
             @Override
@@ -168,6 +199,7 @@ public class REDCapService {
      * @throws REDCapException
      */
     private RedcapParticipantInfo buildParticipantInfo(String coachId) throws IOException, REDCapException {
+        logger.debug("buildParticipantInfo for coachId=" + coachId);
 
         RedcapDataAccessGroup dag = RedcapDataAccessGroup.fromTag(redcapDataAccessGroupStr);
         
@@ -228,6 +260,8 @@ public class REDCapService {
      * @throws REDCapException
      */
     public String createSubjectInfoRecord(String coachId) throws IOException, REDCapException {
+        logger.debug("createSubjectInfoRecord for coachId=" + coachId);
+
         Map<String, String> map = new LinkedHashMap<>();
         map.put(PARTICIPANT_RECORD_ID_FIELD, coachId);
         map.put(PARTICIPANT_COACH_ID_FIELD, coachId);
@@ -273,6 +307,8 @@ public class REDCapService {
      * @throws IOException
      */
     public String getEntrySurveyLink(String recordId) throws REDCapException, IOException {
+        logger.debug("getEntrySurveyLink for recordId=" + recordId);
+
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
@@ -302,6 +338,8 @@ public class REDCapService {
      * @throws IOException
      */
     public String getSurveyQueueLink(String recordId) throws REDCapException, IOException {
+        logger.debug("getSurveyQueueLink for recordId=" + recordId);
+
         Map<String, String> requestHeaders = new LinkedHashMap<>();
         requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
 
@@ -330,6 +368,8 @@ public class REDCapService {
      */
     public String getAESurveyLink(String coachId) throws REDCapException, IOException {
         // First get the recordId from the REDCap id
+        logger.debug("getAESurveyLink for coachId=" + coachId);
+
         String recordId = getRecordId(coachId);
         Assert.notNull(recordId, "No REDCap record exists for COACH id " + coachId);
 
