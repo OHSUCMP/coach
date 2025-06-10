@@ -459,8 +459,9 @@ public class UserWorkspace {
                     patient = svc.buildPatient(sessionId);
                 } catch (Exception e) {
                     if (e instanceof ForbiddenOperationException) {
-                        logger.error("attempt to retrieve Patient was forbidden - Patient is required for system operation; things are going to break");
+                        logger.error("attempt to retrieve Patient was forbidden - Patient is required for system operation; aborting -");
                         auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "retrieving Patient was forbidden");
+                        throw (ForbiddenOperationException) e;
                     } else if (e instanceof RuntimeException) {
                         throw (RuntimeException) e;
                     } else {
