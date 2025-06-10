@@ -1,5 +1,7 @@
 package edu.ohsu.cmp.coach.workspace;
 
+import ca.uhn.fhir.rest.server.exceptions.ForbiddenOperationException;
+import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import com.auth0.jwt.impl.JWTParser;
 import com.auth0.jwt.interfaces.Payload;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -410,6 +412,7 @@ public class UserWorkspace {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, Encounter> getEncounterMap() {
         return (Map<String, Encounter>) cache.get(CACHE_ENCOUNTER, new Function<String, Map<String, Encounter>>() {
             @Override
@@ -426,7 +429,17 @@ public class UserWorkspace {
                         }
                     }
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve Encounters was forbidden - will not include Encounters for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving Encounters was forbidden");
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve Encounters triggered an InvalidRequestException - will not include Encounters for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving Encounters");
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 logger.info("DONE building Encounters for session=" + sessionId +
@@ -449,7 +462,19 @@ public class UserWorkspace {
                 try {
                     patient = svc.buildPatient(sessionId);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.error("attempt to retrieve Patient was forbidden - Patient is required for system operation; aborting -");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "retrieving Patient was forbidden");
+                        throw (ForbiddenOperationException) e;
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve Patient triggered an InvalidRequestException - Patient is required for system operation; aborting -");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving Patient");
+                        throw (InvalidRequestException) e;
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 logger.info("DONE building Patient for session=" + sessionId +
@@ -473,7 +498,17 @@ public class UserWorkspace {
                 try {
                     compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getProtocolCoding()), fcm.getProtocolLookbackPeriod(), null));
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve Protocol Observations was forbidden - will not include Protocol Observations for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving Protocol Observations was forbidden");
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve Protocol Observations triggered an InvalidRequestException - will not include Protocol Observations for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving Protocol Observations");
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 logger.info("DONE building Protocol Observations for session=" + sessionId +
@@ -484,6 +519,7 @@ public class UserWorkspace {
         });
     }
 
+    @SuppressWarnings("unchecked")
     public List<BloodPressureModel> getRemoteBloodPressures() {
         return (List<BloodPressureModel>) cache.get(CACHE_BP, new Function<String, List<BloodPressureModel>>() {
             @Override
@@ -492,21 +528,34 @@ public class UserWorkspace {
                 logger.info("BEGIN build remote Blood Pressures for session=" + sessionId);
 
                 BloodPressureService svc = ctx.getBean(BloodPressureService.class);
+                List<BloodPressureModel> list;
                 try {
-                    List<BloodPressureModel> list = svc.buildRemoteBloodPressureList(sessionId);
-
-                    logger.info("DONE building remote Blood Pressures for session=" + sessionId +
-                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
-
-                    return list;
-
+                    list = svc.buildRemoteBloodPressureList(sessionId);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve remote Blood Pressures was forbidden - will not include remote Blood Pressures for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving remote Blood Pressures was forbidden");
+                        list = new ArrayList<>();
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve remote Blood Pressures triggered an InvalidRequestException - will not include remote Blood Pressures for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving remote Blood Pressures");
+                        list = new ArrayList<>();
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
+
+                logger.info("DONE building remote Blood Pressures for session=" + sessionId +
+                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return list;
             }
         });
     }
 
+    @SuppressWarnings("unchecked")
     public List<PulseModel> getRemotePulses() {
         return (List<PulseModel>) cache.get(CACHE_PULSE, new Function<String, List<PulseModel>>() {
             @Override
@@ -515,17 +564,29 @@ public class UserWorkspace {
                 logger.info("BEGIN build remote Pulses for session=" + sessionId);
 
                 PulseService svc = ctx.getBean(PulseService.class);
+                List<PulseModel> list;
                 try {
-                    List<PulseModel> list = svc.buildRemotePulseList(sessionId);
-
-                    logger.info("DONE building remote Pulses for session=" + sessionId +
-                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
-
-                    return list;
-
+                    list = svc.buildRemotePulseList(sessionId);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve remote Pulses was forbidden - will not include remote Pulses for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving remote Pulses was forbidden");
+                        list = new ArrayList<>();
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve remote Pulses triggered an InvalidRequestException - will not include remote Pulses for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving remote Pulses");
+                        list = new ArrayList<>();
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
+
+                logger.info("DONE building remote Pulses for session=" + sessionId +
+                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return list;
             }
         });
     }
@@ -543,7 +604,17 @@ public class UserWorkspace {
                 try {
                     compositeBundle.consume(svc.getEncounterDiagnosisConditions(sessionId));
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve Encounter Diagnosis Conditions was forbidden - will not include Encounter Diagnosis Conditions for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving Encounter Diagnosis Conditions was forbidden");
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve Encounter Diagnosis Conditions triggered an InvalidRequestException - will not include Encounter Diagnosis Conditions for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving Encounter Diagnosis Conditions");
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 logger.info("DONE building Encounter Diagnosis Conditions for session=" + sessionId +
@@ -554,6 +625,7 @@ public class UserWorkspace {
         });
     }
 
+    @SuppressWarnings("unchecked")
     public List<AdverseEventModel> getRemoteAdverseEvents() {
         return (List<AdverseEventModel>) cache.get(CACHE_ADVERSE_EVENT, new Function<String, List<AdverseEventModel>>() {
             @Override
@@ -562,17 +634,29 @@ public class UserWorkspace {
                 logger.info("BEGIN building remote Adverse Events for session=" + sessionId);
 
                 AdverseEventService svc = ctx.getBean(AdverseEventService.class);
+                List<AdverseEventModel> list;
                 try {
-                    List<AdverseEventModel> list = svc.buildRemoteAdverseEvents(sessionId);
-
-                    logger.info("DONE building remote Adverse Events for session=" + sessionId +
-                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
-
-                    return list;
-
-                } catch (DataException e) {
-                    throw new RuntimeException(e);
+                    list = svc.buildRemoteAdverseEvents(sessionId);
+                } catch (Exception e) {
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve remote Adverse Events was forbidden - will not include remote Adverse Events for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving remote Adverse Events was forbidden");
+                        list = new ArrayList<>();
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve remote Adverse Events triggered an InvalidRequestException - will not include remote Adverse Events for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving remote Adverse Events");
+                        list = new ArrayList<>();
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
+
+                logger.info("DONE building remote Adverse Events for session=" + sessionId +
+                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return list;
             }
         });
     }
@@ -590,7 +674,17 @@ public class UserWorkspace {
                 try {
                     compositeBundle.consume(svc.getOrderServiceRequests(sessionId));
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve Order Service Requests was forbidden - will not include Order Service Requests for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving Order Service Requests was forbidden");
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve Order Service Requests triggered an InvalidRequestException - will not include Order Service Requests for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving Order Service Requests");
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 logger.info("DONE building Order ServiceRequests for session=" + sessionId +
@@ -601,6 +695,7 @@ public class UserWorkspace {
         });
     }
 
+    @SuppressWarnings("unchecked")
     public List<GoalModel> getRemoteGoals() {
         return (List<GoalModel>) cache.get(CACHE_GOAL, new Function<String, List<GoalModel>>() {
             @Override
@@ -609,17 +704,29 @@ public class UserWorkspace {
                 logger.info("BEGIN build remote Goals for session=" + sessionId);
 
                 GoalService svc = ctx.getBean(GoalService.class);
+                List<GoalModel> list;
                 try {
-                    List<GoalModel> list = svc.buildRemoteGoals(sessionId);
-
-                    logger.info("DONE building remote Goals for session=" + sessionId +
-                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
-
-                    return list;
-
+                    list = svc.buildRemoteGoals(sessionId);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve remote Goals was forbidden - will not include remote Goals for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving remote Goals was forbidden");
+                        list = new ArrayList<>();
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve remote Goals triggered an InvalidRequestException - will not include remote Goals for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving remote Goals");
+                        list = new ArrayList<>();
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
+
+                logger.info("DONE building remote Goals for session=" + sessionId +
+                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return list;
             }
         });
     }
@@ -636,6 +743,7 @@ public class UserWorkspace {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public List<MedicationModel> getMedications() {
         return (List<MedicationModel>) cache.get(CACHE_MEDICATION, new Function<String, List<MedicationModel>>() {
             @Override
@@ -644,17 +752,29 @@ public class UserWorkspace {
                 logger.info("BEGIN build Medications for session=" + sessionId);
 
                 MedicationService svc = ctx.getBean(MedicationService.class);
+                List<MedicationModel> list;
                 try {
-                    List<MedicationModel> list = svc.buildMedications(sessionId);
-
-                    logger.info("DONE building Medications for session=" + sessionId +
-                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
-
-                    return list;
-
+                    list = svc.buildMedications(sessionId);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve Medications was forbidden - will not include Medications for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving Medications was forbidden");
+                        list = new ArrayList<>();
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve Medications triggered an InvalidRequestException - will not include Medications for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving Medications");
+                        list = new ArrayList<>();
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
+
+                logger.info("DONE building Medications for session=" + sessionId +
+                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+
+                return list;
             }
         });
     }
@@ -672,7 +792,17 @@ public class UserWorkspace {
                 try {
                     compositeBundle.consume(svc.getProblemListConditions(sessionId));
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve Problem List Conditions was forbidden - will not include Problem List Conditions for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving Problem List Conditions was forbidden");
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve Problem List Conditions triggered an InvalidRequestException - will not include Problem List Conditions for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving Problem List Conditions");
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 logger.info("DONE building Problem List Resources for session=" + sessionId +
@@ -696,7 +826,17 @@ public class UserWorkspace {
                 try {
                     compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getSmokingCodings()), fcm.getSmokingLookbackPeriod(), null));
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve Tobacco Smoking Observations was forbidden - will not include Tobacco Smoking Observations for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving Tobacco Smoking Observations was forbidden");
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve Tobacco Smoking Observations triggered an InvalidRequestException - will not include Tobacco Smoking Observations for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving Tobacco Smoking Observations");
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 logger.info("DONE building Tobacco Smoking Observations for session=" + sessionId +
@@ -723,7 +863,17 @@ public class UserWorkspace {
                             null;
                     compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getDrinkingCodings()), lookback, null));
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve Alcohol Drinking Observations was forbidden - will not include Alcohol Drinking Observations for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving Alcohol Drinking Observations was forbidden");
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve Alcohol Drinking Observations triggered an InvalidRequestException - will not include Alcohol Drinking Observations for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving Alcohol Drinking Observations");
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 logger.info("DONE building Alcohol Drinking Observations for session=" + sessionId +
@@ -748,7 +898,17 @@ public class UserWorkspace {
                     compositeBundle.consume(svc.getObservations(sessionId, FhirUtil.toCodeParamString(fcm.getBmiCoding()), fcm.getBmiLookbackPeriod(),null));
                     compositeBundle.consume(svc.getCounselingProcedures(sessionId));
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    if (e instanceof ForbiddenOperationException) {
+                        logger.warn("attempt to retrieve Supplemental Resources was forbidden - will not include Supplemental Resources for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.WARN, "cache population", "retrieving Supplemental Resources was forbidden");
+                    } else if (e instanceof InvalidRequestException) {
+                        logger.error("attempt to retrieve Supplemental Resources triggered an InvalidRequestException - will not include Supplemental Resources for this session");
+                        auditService.doAudit(sessionId, AuditSeverity.ERROR, "cache population", "invalid request retrieving Supplemental Resources");
+                    } else if (e instanceof RuntimeException) {
+                        throw (RuntimeException) e;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 logger.info("DONE building Supplemental Resources for session=" + sessionId +
@@ -796,6 +956,7 @@ public class UserWorkspace {
         return map;
     }
 
+    @SuppressWarnings("unchecked")
     public List<Card> getCards(String recommendationId) {
         return (List<Card>) cardCache.get(recommendationId, new Function<String, List<Card>>() {
             @Override
