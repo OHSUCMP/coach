@@ -572,6 +572,7 @@ public class RecommendationService extends AbstractService {
     private static final Coding SMOKING_OBSERVATION_CODING = new Coding("http://loinc.org", "72166-2", "Tobacco smoking status");
     private static final Coding TOBACCO_USER_CODING = new Coding("http://snomed.info/sct", "110483000", "Tobacco user (finding)");
     private static final Coding SMOKING_COMPONENT_CODING = new Coding("http://loinc.org", "8663-7", "Cigarettes smoked current (pack per day) - Reported");
+    private static final Coding NEVER_SMOKED_TOBACCO_CODING = new Coding("http://snomed.info/sct", "266919005", "Never smoked tobacco");
     private static final String PACKS_PER_DAY = "Packs/Day";
 
     private Observation normalizeSmokingObservation(Observation o) throws DataException {
@@ -586,10 +587,13 @@ public class RecommendationService extends AbstractService {
 
         normalized.getCode().addCoding(SMOKING_OBSERVATION_CODING);
 
+        boolean isTobaccoUser;
         if (o.hasValueCodeableConcept()) {
             normalized.setValue(o.getValueCodeableConcept());
+            isTobaccoUser = ! FhirUtil.hasCoding(o.getValueCodeableConcept(), NEVER_SMOKED_TOBACCO_CODING);
         } else {
             normalized.setValue(new CodeableConcept().addCoding(TOBACCO_USER_CODING));
+            isTobaccoUser = true;
         }
 
         Quantity valueQuantity = null;
@@ -616,17 +620,20 @@ public class RecommendationService extends AbstractService {
             throw new DataException("expected observation to have a valueQuantity, but none found");
         }
 
-        if (valueQuantity != null && valueQuantity.hasValue()) {
-            Observation.ObservationComponentComponent component = new Observation.ObservationComponentComponent();
-            component.setCode(new CodeableConcept().addCoding(SMOKING_COMPONENT_CODING));
-            component.setValue(new Quantity()
-                    .setValue(valueQuantity.getValue())
-                    .setUnit(PACKS_PER_DAY)
-            );
-            normalized.addComponent(component);
+        if (isTobaccoUser) {
+            // only tobacco users will have a quantity
+            if (valueQuantity != null && valueQuantity.hasValue()) {
+                Observation.ObservationComponentComponent component = new Observation.ObservationComponentComponent();
+                component.setCode(new CodeableConcept().addCoding(SMOKING_COMPONENT_CODING));
+                component.setValue(new Quantity()
+                        .setValue(valueQuantity.getValue())
+                        .setUnit(PACKS_PER_DAY)
+                );
+                normalized.addComponent(component);
 
-        } else {
-            throw new DataException("valueQuantity not found or does not contain a value");
+            } else {
+                throw new DataException("valueQuantity not found or does not contain a value");
+            }
         }
 
         return normalized;
