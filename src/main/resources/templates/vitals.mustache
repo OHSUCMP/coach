@@ -26,9 +26,16 @@
     $(document).on('click', '#createButton', function(e) {
         e.preventDefault();
         if (validateForm('#vitalsEntryContainer form', '#saveMessage')) {
+            let button = $('#createButton');
+            $(button).attr('disabled', true); // prevent re-clicks while saving
+
+            let message = $('#saveMessage');
+            $(message).removeClass();
+            $(message).addClass('ms-3');
+            $(message).html("Saving...");
+
             let vitalsData = buildVitalsData();
             createVitals(vitalsData, function(status, list) {
-                let el = $('#saveMessage');
                 if (status === 200) {
                     let r = getMostRecentReading(vitalsData);
                     if (isMostRecentOfAll(r)) {
@@ -50,15 +57,17 @@
                     });
                     resetForm('#vitalsEntryContainer form');
 
-                    $(el).removeClass();
-                    $(el).addClass('success ms-3');
-                    $(el).html("Record created successfully.");
+                    $(message).removeClass();
+                    $(message).addClass('success ms-3');
+                    $(message).html("Record created successfully.");
 
                 } else {
-                    $(el).removeClass();
-                    $(el).addClass('error ms-3');
-                    $(el).html("Error saving BP reading(s).  See logs for details.");
+                    $(message).removeClass();
+                    $(message).addClass('error ms-3');
+                    $(message).html("Error saving BP reading(s).  See logs for details.");
                 }
+
+                $(button).removeAttr('disabled');
             });
         }
     });
