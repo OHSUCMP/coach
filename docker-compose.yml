@@ -4,7 +4,8 @@
 version: "2"
 services:
   app:
-    image: ghcr.io/ohsucmp/coach
+    # image: ghcr.io/ohsucmp/coach
+    image: p3000/coach
     environment:
       - SERVER_SERVLET_CONTEXTPATH
       - SPRING_DATASOURCE_URL
