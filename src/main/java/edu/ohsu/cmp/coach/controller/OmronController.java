@@ -1,7 +1,7 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.exception.SessionMissingException;
-import edu.ohsu.cmp.coach.model.MyOmronTokenData;
+import edu.ohsu.cmp.coach.model.OmronTokenData;
 import edu.ohsu.cmp.coach.model.omron.AccessTokenResponse;
 import edu.ohsu.cmp.coach.model.omron.OmronNotifyModel;
 import edu.ohsu.cmp.coach.model.omron.OmronStatusData;
@@ -42,7 +42,7 @@ public class OmronController extends BaseController {
                 AccessTokenResponse accessTokenResponse = omronService.requestAccessToken(code);
                 if (accessTokenResponse != null) {
                     logger.debug("got Omron access token: " + accessTokenResponse.getAccessToken());
-                    workspace.setOmronTokenData(new MyOmronTokenData(accessTokenResponse));
+                    workspace.setOmronTokenData(new OmronTokenData(accessTokenResponse));
                 }
             } catch (Exception e) {
                 logger.error("caught " + e.getClass().getName() + " getting Omron access token - " + e.getMessage(), e);

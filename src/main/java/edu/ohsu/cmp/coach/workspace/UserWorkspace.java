@@ -82,7 +82,7 @@ public class UserWorkspace {
     private final AuditService auditService;
 
     // Omron stuff
-    private MyOmronTokenData omronTokenData = null;
+    private OmronTokenData omronTokenData = null;
     private Date omronLastUpdated = null;
     private String redcapId = null;
     private Boolean bpGoalUpdated = null;
@@ -1047,11 +1047,11 @@ public class UserWorkspace {
         this.vendorTransformer = vendorTransformer;
     }
 
-    public MyOmronTokenData getOmronTokenData() {
+    public OmronTokenData getOmronTokenData() {
         return omronTokenData;
     }
 
-    public void setOmronTokenData(MyOmronTokenData omronTokenData) {
+    public void setOmronTokenData(OmronTokenData omronTokenData) {
         this.omronTokenData = omronTokenData;
     }
 
