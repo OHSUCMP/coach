@@ -304,7 +304,7 @@ public class HomeController extends BaseController {
     }
 
     @PostMapping("adverse-events-list")
-    public ResponseEntity<List<AdverseEventModel>> getAdverseEvents(HttpSession session) throws DataException {
+    public ResponseEntity<List<AdverseEventModel>> getAdverseEvents(HttpSession session) {
         try {
             List<AdverseEventModel> list = new ArrayList<>();
 

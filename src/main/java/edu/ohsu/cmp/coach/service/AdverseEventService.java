@@ -4,7 +4,6 @@ import edu.ohsu.cmp.coach.entity.HypotensionAdverseEvent;
 import edu.ohsu.cmp.coach.entity.MyAdverseEvent;
 import edu.ohsu.cmp.coach.entity.MyAdverseEventOutcome;
 import edu.ohsu.cmp.coach.entity.Outcome;
-import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.AdverseEventModel;
 import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.repository.AdverseEventOutcomeRepository;
@@ -45,7 +44,7 @@ public class AdverseEventService extends AbstractService {
     private HypotensionAdverseEventService hypotensionAdverseEventService;
 
 
-    public List<AdverseEventModel> getAdverseEvents(String sessionId) throws DataException {
+    public List<AdverseEventModel> getAdverseEvents(String sessionId) {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         List<AdverseEventModel> list = new ArrayList<>();
@@ -58,7 +57,7 @@ public class AdverseEventService extends AbstractService {
         return list;
     }
 
-    public List<AdverseEventModel> buildRemoteAdverseEvents(String sessionId) throws DataException {
+    public List<AdverseEventModel> buildRemoteAdverseEvents(String sessionId) {
         List<AdverseEventModel> list = new ArrayList<>();
 
         Bundle b = buildRemoteAdverseEventConditions(sessionId);

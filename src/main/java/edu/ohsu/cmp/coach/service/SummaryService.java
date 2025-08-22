@@ -1,11 +1,10 @@
 package edu.ohsu.cmp.coach.service;
 
+import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.entity.Summary;
+import edu.ohsu.cmp.coach.entity.SummaryOngoingAdverseEvent;
 import edu.ohsu.cmp.coach.entity.SummaryRecommendation;
-import edu.ohsu.cmp.coach.model.AuditSeverity;
-import edu.ohsu.cmp.coach.model.BloodPressureSummaryModel;
-import edu.ohsu.cmp.coach.model.GoalModel;
-import edu.ohsu.cmp.coach.model.RecommendationSeverity;
+import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.repository.SummaryRecommendationRepository;
 import edu.ohsu.cmp.coach.repository.SummaryRepository;
@@ -27,6 +26,9 @@ public class SummaryService extends AbstractService {
 
     @Autowired
     private GoalService goalService;
+
+    @Autowired
+    private AdverseEventService adverseEventService;
 
     @Autowired
     private SummaryRepository repository;
@@ -98,6 +100,15 @@ public class SummaryService extends AbstractService {
         }
 
         summary.setRecommendations(recommendations);
+
+        Set<SummaryOngoingAdverseEvent> ongoingAdverseEvents = new LinkedHashSet<>();
+        for (AdverseEventModel ae : adverseEventService.getAdverseEvents(sessionId)) {
+            if (ae.hasOutcome(Outcome.ONGOING)) {
+                ongoingAdverseEvents.add(new SummaryOngoingAdverseEvent(ae, summary));
+            }
+        }
+
+        summary.setOngoingAdverseEvents(ongoingAdverseEvents);
 
         return summary;
     }

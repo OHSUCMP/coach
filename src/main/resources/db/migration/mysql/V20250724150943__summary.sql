@@ -23,3 +23,15 @@ create table summary_recommendation (
 );
 
 create index idxSummaryId on summary_recommendation (summaryId);
+
+drop table if exists summary_ongoing_adverse_event;
+create table summary_ongoing_adverse_event (
+    id int not null auto_increment primary key,
+    summaryId int not null,
+    description varchar(255) not null,
+    conceptSystem varchar(100) not null,
+    conceptCode varchar(50) not null,
+    constraint sum_ae_fk1 foreign key (summaryId) references summary (id) on delete cascade
+);
+
+create index idxSummaryId on summary_ongoing_adverse_event (summaryId);

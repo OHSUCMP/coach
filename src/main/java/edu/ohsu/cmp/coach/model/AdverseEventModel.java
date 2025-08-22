@@ -2,7 +2,6 @@ package edu.ohsu.cmp.coach.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.ohsu.cmp.coach.entity.Outcome;
-import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.AdverseEvent;
@@ -17,7 +16,7 @@ public class AdverseEventModel implements FHIRCompatible {
     private String description;
     private String outcome;         // should map with Outcome.fhirValue
 
-    public AdverseEventModel(AdverseEvent adverseEvent) throws DataException {
+    public AdverseEventModel(AdverseEvent adverseEvent) {
         this.sourceAdverseEvent = adverseEvent;
 
         Coding c = adverseEvent.getEvent().getCodingFirstRep();

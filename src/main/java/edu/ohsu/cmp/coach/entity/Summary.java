@@ -22,6 +22,9 @@ public class Summary {
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "summary", cascade = CascadeType.ALL)
     private Set<SummaryRecommendation> recommendations;
 
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "summary", cascade = CascadeType.ALL)
+    private Set<SummaryOngoingAdverseEvent> ongoingAdverseEvents;
+
     protected Summary() {
     }
 
@@ -94,5 +97,13 @@ public class Summary {
 
     public void setRecommendations(Set<SummaryRecommendation> recommendations) {
         this.recommendations = recommendations;
+    }
+
+    public Set<SummaryOngoingAdverseEvent> getOngoingAdverseEvents() {
+        return ongoingAdverseEvents;
+    }
+
+    public void setOngoingAdverseEvents(Set<SummaryOngoingAdverseEvent> ongoingAdverseEvents) {
+        this.ongoingAdverseEvents = ongoingAdverseEvents;
     }
 }
