@@ -7,6 +7,7 @@ import com.auth0.jwt.interfaces.Payload;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import edu.ohsu.cmp.coach.entity.MyPatient;
+import edu.ohsu.cmp.coach.entity.Summary;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
@@ -246,6 +247,8 @@ public class UserWorkspace {
                 getAllCards();
                 logger.info("DONE populating workspace for session=" + sessionId +
                         " (took " + (System.currentTimeMillis() - start) + "ms)");
+
+                writeSummary();
             }
         };
         executorService.submit(runnable);
@@ -1122,6 +1125,18 @@ public class UserWorkspace {
 
         } else {
             return new OmronStatusData(OmronStatus.DISABLED, null, null, null);
+        }
+    }
+
+    private void writeSummary() {
+        SummaryService svc = ctx.getBean(SummaryService.class);
+        try {
+            Summary summary = svc.buildSummary(sessionId);
+            svc.create(sessionId, summary);
+
+        } catch (Exception e) {
+            logger.error("caught " + e.getClass().getName() + " writing summary for session=" + sessionId + " - " +
+                    e.getMessage(), e);
         }
     }
 }

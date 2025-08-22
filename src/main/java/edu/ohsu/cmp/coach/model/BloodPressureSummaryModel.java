@@ -63,6 +63,10 @@ public class BloodPressureSummaryModel {
         }
     }
 
+    public Boolean hasCalculatedAverage() {
+        return avgSystolic != null && avgDiastolic != null;
+    }
+
     public Integer getAvgSystolic() {
         return avgSystolic;
     }
