@@ -25,6 +25,9 @@ public class Summary {
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "summary", cascade = CascadeType.ALL)
     private Set<SummaryOngoingAdverseEvent> ongoingAdverseEvents;
 
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "summary", cascade = CascadeType.ALL)
+    private Set<SummaryActiveAntihtnMeds> activeAntihtnMeds;
+
     protected Summary() {
     }
 
@@ -105,5 +108,13 @@ public class Summary {
 
     public void setOngoingAdverseEvents(Set<SummaryOngoingAdverseEvent> ongoingAdverseEvents) {
         this.ongoingAdverseEvents = ongoingAdverseEvents;
+    }
+
+    public Set<SummaryActiveAntihtnMeds> getActiveAntihtnMeds() {
+        return activeAntihtnMeds;
+    }
+
+    public void setActiveAntihtnMeds(Set<SummaryActiveAntihtnMeds> activeAntihtnMeds) {
+        this.activeAntihtnMeds = activeAntihtnMeds;
     }
 }

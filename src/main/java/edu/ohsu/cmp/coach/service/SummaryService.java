@@ -1,12 +1,8 @@
 package edu.ohsu.cmp.coach.service;
 
-import edu.ohsu.cmp.coach.entity.Outcome;
-import edu.ohsu.cmp.coach.entity.Summary;
-import edu.ohsu.cmp.coach.entity.SummaryOngoingAdverseEvent;
-import edu.ohsu.cmp.coach.entity.SummaryRecommendation;
+import edu.ohsu.cmp.coach.entity.*;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
-import edu.ohsu.cmp.coach.repository.SummaryRecommendationRepository;
 import edu.ohsu.cmp.coach.repository.SummaryRepository;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.lang3.StringUtils;
@@ -31,10 +27,10 @@ public class SummaryService extends AbstractService {
     private AdverseEventService adverseEventService;
 
     @Autowired
-    private SummaryRepository repository;
+    private MedicationService medicationService;
 
     @Autowired
-    private SummaryRecommendationRepository recommendationRepository;
+    private SummaryRepository repository;
 
     public Summary buildSummary(String sessionId) {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
@@ -109,6 +105,13 @@ public class SummaryService extends AbstractService {
         }
 
         summary.setOngoingAdverseEvents(ongoingAdverseEvents);
+
+        Set<SummaryActiveAntihtnMeds> activeAntihtnMeds = new LinkedHashSet<>();
+        for (MedicationModel mm : medicationService.getAntihypertensiveMedications(sessionId)) {
+            activeAntihtnMeds.add(new SummaryActiveAntihtnMeds(mm, summary));
+        }
+
+        summary.setActiveAntihtnMeds(activeAntihtnMeds);
 
         return summary;
     }
