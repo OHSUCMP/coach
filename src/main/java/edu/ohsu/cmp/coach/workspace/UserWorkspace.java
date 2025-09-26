@@ -260,6 +260,7 @@ public class UserWorkspace {
             public void run() {
                 deleteAllCards();
                 getAllCards();
+                writeSummary();
             }
         };
         executorService.submit(runnable);
