@@ -36,8 +36,16 @@ public class SummaryService extends AbstractService {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         String bpGoal = null;
-        String calculatedBP = null;
+        String calculatedAverageBP = null;
         Boolean bpAtOrBelowGoal = null;
+        String mostRecentBP = null;
+        Date mostRecentBPDate = null;
+        Boolean mostRecentBPInCrisis = null;
+        Boolean mostRecentBPInLowCrisis = null;
+        String secondMostRecentBP = null;
+        Date secondMostRecentBPDate = null;
+        Boolean twoMostRecentBPsInCrisis = null;
+        Boolean twoMostRecentBPsInLowCrisis = null;
         List<String> notesList = new ArrayList<>();
 
         try {
@@ -49,7 +57,7 @@ public class SummaryService extends AbstractService {
             }
 
             if (currentBP.hasCalculatedAverage()) {
-                calculatedBP = currentBP.getAvgSystolic() + "/" + currentBP.getAvgDiastolic();
+                calculatedAverageBP = currentBP.getAvgSystolic() + "/" + currentBP.getAvgDiastolic();
             }
 
             if (currentBP.hasCalculatedAverage() && currentBPGoal != null && currentBPGoal.isBPGoal()) {
@@ -63,6 +71,46 @@ public class SummaryService extends AbstractService {
                 notesList.add("no current BP goal");
             }
 
+            if (currentBP.hasMostRecent()) {
+                mostRecentBP = currentBP.getMostRecentSystolic() + "/" + currentBP.getMostRecentDiastolic();
+                mostRecentBPDate = currentBP.getMostRecentDate();
+
+                if (currentBP.isMostRecentBPCrisis()) {
+                    mostRecentBPInCrisis = true;
+                    notesList.add("most recent BP represents hypertension crisis");
+                } else {
+                    mostRecentBPInCrisis = false;
+                }
+
+                if (currentBP.isMostRecentBPLowCrisis()) {
+                    mostRecentBPInLowCrisis = true;
+                    notesList.add("most recent BP represents hypotension crisis");
+                } else {
+                    mostRecentBPInLowCrisis = false;
+                }
+            }
+
+            if (currentBP.hasSecondMostRecent()) {
+                secondMostRecentBP = currentBP.getSecondMostRecentSystolic() + "/" + currentBP.getSecondMostRecentDiastolic();
+                secondMostRecentBPDate = currentBP.getSecondMostRecentDate();
+
+                if (currentBP.isMostRecentBPCrisis() && currentBP.isSecondMostRecentBPCrisis() && currentBP.twoMostRecentWithin14Days()) {
+                    twoMostRecentBPsInCrisis = true;
+                    notesList.add("two most-recent BPs were taken within the last two weeks and represent hypertension crisis");
+
+                } else {
+                    twoMostRecentBPsInCrisis = false;
+                }
+
+                if (currentBP.isMostRecentBPLowCrisis() && currentBP.isSecondMostRecentBPLowCrisis() && currentBP.twoMostRecentWithin14Days()) {
+                    twoMostRecentBPsInLowCrisis = true;
+                    notesList.add("two most-recent BPs were taken within the last two weeks and represent hypotension crisis");
+
+                } else {
+                    twoMostRecentBPsInLowCrisis = false;
+                }
+            }
+
         } catch (Exception e) {
             logger.error("caught " + e.getClass().getName() + " attempting to generate summary - " + e.getMessage(), e);
             auditService.doAudit(sessionId, AuditSeverity.ERROR, "failed to generate summary", e.getMessage());
@@ -73,7 +121,10 @@ public class SummaryService extends AbstractService {
                 null :
                 StringUtils.join(notesList, "; ");
 
-        Summary summary = new Summary(bpGoal, calculatedBP, bpAtOrBelowGoal, notes);
+        Summary summary = new Summary(bpGoal, calculatedAverageBP, bpAtOrBelowGoal,
+                mostRecentBP, mostRecentBPDate, mostRecentBPInCrisis, mostRecentBPInLowCrisis,
+                secondMostRecentBP, secondMostRecentBPDate, twoMostRecentBPsInCrisis, twoMostRecentBPsInLowCrisis,
+                notes);
 
         Set<SummaryRecommendation> recommendations = new LinkedHashSet<>();
         for (Map.Entry<String, List<Card>> entry : workspace.getAllCards().entrySet()) {
