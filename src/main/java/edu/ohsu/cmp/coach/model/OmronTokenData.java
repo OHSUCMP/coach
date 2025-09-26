@@ -6,13 +6,13 @@ import edu.ohsu.cmp.coach.model.omron.RefreshTokenResponse;
 import java.util.Calendar;
 import java.util.Date;
 
-public class MyOmronTokenData {
+public class OmronTokenData {
     private String userIdToken;
     private String bearerToken;
     private Date expirationTimestamp;
     private String refreshToken;
 
-    public MyOmronTokenData(AccessTokenResponse accessTokenResponse) {
+    public OmronTokenData(AccessTokenResponse accessTokenResponse) {
         this.userIdToken = accessTokenResponse.getIdToken();
         this.bearerToken = accessTokenResponse.getAccessToken();
 

@@ -473,7 +473,7 @@ public class RecommendationService extends AbstractService {
         return o;
     }
 
-    private Bundle buildAdverseEventsBundle(String sessionId, String patientId) throws DataException {
+    private Bundle buildAdverseEventsBundle(String sessionId, String patientId) {
         CompositeBundle bundle = new CompositeBundle();
         List<AdverseEventModel> adverseEvents = adverseEventService.getAdverseEvents(sessionId);
         if (adverseEvents.size() > 0) {

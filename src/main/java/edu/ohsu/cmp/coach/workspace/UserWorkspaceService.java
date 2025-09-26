@@ -6,7 +6,7 @@ import edu.ohsu.cmp.coach.fhir.FhirConfigManager;
 import edu.ohsu.cmp.coach.fhir.FhirQueryManager;
 import edu.ohsu.cmp.coach.fhir.transform.VendorTransformer;
 import edu.ohsu.cmp.coach.model.Audience;
-import edu.ohsu.cmp.coach.model.MyOmronTokenData;
+import edu.ohsu.cmp.coach.model.OmronTokenData;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import org.apache.commons.lang3.StringUtils;
@@ -75,7 +75,7 @@ public class UserWorkspaceService {
 
     public UserWorkspace getByOmronUserId(String omronUserId) throws SessionMissingException {
         for (UserWorkspace workspace : map.values()) {
-            MyOmronTokenData tokenData = workspace.getOmronTokenData();
+            OmronTokenData tokenData = workspace.getOmronTokenData();
             if (tokenData != null && StringUtils.equals(tokenData.getUserIdToken(), omronUserId)) {
                 return workspace;
             }

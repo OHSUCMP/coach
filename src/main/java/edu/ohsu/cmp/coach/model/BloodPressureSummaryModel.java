@@ -10,6 +10,12 @@ public class BloodPressureSummaryModel {
 
     private Integer avgSystolic;
     private Integer avgDiastolic;
+    private Integer mostRecentSystolic;
+    private Integer mostRecentDiastolic;
+    private Date mostRecentDate;
+    private Integer secondMostRecentSystolic;
+    private Integer secondMostRecentDiastolic;
+    private Date secondMostRecentDate;
     private Integer recentHomeBPReadingsCount;
     private Integer recentHomeBPReadingsDayCount;
 
@@ -17,6 +23,18 @@ public class BloodPressureSummaryModel {
         List<BloodPressureModel> bpList = new ArrayList<>();     // create a copy of list to work with, don't want to modify the original
         bpList.addAll(list);
         bpList.sort((o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1); // sort newest first
+
+        if (bpList.size() > 0) {
+            mostRecentSystolic = bpList.get(0).getSystolic().getValue();
+            mostRecentDiastolic = bpList.get(0).getDiastolic().getValue();
+            mostRecentDate = bpList.get(0).getReadingDate();
+
+            if (bpList.size() > 1) {
+                secondMostRecentSystolic = bpList.get(1).getSystolic().getValue();
+                secondMostRecentDiastolic = bpList.get(1).getDiastolic().getValue();
+                secondMostRecentDate = bpList.get(1).getReadingDate();
+            }
+        }
 
         long timeframeStartTS = getStartOfDay30DaysAgoTS();
         Long earliestHomeReadingWithinTimeframeTS = null;
@@ -63,12 +81,48 @@ public class BloodPressureSummaryModel {
         }
     }
 
+    public Boolean hasCalculatedAverage() {
+        return avgSystolic != null && avgDiastolic != null;
+    }
+
     public Integer getAvgSystolic() {
         return avgSystolic;
     }
 
     public Integer getAvgDiastolic() {
         return avgDiastolic;
+    }
+
+    public Boolean hasMostRecent() {
+        return mostRecentSystolic != null && mostRecentDiastolic != null && mostRecentDate != null;
+    }
+
+    public Integer getMostRecentSystolic() {
+        return mostRecentSystolic;
+    }
+
+    public Integer getMostRecentDiastolic() {
+        return mostRecentDiastolic;
+    }
+
+    public Date getMostRecentDate() {
+        return mostRecentDate;
+    }
+
+    public Boolean hasSecondMostRecent() {
+        return secondMostRecentSystolic != null && secondMostRecentDiastolic != null && secondMostRecentDate != null;
+    }
+
+    public Integer getSecondMostRecentSystolic() {
+        return secondMostRecentSystolic;
+    }
+
+    public Integer getSecondMostRecentDiastolic() {
+        return secondMostRecentDiastolic;
+    }
+
+    public Date getSecondMostRecentDate() {
+        return secondMostRecentDate;
     }
 
     public Integer getRecentHomeBPReadingsCount() {
@@ -103,5 +157,34 @@ public class BloodPressureSummaryModel {
             }
         }
         return score > 4.0 ? bpSet : null;
+    }
+
+    public boolean isMostRecentBPCrisis() {
+        return mostRecentSystolic >= 180 || mostRecentDiastolic >= 120;
+    }
+
+    public boolean isMostRecentBPLowCrisis() {
+        return mostRecentSystolic < 90 || mostRecentDiastolic < 60;
+    }
+
+    public boolean isSecondMostRecentBPCrisis() {
+        return secondMostRecentSystolic >= 180 || secondMostRecentDiastolic >= 120;
+    }
+
+    public boolean isSecondMostRecentBPLowCrisis() {
+        return secondMostRecentSystolic < 90 || secondMostRecentDiastolic < 60;
+    }
+
+    public boolean twoMostRecentWithin14Days() {
+        if (mostRecentDate != null && secondMostRecentDate != null) {
+            Date now = new Date();
+            long nowTS = now.getTime();
+            long mostRecentTS = mostRecentDate.getTime();
+            long secondMostRecentTS = secondMostRecentDate.getTime();
+            return (nowTS - mostRecentTS) < MS_IN_DAY * 14 && (nowTS - secondMostRecentTS) < MS_IN_DAY * 14;
+
+        } else {
+            return false;
+        }
     }
 }

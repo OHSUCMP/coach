@@ -12,7 +12,7 @@ import edu.ohsu.cmp.coach.http.HttpRequest;
 import edu.ohsu.cmp.coach.http.HttpResponse;
 import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.BloodPressureModel;
-import edu.ohsu.cmp.coach.model.MyOmronTokenData;
+import edu.ohsu.cmp.coach.model.OmronTokenData;
 import edu.ohsu.cmp.coach.model.PulseModel;
 import edu.ohsu.cmp.coach.model.omron.*;
 import edu.ohsu.cmp.coach.repository.OmronVitalsCacheRepository;
@@ -218,7 +218,7 @@ public class OmronService extends AbstractService {
         }
 
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
-        MyOmronTokenData omronTokenData = workspace.getOmronTokenData();
+        OmronTokenData omronTokenData = workspace.getOmronTokenData();
 
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put(RefreshTokenJob.JOBDATA_APPLICATIONCONTEXT, ctx);
@@ -401,7 +401,7 @@ public class OmronService extends AbstractService {
     private MeasurementResult requestMeasurements(String sessionId, Date sinceTimestamp) throws IOException, NotAuthenticatedException, OmronException {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
-        MyOmronTokenData tokenData = workspace.getOmronTokenData();
+        OmronTokenData tokenData = workspace.getOmronTokenData();
         if (tokenData == null) {
             throw new NotAuthenticatedException("No Omron authentication token data found");
         }
