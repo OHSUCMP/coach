@@ -253,7 +253,7 @@ function getBPSetStartDate(bps) {
     const bpset = getBPSet(bps);
     if (bpset) {
         const sorted = sortByDateAsc(bpset);
-        return sorted[0].readingDate;
+        return new Date(sorted[0].readingDate);
     }
 
     return null;
