@@ -102,7 +102,7 @@ public class HomeController extends BaseController {
             model.addAttribute("pageScripts", new String[] {
                     "science.js/science.v1.js",
                     "science.js/lib/d3/d3.js",
-                    "home.js?v=4",
+                    "home.js?v=5",
                     "recommendations.js?v=2",
                     "bpchart.js"
             });
