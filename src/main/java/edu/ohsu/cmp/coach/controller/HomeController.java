@@ -350,4 +350,11 @@ public class HomeController extends BaseController {
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
         return new ResponseEntity<>(FhirUtil.toJson(workspace.getFhirCredentialsWithClient().getMetadata()), HttpStatus.OK);
     }
+
+    @GetMapping("recommendation-service-status")
+    public ResponseEntity<String> getRecommendationServiceStatus() {
+        return recommendationService.isRunning() ?
+            new ResponseEntity<>("Running", HttpStatus.OK) :
+            new ResponseEntity<>("Not Running", HttpStatus.SERVICE_UNAVAILABLE);
+    }
 }

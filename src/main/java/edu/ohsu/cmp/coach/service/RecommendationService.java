@@ -100,7 +100,7 @@ public class RecommendationService extends AbstractService {
 
     public List<CDSHook> getOrderedCDSHooks(String sessionId) throws IOException {
         Map<String, CDSHook> map = new LinkedHashMap<>();
-        for (CDSHook cdsHook : CDSHooksUtil.getCDSHooks(TESTING, cdsHooksEndpointURL)) {
+        for (CDSHook cdsHook : buildCDSHooks()) {
             map.put(cdsHook.getId(), cdsHook);
         }
 
@@ -127,6 +127,10 @@ public class RecommendationService extends AbstractService {
         }
 
         return list;
+    }
+
+    private List<CDSHook> buildCDSHooks() throws IOException {
+        return CDSHooksUtil.getCDSHooks(TESTING, cdsHooksEndpointURL);
     }
 
     public List<Card> getCards(String sessionId, String hookId) throws IOException {
@@ -299,6 +303,20 @@ public class RecommendationService extends AbstractService {
 
         return cards;
     }
+
+    public boolean isRunning() {
+        try {
+            buildCDSHooks();
+            return true;
+
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+//////////////////////////////////////////////////////////////////////
+/// private methods
+///
 
     private Bundle buildConditionsBundle(String sessionId, String patientId) {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
