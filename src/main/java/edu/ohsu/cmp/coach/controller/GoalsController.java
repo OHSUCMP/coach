@@ -117,6 +117,7 @@ public class GoalsController extends BaseController {
             goal.setGoalText("Target BP: " + systolicTarget + "/" + diastolicTarget);
             goal.setSystolicTarget(systolicTarget);
             goal.setDiastolicTarget(diastolicTarget);
+            goal.setCreatedDate(new Date()); // ensure that this BP goal is now considered the most recent
             goal = goalService.update(goal);
 
             auditService.doAudit(session.getId(), AuditSeverity.INFO, "updated BP goal", "id=" + goal.getId() +
