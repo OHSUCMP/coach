@@ -311,7 +311,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 if ( ! o.hasCode() ) {
                     logger.warn("observation " + o.getId() + " missing code, this is unexpected - skipping -");
 
-                } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
+                } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings) && o.hasValueQuantity()) {
                     String key = getObservationMatchKey(o);
                     if ( ! map.containsKey(key) ) {
                         map.put(key, new SystolicDiastolicPair());
@@ -319,7 +319,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                     map.get(key).setSystolicObservation(o);
                     logger.debug("observation " + o.getId() + " has systolic coding; added to SystolicDiastolicPair map with key=" + key);
 
-                } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
+                } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings) && o.hasValueQuantity()) {
                     String key = getObservationMatchKey(o);
                     if ( ! map.containsKey(key) ) {
                         map.put(key, new SystolicDiastolicPair());
@@ -327,7 +327,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                     map.get(key).setDiastolicObservation(o);
                     logger.debug("observation " + o.getId() + " has diastolic coding; added to SystolicDiastolicPair map with key=" + key);
 
-                } else if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
+                } else if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings) && o.hasComponent() && o.getComponent().size() >= 2) {
                     bpObservationList.add(o);
                     logger.debug("observation " + o.getId() + " has panel coding; expecting both systolic and diastolic to be present");
 
@@ -337,7 +337,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                             encounter.getId());
 
                 } else {
-                    logger.warn("observation " + o.getId() + " has a code but did not match any codings, this is unexpected - skipping -");
+                    logger.warn("observation " + o.getId() + " has a code but did not match any codings, or encountered unexpected resource structure - skipping -");
                 }
             }
 
@@ -411,7 +411,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
             for (Observation o : observationsList) { //encounterObservationsMap.remove(NO_ENCOUNTERS_KEY)) {
                 try {
                     if (o.hasCode()) {
-                        if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings)) {
+                        if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings) && o.hasComponent() && o.getComponent().size() >= 2) {
                             logger.debug("bpObservation = " + o.getId() + " (no encounter) (effectiveDateTime=" +
                                     o.getEffectiveDateTimeType().getValueAsString() + ")");
 
@@ -424,14 +424,14 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                                         e.getMessage() + " - skipping -");
                             }
 
-                        } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings)) {
+                        } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings) && o.hasValueQuantity()) {
                             String key = getObservationMatchKey(o);
                             if (!sdpMap.containsKey(key)) {
                                 sdpMap.put(key, new SystolicDiastolicPair());
                             }
                             sdpMap.get(key).setSystolicObservation(o);
 
-                        } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings)) {
+                        } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings) && o.hasValueQuantity()) {
                             String key = getObservationMatchKey(o);
                             if (!sdpMap.containsKey(key)) {
                                 sdpMap.put(key, new SystolicDiastolicPair());
@@ -439,7 +439,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                             sdpMap.get(key).setDiastolicObservation(o);
 
                         } else {
-                            logger.debug("did not process Observation " + o.getId() + " - invalid coding");
+                            logger.debug("did not process Observation " + o.getId() + " - invalid coding or unexpected resource structure");
                         }
 
                     } else {
