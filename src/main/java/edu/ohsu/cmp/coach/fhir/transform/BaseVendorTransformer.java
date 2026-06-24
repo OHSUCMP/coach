@@ -643,6 +643,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         o.getCode().addCoding(fcm.getProtocolCoding());
 
         FhirUtil.addHomeSettingExtension(o);
+        FhirUtil.addHomeSettingCoding(o.getCode());
 
         o.setEffective(new DateTimeType(model.getReadingDate()));
 

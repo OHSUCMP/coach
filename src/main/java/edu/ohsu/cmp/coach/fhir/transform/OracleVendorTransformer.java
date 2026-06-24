@@ -37,8 +37,6 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
-        FhirUtil.addHomeSettingExtension(o);
-
         if (bpObservation.hasCode()) {
             CodeableConcept code = bpObservation.getCode();
             if (type == ResourceType.SYSTOLIC && FhirUtil.hasCoding(code, fcm.getBpSystolicCodings())) {
@@ -104,6 +102,9 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
             throw new DataException("missing coding");
         }
 
+        FhirUtil.addHomeSettingExtension(o);
+        FhirUtil.addHomeSettingCoding(o.getCode());
+
         o.setEffective(bpObservation.getEffective());
 
         return o;
@@ -123,8 +124,6 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
                 .setCode(OBSERVATION_CATEGORY_CODE)
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
-
-        FhirUtil.addHomeSettingExtension(o);
 
         if (type == ResourceType.SYSTOLIC) {
             if (model.getSystolic() != null) {
@@ -164,6 +163,9 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
             throw new DataException("type must be SYSTOLIC or DIASTOLIC");
         }
 
+        FhirUtil.addHomeSettingExtension(o);
+        FhirUtil.addHomeSettingCoding(o.getCode());
+
         o.setEffective(new DateTimeType(model.getReadingDate()));
 
         return o;
@@ -198,6 +200,7 @@ public class OracleVendorTransformer extends SpecialVendorTransformer implements
         }
 
         FhirUtil.addHomeSettingExtension(o);
+        FhirUtil.addHomeSettingCoding(o.getCode());
 
         o.setEffective(new DateTimeType(model.getReadingDate()));
 
