@@ -38,7 +38,9 @@ public class ObservationUtil {
         if (bpObservation.hasCode()) {
             CodeableConcept code = bpObservation.getCode();
 
-            if (FhirUtil.hasCoding(code, fcm.getBpHomeCodings()) || FhirUtil.hasHomeSettingExtension(bpObservation)) {
+            if (FhirUtil.hasCoding(code, fcm.getBpHomeCodings()) ||
+                    FhirUtil.hasHomeSettingExtension(bpObservation) ||
+                    FhirUtil.hasHomeSettingCoding(code)) {
                 source = ObservationSource.HOME;    // this should remain generic HOME as a more specific source is unknown
 
             } else if (FhirUtil.hasCoding(code, fcm.getBpOfficeCodings())) {
@@ -72,7 +74,8 @@ public class ObservationUtil {
     //        in the way that BloodPressureModel does, and this should be updated
 
     public static ObservationSource getPulseSource(Observation pulseObservation) {
-        return FhirUtil.hasHomeSettingExtension(pulseObservation) ?
+        return FhirUtil.hasHomeSettingExtension(pulseObservation) ||
+                (pulseObservation.hasCode() && FhirUtil.hasHomeSettingCoding(pulseObservation.getCode())) ?
                 ObservationSource.HOME :    // this should remain generic HOME as a more specific source is unknown
                 ObservationSource.UNKNOWN;
     }

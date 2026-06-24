@@ -26,6 +26,9 @@ public class FhirUtil {
     private static final String EXTENSION_HOME_SETTING_SYSTEM = "http://snomed.info/sct";
     private static final String EXTENSION_HOME_SETTING_DISPLAY = "Home (environment)";
 
+    // added for issue https://github.com/OHSUCMP/coach/issues/314
+    private static final Coding HOME_SETTING_CODING = new Coding("http://snomed.info/sct", "418799008", "Finding reported by subject or history provider (finding)");
+
     private static final String EXTENSION_OAUTH_URIS_URL = "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris";
     private static final String EXTENSION_TOKEN_URL = "token";
 
@@ -643,6 +646,10 @@ public class FhirUtil {
         return false;
     }
 
+    public static boolean hasHomeSettingCoding(CodeableConcept cc) {
+        return hasCoding(cc, HOME_SETTING_CODING);
+    }
+
     public static void addHomeSettingExtension(DomainResource domainResource) {
         // setting MeasurementSettingExt to indicate taken in a "home" setting
         // see https://browser.ihtsdotools.org/?perspective=full&conceptId1=264362003&edition=MAIN/SNOMEDCT-US/2021-09-01&release=&languages=en
@@ -653,6 +660,12 @@ public class FhirUtil {
                         .setCode(EXTENSION_HOME_SETTING_CODE)
                         .setSystem(EXTENSION_HOME_SETTING_SYSTEM)
                         .setDisplay(EXTENSION_HOME_SETTING_DISPLAY)));
+    }
+
+    public static void addHomeSettingCoding(CodeableConcept cc) {
+        if (cc != null) {
+            cc.addCoding(HOME_SETTING_CODING);
+        }
     }
 
     public static String getTokenAuthenticationURL(CapabilityStatement metadata) throws DataException {

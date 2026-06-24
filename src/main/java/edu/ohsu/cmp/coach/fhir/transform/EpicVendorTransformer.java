@@ -36,8 +36,6 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
-        FhirUtil.addHomeSettingExtension(o);
-
         if (bpObservation.hasCode()) {
             CodeableConcept code = bpObservation.getCode();
             if (type == ResourceType.SYSTOLIC && FhirUtil.hasCoding(code, fcm.getBpSystolicCodings())) {
@@ -96,6 +94,9 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
             throw new DataException("missing coding");
         }
 
+        FhirUtil.addHomeSettingExtension(o);
+        FhirUtil.addHomeSettingCoding(o.getCode());
+
         o.getValueQuantity().setUnit(null);         // Epic doesn't allow units to be specified
 
         o.setEffective(bpObservation.getEffective());
@@ -117,8 +118,6 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
                 .setCode(OBSERVATION_CATEGORY_CODE)
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
-
-        FhirUtil.addHomeSettingExtension(o);
 
         if (type == ResourceType.SYSTOLIC) {
             if (model.getSystolic() != null) {
@@ -154,6 +153,9 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
             throw new CaseNotHandledException("cannot handle case where type=" + type);
         }
 
+        FhirUtil.addHomeSettingExtension(o);
+        FhirUtil.addHomeSettingCoding(o.getCode());
+
         o.setEffective(new DateTimeType(model.getReadingDate()));
 
         return o;
@@ -187,6 +189,7 @@ public class EpicVendorTransformer extends SpecialVendorTransformer implements V
         }
 
         FhirUtil.addHomeSettingExtension(o);
+        FhirUtil.addHomeSettingCoding(o.getCode());
 
         o.setEffective(new DateTimeType(model.getReadingDate()));
 

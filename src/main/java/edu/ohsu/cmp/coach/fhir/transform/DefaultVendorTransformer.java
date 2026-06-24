@@ -107,8 +107,14 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             appendIfMissing(sourceBPObservation, fcm.getBpPanelCommonCoding());
 
             // CQF Ruler needs to see the Home Setting extension to positively identify the reading as Home
-            if (model.isHomeReading() && ! FhirUtil.hasHomeSettingExtension(sourceBPObservation)) {
-                FhirUtil.addHomeSettingExtension(sourceBPObservation);
+            if (model.isHomeReading()) {
+                if ( ! FhirUtil.hasHomeSettingExtension(sourceBPObservation) ) {
+                    FhirUtil.addHomeSettingExtension(sourceBPObservation);
+                }
+
+                if ( ! FhirUtil.hasHomeSettingCoding(sourceBPObservation.getCode()) ) {
+                    FhirUtil.addHomeSettingCoding(sourceBPObservation.getCode());
+                }
             }
 
             FhirUtil.appendResourceToBundle(bundle, sourceBPObservation);
@@ -126,8 +132,14 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             appendIfMissing(systolicObservation, fcm.getBpSystolicCommonCoding());
 
             // CQF Ruler needs to see the Home Setting extension to positively identify the reading as Home
-            if (model.isHomeReading() && ! FhirUtil.hasHomeSettingExtension(systolicObservation)) {
-                FhirUtil.addHomeSettingExtension(systolicObservation);
+            if (model.isHomeReading()) {
+                if ( ! FhirUtil.hasHomeSettingExtension(systolicObservation) ) {
+                    FhirUtil.addHomeSettingExtension(systolicObservation);
+                }
+
+                if ( ! FhirUtil.hasHomeSettingCoding(systolicObservation.getCode()) ) {
+                    FhirUtil.addHomeSettingCoding(systolicObservation.getCode());
+                }
             }
 
             FhirUtil.appendResourceToBundle(bundle, systolicObservation);
@@ -136,8 +148,14 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             appendIfMissing(diastolicObservation, fcm.getBpDiastolicCommonCoding());
 
             // CQF Ruler needs to see the Home Setting extension to positively identify the reading as Home
-            if (model.isHomeReading() && ! FhirUtil.hasHomeSettingExtension(diastolicObservation)) {
-                FhirUtil.addHomeSettingExtension(diastolicObservation);
+            if (model.isHomeReading()) {
+                if ( ! FhirUtil.hasHomeSettingExtension(diastolicObservation) ) {
+                    FhirUtil.addHomeSettingExtension(diastolicObservation);
+                }
+
+                if ( ! FhirUtil.hasHomeSettingCoding(diastolicObservation.getCode()) ) {
+                    FhirUtil.addHomeSettingCoding(diastolicObservation.getCode());
+                }
             }
 
             FhirUtil.appendResourceToBundle(bundle, diastolicObservation);
@@ -426,8 +444,6 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
                 .setSystem(OBSERVATION_CATEGORY_SYSTEM)
                 .setDisplay("vital-signs");
 
-        FhirUtil.addHomeSettingExtension(o);
-
         if (model.getSystolic() != null && model.getDiastolic() == null) {            // systolic only
             o.getCode().addCoding(fcm.getBpSystolicCommonCoding());
             o.setValue(new Quantity());
@@ -459,6 +475,9 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         } else {
             throw new DataException("BP observation requires systolic and / or diastolic");
         }
+
+        FhirUtil.addHomeSettingExtension(o);
+        FhirUtil.addHomeSettingCoding(o.getCode());
 
         o.setEffective(new DateTimeType(model.getReadingDate()));
 
@@ -505,6 +524,7 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         o.getCode().addCoding(fcm.getPulseCommonCoding());
 
         FhirUtil.addHomeSettingExtension(o);
+        FhirUtil.addHomeSettingCoding(o.getCode());
 
         o.setEffective(new DateTimeType(model.getReadingDate()));
 
