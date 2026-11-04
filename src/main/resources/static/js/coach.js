@@ -68,7 +68,19 @@ $(document).ready(function() {
 });
 
 $(document).on('click', '.anchor:not(.selected)', function() {
-    window.location.href = $(this).attr('data-href');
+    const rawHref = $(this).attr('data-href');
+    if (typeof rawHref !== 'string' || rawHref.trim() === '') {
+        return false;
+    }
+
+    try {
+        const parsedUrl = new URL(rawHref, window.location.origin);
+        if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+            window.location.assign(parsedUrl.toString());
+        }
+    } catch (e) {
+        return false;
+    }
 });
 
 $(document).on('click', 'a', function() {
