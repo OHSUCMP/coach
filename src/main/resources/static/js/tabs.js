@@ -1,16 +1,20 @@
 function setupTabs() {
-    let html = "";
+    let tabsContainer = $('#tabs');
+    tabsContainer.empty();
+
     $('.tabData').each(function() {
         let contentId = $(this).attr('id');
         let label = $(this).attr('data-label');
         let selected = ! $(this).hasClass('hidden');
 
-        html += '<div class="tab';
-        if (selected) html += ' selected';
-        html += '" data-contentId="' + contentId + '">' + label + '</div>\n';
-    });
+        let tab = $('<div></div>')
+            .addClass('tab')
+            .attr('data-contentId', contentId)
+            .text(label);
 
-    $('#tabs').html(html);
+        if (selected) tab.addClass('selected');
+        tabsContainer.append(tab);
+    });
 
     $(document).on('click', '.tab', function() {
         let previousTab = $('#tabs > .tab.selected');
