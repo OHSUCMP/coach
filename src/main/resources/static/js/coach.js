@@ -64,11 +64,6 @@ function pad(o, padChar, fillToLen) {
 
 $(document).ready(function() {
     enableHover('.link');
-    enableHover('.anchor');
-});
-
-$(document).on('click', '.anchor:not(.selected)', function() {
-    window.location.href = $(this).attr('data-href');
 });
 
 $(document).on('click', 'a', function() {
