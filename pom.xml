@@ -201,26 +201,73 @@
             <version>11.0.1</version>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/org.webjars/webjars-locator-lite -->
         <dependency>
             <groupId>org.webjars</groupId>
-            <artifactId>webjars-locator</artifactId>
-            <version>0.42</version>
+            <artifactId>webjars-locator-lite</artifactId>
+            <version>1.1.3</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.webjars/bootstrap -->
+        <!-- Source: https://mvnrepository.com/artifact/org.webjars/jquery -->
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>jquery</artifactId>
+            <version>3.7.1</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/org.webjars/jquery.inputmask -->
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>jquery.inputmask</artifactId>
+            <version>5.0.9</version>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/org.webjars/jquery-ui -->
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>jquery-ui</artifactId>
+            <version>1.14.2</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/org.webjars/bootstrap -->
         <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>bootstrap</artifactId>
-            <version>5.2.3</version>
+            <version>5.3.8</version>
+            <scope>compile</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.webjars/font-awesome -->
+        <!-- Source: https://mvnrepository.com/artifact/org.webjars/font-awesome -->
         <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>font-awesome</artifactId>
             <version>5.15.4</version>
+            <scope>compile</scope>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/org.webjars.npm/chart.js -->
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>chart.js</artifactId>
+            <version>3.9.1</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/org.webjars.npm/chartjs-adapter-date-fns -->
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>chartjs-adapter-date-fns</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/org.webjars.npm/chartjs-plugin-annotation -->
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>chartjs-plugin-annotation</artifactId>
+            <version>2.2.1</version>
+        </dependency>
     </dependencies>
 
    <build>

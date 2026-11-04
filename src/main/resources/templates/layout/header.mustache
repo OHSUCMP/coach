@@ -8,17 +8,22 @@
 
     {{>fragments/css}}
 
-    <link rel="stylesheet" href="/node_modules/jquery-ui-dist/jquery-ui.css">
-    <link rel="stylesheet" href="{{req.contextPath}}/webjars/font-awesome/css/all.min.css">
-    <link rel="stylesheet" href="{{req.contextPath}}/css/coach.css?v=3">
-    
-	{{! Page-specific stylesheets can be specified in the view model }}
-	{{#pageStyles}}
-	<link rel="stylesheet" href="{{req.contextPath}}/css/{{.}}">
-	{{/pageStyles}}
+    {{! Page-specific stylesheets can be specified in the view model }}
+    {{#pageStyles}}
+        <link rel="stylesheet" href="{{req.contextPath}}/css/{{.}}">
+    {{/pageStyles}}
 
-    <script type="text/javascript" src="{{req.contextPath}}/node_modules/jquery/dist/jquery.min.js"></script>
-    <script type="text/javascript" src="{{req.contextPath}}/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
+    {{>fragments/assets}}
+
+    {{! Webjars needed by page-specific scripts can be specified in the view model }}
+    {{#pageWebjars}}
+        <script type="text/javascript" src="{{req.contextPath}}/webjars/{{.}}"></script>
+    {{/pageWebjars}}
+
+    {{! Page-specific scripts can be specified in the view model }}
+    {{#pageScripts}}
+        <script type="text/javascript" src="{{req.contextPath}}/js/{{.}}"></script>
+    {{/pageScripts}}
 
     <script type="text/javascript">
         const IDLE_TIMEOUT_SECONDS = {{idleTimeoutSeconds}};
@@ -109,18 +114,6 @@
             validateSession();
         });
     </script>
-
-    <script type="text/javascript" src="{{req.contextPath}}/js/coach.js?v=1"></script>
-
-    {{#pageScripts}}
-	  {{! Page-specific scripts can be specified in the view model }}
-	  <script type="text/javascript" src="{{req.contextPath}}/js/{{.}}"></script>
-	{{/pageScripts}}
-
-    {{#pageNodeScripts}}
-	  {{! Page-specific scripts managed by node can be specified in the view model }}
-	  <script type="text/javascript" src="{{req.contextPath}}/node_modules/{{.}}"></script>
-    {{/pageNodeScripts}}
 </head>
 <body>
     <div id="timeoutCountdownContainer" class="modal">
