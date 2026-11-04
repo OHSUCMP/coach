@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.regex.Pattern;
 
 // These pages may be linked to in the recommendations. Don't change the URL.
 @Controller
@@ -29,6 +30,7 @@ public class ResourceController extends BaseController {
 
     private static final String WELCOME_VIDEO_ID_CONTROL = "m0751n7glxU";
     private static final String WELCOME_VIDEO_ID_INTERVENTION = "AQGLdXV9ZTE";
+    private static final Pattern SAFE_PDF_FILENAME_PATTERN = Pattern.compile("^[A-Za-z0-9._-]+\\.pdf$");
 
     @Autowired
     private ResourceService resourceService;
@@ -80,6 +82,11 @@ public class ResourceController extends BaseController {
     @GetMapping("/pdf/{filename}")
     public ResponseEntity<InputStreamResource> getPdf(HttpSession session, @PathVariable("filename") String filename) {
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
+
+        if (filename == null || !SAFE_PDF_FILENAME_PATTERN.matcher(filename).matches()) {
+            logger.warn("invalid pdf filename requested: {}", filename);
+            return ResponseEntity.badRequest().build();
+        }
 
         String path = switch (workspace.getActiveRandomizationGroup()) {
             case BASIC -> "control";
