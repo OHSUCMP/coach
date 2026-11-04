@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
 // These pages may be linked to in the recommendations. Don't change the URL.
@@ -83,7 +85,14 @@ public class ResourceController extends BaseController {
     public ResponseEntity<InputStreamResource> getPdf(HttpSession session, @PathVariable("filename") String filename) {
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
 
-        if (filename == null || !SAFE_PDF_FILENAME_PATTERN.matcher(filename).matches()) {
+        if (filename == null || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+            logger.warn("invalid pdf filename requested: {}", filename);
+            return ResponseEntity.badRequest().build();
+        }
+
+        Path normalizedFilenamePath = Paths.get(filename).getFileName();
+        String safeFilename = normalizedFilenamePath == null ? null : normalizedFilenamePath.toString();
+        if (safeFilename == null || !SAFE_PDF_FILENAME_PATTERN.matcher(safeFilename).matches()) {
             logger.warn("invalid pdf filename requested: {}", filename);
             return ResponseEntity.badRequest().build();
         }
@@ -93,13 +102,13 @@ public class ResourceController extends BaseController {
             case ENHANCED -> "intervention";
         };
 
-        String resName = "static/pdf/" + path + "/" + filename;
+        String resName = "static/pdf/" + path + "/" + safeFilename;
         ClassLoader classLoader = ResourceController.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(resName);
         if (inputStream != null) {
             InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentDisposition(ContentDisposition.inline().filename(filename).build());
+            headers.setContentDisposition(ContentDisposition.inline().filename(safeFilename).build());
             headers.setContentType(MediaType.APPLICATION_PDF);
             return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
         } else {
