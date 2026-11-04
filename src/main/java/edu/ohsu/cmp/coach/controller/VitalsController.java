@@ -62,9 +62,9 @@ public class VitalsController extends BaseController {
         model.addAttribute("homeReadings", homeReadings);
         model.addAttribute("pageStyles", new String[] { "vitals.css" });
         model.addAttribute("pageScripts", new String[] { "vitals.js?v=1", "form.js" });
-        model.addAttribute("pageNodeScripts", new String[] {
-                "inputmask/dist/jquery.inputmask.js",
-                "inputmask/dist/bindings/inputmask.binding.js"
+        model.addAttribute("pageWebjars", new String[] {
+                "jquery.inputmask/jquery.inputmask.js",
+                "jquery.inputmask/bindings/inputmask.binding.js"
         });
 
         auditService.doAudit(session.getId(), AuditSeverity.INFO, "visited vitals page");

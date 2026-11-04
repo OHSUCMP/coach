@@ -9,13 +9,6 @@
 			</div>
 		</footer>
 
-		{{>fragments/assets}}
-
-		{{#pageWebjars}}
-			{{! Webjars needed by page-specific scripts can be specified in the view model }}
-			<script type="text/javascript" src="{{req.contextPath}}/webjars/{{.}}"></script>
-		{{/pageWebjars}}
-
         <script type="text/javascript">
             function doRefresh(_callback) {
                 $.ajax({
