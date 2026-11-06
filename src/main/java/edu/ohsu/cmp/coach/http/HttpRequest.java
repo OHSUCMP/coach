@@ -101,36 +101,40 @@ public class HttpRequest {
         RequestConfig requestConfig = RequestConfig.custom()
                 .setCookieSpec(CookieSpecs.STANDARD)
                 .build();
-        CloseableHttpClient httpclient = HttpClientBuilder.create()
+        int code;
+
+        // close the client when done, to release its connection pool and sockets
+        try (CloseableHttpClient httpclient = HttpClientBuilder.create()
                 .setDefaultRequestConfig(requestConfig)
-                .build();
+                .build()) {
 
-        CloseableHttpResponse response = httpclient.execute(request);
+            CloseableHttpResponse response = httpclient.execute(request);
 
-        int code = response.getStatusLine().getStatusCode();
+            code = response.getStatusLine().getStatusCode();
 
-        try {
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                InputStream is = entity.getContent();
-                InputStreamReader isr = null;
-                BufferedReader br = null;
-                try {
-                    isr = new InputStreamReader(is);
-                    br = new BufferedReader(isr);
-                    int c = 0;
-                    while ((c = br.read()) != -1) {
-                        sb.append((char) c);
+            try {
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    InputStream is = entity.getContent();
+                    InputStreamReader isr = null;
+                    BufferedReader br = null;
+                    try {
+                        isr = new InputStreamReader(is);
+                        br = new BufferedReader(isr);
+                        int c = 0;
+                        while ((c = br.read()) != -1) {
+                            sb.append((char) c);
+                        }
+
+                    } finally {
+                        try { if (br != null) br.close(); } catch (Exception e) { }
+                        try { if (isr != null) isr.close(); } catch (Exception e) { }
                     }
-
-                } finally {
-                    try { if (br != null) br.close(); } catch (Exception e) { }
-                    try { if (isr != null) isr.close(); } catch (Exception e) { }
                 }
-            }
 
-        } finally {
-            try { response.close(); } catch (Exception e) { }
+            } finally {
+                try { response.close(); } catch (Exception e) { }
+            }
         }
 
         return new HttpResponse(code, sb.toString());

@@ -18,7 +18,7 @@ public class AccessToken {
     @Override
     public String toString() {
         return "AccessToken{" +
-                "accessToken='" + accessToken + '\'' +
+                "accessToken=" + (accessToken != null ? "[REDACTED]" : null) +    // never log credentials
                 ", tokenType='" + tokenType + '\'' +
                 ", expiresIn=" + expiresIn +
                 ", scope='" + scope + '\'' +

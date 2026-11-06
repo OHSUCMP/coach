@@ -23,6 +23,7 @@ import jakarta.servlet.http.HttpSession;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
 
 @Controller
 public class ContactController extends BaseController {
@@ -109,7 +110,7 @@ public class ContactController extends BaseController {
 
     private String replaceTokens(String s, Map<String, String> map) {
         for (Map.Entry<String, String> entry : map.entrySet()) {
-            s = s.replaceAll("\\{" + entry.getKey() + "}", entry.getValue());
+            s = s.replaceAll("\\{" + entry.getKey() + "}", Matcher.quoteReplacement(entry.getValue()));
         }
         return s;
     }

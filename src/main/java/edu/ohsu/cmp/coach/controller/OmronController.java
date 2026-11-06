@@ -41,7 +41,7 @@ public class OmronController extends BaseController {
             try {
                 AccessTokenResponse accessTokenResponse = omronService.requestAccessToken(code);
                 if (accessTokenResponse != null) {
-                    logger.debug("got Omron access token: " + accessTokenResponse.getAccessToken());
+                    logger.debug("got Omron access token");
                     workspace.setOmronTokenData(new OmronTokenData(accessTokenResponse));
                 }
             } catch (Exception e) {

@@ -182,7 +182,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
 
     private String buildQuery(String template, Map<String, String> params, Integer limit) {
         for (Map.Entry<String, String> entry : params.entrySet()) {
-            template = template.replaceAll(entry.getKey(), entry.getValue());
+            template = template.replaceAll(entry.getKey(), Matcher.quoteReplacement(entry.getValue()));
         }
         template = template.replaceAll(TOKEN_RELATIVE_DATE, buildRelativeDate(extract(TOKEN_RELATIVE_DATE, template)));
         return limit != null ?
@@ -219,7 +219,9 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 }
             }
 
-            return FHIR_DATE_FORMAT.format(cal.getTime());
+            synchronized (FHIR_DATE_FORMAT) {   // SimpleDateFormat is not thread-safe
+                return FHIR_DATE_FORMAT.format(cal.getTime());
+            }
         }
 
         return "";

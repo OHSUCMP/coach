@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class SessionService extends AbstractService {
@@ -36,7 +37,7 @@ public class SessionService extends AbstractService {
     private final Map<String, ProvisionalSessionCacheData> provisionalCache;
 
     public SessionService() {
-        provisionalCache = new HashMap<>();
+        provisionalCache = new ConcurrentHashMap<>();
     }
 
     public void prepareSession(String sessionId, FHIRCredentials credentials, Audience audience, RandomizationGroup randomizationGroup,

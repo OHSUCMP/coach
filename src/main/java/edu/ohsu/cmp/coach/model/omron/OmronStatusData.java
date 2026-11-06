@@ -28,9 +28,10 @@ public class OmronStatusData {
     }
 
     public String getLastUpdatedString() {
-        return lastUpdated != null ?
-                OMRON_LAST_UPDATED.format(lastUpdated) :
-                "";
+        if (lastUpdated == null) return "";
+        synchronized (OMRON_LAST_UPDATED) {     // SimpleDateFormat is not thread-safe
+            return OMRON_LAST_UPDATED.format(lastUpdated);
+        }
     }
 
     public Integer getCurrentlyProcessing() {

@@ -121,7 +121,7 @@ public class BloodPressureModel extends AbstractVitalsModel {
     }
 
     public BloodPressureModel(MyOmronVitals vitals, FhirConfigManager fcm) throws ParseException, DataException {
-        super(ObservationSource.OMRON, null, OMRON_DATETIME_FORMAT.parse(vitals.getDateTimeLocal() + vitals.getDateTimeUtcOffset()), fcm);
+        super(ObservationSource.OMRON, null, parseOmronDateTime(vitals.getDateTimeLocal() + vitals.getDateTimeUtcOffset()), fcm);
         sourceOmronBloodPressureModel = new OmronBloodPressureModel(vitals);
         localDatabaseId = vitals.getId();
         systolic = new QuantityModel(vitals.getSystolic(), vitals.getBloodPressureUnits());

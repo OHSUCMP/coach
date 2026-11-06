@@ -86,14 +86,14 @@ public class ResourceController extends BaseController {
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
 
         if (filename == null || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-            logger.warn("invalid pdf filename requested: {}", filename);
+            logger.warn("invalid pdf filename requested: {}", sanitizeForLog(filename));
             return ResponseEntity.badRequest().build();
         }
 
         Path normalizedFilenamePath = Paths.get(filename).getFileName();
         String safeFilename = normalizedFilenamePath == null ? null : normalizedFilenamePath.toString();
         if (safeFilename == null || !SAFE_PDF_FILENAME_PATTERN.matcher(safeFilename).matches()) {
-            logger.warn("invalid pdf filename requested: {}", filename);
+            logger.warn("invalid pdf filename requested: {}", sanitizeForLog(filename));
             return ResponseEntity.badRequest().build();
         }
 
@@ -173,8 +173,13 @@ public class ResourceController extends BaseController {
 
             return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
         } else {
-            logger.warn("requested site-specific resource key does not exist: " + key);
+            logger.warn("requested site-specific resource key does not exist: {}", sanitizeForLog(key));
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    // prevent log forging via CR/LF characters in user-supplied input
+    private static String sanitizeForLog(String s) {
+        return s == null ? null : s.replaceAll("[\\r\\n]", "_");
     }
 }

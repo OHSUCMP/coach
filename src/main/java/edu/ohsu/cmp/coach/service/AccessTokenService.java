@@ -41,6 +41,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AccessTokenService {
@@ -64,7 +65,7 @@ public class AccessTokenService {
     @Value("${smart.backend.basic-auth.secret}")
     private String basicAuthSecret;
 
-    private final Map<String, String> tokenAuthUrlMap = new HashMap<>();
+    private final Map<String, String> tokenAuthUrlMap = new ConcurrentHashMap<>();
 
     public boolean isAccessTokenEnabled() {
         return isJWTEnabled() || isBasicAuthEnabled();
@@ -131,7 +132,7 @@ public class AccessTokenService {
         if (isJWTEnabled()) {
             String jwt = createJWT(tokenAuthUrl);
 
-            logger.debug("requesting access token from tokenAuthUrl=" + tokenAuthUrl + " with jwt=" + jwt);
+            logger.debug("requesting access token from tokenAuthUrl=" + tokenAuthUrl + " with jwt");
             if (logger.isDebugEnabled()) {
                 logger.debug("JWT is valid? " + isJWTValid(jwt));
             }
@@ -142,7 +143,7 @@ public class AccessTokenService {
         } else if (isBasicAuthEnabled()) {
             String authorization = "Basic " + Base64.encode(clientId + ":" + basicAuthSecret);
 
-            logger.debug("requesting access token from tokenAuthUrl=" + tokenAuthUrl + " with authorization=" + authorization);
+            logger.debug("requesting access token from tokenAuthUrl=" + tokenAuthUrl + " with Basic authorization");
 
             requestHeaders.put("Authorization", authorization);
 

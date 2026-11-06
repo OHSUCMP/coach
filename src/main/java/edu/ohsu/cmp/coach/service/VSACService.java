@@ -62,6 +62,12 @@ public class VSACService {
         String xml = getRawValueSet(oid);
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        // prevent XXE (XML External Entity) processing
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
         DocumentBuilder builder = factory.newDocumentBuilder();
 
         InputStream in = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
@@ -102,9 +108,12 @@ public class VSACService {
                 xmlValueSet.getChildren("ns0:Status").get(0).getText() :
                 null;
 
-        Date revisionDate = xmlValueSet.hasChildren("ns0:RevisionDate") ?
-                DATE_FORMAT.parse(xmlValueSet.getChildren("ns0:RevisionDate").get(0).getText()) :
-                null;
+        Date revisionDate = null;
+        if (xmlValueSet.hasChildren("ns0:RevisionDate")) {
+            synchronized (DATE_FORMAT) {        // SimpleDateFormat is not thread-safe
+                revisionDate = DATE_FORMAT.parse(xmlValueSet.getChildren("ns0:RevisionDate").get(0).getText());
+            }
+        }
 
         ValueSet valueSet = new ValueSet(
                 xmlValueSet.getAttribute("ID"),

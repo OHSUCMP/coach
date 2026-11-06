@@ -158,7 +158,7 @@ public class FHIRService {
 
             int page = 2;
             while (bundle.getLink(Bundle.LINK_NEXT) != null) {
-                bundle = fcc.getClient().loadPage().next(bundle).execute();
+                bundle = client.loadPage().next(bundle).execute();  // use same client (patient or backend) as the initial search
 
                 logger.info("search (page " + page + "): " + fhirQuery + " (size=" + bundle.getTotal() + ")");
                 if (logger.isDebugEnabled()) {

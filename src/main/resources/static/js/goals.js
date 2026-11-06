@@ -23,10 +23,10 @@ function populateOtherGoals() {
 
             // goal info and actions
             html += "<div class='col-lg-6 mt-2'>";
-            html += "<div class='card h-100 goal' data-extGoalId='" + g.extGoalId + "'>";
-            html += "<div class='card-header fw-bold'>" + g.referenceDisplay + "</div>";
+            html += "<div class='card h-100 goal' data-extGoalId='" + escapeHtml(g.extGoalId) + "'>";
+            html += "<div class='card-header fw-bold'>" + escapeHtml(g.referenceDisplay) + "</div>";
             html += "<div class='card-body'>";
-            html += "<p class='mb-0'><strong>Your goal:</strong> " + g.goalText + "</p>";
+            html += "<p class='mb-0'><strong>Your goal:</strong> " + escapeHtml(g.goalText) + "</p>";
             html += "<p class='mb-0'><strong>Target completion date:</strong> " + toDateString(g.targetDate) + "</p>";
             html += "<p class='mb-0'><strong>Current status:</strong> <span class='" + c + "'>" + g.achievementStatusLabel + "</span></p>";
             html += "<div class='mt-4 d-flex justify-content-evenly'>";

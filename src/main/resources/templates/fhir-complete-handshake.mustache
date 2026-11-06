@@ -39,7 +39,7 @@
             }).fail(function (jqXHR) {
                 try {
                     let response = JSON.parse(jqXHR.responseText);
-                    $('.response').html("Error " + jqXHR.status + ": " + (response.message ? response.message : "An error occurred. Try again later or contact study staff."));
+                    $('.response').text("Error " + jqXHR.status + ": " + (response.message ? response.message : "An error occurred. Try again later or contact study staff."));
                 } catch (e) {
                     $('.response').html("Error " + jqXHR.status + ": An error occurred. Try again later or contact study staff.");
                 }

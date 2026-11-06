@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -105,6 +106,14 @@ public class SessionController extends BaseController {
                                             @RequestParam String bearerToken,
                                             @RequestParam String patientId,
                                             @RequestParam String userId) throws ConfigurationException, REDCapException, IOException {
+
+        // serverUrl is supplied by the client; only permit the configured FHIR server(s) to prevent session
+        // establishment against an arbitrary (attacker-controlled) server
+        if ( ! isPermittedServerUrl(serverUrl) ) {
+            logger.warn("rejecting prepare-session for session " + session.getId() + " - serverUrl does not match " +
+                    "smart.patient.iss or smart.provider.iss");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         Audience audience;
         if (StringUtils.equals(clientId, patientClientId)) {
@@ -201,6 +210,14 @@ public class SessionController extends BaseController {
         } else {
             throw new CaseNotHandledException("no case exists for handling audience=" + audience);
         }
+    }
+
+    private boolean isPermittedServerUrl(String serverUrl) {
+        String s = StringUtils.removeEnd(serverUrl, "/");   // tolerate a trailing slash only
+        return StringUtils.isNotBlank(s) && (
+                StringUtils.equals(s, StringUtils.removeEnd(patientIss, "/")) ||
+                StringUtils.equals(s, StringUtils.removeEnd(providerIss, "/"))
+        );
     }
 
     @PostMapping("validate-session")
