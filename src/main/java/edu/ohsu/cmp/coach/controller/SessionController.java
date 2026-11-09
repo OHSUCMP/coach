@@ -243,6 +243,7 @@ public class SessionController extends BaseController {
     public String logout(HttpSession session) {
         auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out"); // must occur before expire action
         sessionService.expireAll(session.getId());
+        session.invalidate();
         return "logout";
     }
 
@@ -250,12 +251,14 @@ public class SessionController extends BaseController {
     public String inactivityLogout(HttpSession session) {
         auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out due to inactivity"); // must occur before expire action
         sessionService.expireAll(session.getId());
+        session.invalidate();
         return "inactivity-logout";
     }
 
     @PostMapping("clear-session")
     public ResponseEntity<?> clearSession(HttpSession session) {
         sessionService.expireAll(session.getId());
+        session.invalidate();
         return ResponseEntity.ok("session cleared");
     }
 
