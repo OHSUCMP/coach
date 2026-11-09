@@ -5,11 +5,11 @@ import edu.ohsu.cmp.coach.entity.ValueSet;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.MedicationModel;
+import edu.ohsu.cmp.coach.util.CodeSystemUtil;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.MedicationRequest;
 import org.hl7.fhir.r4.model.MedicationStatement;
-import org.opencds.cqf.tooling.terminology.CodeSystemLookupDictionary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,7 +120,7 @@ public class MedicationService extends AbstractService {
 
             boolean matches = false;
             for (Concept c : concepts) {
-                String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
+                String codeSystem = CodeSystemUtil.getUrl(c.getCodeSystem());
                 if (item.matches(codeSystem, c.getCode())) {
                     logger.debug("   - matches codeSystem=" + codeSystem + ", code=" + c.getCode() + "!");
                     matches = true;
