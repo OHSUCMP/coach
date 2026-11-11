@@ -2,8 +2,9 @@ package edu.ohsu.cmp.coach.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
-import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import ca.uhn.fhir.rest.gclient.IQuery;
+import ca.uhn.fhir.rest.gclient.IReadExecutable;
+import ca.uhn.fhir.rest.server.exceptions.*;
 import edu.ohsu.cmp.coach.exception.*;
 import edu.ohsu.cmp.coach.fhir.CompositeBundle;
 import edu.ohsu.cmp.coach.fhir.FhirStrategy;
@@ -26,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,11 +37,11 @@ import java.util.function.Function;
 public class FHIRService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("${socket.timeout:300000}")
-    private Integer socketTimeout;
-
     @Value("${fhir.search.count}")
     private int searchCount;
+
+    @Value("${fhir.retry.count:5}")
+    private Integer maxRetries;
 
     @Value("${smart.backend.iss}")
     private String backendIss;
@@ -69,11 +71,16 @@ public class FHIRService {
 
     public <T extends IBaseResource> T readByIdentifier(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
                                                         Identifier identifier) throws DataException, ConfigurationException, IOException {
+        return readByIdentifier(fcc, strategy, aClass, identifier, null);
+    }
+
+    public <T extends IBaseResource> T readByIdentifier(FHIRCredentialsWithClient fcc, FhirStrategy strategy, Class<T> aClass,
+                                                        Identifier identifier, Map<String, String> headers) throws DataException, ConfigurationException, IOException {
         String identifierString = FhirUtil.toIdentifierString(identifier);
-        Bundle b = search(fcc, strategy, aClass.getSimpleName() + "/?identifier=" + identifierString);
+        Bundle b = search(fcc, strategy, aClass.getSimpleName() + "/?identifier=" + identifierString, headers);
 
         if (b.getEntry().isEmpty()) {
-            logger.warn("couldn't find resource with identifier=" + identifierString);
+            logger.warn("couldn't find resource with identifier={}", identifierString);
             return null;
         }
 
@@ -83,37 +90,82 @@ public class FHIRService {
             r = b.getEntryFirstRep().getResource();
 
             if (b.getEntry().size() == 1) {
-                logger.debug("found " + r.getClass().getName() + " with identifier=" + identifierString);
+                logger.debug("found {} with identifier={}", r.getClass().getName(), identifierString);
 
             } else {
-                logger.warn("found " + b.getEntry().size() + " resources associated with identifier=" + identifierString +
-                        "!  returning first match (" + r.getClass().getName() + ") -");
+                logger.warn("found {} resources associated with identifier={}!  returning first match ({}) -",
+                        b.getEntry().size(), identifierString, r.getClass().getName());
             }
 
             return aClass.cast(r);
 
         } catch (ClassCastException cce) {
-            logger.error("caught " + cce.getClass().getName() + " attempting to cast " + r.getClass().getName() + " to " + aClass.getName());
-            logger.debug(r.getClass().getName() + " : " + FhirUtil.toJson(r));
+            String classNameForLogging = r != null ?
+                    r.getClass().getSimpleName() :
+                    "null";
+
+            logger.error("caught {} attempting to cast {} to {}", cce.getClass().getName(), classNameForLogging, aClass.getName());
+            if (logger.isDebugEnabled()) {
+                logger.debug("{} : {}", classNameForLogging, FhirUtil.toJsonForLogging(r));
+            }
             throw cce;
         }
     }
 
     public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, @NotNull Class<T> aClass,
                                                        String reference) throws DataException, ConfigurationException, IOException {
-        logger.info("read: " + reference + " (" + aClass.getSimpleName() + ")");
-        String id = FhirUtil.extractIdFromReference(reference);
-        IGenericClient client = buildClient(fcc, strategy);
-        try {
-            return client.read()
-                    .resource(aClass)
-                    .withId(id)
-                    .execute();
+        return readByReference(fcc, strategy, aClass, reference, null);
+    }
 
-        } catch (InvalidRequestException ire) {
-            logger.error("caught " + ire.getClass().getName() + " reading " + aClass.getName() + " with id='" + id + "' - " + ire.getMessage());
-            throw ire;
+    public <T extends IBaseResource> T readByReference(FHIRCredentialsWithClient fcc, FhirStrategy strategy, @NotNull Class<T> aClass,
+                                                       String reference, Map<String, String> headers) throws DataException, ConfigurationException, IOException {
+        return readByReference(buildClient(fcc, strategy), aClass, reference, headers);
+    }
+
+    public <T extends IBaseResource> T readByReference(IGenericClient client, @NotNull Class<T> aClass, String reference) throws DataException, ConfigurationException, IOException {
+        return readByReference(client, aClass, reference, null);
+    }
+
+    public <T extends IBaseResource> T readByReference(IGenericClient client, @NotNull Class<T> aClass, String reference, Map<String, String> headers) throws DataException, ConfigurationException, IOException {
+        logger.info("read: {}", reference);
+        String id = FhirUtil.extractIdFromReference(reference);
+
+        int attempt = 0;
+        while (attempt++ < maxRetries) {
+            try {
+                IReadExecutable<T> read = client.read()
+                        .resource(aClass)
+                        .withId(id);
+
+                if (headers != null) {
+                    for (Map.Entry<String, String> entry : headers.entrySet()) {
+                        read = read.withAdditionalHeader(entry.getKey(), entry.getValue());
+                    }
+                }
+
+                return read.execute();
+
+            } catch (InvalidRequestException ire) {
+                logger.error("caught {} reading {} - {}", ire.getClass().getName(), reference, ire.getMessage());
+                throw ire;
+
+            } catch (InternalErrorException iee) {
+                // HTTP 500 Internal Server Error - retry
+                if (canRetry(attempt)) {
+                    logger.debug("caught {} while reading: {} - retrying -", iee.getClass().getSimpleName(), reference);
+                } else {
+                    throw iee;
+                }
+
+            } catch (UnclassifiedServerFailureException usfe) {
+                if (usfe.getStatusCode() == 504 && canRetry(attempt)) { // gateway timeout - retry
+                    logger.debug("caught HTTP 504 Bad Gateway while reading {} - retrying -", reference);
+                } else {
+                    throw usfe;
+                }
+            }
         }
+        throw new DataException("failed to read " + reference + " after " + maxRetries + " attempts");
     }
 
     // search function to facilitate getting large datasets involving multi-paginated queries
@@ -121,48 +173,128 @@ public class FHIRService {
         return search(fcc, strategy, fhirQuery, null);
     }
 
-    public Bundle search(FHIRCredentialsWithClient fcc, FhirStrategy strategy, String fhirQuery,
-                         Function<ResourceWithBundle, Boolean> validityFunction) throws DataException, ConfigurationException, IOException {
+    public Bundle search(FHIRCredentialsWithClient fcc, FhirStrategy strategy, String fhirQuery, Map<String, String> headers) throws DataException, ConfigurationException, IOException {
+        return search(fcc, strategy, fhirQuery, headers, null, null);
+    }
 
-        if (StringUtils.isBlank(fhirQuery) || strategy == FhirStrategy.DISABLED) {
+    public Bundle search(FHIRCredentialsWithClient fcc, FhirStrategy strategy, String fhirQuery,
+                         Function<ResourceWithBundle, Boolean> validityFunction,
+                         Function<ResourceWithBundle, List<Resource>> supplementalResourcesFunction) throws DataException, ConfigurationException, IOException {
+        return search(fcc, strategy, fhirQuery, null, validityFunction, supplementalResourcesFunction);
+    }
+
+    public Bundle search(FHIRCredentialsWithClient fcc, FhirStrategy strategy, String fhirQuery, Map<String, String> headers,
+                         Function<ResourceWithBundle, Boolean> validityFunction,
+                         Function<ResourceWithBundle, List<Resource>> supplementalResourcesFunction) throws DataException, ConfigurationException, IOException {
+        if (strategy == FhirStrategy.DISABLED) {
             return null;
         }
 
-        logger.info("search: executing query: " + fhirQuery);
-
         IGenericClient client = buildClient(fcc, strategy);
 
-        Bundle bundle;
-        try {
-            bundle = client.search()
-                    .byUrl(fcc.getCredentials().getServerURL() + '/' + fhirQuery)
-                    .count(searchCount)
-                    .accept("application/fhir+json")        // required for Cerner
-                    .returnBundle(Bundle.class)
-                    .execute();
+        return search(client, fcc.getCredentials().getServerURL(), fhirQuery, headers, validityFunction, supplementalResourcesFunction);
+    }
 
-            // bundle.getTotal() may be null and if so it will return 0, even if there are many entries.  Cerner does this
-            logger.info("search: got Bundle with total=" + bundle.getTotal() + ", entries=" + bundle.getEntry().size() + " for query: " + fhirQuery);
-            if (logger.isDebugEnabled()) {
-                logger.debug("bundle = " + FhirUtil.toJson(bundle));
-            }
+    public Bundle search(IGenericClient client, String fhirServerURL, String fhirQuery) throws DataException, ConfigurationException, IOException {
+        return search(client, fhirServerURL, fhirQuery, null);
+    }
 
-        } catch (InvalidRequestException ire) {
-            logger.error("caught " + ire.getClass().getName() + " executing search: " + fhirQuery, ire);
-            throw ire;
+    public Bundle search(IGenericClient client, String fhirServerURL, String fhirQuery, Map<String, String> headers) throws DataException, ConfigurationException, IOException {
+        return search(client, fhirServerURL, fhirQuery, headers, null, null);
+    }
+
+    public Bundle search(IGenericClient client, String fhirServerURL, String fhirQuery,
+                         Function<ResourceWithBundle, Boolean> validityFunction,
+                         Function<ResourceWithBundle, List<Resource>> supplementalResourcesFunction) throws DataException, ConfigurationException, IOException {
+        return search(client, fhirServerURL, fhirQuery, null, validityFunction, supplementalResourcesFunction);
+    }
+
+    public Bundle search(IGenericClient client, String fhirServerURL, String fhirQuery, Map<String, String> headers,
+                         Function<ResourceWithBundle, Boolean> validityFunction,
+                         Function<ResourceWithBundle, List<Resource>> supplementalResourcesFunction) throws DataException, ConfigurationException, IOException {
+
+        if (StringUtils.isBlank(fhirQuery)) {
+            return null;
         }
 
-        if (bundle.getLink(Bundle.LINK_NEXT) != null) {
+        logger.info("search: executing query: {}", fhirQuery);
+
+        Bundle bundle = null;
+        int attempt = 0;
+        while (attempt++ < maxRetries) {
+            try {
+                IQuery<Bundle> query = client.search()
+                        .byUrl(fhirServerURL + '/' + fhirQuery)
+                        .count(searchCount)
+                        .accept("application/fhir+json")        // required for Cerner
+                        .returnBundle(Bundle.class);
+
+                if (headers != null) {
+                    for (Map.Entry<String, String> entry : headers.entrySet()) {
+                        query = query.withAdditionalHeader(entry.getKey(), entry.getValue());
+                    }
+                }
+
+                bundle = query.execute();
+
+                // bundle.getTotal() may be null and if so it will return 0, even if there are many entries.  Cerner does this
+                logger.info("search: got Bundle with total={}, entries={} for query: {}", bundle.getTotal(), bundle.getEntry().size(), fhirQuery);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("bundle = {}", FhirUtil.toJsonForLogging(bundle));
+                }
+                break;
+
+            } catch (InvalidRequestException ire) {
+                logger.error("caught {} executing search: {}", ire.getClass().getName(), fhirQuery, ire);
+                throw ire;
+
+            } catch (InternalErrorException iee) {
+                // HTTP 500 Internal Server Error - retry
+                if (canRetry(attempt)) {
+                    logger.debug("caught {} executing search: {} - retrying", iee.getClass().getSimpleName(), fhirQuery);
+                } else {
+                    throw iee;
+                }
+
+            } catch (UnclassifiedServerFailureException usfe) {
+                if (usfe.getStatusCode() == 504 && canRetry(attempt)) { // gateway timeout - retry
+                    logger.debug("caught HTTP 504 Bad Gateway executing search: {} - retrying -", fhirQuery);
+                } else {
+                    throw usfe;
+                }
+            }
+        }
+
+        if (bundle != null && bundle.getLink(Bundle.LINK_NEXT) != null) {
             CompositeBundle compositeBundle = new CompositeBundle();
             compositeBundle.consume(bundle);
 
             int page = 2;
             while (bundle.getLink(Bundle.LINK_NEXT) != null) {
-                bundle = client.loadPage().next(bundle).execute();  // use same client (patient or backend) as the initial search
+                if (Thread.currentThread().isInterrupted()) {
+                    // stop requesting pages - the task this is running in is being shut down.
+                    // isInterrupted() doesn't clear the flag, so callers still see the interrupt
+                    throw new DataException("interrupted paginating search: " + fhirQuery);
+                }
 
-                logger.info("search (page " + page + "): " + fhirQuery + " (size=" + bundle.getTotal() + ")");
+                attempt = 0;
+                while (attempt++ < maxRetries) {
+                    try {
+                        bundle = client.loadPage().next(bundle).execute();
+                        break;
+
+                    } catch (UnclassifiedServerFailureException usfe) {
+                        if (usfe.getStatusCode() == 504 && canRetry(attempt)) { // gateway timeout - retry
+                            logger.debug("caught HTTP 504 Bad Gateway getting page {} for search: {} - retrying -", page, fhirQuery);
+                        } else {
+                            throw usfe;
+                        }
+                    }
+                }
+
+                logger.info("search (page {}): {} (size={})", page, fhirQuery, bundle.getTotal());
                 if (logger.isDebugEnabled()) {
-                    logger.debug("bundle = " + FhirUtil.toJson(bundle));
+                    logger.debug("bundle = {}", FhirUtil.toJsonForLogging(bundle));
                 }
 
                 compositeBundle.consume(bundle);
@@ -176,6 +308,11 @@ public class FHIRService {
         if (validityFunction != null) {
             filterInvalidResources(bundle, validityFunction);
         }
+
+        if (supplementalResourcesFunction != null) {
+            appendSupplementalResources(bundle, supplementalResourcesFunction);
+        }
+
         return bundle;
     }
 
@@ -184,7 +321,7 @@ public class FHIRService {
         IGenericClient client = buildClient(fcc, strategy);
 
         if (logger.isDebugEnabled()) {
-            logger.debug("transacting " + resource.getClass().getSimpleName() + ": " + FhirUtil.toJson(resource));
+            logger.debug("transacting {}: {}", resource.getClass().getSimpleName(), FhirUtil.toJsonForLogging(resource));
         }
 
         MethodOutcome outcome = client.create()
@@ -192,7 +329,7 @@ public class FHIRService {
                 .withAdditionalHeader("Prefer", "return=representation")
                 .execute();
 
-        T t = null;
+        T t;
         try {
             if (outcome.getResource() != null) {
                 t = (T) outcome.getResource();
@@ -218,20 +355,20 @@ public class FHIRService {
             }
 
         } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " transacting " + resource.getClass().getSimpleName() +
-                    ": " + FhirUtil.toJson(resource), e);
+            logger.error("caught {} transacting {} - {}", e.getClass().getName(), resource.getClass().getSimpleName(), e.getMessage(), e);
 
             if (logger.isDebugEnabled()) {
-                logger.debug("outcome=" + outcome);
-                if (outcome != null) logger.debug("response status code=" + outcome.getResponseStatusCode());
+                logger.debug("resource={}", FhirUtil.toJsonForLogging(resource));
+                logger.debug("outcome={}", outcome);
+                if (outcome != null) logger.debug("response status code={}", outcome.getResponseStatusCode());
                 if (outcome != null && outcome.getResponseHeaders() != null) {
                     logger.debug("outcome response headers:");
                     for (Map.Entry<String, List<String>> entry : outcome.getResponseHeaders().entrySet() ) {
-                        logger.debug(entry.getKey() + "=" + StringUtils.join(entry.getValue(), ","));
+                        logger.debug("{} : {}", entry.getKey(), StringUtils.join(entry.getValue(), ","));
                     }
                 }
-                if (outcome != null && outcome.getOperationOutcome() != null) {
-                    logger.debug("response operation outcome=" + FhirUtil.toJson(outcome.getOperationOutcome()));
+                if (logger.isDebugEnabled() && outcome != null && outcome.getOperationOutcome() != null) {
+                    logger.debug("response operation outcome={}", FhirUtil.toJsonForLogging(outcome.getOperationOutcome()));
                 }
             }
 
@@ -260,7 +397,7 @@ public class FHIRService {
                     Resource resource = item.getResource();
                     if ( ! accessToken.providesWriteAccess(resource.getClass()) ) {
                         if (stripIfNotInScope) {
-                            logger.warn("stripping " + resource.getClass().getName() + " with id=" + resource.getId() + " from transaction - write permission not in scope");
+                            logger.warn("stripping {}/{} from transaction - write permission not in scope", resource.getClass().getSimpleName(), resource.getId());
                             iter.remove();
                         } else {
                             throw new ScopeException("scope does not permit writing " + resource.getClass().getName());
@@ -268,9 +405,7 @@ public class FHIRService {
                     }
                 }
 
-                client = FhirUtil.buildClient(getBackendServerURL(fcc),
-                        accessToken.getAccessToken(),
-                        socketTimeout);
+                client = FhirUtil.buildClient(fcc.getClient().getFhirContext(), getBackendServerURL(fcc), accessToken.getAccessToken());
 
             } else {
                 throw new ConfigurationException("BACKEND context requested but JWT not defined");
@@ -287,7 +422,7 @@ public class FHIRService {
         }
 
         if (logger.isDebugEnabled()) {
-            logger.debug("transacting Bundle: " + FhirUtil.toJson(bundle));
+            logger.debug("transacting Bundle: {}", FhirUtil.toJsonForLogging(bundle));
         }
 
         Bundle response = client.transaction().withBundle(bundle)
@@ -295,7 +430,7 @@ public class FHIRService {
                 .execute();
 
         if (logger.isDebugEnabled()) {
-            logger.debug("transaction response: " + FhirUtil.toJson(response));
+            logger.debug("transaction response: {}", FhirUtil.toJsonForLogging(response));
         }
 
         return response;
@@ -303,9 +438,13 @@ public class FHIRService {
 
 
 
-//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
 // private methods
 //
+
+    private boolean canRetry(int attempt) {
+        return attempt < maxRetries && ! Thread.currentThread().isInterrupted();
+    }
 
     private String getBackendServerURL(FHIRCredentialsWithClient fcc) {
         return StringUtils.isNotBlank(backendIss) ?
@@ -318,9 +457,7 @@ public class FHIRService {
             if (accessTokenService.isAccessTokenEnabled()) {
                 AccessToken accessToken = accessTokenService.getAccessToken(fcc);
 
-                return FhirUtil.buildClient(getBackendServerURL(fcc),
-                        accessToken.getAccessToken(),
-                        socketTimeout);
+                return FhirUtil.buildClient(fcc.getClient().getFhirContext(), getBackendServerURL(fcc), accessToken.getAccessToken());
 
             } else {
                 throw new ConfigurationException("BACKEND context requested but JWT not defined");
@@ -347,6 +484,31 @@ public class FHIRService {
                     if ( ! isValid ) {
                         iter.remove();
                     }
+                }
+            }
+        }
+    }
+
+    private void appendSupplementalResources(Bundle bundle, Function<ResourceWithBundle, List<Resource>> supplementalResourcesFunction) {
+        if (bundle != null && bundle.hasEntry()) {
+            List<Resource> resources = new ArrayList<>();
+            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+                if (entry.hasResource()) {
+                    resources.add(entry.getResource());
+                }
+            }
+
+            for (Resource resource : resources) {
+                try {
+                    List<Resource> list = supplementalResourcesFunction.apply(new ResourceWithBundle(resource, bundle));
+                    if (list != null) {
+                        for (Resource supplementalResource : list) {
+                            FhirUtil.appendResourceToBundle(bundle, supplementalResource);
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("caught {} while appending supplemental resources for {}/{}", e.getClass().getName(), resource.getClass().getSimpleName(), resource.getId(), e);
+                    if (e instanceof AuthenticationException ae) throw ae;
                 }
             }
         }

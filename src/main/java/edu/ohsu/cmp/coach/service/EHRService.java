@@ -16,7 +16,6 @@ import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Nullable;
@@ -40,9 +39,6 @@ public class EHRService extends AbstractService {
 
     private static final String CONDITION_CLINICALSTATUS_SYSTEM = "http://terminology.hl7.org/CodeSystem/condition-clinical";
     private static final String CONDITION_VERIFICATIONSTATUS_SYSTEM = "http://terminology.hl7.org/CodeSystem/condition-ver-status";
-
-    @Value("${security.salt}")
-    private String salt;
 
     @Autowired
     private FHIRService fhirService;
@@ -96,7 +92,7 @@ public class EHRService extends AbstractService {
 
                         return true;
                     }
-                }
+                }, null
         );
 
         List<Encounter> list = new ArrayList<>();
@@ -156,7 +152,8 @@ public class EHRService extends AbstractService {
 
                         return true;
                     }
-        });
+                }, null
+        );
     }
 
     public Bundle getEncounterDiagnosisConditions(String sessionId) throws DataException, ConfigurationException, IOException {
@@ -206,7 +203,7 @@ public class EHRService extends AbstractService {
 
                         return true;
                     }
-                }
+                }, null
         );
     }
 
@@ -241,7 +238,7 @@ public class EHRService extends AbstractService {
 
                         return true;
                     }
-                }
+                }, null
         );
     }
 
@@ -280,7 +277,7 @@ public class EHRService extends AbstractService {
 
                         return true;
                     }
-                }
+                }, null
         );
     }
 
@@ -346,7 +343,7 @@ public class EHRService extends AbstractService {
                         }
                         return true;
                     }
-                }
+                }, null
         );
 
         if (bundle == null) return null;    // optional considering MedicationRequest
@@ -461,7 +458,7 @@ public class EHRService extends AbstractService {
 
                         return true;
                     }
-                }
+                }, null
         );
 
         if (bundle == null) return null;    // optional considering MedicationStatement
@@ -530,7 +527,7 @@ public class EHRService extends AbstractService {
 
                         return true;
                     }
-                }
+                }, null
         );
     }
 

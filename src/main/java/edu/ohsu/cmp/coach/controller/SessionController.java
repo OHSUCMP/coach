@@ -12,7 +12,7 @@ import edu.ohsu.cmp.coach.model.RedcapDataAccessGroup;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.service.PatientService;
 import edu.ohsu.cmp.coach.service.REDCapService;
-import edu.ohsu.cmp.coach.session.SessionService;
+import edu.ohsu.cmp.coach.service.SessionService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

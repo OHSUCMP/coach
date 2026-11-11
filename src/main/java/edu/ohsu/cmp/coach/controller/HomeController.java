@@ -10,7 +10,7 @@ import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.model.redcap.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.service.*;
 import edu.ohsu.cmp.coach.session.ProvisionalSessionCacheData;
-import edu.ohsu.cmp.coach.session.SessionService;
+import edu.ohsu.cmp.coach.service.SessionService;
 import edu.ohsu.cmp.coach.util.FhirUtil;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.lang3.StringUtils;

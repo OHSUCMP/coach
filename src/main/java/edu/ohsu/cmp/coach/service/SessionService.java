@@ -1,14 +1,18 @@
-package edu.ohsu.cmp.coach.session;
+package edu.ohsu.cmp.coach.service;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.model.Audience;
 import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
-import edu.ohsu.cmp.coach.service.AbstractService;
+import edu.ohsu.cmp.coach.session.ExpireProvisionalSessionJob;
+import edu.ohsu.cmp.coach.session.ProvisionalSessionCacheData;
 import edu.ohsu.cmp.coach.util.FhirUtil;
+import jakarta.annotation.PostConstruct;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +29,23 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SessionService extends AbstractService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("${socket.timeout:300000}")
-    private Integer socketTimeout;
+    // fallbacks so a context can never land on HAPI's defaults (10s socket timeout, 20 connections)
+    public static final int DEFAULT_SOCKET_TIMEOUT = 5 * 60 * 1000;
+    public static final int DEFAULT_POOL_MAX_TOTAL = 200;
+    public static final int DEFAULT_POOL_MAX_PER_ROUTE = 100;
+    public static final int DEFAULT_CONNECTION_REQUEST_TIMEOUT = 60 * 1000;
+
+    @Value("${fhir.socket.timeout:" + DEFAULT_SOCKET_TIMEOUT + "}")
+    private int socketTimeout;
+
+    @Value("${fhir.pool.maxTotal:" + DEFAULT_POOL_MAX_TOTAL + "}")
+    private int poolMaxTotal;
+
+    @Value("${fhir.pool.maxPerRoute:" + DEFAULT_POOL_MAX_PER_ROUTE + "}")
+    private int poolMaxPerRoute;
+
+    @Value("${fhir.pool.connectionRequestTimeout:" + DEFAULT_CONNECTION_REQUEST_TIMEOUT + "}")
+    private int connectionRequestTimeout;
 
     @Autowired
     private ApplicationContext ctx;
@@ -36,6 +55,29 @@ public class SessionService extends AbstractService {
 
     private final Map<String, ProvisionalSessionCacheData> provisionalCache;
 
+    private FhirContext fhirContext;
+
+    @PostConstruct
+    private void initFhirContext() {
+        // initialize fhirContext in @PostConstruct to ensure that injected @Values are populated
+        FhirContext ctx = FhirContext.forR4();
+        ctx.getRestfulClientFactory().setServerValidationMode(ServerValidationModeEnum.ONCE);
+        configureClientFactory(ctx, socketTimeout, poolMaxTotal, poolMaxPerRoute, connectionRequestTimeout);
+        fhirContext = ctx;
+    }
+
+    private void configureClientFactory(FhirContext ctx, int socketTimeout, int poolMaxTotal,
+                                        int poolMaxPerRoute, int connectionRequestTimeout) {
+        var factory = ctx.getRestfulClientFactory();
+        factory.setSocketTimeout(socketTimeout);
+        factory.setPoolMaxTotal(poolMaxTotal);
+        factory.setPoolMaxPerRoute(poolMaxPerRoute);
+
+        // an exhausted pool otherwise fails the lease after 10s, and callers treat that as a dead
+        // server rather than backpressure.  waiting is cheap on a virtual thread, so wait instead
+        factory.setConnectionRequestTimeout(connectionRequestTimeout);
+    }
+
     public SessionService() {
         provisionalCache = new ConcurrentHashMap<>();
     }
@@ -44,9 +86,9 @@ public class SessionService extends AbstractService {
                                boolean requiresEnrollment, boolean hasCompletedStudy) throws ConfigurationException {
         logger.debug("preparing session " + sessionId + " with credentials=" + credentials);
         IGenericClient client = FhirUtil.buildClient(
+                fhirContext,
                 credentials.getServerURL(),
-                credentials.getBearerToken(),
-                socketTimeout
+                credentials.getBearerToken()
         );
         FHIRCredentialsWithClient fcc = new FHIRCredentialsWithClient(credentials, client);
 
