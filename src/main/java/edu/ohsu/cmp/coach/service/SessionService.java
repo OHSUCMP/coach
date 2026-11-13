@@ -123,11 +123,12 @@ public class SessionService extends AbstractService {
         provisionalCache.remove(sessionId);
     }
 
-    public void expireAll(String sessionId) {
-        logger.info("expiring credentials for session " + sessionId);
-        auditService.doAudit(sessionId, AuditSeverity.INFO, "session expired", sessionId);
-        provisionalCache.remove(sessionId);
-        userWorkspaceService.shutdown(sessionId);
+    public void forceExpiration(String sessionId) {
+        if (userWorkspaceService.exists(sessionId)) {
+            logger.info("expiring credentials for session {}", sessionId);
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "session expired", sessionId);
+            userWorkspaceService.shutdown(sessionId);
+        }
     }
 
 /////////////////////////////////////////////////////////////

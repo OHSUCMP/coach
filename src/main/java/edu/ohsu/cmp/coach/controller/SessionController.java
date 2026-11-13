@@ -79,7 +79,7 @@ public class SessionController extends BaseController {
 
     @GetMapping(value = {"launch-provider", "launch-ehr"}) // launch-ehr is deprecated
     public String launchProvider(HttpSession session, Model model) {
-        sessionService.expireAll(session.getId());
+        sessionService.forceExpiration(session.getId());
         setCommonViewComponents(model);
         model.addAttribute("clientId", providerClientId);
         model.addAttribute("scope", providerScope);
@@ -90,7 +90,7 @@ public class SessionController extends BaseController {
 
     @GetMapping("launch-patient")
     public String launchPatient(HttpSession session, Model model) {
-        sessionService.expireAll(session.getId());
+        sessionService.forceExpiration(session.getId());
         setCommonViewComponents(model);
         model.addAttribute("clientId", patientClientId);
         model.addAttribute("scope", patientScope);
@@ -241,25 +241,42 @@ public class SessionController extends BaseController {
 
     @GetMapping("logout")
     public String logout(HttpSession session) {
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out"); // must occur before expire action
-        sessionService.expireAll(session.getId());
+        if (userWorkspaceService.exists(session.getId())) {
+            auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out"); // must occur before expire action
+            sessionService.forceExpiration(session.getId());
+        }
+
         session.invalidate();
+
         return "logout";
     }
 
     @GetMapping("inactivity-logout")
     public String inactivityLogout(HttpSession session) {
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out due to inactivity"); // must occur before expire action
-        sessionService.expireAll(session.getId());
+        if (userWorkspaceService.exists(session.getId())) {
+            auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out due to inactivity"); // must occur before expire action
+            sessionService.forceExpiration(session.getId());
+        }
+
         session.invalidate();
+
         return "inactivity-logout";
     }
 
     @PostMapping("clear-session")
     public ResponseEntity<?> clearSession(HttpSession session) {
-        sessionService.expireAll(session.getId());
+        String sessionId = session.getId();
+        boolean sessionExists = userWorkspaceService.exists(sessionId);
+
+        if (sessionExists) {
+            sessionService.forceExpiration(sessionId);
+        }
+
         session.invalidate();
-        return ResponseEntity.ok("session cleared");
+
+        return sessionExists ?
+                ResponseEntity.ok("session cleared") :
+                ResponseEntity.ok("no session");
     }
 
     @PostMapping("confirm-end-of-study")
