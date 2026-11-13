@@ -113,25 +113,25 @@
             <version>${hapi-fhir.version}</version>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.15.0</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz -->
-        <dependency>
-            <groupId>org.quartz-scheduler</groupId>
-            <artifactId>quartz</artifactId>
-            <version>2.5.2</version>
         </dependency>
 
         <!-- mustache compiler for building out hook request templates -->
         <dependency>
             <groupId>com.github.spullara.mustache.java</groupId>
             <artifactId>compiler</artifactId>
-            <version>0.9.7</version>
+            <version>0.9.14</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
@@ -152,7 +152,6 @@
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
-            <version>3.3.1</version>
         </dependency>
 
         <!-- Source: https://mvnrepository.com/artifact/com.auth0/java-jwt -->
