@@ -1,8 +1,8 @@
 package edu.ohsu.cmp.coach.http;
 
 public class HttpResponse {
-    private int responseCode;
-    private String responseBody;
+    private final int responseCode;
+    private final String responseBody;
 
     public HttpResponse(int responseCode, String responseBody) {
         this.responseCode = responseCode;

@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 public class HttpRequest {
-    private URLCodec urlCodec;
+    private final URLCodec urlCodec;
 
     public HttpRequest() {
         this.urlCodec = new URLCodec();
