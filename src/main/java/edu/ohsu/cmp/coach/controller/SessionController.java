@@ -264,7 +264,7 @@ public class SessionController extends BaseController {
 
     @PostMapping("confirm-end-of-study")
     public ResponseEntity<?> confirmEndOfStudy(HttpSession session) {
-        userWorkspaceService.get(session.getId()).setConfirmedEndOfStudy(true);
+        userWorkspaceService.get(session.getId()).setConfirmedEndOfStudy(Boolean.TRUE);
         return ResponseEntity.ok("end-of-study confirmed");
     }
 

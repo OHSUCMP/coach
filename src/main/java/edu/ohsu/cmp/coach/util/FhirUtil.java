@@ -4,15 +4,22 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.http.HttpRequest;
+import edu.ohsu.cmp.coach.http.HttpResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -237,7 +244,8 @@ public class FhirUtil {
             if (entry.hasResource()) {
                 Resource r = entry.getResource();
                 if (r.hasId()) {
-                    if (Pattern.matches("(.*/)?" + referenceId + "(/.*)?", r.getId())) {
+                    String quotedReferenceId = Pattern.quote(referenceId);
+                    if (Pattern.matches("(.*/)?" + quotedReferenceId + "(/.*)?", r.getId())) {
                         logger.debug("matched: '" + r.getId() + "' contains '" + reference + "'");
                         return true;
                     } else {
@@ -320,10 +328,16 @@ public class FhirUtil {
     @SuppressWarnings("unchecked")
     public static <T extends IBaseResource> T getContainedResourceByReference(DomainResource resource, Class<T> aClass, String reference) {
         Resource r = getContainedResourceByReference(resource, reference);
-        if (r.getClass().isAssignableFrom(aClass)) {
+        if (r == null) {
+            return null;
+        }
+
+        if (aClass.isAssignableFrom(r.getClass())) {
             return (T) r;
 
         } else {
+            logger.warn("found contained resource with id=" + r.getId() + ", but it is a " + r.getClass().getSimpleName() +
+                    ", not " + aClass.getSimpleName() + " as expected.");
             throw new ClassCastException("attempted to cast " + r.getClass().getSimpleName() + " to " + aClass.getSimpleName());
         }
     }
@@ -363,10 +377,11 @@ public class FhirUtil {
 
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             Resource r = entry.getResource();
-            if (r.getClass().isAssignableFrom(aClass)) {
+            if (aClass.isAssignableFrom(r.getClass())) {
                 if (r.hasId()) {
                     try {
-                        if (Pattern.matches("(.*/)?" + referenceId + "(/.*)?", r.getId())) {
+                        String quotedReferenceId = Pattern.quote(referenceId);
+                        if (Pattern.matches("(.*/)?" + quotedReferenceId + "(/.*)?", r.getId())) {
                             return aClass.cast(entry.getResource());
                         }
                     } catch (NullPointerException npe) {
@@ -389,7 +404,7 @@ public class FhirUtil {
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (entry.hasResource()) {
                 Resource r = entry.getResource();
-                if (r.getClass().isAssignableFrom(aClass)) {
+                if (aClass.isAssignableFrom(r.getClass())) {
                     try {
                         Method m = r.getClass().getMethod("getIdentifier");
                         List<Identifier> idList = (List<Identifier>) m.invoke(r);
@@ -752,6 +767,93 @@ public class FhirUtil {
         }
 
         return tokenAuthUrl;
+    }
+
+    /**
+     * Retrieves the distinct origins (scheme + host [+ port]) of the OAuth endpoints advertised by the FHIR server
+     * at {@code iss}, by way of its /.well-known/smart-configuration and /metadata resources.  Relative URLs are
+     * ignored.  Failures retrieving or parsing either resource are logged and skipped.
+     */
+    public static Set<String> getAuthEndpointOrigins(String iss) {
+        Set<String> origins = new LinkedHashSet<>();
+        if (StringUtils.isBlank(iss)) return origins;
+
+        String baseUrl = StringUtils.removeEnd(iss.trim(), "/");
+        Map<String, String> requestHeaders = Map.of("Accept", "application/json");
+
+        String smartConfigUrl = baseUrl + "/.well-known/smart-configuration";
+        try {
+            HttpResponse response = new HttpRequest().get(smartConfigUrl, null, requestHeaders);
+            if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+                throw new IOException("received HTTP " + response.getResponseCode());
+            }
+
+            JsonObject json = JsonParser.parseString(response.getResponseBody()).getAsJsonObject();
+            for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                if (entry.getKey().endsWith("_endpoint") && entry.getValue().isJsonPrimitive()) {
+                    addOrigin(origins, entry.getValue().getAsString());
+                }
+            }
+
+        } catch (Exception e) {
+            logger.warn("caught " + e.getClass().getName() + " retrieving or parsing " + smartConfigUrl + " - " + e.getMessage(), e);
+        }
+
+        String metadataUrl = baseUrl + "/metadata";
+        try {
+            HttpResponse response = new HttpRequest().get(metadataUrl, Map.of("_format", "json"), requestHeaders);
+            if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+                throw new IOException("received HTTP " + response.getResponseCode());
+            }
+
+            JsonObject json = JsonParser.parseString(response.getResponseBody()).getAsJsonObject();
+            if (json.has("rest") && json.get("rest").isJsonArray()) {
+                for (JsonElement rest : json.getAsJsonArray("rest")) {
+                    if ( ! rest.isJsonObject() ) continue;
+                    JsonObject restObj = rest.getAsJsonObject();
+                    if ( ! restObj.has("mode") || ! "server".equals(restObj.get("mode").getAsString()) ) continue;
+                    if ( ! restObj.has("security") || ! restObj.get("security").isJsonObject() ) continue;
+                    JsonObject security = restObj.getAsJsonObject("security");
+                    if ( ! security.has("extension") || ! security.get("extension").isJsonArray() ) continue;
+
+                    for (JsonElement ext : security.getAsJsonArray("extension")) {
+                        if ( ! ext.isJsonObject() ) continue;
+                        JsonObject extObj = ext.getAsJsonObject();
+                        if ( ! extObj.has("url") || ! EXTENSION_OAUTH_URIS_URL.equals(extObj.get("url").getAsString()) ) continue;
+                        if ( ! extObj.has("extension") || ! extObj.get("extension").isJsonArray() ) continue;
+
+                        for (JsonElement subExt : extObj.getAsJsonArray("extension")) {
+                            if (subExt.isJsonObject() && subExt.getAsJsonObject().has("valueUri")) {
+                                addOrigin(origins, subExt.getAsJsonObject().get("valueUri").getAsString());
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            logger.warn("caught " + e.getClass().getName() + " retrieving or parsing " + metadataUrl + " - " + e.getMessage(), e);
+        }
+
+        return origins;
+    }
+
+    private static void addOrigin(Set<String> origins, String url) {
+        if (StringUtils.isBlank(url)) return;
+
+        try {
+            URI uri = URI.create(url.trim());
+            if (StringUtils.isBlank(uri.getScheme()) || StringUtils.isBlank(uri.getHost())) {
+                logger.debug("ignoring URL without scheme and host: " + url);
+                return;
+            }
+
+            String origin = uri.getScheme() + "://" + uri.getHost() + (uri.getPort() >= 0 ? ":" + uri.getPort() : "");
+            origins.add(origin);
+
+        } catch (IllegalArgumentException e) {
+            logger.warn("ignoring invalid URL: " + url);
+        }
     }
 
     // UUID_REGEX pattern : see https://www.uuidtools.com/what-is-uuid

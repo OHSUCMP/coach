@@ -102,6 +102,32 @@ function safeUrl(url) {
     return '#';
 }
 
+function getCookie(name) {
+    let nameEq = name + "=";
+    let cookies = document.cookie.split(';');
+
+    for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.indexOf(nameEq) === 0) {
+            return decodeURIComponent(cookie.substring(nameEq.length));
+        }
+    }
+
+    return null;
+}
+
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        let method = settings.type || settings.method || "GET";
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(method)) {
+            let csrfToken = getCookie("XSRF-TOKEN");
+            if (csrfToken) {
+                xhr.setRequestHeader("X-XSRF-TOKEN", csrfToken);
+            }
+        }
+    }
+});
+
 $(document).ready(function() {
     enableHover('.link');
 });
