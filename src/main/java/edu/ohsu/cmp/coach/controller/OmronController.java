@@ -7,17 +7,15 @@ import edu.ohsu.cmp.coach.model.omron.OmronNotifyModel;
 import edu.ohsu.cmp.coach.model.omron.OmronStatusData;
 import edu.ohsu.cmp.coach.service.OmronService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import jakarta.servlet.http.HttpSession;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/omron")
@@ -89,12 +87,12 @@ public class OmronController extends BaseController {
             logger.debug("notify: no workspace found for user with Omron id=" + notification.getId());
         }
 
-        return new ResponseEntity<>(HttpStatus.OK);         // returns only OK status, no body
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("status")
     public ResponseEntity<OmronStatusData> getStatus(HttpSession session) {
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
-        return new ResponseEntity<>(workspace.getOmronSynchronizationStatus(), HttpStatus.OK);
+        return ResponseEntity.ok(workspace.getOmronSynchronizationStatus());
     }
 }

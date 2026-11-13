@@ -174,7 +174,7 @@ public class ResourceController extends BaseController {
             return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
         } else {
             logger.warn("requested site-specific resource key does not exist: {}", sanitizeForLog(key));
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
         }
     }
 

@@ -52,10 +52,10 @@ public class CounselingController extends BaseController {
 
             auditService.doAudit(session.getId(), AuditSeverity.INFO, "created counseling record", "id=" + c.getId());
 
-            return new ResponseEntity<>(c, HttpStatus.OK);
+            return ResponseEntity.ok(c);
 
         } else {
-            return new ResponseEntity<>(c, HttpStatus.NOT_MODIFIED);
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).body(c);
         }
     }
 }

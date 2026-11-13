@@ -255,13 +255,13 @@ public class HomeController extends BaseController {
     @PostMapping("blood-pressure-observations-list")
     public ResponseEntity<List<BloodPressureModel>> getBloodPressureObservations(HttpSession session) throws DataException {
         List<BloodPressureModel> list = bpService.getBloodPressureReadings(session.getId());
-        return new ResponseEntity<>(list, HttpStatus.OK);
+        return ResponseEntity.ok(list);
     }
 
     @PostMapping("pulse-observations-list")
     public ResponseEntity<List<PulseModel>> getPulseObservations(HttpSession session) throws DataException {
         List<PulseModel> list = pulseService.getPulseReadings(session.getId());
-        return new ResponseEntity<>(list, HttpStatus.OK);
+        return ResponseEntity.ok(list);
     }
 
     @PostMapping("recommendation")
@@ -275,7 +275,7 @@ public class HomeController extends BaseController {
                     List<Card> cards = workspace.getCards(hookId);
                     logger.info("got cards for hookId=" + hookId + "!");
 
-                    return new ResponseEntity<>(cards, HttpStatus.OK);
+                    return ResponseEntity.ok(cards);
 
                 } catch (RuntimeException re) {
                     logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
@@ -285,7 +285,7 @@ public class HomeController extends BaseController {
                             re.getClass().getSimpleName() + " getting recommendations for " + hookId + " - " +
                             re.getMessage());
 
-                    return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 }
             }
         };
@@ -296,7 +296,7 @@ public class HomeController extends BaseController {
         try {
             List<MedicationModel> list = filterDuplicates(medicationService.getAntihypertensiveMedications(session.getId()));
 
-            return new ResponseEntity<>(new ArrayList<>(list), HttpStatus.OK);
+            return ResponseEntity.ok(new ArrayList<>(list));
 
         } catch (HttpServerErrorException.InternalServerError ise) {
             logger.error("caught " + ise.getClass().getName() + " getting medications - " + ise.getMessage(), ise);
@@ -315,7 +315,7 @@ public class HomeController extends BaseController {
                 }
             }
 
-            return new ResponseEntity<>(new ArrayList<>(list), HttpStatus.OK);
+            return ResponseEntity.ok(new ArrayList<>(list));
 
         } catch (HttpServerErrorException.InternalServerError ise) {
             logger.error("caught " + ise.getClass().getName() + " getting adverse events - " + ise.getMessage(), ise);
@@ -349,13 +349,13 @@ public class HomeController extends BaseController {
     @GetMapping("metadata")
     public ResponseEntity<String> getMetadata(HttpSession session) {
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
-        return new ResponseEntity<>(FhirUtil.toJson(workspace.getFhirCredentialsWithClient().getMetadata()), HttpStatus.OK);
+        return ResponseEntity.ok(FhirUtil.toJson(workspace.getFhirCredentialsWithClient().getMetadata()));
     }
 
     @GetMapping("recommendation-service-status")
     public ResponseEntity<String> getRecommendationServiceStatus() {
         return recommendationService.isRunning() ?
-            new ResponseEntity<>("Running", HttpStatus.OK) :
-            new ResponseEntity<>("Not Running", HttpStatus.SERVICE_UNAVAILABLE);
+            ResponseEntity.ok("Running") :
+            ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Not Running");
     }
 }
