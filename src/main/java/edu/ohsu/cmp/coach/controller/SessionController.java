@@ -107,14 +107,6 @@ public class SessionController extends BaseController {
                                             @RequestParam String patientId,
                                             @RequestParam String userId) throws ConfigurationException, REDCapException, IOException {
 
-        // serverUrl is supplied by the client; only permit the configured FHIR server(s) to prevent session
-        // establishment against an arbitrary (attacker-controlled) server
-        if ( ! isPermittedServerUrl(serverUrl) ) {
-            logger.warn("rejecting prepare-session for session " + session.getId() + " - serverUrl does not match " +
-                    "smart.patient.iss or smart.provider.iss");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
         Audience audience;
         if (StringUtils.equals(clientId, patientClientId)) {
             audience = Audience.PATIENT;
@@ -124,9 +116,18 @@ public class SessionController extends BaseController {
             throw new CaseNotHandledException("couldn't determine audience from clientId=" + clientId);
         }
 
+        // serverUrl is supplied by the client; only permit the configured FHIR server for the resolved launch audience.
+        // Use the canonical configured URL from application properties after validation, not the user-supplied value.
+        String permittedServerUrl = resolvePermittedServerUrl(serverUrl, audience);
+        if (permittedServerUrl == null) {
+            logger.warn("rejecting prepare-session for session " + session.getId() + " - serverUrl does not match configured issuer for " +
+                    "audience=" + audience);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         logger.debug("preparing " + audience + " session " + session.getId());
 
-        FHIRCredentials credentials = new FHIRCredentials(clientId, serverUrl, bearerToken, patientId, userId);
+        FHIRCredentials credentials = new FHIRCredentials(clientId, permittedServerUrl, bearerToken, patientId, userId);
         MyPatient myPatient = patientService.getMyPatient(patientId);
 
         boolean requiresEnrollment = false;
@@ -212,12 +213,21 @@ public class SessionController extends BaseController {
         }
     }
 
-    private boolean isPermittedServerUrl(String serverUrl) {
-        String s = StringUtils.removeEnd(serverUrl, "/");   // tolerate a trailing slash only
-        return StringUtils.isNotBlank(s) && (
-                StringUtils.equals(s, StringUtils.removeEnd(patientIss, "/")) ||
-                StringUtils.equals(s, StringUtils.removeEnd(providerIss, "/"))
-        );
+    private String resolvePermittedServerUrl(String serverUrl, Audience audience) {
+        String normalizedServerUrl = StringUtils.removeEnd(serverUrl, "/");
+
+        if (StringUtils.isBlank(normalizedServerUrl)) {
+            return null;
+        }
+
+        String configuredIssuer = switch (audience) {
+            case PATIENT -> patientIss;
+            case CARE_TEAM -> providerIss;
+        };
+
+        return StringUtils.equals(normalizedServerUrl, StringUtils.removeEnd(configuredIssuer, "/")) ?
+                configuredIssuer :
+                null;
     }
 
     @PostMapping("validate-session")
