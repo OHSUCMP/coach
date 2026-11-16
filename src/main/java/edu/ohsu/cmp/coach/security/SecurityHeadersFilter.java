@@ -46,17 +46,44 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
         Set<String> frameSrc = buildSourceSet(externalOrigins, env.getProperty(PROPERTY_EXTRA_FRAME_SRC));
         Set<String> formAction = buildSourceSet(externalOrigins, env.getProperty(PROPERTY_EXTRA_FORM_ACTION));
 
-        // add YouTube for resources links
+        Set<String> scriptSrc = new LinkedHashSet<>();
+        scriptSrc.add("'self'");
+        scriptSrc.add("'unsafe-inline'");
+        scriptSrc.add("https://www.youtube.com");
+        scriptSrc.add("https://www.gstatic.com");
+
+        Set<String> imgSrc = new LinkedHashSet<>();
+        imgSrc.add("'self'");
+        imgSrc.add("data:");
+        imgSrc.add("https://i.ytimg.com");
+        imgSrc.add("https://yt3.ggpht.com");
+
+        Set<String> fontSrc = new LinkedHashSet<>();
+        fontSrc.add("'self'");
+        fontSrc.add("data:");
+        fontSrc.add("https://fonts.gstatic.com");
+
+        Set<String> mediaSrc = new LinkedHashSet<>();
+        mediaSrc.add("'self'");
+        mediaSrc.add("https://*.googlevideo.com");
+
+        // add YouTube for embedded videos
         frameSrc.add("https://www.youtube.com");
         frameSrc.add("https://www.youtube-nocookie.com");
 
+        connectSrc.add("https://www.youtube.com");
+        connectSrc.add("https://www.youtube-nocookie.com");
+        connectSrc.add("https://youtubei.googleapis.com");
+        connectSrc.add("https://jnn-pa.googleapis.com");
+
         this.contentSecurityPolicy = String.join("; ",
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline'",
+                "script-src " + StringUtils.join(scriptSrc, " "),
                 "style-src 'self' 'unsafe-inline'",
-                "img-src 'self' data:",
-                "font-src 'self' data:",
+                "img-src " + StringUtils.join(imgSrc, " "),
+                "font-src " + StringUtils.join(fontSrc, " "),
                 "connect-src " + StringUtils.join(connectSrc, " "),
+                "media-src " + StringUtils.join(mediaSrc, " "),
                 "frame-src " + StringUtils.join(frameSrc, " "),
                 "object-src 'none'",
                 "base-uri 'self'",
@@ -147,7 +174,7 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         response.setHeader("Content-Security-Policy", contentSecurityPolicy);
         response.setHeader("X-Content-Type-Options", "nosniff");
-        response.setHeader("Referrer-Policy", "no-referrer");
+        response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
         response.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
         response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
         response.setHeader("Pragma", "no-cache");
