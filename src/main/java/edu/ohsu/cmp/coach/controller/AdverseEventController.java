@@ -46,6 +46,6 @@ public class AdverseEventController extends BaseController {
             message = "no action taken";
         }
 
-        return new ResponseEntity<>(message, status);
+        return ResponseEntity.status(status).body(message);
     }
 }

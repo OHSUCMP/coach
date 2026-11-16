@@ -31,7 +31,7 @@ public class ResourceService extends AbstractService {
         }
     };
 
-    public void clear() {
+    public synchronized void clear() {
         if (siteSpecificResources != null) {
             siteSpecificResources.clear();
             siteSpecificResources = null;
@@ -58,7 +58,7 @@ public class ResourceService extends AbstractService {
 // private methods
 //
 
-    private Map<String, SiteSpecificResource> getSiteSpecificResourcesMap(RandomizationGroup randomizationGroup) {
+    private synchronized Map<String, SiteSpecificResource> getSiteSpecificResourcesMap(RandomizationGroup randomizationGroup) {
         if (siteSpecificResources == null) {
             siteSpecificResources = new LinkedHashMap<>();
         }

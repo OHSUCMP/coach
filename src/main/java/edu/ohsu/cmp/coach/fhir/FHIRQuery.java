@@ -11,12 +11,12 @@ import edu.ohsu.cmp.coach.entity.Concept;
 import edu.ohsu.cmp.coach.entity.ValueSet;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentialsWithClient;
 import edu.ohsu.cmp.coach.model.fhir.SearchParameterMap;
+import edu.ohsu.cmp.coach.util.CodeSystemUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseCoding;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
-import org.opencds.cqf.tooling.terminology.CodeSystemLookupDictionary;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,7 +117,7 @@ public class FHIRQuery {
             }
 
             codeCount ++;
-            String codeSystem = CodeSystemLookupDictionary.getUrlFromOid(c.getCodeSystem());
+            String codeSystem = CodeSystemUtil.getUrl(c.getCodeSystem());
             codeParam.addOr(new TokenParam(codeSystem, c.getCode()));
         }
 

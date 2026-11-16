@@ -55,8 +55,8 @@ function populateMedications() {
     if (Array.isArray(data) && data.length > 0) {
         let arr = [];
         data.forEach(function(m) {
-            arr.push('<span class="medication" data-system="' + m.system + '" data-code="' + m.code + '">' +
-                m.description +
+            arr.push('<span class="medication" data-system="' + escapeHtml(m.system) + '" data-code="' + escapeHtml(m.code) + '">' +
+                escapeHtml(m.description) +
                 '</span>');
         });
 
@@ -82,8 +82,8 @@ function populateAdverseEvents() {
     if (Array.isArray(data) && data.length > 0) {
         let arr = [];
         data.forEach(function(m) {
-            arr.push('<span class="adverseEvent" data-system="' + m.system + '" data-code="' + m.code + '">' +
-                m.description +
+            arr.push('<span class="adverseEvent" data-system="' + escapeHtml(m.system) + '" data-code="' + escapeHtml(m.code) + '">' +
+                escapeHtml(m.description) +
                 '</span>');
         });
 

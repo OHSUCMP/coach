@@ -113,7 +113,7 @@ public class OmronService extends AbstractService {
             return null;
         }
 
-        logger.debug("requesting access token for authorizationCode=" + authorizationCode);
+        logger.debug("requesting access token using authorization code");
 
         Map<String, String> bodyParams = new LinkedHashMap<>();
         bodyParams.put("client_id", clientId);
@@ -131,7 +131,7 @@ public class OmronService extends AbstractService {
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
-        logger.debug("got response code=" + code + ", body=" + body);
+        logger.debug("got response code=" + code);     // body not logged on success; contains tokens
 
         if (code < 200 || code > 299) {
             logger.error("Omron access token request error: " + body);
@@ -149,7 +149,7 @@ public class OmronService extends AbstractService {
             return null;
         }
 
-        logger.debug("refreshing access token for refreshToken=" + refreshToken);
+        logger.debug("refreshing access token using refresh token");
 
         Map<String, String> bodyParams = new LinkedHashMap<>();
         bodyParams.put("client_id", clientId);
@@ -166,7 +166,7 @@ public class OmronService extends AbstractService {
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
-        logger.debug("got response code=" + code + ", body=" + body);
+        logger.debug("got response code=" + code);     // body not logged on success; contains tokens
 
         if (code < 200 || code > 299) {
             logger.error("Omron access token refresh error: " + body);
@@ -430,9 +430,13 @@ public class OmronService extends AbstractService {
             calendar.set(Calendar.MILLISECOND, 0);
             sinceTimestamp = calendar.getTime();
         }
-        bodyParams.put("since", OMRON_DATE_FORMAT.format(sinceTimestamp));
+        String sinceStr;
+        synchronized (OMRON_DATE_FORMAT) {      // SimpleDateFormat is not thread-safe
+            sinceStr = OMRON_DATE_FORMAT.format(sinceTimestamp);
+        }
+        bodyParams.put("since", sinceStr);
 
-        logger.info("requesting Omron measurements since " + OMRON_DATE_FORMAT.format(sinceTimestamp) + " for session " + sessionId);
+        logger.info("requesting Omron measurements since " + sinceStr + " for session " + sessionId);
 
 //        bodyParams.put("limit", limit);           // optional
         bodyParams.put("type", "bloodpressure");

@@ -4,16 +4,24 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.DataException;
+import edu.ohsu.cmp.coach.http.HttpRequest;
+import edu.ohsu.cmp.coach.http.HttpResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FhirUtil {
@@ -32,12 +40,15 @@ public class FhirUtil {
     private static final String EXTENSION_OAUTH_URIS_URL = "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris";
     private static final String EXTENSION_TOKEN_URL = "token";
 
-    public static IGenericClient buildClient(String serverUrl, String bearerToken, int socketTimeout) {
-        logger.debug("building FHIR R4 client for serverUrl=" + serverUrl + ", bearerToken=" + bearerToken +
-                ", socketTimeout=" + socketTimeout);
+    private static final FhirContext FHIR_R4_CONTEXT_AUXILIARY = FhirContext.forR4();
 
-        FhirContext ctx = FhirContext.forR4();
-        ctx.getRestfulClientFactory().setSocketTimeout(socketTimeout);
+    /**
+     * Server validation and connection settings come from the supplied context's client factory, so
+     * pass the context belonging to the service that owns this endpoint's configuration.
+     */
+    public static IGenericClient buildClient(FhirContext ctx, String serverUrl, String bearerToken) {
+        logger.debug("building FHIR R4 client for serverUrl=" + serverUrl + ", bearerToken=" + bearerToken);
+
         IGenericClient client = ctx.newRestfulGenericClient(serverUrl);
 
         BearerTokenAuthInterceptor authInterceptor = new BearerTokenAuthInterceptor(bearerToken);
@@ -54,7 +65,7 @@ public class FhirUtil {
 
     public static List<String> buildKeys(String id, Identifier identifier) {
         List<Identifier> identifiers = identifier != null ?
-                Arrays.asList(identifier) :
+                List.of(identifier) :
                 null;
 
         return buildKeys(id, identifiers);
@@ -90,28 +101,6 @@ public class FhirUtil {
 
         return list;
     }
-
-
-//    public static Bundle toBundle(String patientId, FhirConfigManager fcm,
-//                                  Collection<? extends FHIRCompatible> collection) throws DataException {
-//        return toBundle(patientId, fcm, null, collection);
-//    }
-//
-//    public static Bundle toBundle(String patientId, FhirConfigManager fcm, Bundle.BundleType bundleType,
-//                                  Collection<? extends FHIRCompatible> collection) throws DataException {
-//        if (collection == null) return null;
-//
-//        Bundle bundle = new Bundle();
-//        bundle.setType(bundleType);
-//
-//        for (FHIRCompatible item : collection) {
-//            bundle.getEntry().addAll(
-//                    item.toBundle(patientId, fcm).getEntry()
-//            );
-//        }
-//
-//        return bundle;
-//    }
 
     public static Bundle bundleResources(Resource ... resources) {
         return bundleResources(Bundle.BundleType.COLLECTION, Arrays.asList(resources));
@@ -185,7 +174,7 @@ public class FhirUtil {
             }
 
             if (reference.startsWith("http://") || reference.startsWith("https://")) {
-                String[] parts = s.split("\\/");
+                String[] parts = s.split("/");
                 return parts[parts.length - 2] + "/" + parts[parts.length - 1];
 
             } else {
@@ -255,7 +244,8 @@ public class FhirUtil {
             if (entry.hasResource()) {
                 Resource r = entry.getResource();
                 if (r.hasId()) {
-                    if (Pattern.matches("(.*\\/)?" + referenceId + "(\\/.*)?", r.getId())) {
+                    String quotedReferenceId = Pattern.quote(referenceId);
+                    if (Pattern.matches("(.*/)?" + quotedReferenceId + "(/.*)?", r.getId())) {
                         logger.debug("matched: '" + r.getId() + "' contains '" + reference + "'");
                         return true;
                     } else {
@@ -268,6 +258,7 @@ public class FhirUtil {
         return false;
     }
 
+    @SuppressWarnings("unchecked")
     public static boolean bundleContainsResourceWithIdentifier(Bundle b, Identifier identifier) {
         if (identifier == null) return false;
 
@@ -303,8 +294,7 @@ public class FhirUtil {
         }
 
         if (reference.hasIdentifier()) {
-            T t = getResourceFromBundleByIdentifier(bundle, aClass, reference.getIdentifier());
-            if (t != null) return t;
+            return getResourceFromBundleByIdentifier(bundle, aClass, reference.getIdentifier());
         }
 
         return null;
@@ -329,17 +319,20 @@ public class FhirUtil {
     /**
      * getContainedResourceByReference
      * Replaces DomainResource.getContained(String reference) as that function is buggy.
-     * See https://github.com/hapifhir/hapi-fhir/issues/6612 for details.
+     * See <a href="https://github.com/hapifhir/hapi-fhir/issues/6612">...</a> for details.
      * @param resource the DomainResource object that is expected to contain the referenced resource
      * @param aClass the type of resource that is expected for the specified reference
      * @param reference a reference to a contained resource, which is expected to begin with "#"
      * @return a resource of type specified by aClass from containedList with an id that matches the specified reference
-     * @param <T>
      */
     @SuppressWarnings("unchecked")
     public static <T extends IBaseResource> T getContainedResourceByReference(DomainResource resource, Class<T> aClass, String reference) {
         Resource r = getContainedResourceByReference(resource, reference);
-        if (r.getClass().isAssignableFrom(aClass)) {
+        if (r == null) {
+            return null;
+        }
+
+        if (aClass.isAssignableFrom(r.getClass())) {
             return (T) r;
 
         } else {
@@ -384,10 +377,11 @@ public class FhirUtil {
 
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             Resource r = entry.getResource();
-            if (r.getClass().isAssignableFrom(aClass)) {
+            if (aClass.isAssignableFrom(r.getClass())) {
                 if (r.hasId()) {
                     try {
-                        if (Pattern.matches("(.*\\/)?" + referenceId + "(\\/.*)?", r.getId())) {
+                        String quotedReferenceId = Pattern.quote(referenceId);
+                        if (Pattern.matches("(.*/)?" + quotedReferenceId + "(/.*)?", r.getId())) {
                             return aClass.cast(entry.getResource());
                         }
                     } catch (NullPointerException npe) {
@@ -402,6 +396,7 @@ public class FhirUtil {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T extends IBaseResource> T getResourceFromBundleByIdentifier(Bundle b, Class<T> aClass, Identifier identifier) {
         if (b == null) return null;
         if (identifier == null) return null;
@@ -409,7 +404,7 @@ public class FhirUtil {
         for (Bundle.BundleEntryComponent entry : b.getEntry()) {
             if (entry.hasResource()) {
                 Resource r = entry.getResource();
-                if (r.getClass().isAssignableFrom(aClass)) {
+                if (aClass.isAssignableFrom(r.getClass())) {
                     try {
                         Method m = r.getClass().getMethod("getIdentifier");
                         List<Identifier> idList = (List<Identifier>) m.invoke(r);
@@ -446,11 +441,34 @@ public class FhirUtil {
         }
     }
 
+    // identifies whether an id ('123') or reference ('Patient/123') matches a resource
+    // if idOrReference is a reference, the resource type must match in addition to the id
+    public static boolean references(String idOrReference, Resource resource) {
+        if (StringUtils.isBlank(idOrReference) || resource == null) return false;
+
+        String resourceReference = toRelativeReference(resource.getId());
+        if (idOrReference.equals(resourceReference)) {
+            return true;
+        }
+
+        String[] parts = idOrReference.split("/");
+        String id = parts[parts.length - 1];
+
+        String[] resourceParts = resourceReference.split("/");
+        String resourceId = resourceParts[resourceParts.length - 1];
+
+        if (id.equals(resourceId)) {
+            return parts.length == 1 || resource.getResourceType().name().equals(parts[parts.length - 2]);
+        }
+
+        return false;
+    }
+
     private static boolean identifiersMatch(Identifier a, Identifier b) {
         boolean useMatch = (!a.hasUse() && !b.hasUse()) ||
                 (a.hasUse() && b.hasUse() && a.getUse() == b.getUse());
         boolean systemMatch = (!a.hasSystem() && !b.hasSystem()) ||
-                (a.hasSystem() && b.hasSystem() && a.getSystem().equals(b.getSystem()));
+                (a.hasSystem() && b.hasSystem() && CodeSystemUtil.matches(a.getSystem(), b.getSystem()));
         boolean valueMatch = (!a.hasValue() && !b.hasValue()) ||
                 (a.hasValue() && b.hasValue() && a.getValue().equals(b.getValue()));
 
@@ -492,10 +510,40 @@ public class FhirUtil {
     }
 
     public static String toJson(IBaseResource r) {
-        FhirContext ctx = FhirContext.forR4();
-        IParser parser = ctx.newJsonParser();
+        return FHIR_R4_CONTEXT_AUXILIARY.newJsonParser().encodeResourceToString(r);
+    }
+
+    public static <R extends IBaseResource> R fromJson(Class<R> clazz, String json) {
+        return FHIR_R4_CONTEXT_AUXILIARY.newJsonParser().parseResource(clazz, json);
+    }
+
+    private static final Pattern ID_PATTERN = Pattern.compile("\"id\":\\s+\"([^\"]+)\"");
+
+    public static String toJsonForLogging(IBaseResource r) {
+        if (r == null) return "";
+
+        IParser parser = FHIR_R4_CONTEXT_AUXILIARY.newJsonParser();
         parser.setPrettyPrint(true);
-        return parser.encodeResourceToString(r);
+        if (r instanceof Patient) {
+            String json = parser.encodeResourceToString(r);
+
+            StringBuilder redacted = new StringBuilder();
+            Matcher matcher = ID_PATTERN.matcher(json);
+            while (matcher.find()) {
+                String match = matcher.group();
+                String id = matcher.group(1);
+                String redactedMatch = match.replace(id, "[REDACTED]");
+
+                matcher.appendReplacement(redacted, Matcher.quoteReplacement(redactedMatch));
+            }
+
+            matcher.appendTail(redacted);
+
+            return redacted.toString();
+
+        } else {
+            return parser.encodeResourceToString(r);
+        }
     }
 
     public static String toCodeParamString(List<Coding> codings) throws ConfigurationException {
@@ -530,6 +578,18 @@ public class FhirUtil {
         throw new ConfigurationException("Coding has no system or code specified");
     }
 
+    public static boolean hasCoding(List<CodeableConcept> ccList, List<Coding> specificationCodings) {
+        if (ccList == null || specificationCodings == null) return false;
+
+        for (CodeableConcept cc : ccList) {
+            if (hasCoding(cc, specificationCodings)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * identifies whether a CodeableConcept's list of Codings matches a specification, or not.
      * @param cc a CodeableConcept object that contains one or more Codings
@@ -542,6 +602,18 @@ public class FhirUtil {
 
         for (Coding spec : specificationCodings) {
             if (hasCoding(cc, spec)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean hasCoding(List<CodeableConcept> ccList, Coding specificationCoding) {
+        if (ccList == null || specificationCoding == null) return false;
+
+        for (CodeableConcept cc : ccList) {
+            if (hasCoding(cc, specificationCoding)) {
                 return true;
             }
         }
@@ -596,7 +668,7 @@ public class FhirUtil {
 
         // if system is specified, c must have a system that matches it
         if (spec.hasSystem()) {
-            boolean systemMatches = c.hasSystem() && c.getSystem().equals(spec.getSystem());
+            boolean systemMatches = c.hasSystem() && CodeSystemUtil.matches(c.getSystem(), spec.getSystem());
             if (systemMatches) {
                 if (sb != null) sb.append("MATCH system='").append(spec.getSystem()).append("' ");
             } else {
@@ -637,8 +709,7 @@ public class FhirUtil {
     public static boolean hasHomeSettingExtension(DomainResource domainResource) {
         if (domainResource != null && domainResource.hasExtension(EXTENSION_HOME_SETTING_URL)) {
             Extension extension = domainResource.getExtensionByUrl(EXTENSION_HOME_SETTING_URL);
-            if (extension.hasValue() && extension.getValue() instanceof Coding) {
-                Coding coding = (Coding) extension.getValue();
+            if (extension.hasValue() && extension.getValue() instanceof Coding coding) {
                 return coding.is(EXTENSION_HOME_SETTING_SYSTEM, EXTENSION_HOME_SETTING_CODE);
             }
         }
@@ -696,6 +767,93 @@ public class FhirUtil {
         }
 
         return tokenAuthUrl;
+    }
+
+    /**
+     * Retrieves the distinct origins (scheme + host [+ port]) of the OAuth endpoints advertised by the FHIR server
+     * at {@code iss}, by way of its /.well-known/smart-configuration and /metadata resources.  Relative URLs are
+     * ignored.  Failures retrieving or parsing either resource are logged and skipped.
+     */
+    public static Set<String> getAuthEndpointOrigins(String iss) {
+        Set<String> origins = new LinkedHashSet<>();
+        if (StringUtils.isBlank(iss)) return origins;
+
+        String baseUrl = StringUtils.removeEnd(iss.trim(), "/");
+        Map<String, String> requestHeaders = Map.of("Accept", "application/json");
+
+        String smartConfigUrl = baseUrl + "/.well-known/smart-configuration";
+        try {
+            HttpResponse response = new HttpRequest().get(smartConfigUrl, null, requestHeaders);
+            if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+                throw new IOException("received HTTP " + response.getResponseCode());
+            }
+
+            JsonObject json = JsonParser.parseString(response.getResponseBody()).getAsJsonObject();
+            for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                if (entry.getKey().endsWith("_endpoint") && entry.getValue().isJsonPrimitive()) {
+                    addOrigin(origins, entry.getValue().getAsString());
+                }
+            }
+
+        } catch (Exception e) {
+            logger.warn("caught " + e.getClass().getName() + " retrieving or parsing " + smartConfigUrl + " - " + e.getMessage(), e);
+        }
+
+        String metadataUrl = baseUrl + "/metadata";
+        try {
+            HttpResponse response = new HttpRequest().get(metadataUrl, Map.of("_format", "json"), requestHeaders);
+            if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+                throw new IOException("received HTTP " + response.getResponseCode());
+            }
+
+            JsonObject json = JsonParser.parseString(response.getResponseBody()).getAsJsonObject();
+            if (json.has("rest") && json.get("rest").isJsonArray()) {
+                for (JsonElement rest : json.getAsJsonArray("rest")) {
+                    if ( ! rest.isJsonObject() ) continue;
+                    JsonObject restObj = rest.getAsJsonObject();
+                    if ( ! restObj.has("mode") || ! "server".equals(restObj.get("mode").getAsString()) ) continue;
+                    if ( ! restObj.has("security") || ! restObj.get("security").isJsonObject() ) continue;
+                    JsonObject security = restObj.getAsJsonObject("security");
+                    if ( ! security.has("extension") || ! security.get("extension").isJsonArray() ) continue;
+
+                    for (JsonElement ext : security.getAsJsonArray("extension")) {
+                        if ( ! ext.isJsonObject() ) continue;
+                        JsonObject extObj = ext.getAsJsonObject();
+                        if ( ! extObj.has("url") || ! EXTENSION_OAUTH_URIS_URL.equals(extObj.get("url").getAsString()) ) continue;
+                        if ( ! extObj.has("extension") || ! extObj.get("extension").isJsonArray() ) continue;
+
+                        for (JsonElement subExt : extObj.getAsJsonArray("extension")) {
+                            if (subExt.isJsonObject() && subExt.getAsJsonObject().has("valueUri")) {
+                                addOrigin(origins, subExt.getAsJsonObject().get("valueUri").getAsString());
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            logger.warn("caught " + e.getClass().getName() + " retrieving or parsing " + metadataUrl + " - " + e.getMessage(), e);
+        }
+
+        return origins;
+    }
+
+    private static void addOrigin(Set<String> origins, String url) {
+        if (StringUtils.isBlank(url)) return;
+
+        try {
+            URI uri = URI.create(url.trim());
+            if (StringUtils.isBlank(uri.getScheme()) || StringUtils.isBlank(uri.getHost())) {
+                logger.debug("ignoring URL without scheme and host: " + url);
+                return;
+            }
+
+            String origin = uri.getScheme() + "://" + uri.getHost() + (uri.getPort() >= 0 ? ":" + uri.getPort() : "");
+            origins.add(origin);
+
+        } catch (IllegalArgumentException e) {
+            logger.warn("ignoring invalid URL: " + url);
+        }
     }
 
     // UUID_REGEX pattern : see https://www.uuidtools.com/what-is-uuid

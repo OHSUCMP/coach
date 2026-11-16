@@ -1,5 +1,6 @@
 package edu.ohsu.cmp.coach.session;
 
+import edu.ohsu.cmp.coach.service.SessionService;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;

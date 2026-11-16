@@ -41,8 +41,8 @@ public class GlobalExceptionHandler {
             return "error";
 
         } else {
-            return new ResponseEntity<String>("the system encountered an internal error.  see logs for details.",
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("the system encountered an internal error.  see logs for details.");
         }
     }
 }

@@ -59,7 +59,7 @@ function renderCards(cards) {
 
         } else {
             html += "<div class='container'><div class='row'>";
-            html += "<div class='col-auto p-0 pl-1 pt-1' style='min-width:40px;'><img src='/images/" + card.indicator + "-icon.png' class='icon' alt='" + card.indicator + "' /></div>";
+            html += "<div class='col-auto p-0 pl-1 pt-1' style='min-width:40px;'><img src='/images/" + escapeQuotes(card.indicator) + "-icon.png' class='icon' alt='" + escapeQuotes(card.indicator) + "' /></div>";
             html += "<div class='col-10 col-lg-4 content p-1'>";
             html += "<span class='summary heading'>" + card.summary + "</span>";
 
@@ -70,7 +70,7 @@ function renderCards(cards) {
             if (card.links !== null) {
                 html += "<div class='links'>";
                 card.links.forEach(function(link) {
-                    html += "<a class='link' href='" + link.url + "'>" + link.label + "</a>";
+                    html += "<a class='link' href='" + safeUrl(link.url) + "'>" + link.label + "</a>";
                 });
                 html += "</div>";
             }
@@ -96,12 +96,12 @@ function buildCounselingHTML(suggestions) {
     if (suggestions !== null) {
         suggestions.forEach(function(s) {
             if (s.type === 'counseling-link') {
-                html += "<div class='counseling' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
+                html += "<div class='counseling' data-id='" + escapeQuotes(s.id) + "' data-reference-system='" + escapeQuotes(s.references.system) + "' data-reference-code='" + escapeQuotes(s.references.code) + "'>";
                 html += "<span class='heading'>" + s.label + "</span>";
                 if (s.actions !== null) {
                     html += "<ul class='actions'>";
                     s.actions.forEach(function(action) {
-                        html += "<li class='action'><a href='" + action.url + "'>" + action.label + "</a></li>";
+                        html += "<li class='action'><a href='" + safeUrl(action.url) + "'>" + action.label + "</a></li>";
                     });
                     html += "</ul>";
                 }
@@ -119,7 +119,7 @@ function buildAdverseEvents(suggestions) {
     if (suggestions != null) {
         suggestions.forEach(function(s) {
             if (s.type === 'adverse-event') {
-                html += "<div class='adverseEvent' data-id='" + s.id + "'>";
+                html += "<div class='adverseEvent' data-id='" + escapeQuotes(s.id) + "'>";
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<table><tr>";
                 html += "<td class='expand'>";
@@ -163,10 +163,10 @@ function buildGoalsHTML(suggestions) {
             if (s.type === 'goal' || s.type === 'bp-goal') {
                 let c = s.type === 'bp-goal' ? 'bpGoal' : 'goal';
 
-                html += "<div class='" + c + " p-2' data-id='" + s.id +
-                    "' data-reference-system='" + s.references.system +
-                    "' data-reference-code='" + s.references.code +
-                    "' + data-reference-display='" + s.references.display + "'>";
+                html += "<div class='" + c + " p-2' data-id='" + escapeQuotes(s.id) +
+                    "' data-reference-system='" + escapeQuotes(s.references.system) +
+                    "' data-reference-code='" + escapeQuotes(s.references.code) +
+                    "' + data-reference-display='" + escapeQuotes(s.references.display) + "'>";
 
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<div class='row'>"
@@ -185,7 +185,7 @@ function buildGoalsHTML(suggestions) {
                             if (arr.length === 1) {
                                 // presume that if there's just one thing in the array, that it's a fixed response,
                                 // it's the only thing that makes sense
-                                html += "<input class='m-1' name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + action.label + "' />";
+                                html += "<input class='m-1' name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + escapeQuotes(action.label) + "' />";
                                 html += "<label class='m-1' for='action" + x + "_" + i + "'>" + action.label + "</label>";
 
                             } else {
@@ -195,9 +195,9 @@ function buildGoalsHTML(suggestions) {
                                         html += "<span class='madlibResponse m-1'>" + item + '</span> ';
 
                                     } else {
-                                        html += "<input type='text' class='madlibResponse m-1' placeholder='" + item.label + "'";
+                                        html += "<input type='text' class='madlibResponse m-1' placeholder='" + escapeQuotes(item.label) + "'";
                                         if (item.defaultValue) {
-                                            html += " value='" + item.defaultValue + "'";
+                                            html += " value='" + escapeQuotes(item.defaultValue) + "'";
                                         }
                                         html += " disabled/> ";
                                     }
@@ -231,7 +231,7 @@ function buildGoalsHTML(suggestions) {
                         s.actions.forEach(function (action) {
                             let bpdata = parseBPData(action.label);
                             html += "<div class='action'>";
-                            html += "<input class='m-1' name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + action.label + "' data-systolic='" + bpdata.systolic + "' data-diastolic='" + bpdata.diastolic + "' />";
+                            html += "<input class='m-1' name='action" + x + "' type='radio' id='action" + x + "_" + i + "' value='" + escapeQuotes(action.label) + "' data-systolic='" + bpdata.systolic + "' data-diastolic='" + bpdata.diastolic + "' />";
                             html += "<label class='m-1' for='action" + x + "_" + i + "'>" + action.label + "</label></div>";
                             i++;
                         });
@@ -253,7 +253,7 @@ function buildGoalsHTML(suggestions) {
                 html += "</div>";
 
             } else if (s.type === 'update-goal') {
-                html += "<div class='goal p-2' data-id='" + s.id + "' data-reference-system='" + s.references.system + "' data-reference-code='" + s.references.code + "'>";
+                html += "<div class='goal p-2' data-id='" + escapeQuotes(s.id) + "' data-reference-system='" + escapeQuotes(s.references.system) + "' data-reference-code='" + escapeQuotes(s.references.code) + "'>";
                 html += "<span class='heading'>" + s.label + "</span>";
                 html += "<div class='row'>";
                 html += "<div class='col-lg-8 mb-2'>";
@@ -355,7 +355,7 @@ function buildLinksHTML(suggestions) {
                 // Iterate through links
                 s.actions.forEach(function(action) {
                 	html += "<tr><td>";
-                	html += "<a href='" + action.url + "'>" + action.label + "</a>";
+                	html += "<a href='" + safeUrl(action.url) + "'>" + action.label + "</a>";
                 	html += "</td></tr>";
                 });
  

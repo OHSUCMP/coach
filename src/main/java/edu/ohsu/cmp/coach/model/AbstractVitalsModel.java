@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -34,6 +35,13 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
     protected ObservationSource source = null;
     protected Boolean followedProtocol;
     protected Date readingDate;
+
+    // SimpleDateFormat is not thread-safe; synchronize access to the shared instance
+    protected static Date parseOmronDateTime(String s) throws ParseException {
+        synchronized (OMRON_DATETIME_FORMAT) {
+            return OMRON_DATETIME_FORMAT.parse(s);
+        }
+    }
 
     public AbstractVitalsModel(ObservationSource source, Boolean followedProtocol, Date readingDate) {
         this.source = source;
@@ -126,7 +134,9 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
     }
 
     public String getReadingDateString() {
-        return DATE_FORMAT.format(readingDate);
+        synchronized (DATE_FORMAT) {
+            return DATE_FORMAT.format(readingDate);
+        }
     }
 
     public Long getReadingDateTimestamp() {

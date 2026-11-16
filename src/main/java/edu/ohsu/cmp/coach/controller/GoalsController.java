@@ -66,7 +66,7 @@ public class GoalsController extends BaseController {
 
         Collections.sort(list);
 
-        return new ResponseEntity<>(list, HttpStatus.OK);
+        return ResponseEntity.ok(list);
     }
 
     @PostMapping("create")
@@ -92,25 +92,17 @@ public class GoalsController extends BaseController {
             UserWorkspace workspace = userWorkspaceService.get(session.getId());
             workspace.deleteSuggestion(extGoalId);
 
-            return new ResponseEntity<>(new GoalModel(myGoal), HttpStatus.OK);
+            return ResponseEntity.ok(new GoalModel(myGoal));
 
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
         }
     }
 
     @PostMapping("update-bp")
     public ResponseEntity<GoalModel> updatebp(HttpSession session,
-//                                              @RequestParam("extGoalId") String extGoalId,
-//                                              @RequestParam("referenceSystem") String referenceSystem,
-//                                              @RequestParam("referenceCode") String referenceCode,
                                               @RequestParam Integer systolicTarget,
                                               @RequestParam Integer diastolicTarget) {
-
-        // THERE CAN BE ONLY ONE!!!
-        // (blood pressure goal, that is)
-
-//        goalService.deleteBPGoalIfExists(session.getId());
 
         MyGoal goal = goalService.getCurrentLocalBPGoal(session.getId());
         if (goal != null) {
@@ -136,7 +128,7 @@ public class GoalsController extends BaseController {
             workspace.setBpGoalUpdated(true);
         }
 
-        return new ResponseEntity<>(new GoalModel(goal), HttpStatus.OK);
+        return ResponseEntity.ok(new GoalModel(goal));
     }
 
     @PostMapping("update-status")
@@ -156,18 +148,6 @@ public class GoalsController extends BaseController {
         auditService.doAudit(session.getId(), AuditSeverity.INFO, "updated goal status", "goalId=" + g.getId() +
                 ", historyId=" + gh.getId() + ", achievementStatus=" + achievementStatusStr);
 
-        return new ResponseEntity<>(new GoalHistoryModel(gh), HttpStatus.OK);
+        return ResponseEntity.ok(new GoalHistoryModel(gh));
     }
-
-//    @PostMapping("delete")
-//    public ResponseEntity<String> delete(HttpSession session,
-//                                         @RequestParam("extGoalId") String extGoalId) {
-//        try {
-//            goalService.delete(session.getId(), extGoalId);
-//            return new ResponseEntity<>(extGoalId, HttpStatus.OK);
-//
-//        } catch (Exception e) {
-//            return new ResponseEntity<>("Caught " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
 }

@@ -62,6 +62,72 @@ function pad(o, padChar, fillToLen) {
     //     padChar.repeat(fillToLen - s.length) + s;
 }
 
+// escape a value for safe inclusion in HTML element content or a quoted attribute value
+function escapeHtml(o) {
+    return String(o)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// escape only quote characters, for values placed in quoted attributes that may legitimately contain
+// HTML entities (e.g. recommendation card content).  prevents breaking out of the attribute while
+// preserving existing entity decoding behavior
+function escapeQuotes(o) {
+    return String(o)
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// decode HTML entities (e.g. "&amp;" -> "&") the same way the browser would in an attribute value
+function decodeEntities(s) {
+    let t = document.createElement('textarea');
+    t.innerHTML = s;
+    return t.value;
+}
+
+// return an attribute-safe URL, or '#' if the URL uses a disallowed scheme (e.g. javascript:, data:)
+function safeUrl(url) {
+    try {
+        let decoded = decodeEntities(String(url));   // check the URL the browser will actually see
+        let protocol = new URL(decoded, window.location.href).protocol;
+        if (protocol === 'http:' || protocol === 'https:' || protocol === 'mailto:' || protocol === 'tel:') {
+            return escapeHtml(decoded);
+        }
+    } catch (e) {
+        // fall through - unparseable URL
+    }
+    return '#';
+}
+
+function getCookie(name) {
+    let nameEq = name + "=";
+    let cookies = document.cookie.split(';');
+
+    for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.indexOf(nameEq) === 0) {
+            return decodeURIComponent(cookie.substring(nameEq.length));
+        }
+    }
+
+    return null;
+}
+
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        let method = settings.type || settings.method || "GET";
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(method)) {
+            let csrfToken = getCookie("XSRF-TOKEN");
+            if (csrfToken) {
+                xhr.setRequestHeader("X-XSRF-TOKEN", csrfToken);
+            }
+        }
+    }
+});
+
 $(document).ready(function() {
     enableHover('.link');
 });

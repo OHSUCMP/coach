@@ -65,8 +65,9 @@ public class UserWorkspaceService {
     }
 
     public UserWorkspace get(String sessionId) throws SessionMissingException {
-        if (map.containsKey(sessionId)) {
-            return map.get(sessionId);
+        UserWorkspace workspace = map.get(sessionId);   // single atomic lookup avoids check-then-act race
+        if (workspace != null) {
+            return workspace;
 
         } else {
             throw new SessionMissingException(sessionId);
@@ -84,8 +85,8 @@ public class UserWorkspaceService {
     }
 
     public boolean shutdown(String sessionId) {
-        if (map.containsKey(sessionId)) {
-            UserWorkspace workspace = map.remove(sessionId);
+        UserWorkspace workspace = map.remove(sessionId);   // single atomic removal avoids check-then-act race
+        if (workspace != null) {
             workspace.shutdown();
             return true;
         }

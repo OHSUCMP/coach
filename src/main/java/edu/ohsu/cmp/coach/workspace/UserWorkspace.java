@@ -40,6 +40,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 public class UserWorkspace {
@@ -88,7 +89,7 @@ public class UserWorkspace {
     private String redcapId = null;
     private Boolean bpGoalUpdated = null;
     private Boolean confirmedEndOfStudy = null;
-    private Boolean omronSynchronizing = false;
+    private final AtomicBoolean omronSynchronizing = new AtomicBoolean(false);
     private Integer omronCurrentItem = null;
     private Integer omronTotalItems = null;
 
@@ -1061,13 +1062,14 @@ public class UserWorkspace {
 
     public void initiateSynchronousOmronUpdate() {
         OmronService omronService = ctx.getBean(OmronService.class);
-        if (omronSynchronizing) {
-            logger.warn("Omron is still synchronizing; aborting new synchronize request");
+        if ( ! omronService.isOmronEnabled() ) {
+            logger.warn("Omron integration is currently disabled; aborting synchronize request");
             return;
         }
 
-        if ( ! omronService.isOmronEnabled() ) {
-            logger.warn("Omron integration is currently disabled; aborting synchronize request");
+        // atomically claim the synchronizing flag so concurrent requests can't start a second sync
+        if ( ! omronSynchronizing.compareAndSet(false, true) ) {
+            logger.warn("Omron is still synchronizing; aborting new synchronize request");
             return;
         }
 
@@ -1077,14 +1079,13 @@ public class UserWorkspace {
                 long start = System.currentTimeMillis();
                 logger.info("BEGIN Omron synchronization for session=" + sessionId);
                 try {
-                    omronSynchronizing = true;
                     omronService.synchronize(sessionId);
 
                 } catch (Exception e) {
                     logger.error("caught " + e.getClass().getName() + " synchronizing with Omron - " + e.getMessage(), e);
 
                 } finally {
-                    omronSynchronizing = false;
+                    omronSynchronizing.set(false);
                     omronCurrentItem = null;
                     omronTotalItems = null;
                 }
@@ -1093,16 +1094,21 @@ public class UserWorkspace {
             }
         };
 
-        executorService.submit(runnable);
+        try {
+            executorService.submit(runnable);
+        } catch (RuntimeException e) {
+            omronSynchronizing.set(false);      // task was never scheduled, so release the flag
+            throw e;
+        }
     }
 
     public Boolean isOmronSynchronizing() {
-        return omronSynchronizing;
+        return omronSynchronizing.get();
     }
 
     public void setOmronSynchronizationProgress(int current, int total) {
         logger.debug("setting Omron sync progress: current=" + current + ", total=" + total);
-        if (omronSynchronizing) {
+        if (omronSynchronizing.get()) {
             omronCurrentItem = current;
             omronTotalItems = total;
 
@@ -1115,7 +1121,7 @@ public class UserWorkspace {
         OmronService omronService = ctx.getBean(OmronService.class);
         if (omronService.isOmronEnabled()) {
             OmronStatus status;
-            if (omronSynchronizing) {
+            if (omronSynchronizing.get()) {
                 status = omronCurrentItem == null && omronTotalItems == null ?
                         OmronStatus.INITIATING_SYNC :
                         OmronStatus.SYNCHRONIZING;

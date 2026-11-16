@@ -20,7 +20,7 @@ public class FHIRCredentials {
         return "FHIRCredentials{" +
                 "clientId='" + clientId + '\'' +
                 ", serverURL='" + serverURL + '\'' +
-                ", bearerToken='" + bearerToken + '\'' +
+                ", bearerToken=" + (bearerToken != null ? "[REDACTED]" : null) +   // never log credentials
                 ", patientId='" + patientId + '\'' +
                 ", userId='" + userId + '\'' +
                 '}';

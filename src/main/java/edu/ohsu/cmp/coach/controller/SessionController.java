@@ -12,13 +12,14 @@ import edu.ohsu.cmp.coach.model.RedcapDataAccessGroup;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
 import edu.ohsu.cmp.coach.service.PatientService;
 import edu.ohsu.cmp.coach.service.REDCapService;
-import edu.ohsu.cmp.coach.session.SessionService;
+import edu.ohsu.cmp.coach.service.SessionService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -78,7 +79,7 @@ public class SessionController extends BaseController {
 
     @GetMapping(value = {"launch-provider", "launch-ehr"}) // launch-ehr is deprecated
     public String launchProvider(HttpSession session, Model model) {
-        sessionService.expireAll(session.getId());
+        sessionService.forceExpiration(session.getId());
         setCommonViewComponents(model);
         model.addAttribute("clientId", providerClientId);
         model.addAttribute("scope", providerScope);
@@ -89,7 +90,7 @@ public class SessionController extends BaseController {
 
     @GetMapping("launch-patient")
     public String launchPatient(HttpSession session, Model model) {
-        sessionService.expireAll(session.getId());
+        sessionService.forceExpiration(session.getId());
         setCommonViewComponents(model);
         model.addAttribute("clientId", patientClientId);
         model.addAttribute("scope", patientScope);
@@ -115,9 +116,18 @@ public class SessionController extends BaseController {
             throw new CaseNotHandledException("couldn't determine audience from clientId=" + clientId);
         }
 
+        // serverUrl is supplied by the client; only permit the configured FHIR server for the resolved launch audience.
+        // Use the canonical configured URL from application properties after validation, not the user-supplied value.
+        String permittedServerUrl = resolvePermittedServerUrl(serverUrl, audience);
+        if (permittedServerUrl == null) {
+            logger.warn("rejecting prepare-session for session " + session.getId() + " - serverUrl does not match configured issuer for " +
+                    "audience=" + audience);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         logger.debug("preparing " + audience + " session " + session.getId());
 
-        FHIRCredentials credentials = new FHIRCredentials(clientId, serverUrl, bearerToken, patientId, userId);
+        FHIRCredentials credentials = new FHIRCredentials(clientId, permittedServerUrl, bearerToken, patientId, userId);
         MyPatient myPatient = patientService.getMyPatient(patientId);
 
         boolean requiresEnrollment = false;
@@ -203,6 +213,23 @@ public class SessionController extends BaseController {
         }
     }
 
+    private String resolvePermittedServerUrl(String serverUrl, Audience audience) {
+        String normalizedServerUrl = StringUtils.removeEnd(serverUrl, "/");
+
+        if (StringUtils.isBlank(normalizedServerUrl)) {
+            return null;
+        }
+
+        String configuredIssuer = switch (audience) {
+            case PATIENT -> patientIss;
+            case CARE_TEAM -> providerIss;
+        };
+
+        return StringUtils.equals(normalizedServerUrl, StringUtils.removeEnd(configuredIssuer, "/")) ?
+                configuredIssuer :
+                null;
+    }
+
     @PostMapping("validate-session")
     public ResponseEntity<?> validateSession(HttpSession session) {
         logger.debug("validating session " + session.getId() + " - exists? --> " + userWorkspaceService.exists(session.getId()));
@@ -224,27 +251,47 @@ public class SessionController extends BaseController {
 
     @GetMapping("logout")
     public String logout(HttpSession session) {
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out"); // must occur before expire action
-        sessionService.expireAll(session.getId());
+        if (userWorkspaceService.exists(session.getId())) {
+            auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out"); // must occur before expire action
+            sessionService.forceExpiration(session.getId());
+        }
+
+        session.invalidate();
+
         return "logout";
     }
 
     @GetMapping("inactivity-logout")
     public String inactivityLogout(HttpSession session) {
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out due to inactivity"); // must occur before expire action
-        sessionService.expireAll(session.getId());
+        if (userWorkspaceService.exists(session.getId())) {
+            auditService.doAudit(session.getId(), AuditSeverity.INFO, "logged out due to inactivity"); // must occur before expire action
+            sessionService.forceExpiration(session.getId());
+        }
+
+        session.invalidate();
+
         return "inactivity-logout";
     }
 
     @PostMapping("clear-session")
     public ResponseEntity<?> clearSession(HttpSession session) {
-        sessionService.expireAll(session.getId());
-        return ResponseEntity.ok("session cleared");
+        String sessionId = session.getId();
+        boolean sessionExists = userWorkspaceService.exists(sessionId);
+
+        if (sessionExists) {
+            sessionService.forceExpiration(sessionId);
+        }
+
+        session.invalidate();
+
+        return sessionExists ?
+                ResponseEntity.ok("session cleared") :
+                ResponseEntity.ok("no session");
     }
 
     @PostMapping("confirm-end-of-study")
     public ResponseEntity<?> confirmEndOfStudy(HttpSession session) {
-        userWorkspaceService.get(session.getId()).setConfirmedEndOfStudy(true);
+        userWorkspaceService.get(session.getId()).setConfirmedEndOfStudy(Boolean.TRUE);
         return ResponseEntity.ok("end-of-study confirmed");
     }
 
