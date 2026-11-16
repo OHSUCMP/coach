@@ -74,11 +74,11 @@ jobs:
 
       # added the following by recommendation from here: https://resources.github.com/learn/pathways/security/intermediate/codeql-advanced-setup/
     - if: matrix.language == 'java-kotlin'
-      name: Set up Java 17
+      name: Set up Java 21
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: 17
+        java-version: 21
         architecture: x64
 
     - if: matrix.language == 'java-kotlin'
