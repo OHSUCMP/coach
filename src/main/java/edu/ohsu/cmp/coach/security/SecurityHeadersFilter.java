@@ -146,7 +146,7 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
             URI uri = URI.create(value.trim());
 
             if (StringUtils.isBlank(uri.getScheme()) || StringUtils.isBlank(uri.getHost())) {
-                logger.warn("ignoring URL for Content-Security-Policy because it does not include a scheme and host: " + value);
+                logger.warn("ignoring URL for Content-Security-Policy because it does not include a scheme and host: {}", value);
                 return null;
             }
 
@@ -162,8 +162,8 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
             return origin.toString();
 
         } catch (IllegalArgumentException e) {
-            logger.warn("ignoring invalid URL for Content-Security-Policy: " + value);
-            logger.debug("caught " + e.getClass().getName() + " parsing CSP URL value - " + e.getMessage(), e);
+            logger.warn("ignoring invalid URL for Content-Security-Policy: {}", value);
+            logger.debug("caught {} parsing CSP URL value - {}", e.getClass().getName(), e.getMessage(), e);
             return null;
         }
     }

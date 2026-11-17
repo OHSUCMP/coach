@@ -39,46 +39,70 @@ public class ResourceController extends BaseController {
 
     @GetMapping("/faq")
     public String faq(HttpSession session, Model model) {
-        userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(session.getId(), model);
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            userWorkspaceService.get(sessionId);
+            setCommonViewComponents(sessionId, model);
 
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: faq");
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "viewed resources: faq");
 
-        return "faq";
+            return "faq";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
 
     @GetMapping("/symptoms-911")
     public String symptoms(HttpSession session, Model model) {
-        userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(session.getId(), model);
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            userWorkspaceService.get(sessionId);  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
+            setCommonViewComponents(sessionId, model);
 
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: symptoms-911");
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "viewed resources: symptoms-911");
 
-        return "symptoms";
+            return "symptoms";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
 
     @GetMapping("/side-effects")
     public String sideEffects(HttpSession session, Model model) {
-        userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(session.getId(), model);
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            userWorkspaceService.get(sessionId);  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
+            setCommonViewComponents(sessionId, model);
 
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: side-effects");
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "viewed resources: side-effects");
 
-        return "side-effects";
+            return "side-effects";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
 
     @GetMapping("/welcome-video")
     public String welcomeVideo(HttpSession session, Model model) {
-        setCommonViewComponents(session.getId(), model);
-        UserWorkspace workspace = userWorkspaceService.get(session.getId());
-        String videoId = workspace.getActiveRandomizationGroup() == RandomizationGroup.ENHANCED ?
-                WELCOME_VIDEO_ID_INTERVENTION :
-                WELCOME_VIDEO_ID_CONTROL;
-        model.addAttribute("videoId", videoId);
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            setCommonViewComponents(sessionId, model);
+            UserWorkspace workspace = userWorkspaceService.get(sessionId);
+            String videoId = workspace.getActiveRandomizationGroup() == RandomizationGroup.ENHANCED ?
+                    WELCOME_VIDEO_ID_INTERVENTION :
+                    WELCOME_VIDEO_ID_CONTROL;
+            model.addAttribute("videoId", videoId);
 
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: welcome-video");
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "viewed resources: welcome-video");
 
-        return "embedded-video";
+            return "embedded-video";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
 
     @GetMapping("/pdf/{filename}")
@@ -112,50 +136,74 @@ public class ResourceController extends BaseController {
             headers.setContentType(MediaType.APPLICATION_PDF);
             return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
         } else {
-            logger.warn("requested resource does not exist: " + resName);
+            logger.warn("requested resource does not exist: {}", resName);
             return ResponseEntity.notFound().build();
         }
     }
 
     @GetMapping("/risks-of-hypertension-study-results")
     public String risksOfHypertensionStudyResults(HttpSession session, Model model) {
-        userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(session.getId(), model);
-        model.addAttribute("pdfUrl", "/resources/pdf/Risks_of_Hypertension_Study_Results.pdf");
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            userWorkspaceService.get(sessionId);  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
+            setCommonViewComponents(sessionId, model);
+            model.addAttribute("pdfUrl", "/resources/pdf/Risks_of_Hypertension_Study_Results.pdf");
 
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: risks-of-hypertension-study-results");
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "viewed resources: risks-of-hypertension-study-results");
 
-        return "embedded-pdf";
+            return "embedded-pdf";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
 
     @GetMapping("/coach-written-instructions")
     public String coachWrittenInstructions(HttpSession session, Model model) {
-        userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(session.getId(), model);
-        model.addAttribute("pdfUrl", "/resources/pdf/COACH_Written_Instructions.pdf");
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            userWorkspaceService.get(sessionId);  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
+            setCommonViewComponents(sessionId, model);
+            model.addAttribute("pdfUrl", "/resources/pdf/COACH_Written_Instructions.pdf");
 
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: coach-written-instructions");
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "viewed resources: coach-written-instructions");
 
-        return "embedded-pdf";
+            return "embedded-pdf";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
 
     @GetMapping("/omron-instructions")
     public String omronInstructions(HttpSession session, Model model) {
-        userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(session.getId(), model);
-        model.addAttribute("pdfUrl", "/resources/pdf/OMRON_Instructions.pdf");
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            userWorkspaceService.get(sessionId);  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
+            setCommonViewComponents(sessionId, model);
+            model.addAttribute("pdfUrl", "/resources/pdf/OMRON_Instructions.pdf");
 
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed resources: omron-instructions");
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "viewed resources: omron-instructions");
 
-        return "embedded-pdf";
+            return "embedded-pdf";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
 
     @GetMapping("/site-pdf/{key}")
     public String getSiteSpecificResource(HttpSession session, Model model, @PathVariable("key") String key) {
-        userWorkspaceService.get(session.getId());  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
-        setCommonViewComponents(session.getId(), model);
-        model.addAttribute("pdfUrl", "/resources/site-pdf-raw/" + key);
-        return "embedded-pdf";
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            userWorkspaceService.get(sessionId);  // don't need it, but we do want to blow out with an error if the user's session doesn't exist
+            setCommonViewComponents(sessionId, model);
+            model.addAttribute("pdfUrl", "/resources/site-pdf-raw/" + key);
+            return "embedded-pdf";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
 
     @GetMapping("/site-pdf-raw/{key}")
@@ -172,6 +220,7 @@ public class ResourceController extends BaseController {
             auditService.doAudit(session.getId(), AuditSeverity.INFO, "viewed site-specific resources: " + resource.getName());
 
             return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
+
         } else {
             logger.warn("requested site-specific resource key does not exist: {}", sanitizeForLog(key));
             return ResponseEntity.notFound().build();

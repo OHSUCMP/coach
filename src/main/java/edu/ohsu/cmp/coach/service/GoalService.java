@@ -87,16 +87,16 @@ public class GoalService extends AbstractService {
                         if (sr.hasCode() && FhirUtil.hasCoding(sr.getCode(), fcm.getServiceRequestOrderBPGoalCodings())) {
                             Goal g = buildBPGoal(sessionId, sr);
                             if (logger.isDebugEnabled()) {
-                                logger.debug("created Goal: " + FhirUtil.toJson(g));
+                                logger.debug("created Goal: {}", FhirUtil.toJson(g));
                             }
                             FhirUtil.appendResourceToBundle(bundle, g);
                         }
 
                     } catch (Exception e) {
-                        logger.error("caught " + e.getClass().getName() + " building BP Goal from ServiceRequest " +
-                                sr.getId() + " - " + e.getMessage());
+                        logger.error("caught {} building BP Goal from ServiceRequest {} - {}",
+                                e.getClass().getName(), sr.getId(), e.getMessage());
                         logger.debug("exception: ", e);
-                        logger.debug("ServiceRequest = " + FhirUtil.toJson(sr));
+                        logger.debug("ServiceRequest = {}", FhirUtil.toJson(sr));
                     }
                 }
             }
@@ -338,7 +338,7 @@ public class GoalService extends AbstractService {
                 repository.deleteAllByPatId(workspace.getInternalPatientId());
 //            }
 //        } catch (Exception e) {
-//            logger.error("caught " + e.getClass().getName() + " attempting to delete Goals for session " + sessionId, e);
+//            logger.error("caught {} attempting to delete Goals for session {}", e.getClass().getName(), sessionId, e);
 //        }
     }
 }

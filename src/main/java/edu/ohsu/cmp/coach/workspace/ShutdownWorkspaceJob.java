@@ -30,13 +30,13 @@ public class ShutdownWorkspaceJob implements Job {
 
         UserWorkspaceService userWorkspaceService = ctx.getBean(UserWorkspaceService.class);
         if (userWorkspaceService.exists(sessionId)) {
-            logger.info("expiring credentials for session " + sessionId);
+            logger.info("expiring credentials for session {}", sessionId);
             AuditService auditService = ctx.getBean(AuditService.class);
             auditService.doAudit(sessionId, AuditSeverity.INFO, "session expired", sessionId);
             userWorkspaceService.shutdown(sessionId);
 
         } else {
-            logger.info("user workspace for session " + sessionId + " no longer exists, so nothing to shut down.");
+            logger.info("user workspace for session {} no longer exists, so nothing to shut down.", sessionId);
         }
     }
 }

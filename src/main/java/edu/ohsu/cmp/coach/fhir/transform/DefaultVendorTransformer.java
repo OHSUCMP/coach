@@ -54,9 +54,9 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
             if (entry.hasResponse()) {
                 Bundle.BundleEntryResponseComponent response = entry.getResponse();
                 if (response.hasStatus() && response.getStatus().equals("201 Created")) {
-                    logger.debug("successfully created " + response.getLocation());
+                    logger.debug("successfully created {}", response.getLocation());
                 } else {
-                    logger.warn("got status = " + response.getStatus() + " attempting to write " + entry + " - removing");
+                    logger.warn("got status = {} attempting to write {} - removing", response.getStatus(), entry);
                     iter.remove();
                 }
             }
@@ -217,12 +217,12 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
         // todo : outer loop should iterate over encounterObservationsMap, ignoring items where the key is null
 
         for (Encounter encounter : getAllEncounters(bundle)) {
-            logger.debug("processing Encounter: " + encounter.getId());
+            logger.debug("processing Encounter: {}", encounter.getId());
 
             List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
 
             if (encounterObservations != null) {
-                logger.debug("building Observations for Encounter " + encounter.getId());
+                logger.debug("building Observations for Encounter {}", encounter.getId());
 
                 List<Observation> pulseObservationList = new ArrayList<>();    // potentially many per encounter
                 Observation protocolObservation = null;
@@ -231,12 +231,12 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
                 while (iter.hasNext()) {
                     Observation o = iter.next();
                     if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCodings())) {
-                        logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                        logger.debug("pulseObservation = {} (effectiveDateTime={})", o.getId(), o.getEffectiveDateTimeType().getValueAsString());
                         pulseObservationList.add(o);
                         iter.remove();
 
                     } else if (protocolObservation == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
-                        logger.debug("protocolObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                        logger.debug("protocolObservation = {} (effectiveDateTime={})", o.getId(), o.getEffectiveDateTimeType().getValueAsString());
                         protocolObservation = o;
                         iter.remove();
                     }
@@ -246,16 +246,15 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
                     try {
                         list.add(new PulseModel(encounter, pulseObservation, protocolObservation, fcm));
                     } catch (DataException e) {
-                        logger.warn("caught " + e.getClass().getName() +
-                                " building Pulse from Observation with id=" + pulseObservation.getId() + " - " +
-                                e.getMessage() + " - skipping -");
+                        logger.warn("caught {} building Pulse from Observation with id={} - {} - skipping -",
+                                e.getClass().getName(), pulseObservation.getId(), e.getMessage());
                     }
                 }
 
                 pulseObservationList.clear();
 
             } else {
-                logger.debug("no Observations found for Encounter " + encounter.getId());
+                logger.debug("no Observations found for Encounter {}", encounter.getId());
             }
         }
 
@@ -268,25 +267,24 @@ public class DefaultVendorTransformer extends BaseVendorTransformer implements V
                     try {
                         if (o.hasCode()) {
                             if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCodings())) {
-                                logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                                logger.debug("pulseObservation = {} (effectiveDateTime={})", o.getId(), o.getEffectiveDateTimeType().getValueAsString());
                                 try {
                                     list.add(new PulseModel(o, fcm));
                                 } catch (DataException e) {
-                                    logger.warn("caught " + e.getClass().getName() +
-                                            " building Pulse from Observation with id=" + o.getId() + " - " +
-                                            e.getMessage() + " - skipping -");
+                                    logger.warn("caught {} building Pulse from Observation with id={} - {} - skipping -",
+                                            e.getClass().getName(), o.getId(), e.getMessage());
                                 }
 
                             } else {
-                                logger.debug("did not process Observation " + o.getId() + " - invalid coding");
+                                logger.debug("did not process Observation {} - invalid coding", o.getId());
                             }
 
                         } else {
-                            logger.debug("did not process Observation " + o.getId() + " - no coding");
+                            logger.debug("did not process Observation {} - no coding", o.getId());
                         }
 
                     } catch (Exception e) {
-                        logger.error("caught " + e.getClass().getName() + " processing Observation with id=" + o.getId() + " - " + e.getMessage(), e);
+                        logger.error("caught {} processing Observation with id={} - {}", e.getClass().getName(), o.getId(), e.getMessage(), e);
                     }
                 }
             }

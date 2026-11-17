@@ -134,7 +134,7 @@ public class RecommendationService extends AbstractService {
     }
 
     public List<Card> getCards(String sessionId, String hookId) throws IOException {
-        logger.debug("BEGIN getting cards for session=" + sessionId + ", hookId=" + hookId);
+        logger.debug("BEGIN getting cards for session={}, hookId={}", sessionId, hookId);
 
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
@@ -170,7 +170,7 @@ public class RecommendationService extends AbstractService {
             StringWriter writer = new StringWriter();
             mustache.execute(writer, hookRequest).flush();
 
-            logger.debug("hookRequest = " + writer.toString());
+            logger.debug("hookRequest = {}", writer.toString());
 
             Map<String, String> headers = new HashMap<>();
             headers.put("Content-Type", "application/json; charset=UTF-8");
@@ -196,10 +196,10 @@ public class RecommendationService extends AbstractService {
                 body = httpResponse.getResponseBody();
             }
 
-            logger.debug("got response code=" + code + ", body=" + body);
+            logger.debug("got response code={}, body={}", code, body);
 
             if (code < 200 || code > 299) {
-                logger.error("CQF-RULER ERROR: code=" + code + ", body=" + body);
+                logger.error("CQF-RULER ERROR: code={}, body={}", code, body);
 
                 auditService.doAudit(sessionId, AuditSeverity.ERROR, "recommendation engine error", "received HTTP " + code +
                         " from recommendation engine for " + hookId + " - see logs for details");
@@ -274,8 +274,8 @@ public class RecommendationService extends AbstractService {
                     }
 
                 } catch (Exception e) {
-                    logger.error("caught " + e.getClass().getName() + " processing response for hookId=" + hookId + " - " + e.getMessage(), e);
-                    logger.debug("\n\nBODY =\n" + body + "\n\n");
+                    logger.error("caught {} processing response for hookId={} - {}", e.getClass().getName(), hookId, e.getMessage(), e);
+                    logger.debug("\n\nBODY =\n{}\n\n", body);
                     throw e;
                 }
             }
@@ -298,7 +298,7 @@ public class RecommendationService extends AbstractService {
             }
 
         } finally {
-            logger.debug("DONE getting cards for session=" + sessionId + ", hookId=" + hookId);
+            logger.debug("DONE getting cards for session={}, hookId={}", sessionId, hookId);
         }
 
         return cards;
@@ -577,7 +577,7 @@ public class RecommendationService extends AbstractService {
                             bundle.consume(normalizeSmokingObservation(o));
 
                         } catch (Exception e) {
-                            logger.error("caught " + e.getClass().getSimpleName() + " building normalized smoking Observation from resource with id=" + o.getId(), e);
+                            logger.error("caught {} building normalized smoking Observation from resource with id={}", e.getClass().getSimpleName(), o.getId(), e);
                         }
                     }
                 }
@@ -671,7 +671,7 @@ public class RecommendationService extends AbstractService {
                             bundle.consume(normalizeDrinkingObservation(o));
 
                         } catch (Exception e) {
-                            logger.error("caught " + e.getClass().getSimpleName() + " building normalized drinking Observation from resource with id=" + o.getId(), e);
+                            logger.error("caught {} building normalized drinking Observation from resource with id={}", e.getClass().getSimpleName(), o.getId(), e);
                         }
                     }
                 }

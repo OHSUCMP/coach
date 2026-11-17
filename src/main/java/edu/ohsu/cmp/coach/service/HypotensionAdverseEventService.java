@@ -29,7 +29,7 @@ public class HypotensionAdverseEventService extends AbstractService {
     private BloodPressureService bloodPressureService;
 
     public boolean refresh(String sessionId) throws DataException {
-        logger.info("refreshing hypotension adverse events for session=" + sessionId);
+        logger.info("refreshing hypotension adverse events for session={}", sessionId);
 
         boolean modified = false;
 
@@ -71,7 +71,7 @@ public class HypotensionAdverseEventService extends AbstractService {
         while (iter.hasNext()) {
             String key = iter.next();
             if (currentMap.containsKey(key)) {
-                logger.debug("found hypotension adverse event in both current and new lists (will not process) - " + key);
+                logger.debug("found hypotension adverse event in both current and new lists (will not process) - {}", key);
                 currentMap.remove(key);
                 iter.remove();
             }
@@ -109,7 +109,7 @@ public class HypotensionAdverseEventService extends AbstractService {
     }
 
     public HypotensionAdverseEvent create(String sessionId, HypotensionAdverseEvent hae) {
-        logger.info("creating new hypotension adverse event for session=" + sessionId + " - " + hae.getLogicalEqualityKey());
+        logger.info("creating new hypotension adverse event for session={} - {}", sessionId, hae.getLogicalEqualityKey());
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         hae.setPatId(workspace.getInternalPatientId());
         hae.setCreatedDate(new Date());
@@ -121,8 +121,8 @@ public class HypotensionAdverseEventService extends AbstractService {
     }
 
     public void delete(String sessionId, HypotensionAdverseEvent hae) {
-        logger.info("deleting hypotension adverse event that no longer reflects current state for session=" +
-                sessionId + " - " + hae.getLogicalEqualityKey());
+        logger.info("deleting hypotension adverse event that no longer reflects current state for session={} - {}",
+                sessionId, hae.getLogicalEqualityKey());
         repository.delete(hae);
 
         auditService.doAudit(sessionId, AuditSeverity.INFO, "deleted hypotension adverse event", "id=" + hae.getId());

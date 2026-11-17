@@ -115,9 +115,9 @@ public class HookRequest {
 
         boolean modified = ! StringUtils.equals(json, jsonSanitized);
         if (modified) {
-            logger.warn("JSON contains non-" + charset.name() + " characters.  Offending characters have been replaced with sentinels.");
-            logger.debug("JSON = " + json);
-            logger.debug("JSON-" + charset.name() + " = " + jsonSanitized);
+            logger.warn("JSON contains non-{} characters.  Offending characters have been replaced with sentinels.", charset.name());
+            logger.debug("JSON = {}", json);
+            logger.debug("JSON-{} = {}", charset.name(), jsonSanitized);
         }
 
         return new SanitizeResponse(jsonSanitized, modified);

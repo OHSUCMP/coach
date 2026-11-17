@@ -82,7 +82,7 @@ public class RedcapParticipantInfo {
                 pi.setRandomizationGroup(RandomizationGroup.getByRedcapCode(rand));
             } catch (IllegalArgumentException e) {
                 pi.setRandomizationGroup(RandomizationGroup.ENHANCED);
-                RedcapParticipantInfo.logger.error("Randomization Group " + randString + " is not understood. User " + coachId + " will get ENHANCED experience.");
+                RedcapParticipantInfo.logger.error("Randomization Group {} is not understood. User {} will get ENHANCED experience.", randString, coachId);
             }
 
             try {
@@ -91,7 +91,7 @@ public class RedcapParticipantInfo {
             } catch (ParseException e) {
                 pi.setIsRandomized(false);
                 pi.setRandomizationGroup(null);
-                RedcapParticipantInfo.logger.error("Randomization date " + randDateString + " is not understood. User " + coachId + " is denied access.");
+                RedcapParticipantInfo.logger.error("Randomization date {} is not understood. User {} is denied access.", randDateString, coachId);
             }
         }
 

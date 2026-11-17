@@ -65,9 +65,6 @@ public class HomeController extends BaseController {
     @Autowired
     private AdverseEventService adverseEventService;
 
-    @Value("#{new Boolean('${security.browser.cache-credentials}')}")
-    private Boolean cacheCredentials;
-
     @Value("${system.status-message}")
     private String systemStatusMessage;
 
@@ -82,11 +79,11 @@ public class HomeController extends BaseController {
                        @RequestParam(name = "bandwidth", required = false) Number bandwidthOverride) throws Exception {
 
         String sessionId = session.getId();
-        if (sessionService.exists(sessionId)) {
-            logger.info("session exists.  requesting data for session " + sessionId);
+        if (userWorkspaceService.exists(sessionId)) {
+            logger.info("session exists.  requesting data for session {}", sessionId);
 
             UserWorkspace workspace = userWorkspaceService.get(sessionId);
-            logger.info("Randomization group for user: " + workspace.getRandomizationGroup());
+            logger.info("Randomization group for user: {}", workspace.getRandomizationGroup());
 
             setCommonViewComponents(sessionId, model);
             model.addAttribute("sessionEstablished", true);
@@ -123,7 +120,7 @@ public class HomeController extends BaseController {
 
             } catch (Exception e) {
                 // fail gracefully if the recommendation engine isn't running for some reason
-                logger.error("caught " + e.getClass().getName() + " getting recommendations list - " + e.getMessage(), e);
+                logger.error("caught {} getting recommendations list - {}", e.getClass().getName(), e.getMessage(), e);
                 model.addAttribute("cdshooks", new ArrayList<CDSHook>());
             }
 
@@ -132,7 +129,7 @@ public class HomeController extends BaseController {
                 RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(workspace.getRedcapId());
                 if (redCapService.isUsersWithoutRedcapRecordBypassStudyEnabled() && ! redcapParticipantInfo.getExists()) {
                     // this is fine.  do not add AE survey link
-                    logger.debug("not adding AE survey link for session " + sessionId + ", user is not in study");
+                    logger.debug("not adding AE survey link for session {}, user is not in study", sessionId);
 
                 } else {
                     model.addAttribute("aeSurveyLink", redCapService.getAESurveyLink(workspace.getRedcapId()));
@@ -161,7 +158,7 @@ public class HomeController extends BaseController {
             return "home";
 
         } else if (sessionService.existsProvisional(sessionId)) {
-            logger.info("provisional session exists.  starting REDCap workflow for session " + sessionId);
+            logger.info("provisional session exists.  starting REDCap workflow for session {}", sessionId);
 
             // we get here if the user hasn't completed REDCap enrollment, has denied consent, or withdrew
             ProvisionalSessionCacheData cacheData = sessionService.getProvisionalSessionData(sessionId);
@@ -171,7 +168,7 @@ public class HomeController extends BaseController {
             RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(patient.getRedcapId());
             if ( ! redcapParticipantInfo.getExists() ) {
                 // If they are not in REDCap yet, create them and forward them to the entry survey
-                logger.info("REDCap workflow: Creating REDCap participant record with REDCap COACH Id " + redcapParticipantInfo.getCoachId() + " and forwarding to the entry survey");
+                logger.info("REDCap workflow: Creating REDCap participant record with REDCap COACH Id {} and forwarding to the entry survey", redcapParticipantInfo.getCoachId());
                 String recordId = redCapService.createSubjectInfoRecord(redcapParticipantInfo.getCoachId());
                 String entrySurveyLink = redCapService.getEntrySurveyLink(recordId);
 
@@ -181,7 +178,7 @@ public class HomeController extends BaseController {
 
             } else if ( ! redcapParticipantInfo.getIsInformationSheetComplete() ) {
                 // If they haven't gotten past the entry survey and don't have a queue yet, send them back to the entry survey
-                logger.info("REDCap workflow: Forwarding " + redcapParticipantInfo.getCoachId() + " to the entry survey");
+                logger.info("REDCap workflow: Forwarding {} to the entry survey", redcapParticipantInfo.getCoachId());
                 String entrySurveyLink = redCapService.getEntrySurveyLink(redcapParticipantInfo.getRecordId());
 
                 auditService.doAudit(patient, AuditSeverity.INFO, "accessed REDCap entry survey", "information sheet was incomplete");
@@ -190,7 +187,7 @@ public class HomeController extends BaseController {
 
             } else if (redcapParticipantInfo.getHasConsentRecord() && ! redcapParticipantInfo.getIsConsentGranted()) {
                 // If consent record exists and the answer is no, exit
-                logger.info("REDCap workflow: Participant " + redcapParticipantInfo.getCoachId() + " denied consent. Forwarding to consent-previously-denied.");
+                logger.info("REDCap workflow: Participant {} denied consent. Forwarding to consent-previously-denied.", redcapParticipantInfo.getCoachId());
                 setCommonViewComponents(model);
 
                 auditService.doAudit(patient, AuditSeverity.INFO, "access denied", "participant did not grant consent");
@@ -199,7 +196,7 @@ public class HomeController extends BaseController {
 
             } else if ( ! redcapParticipantInfo.getHasConsentRecord() || ! redcapParticipantInfo.getIsRandomized()) {
                 // If there is no consent or randomization record, forward them to their survey queue
-                logger.info("REDCap workflow: Forwarding " + redcapParticipantInfo.getCoachId() + " to the survey queue to complete enrollment.");
+                logger.info("REDCap workflow: Forwarding {} to the survey queue to complete enrollment.", redcapParticipantInfo.getCoachId());
                 String surveyQueueLink = redCapService.getSurveyQueueLink(redcapParticipantInfo.getRecordId());
 
                 auditService.doAudit(patient, AuditSeverity.INFO, "accessed REDCap survey queue", "participant has no consent record, or has not been randomized");
@@ -208,7 +205,7 @@ public class HomeController extends BaseController {
 
             } else if (redcapParticipantInfo.getIsWithdrawn()) {
                 // If withdrawn, exit
-                logger.info("REDCap workflow: Participant " + redcapParticipantInfo.getCoachId() + " has withdrawn. Forwarding to withdrawn page.");
+                logger.info("REDCap workflow: Participant {} has withdrawn. Forwarding to withdrawn page.", redcapParticipantInfo.getCoachId());
                 setCommonViewComponents(model);
 
                 auditService.doAudit(patient, AuditSeverity.INFO, "access denied", "participant has withdrawn from the study");
@@ -219,7 +216,7 @@ public class HomeController extends BaseController {
                 // if they've completed the study, and we're working with a provisional session, continued use has been prohibited,
                 // so display the end-of-study message in a static page.
 
-                logger.info("REDCap workflow: Participant " + redcapParticipantInfo.getCoachId() + " has completed the study.");
+                logger.info("REDCap workflow: Participant {} has completed the study.", redcapParticipantInfo.getCoachId());
                 setCommonViewComponents(model);
 
                 if (redcapParticipantInfo.getRandomizationGroup() == RandomizationGroup.BASIC) {
@@ -235,7 +232,7 @@ public class HomeController extends BaseController {
                 return "end-of-study";
 
             } else {
-                logger.error("REDCap workflow: Participant " + redcapParticipantInfo.getRecordId() + "is actively enrolled but cannot access COACH.");
+                logger.error("REDCap workflow: Participant {}is actively enrolled but cannot access COACH.", redcapParticipantInfo.getRecordId());
 
                 auditService.doAudit(patient, AuditSeverity.ERROR, "enrolled but cannot access COACH");
 
@@ -243,12 +240,7 @@ public class HomeController extends BaseController {
             }
 
         } else {
-            logger.debug("no session exists.  completing SMART-on-FHIR handshake for session " + sessionId);
-            setCommonViewComponents(model);
-            model.addAttribute("cacheCredentials", cacheCredentials);
-            model.addAttribute("patientNotActiveEndpoint", "/patient-not-active");
-            model.addAttribute("patientNotActiveResponse", SessionController.PATIENT_NOT_ACTIVE_RESPONSE);
-            return "fhir-complete-handshake";
+            return "redirect:" + getLaunchRedirect();
         }
     }
 
@@ -273,13 +265,13 @@ public class HomeController extends BaseController {
                     UserWorkspace workspace = userWorkspaceService.get(session.getId());
 
                     List<Card> cards = workspace.getCards(hookId);
-                    logger.info("got cards for hookId=" + hookId + "!");
+                    logger.info("got cards for hookId={}!", hookId);
 
                     return ResponseEntity.ok(cards);
 
                 } catch (RuntimeException re) {
-                    logger.error("caught " + re.getClass().getName() + " getting recommendations for " + hookId + " - " +
-                            re.getMessage(), re);
+                    logger.error("caught {} getting recommendations for {} - {}",
+                            re.getClass().getName(), hookId, re.getMessage(), re);
 
                     auditService.doAudit(session.getId(), AuditSeverity.ERROR, "recommendation exception", "encountered " +
                             re.getClass().getSimpleName() + " getting recommendations for " + hookId + " - " +
@@ -299,7 +291,7 @@ public class HomeController extends BaseController {
             return ResponseEntity.ok(new ArrayList<>(list));
 
         } catch (HttpServerErrorException.InternalServerError ise) {
-            logger.error("caught " + ise.getClass().getName() + " getting medications - " + ise.getMessage(), ise);
+            logger.error("caught {} getting medications - {}", ise.getClass().getName(), ise.getMessage(), ise);
             throw ise;
         }
     }
@@ -318,7 +310,7 @@ public class HomeController extends BaseController {
             return ResponseEntity.ok(new ArrayList<>(list));
 
         } catch (HttpServerErrorException.InternalServerError ise) {
-            logger.error("caught " + ise.getClass().getName() + " getting adverse events - " + ise.getMessage(), ise);
+            logger.error("caught {} getting adverse events - {}", ise.getClass().getName(), ise.getMessage(), ise);
             throw ise;
         }
     }

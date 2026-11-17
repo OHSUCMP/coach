@@ -264,25 +264,25 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 int i = 0;
                 for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
                     if (entry.hasResource()) {
-                        logger.debug(i + " : " + entry.getResource().getClass().getSimpleName() + " (" + entry.getResource().getId() + ")");
+                        logger.debug("{} : {} ({})", i, entry.getResource().getClass().getSimpleName(), entry.getResource().getId());
                         i++;
                     }
                 }
                 logger.debug("bpPanelCodings:");
                 for (Coding c : bpPanelCodings) {
-                    logger.debug("- system=" + c.getSystem() + ", code=" + c.getCode() + ", display=" + c.getDisplay());
+                    logger.debug("- system={}, code={}, display={}", c.getSystem(), c.getCode(), c.getDisplay());
                 }
                 logger.debug("systolicCodings:");
                 for (Coding c : systolicCodings) {
-                    logger.debug("- system=" + c.getSystem() + ", code=" + c.getCode() + ", display=" + c.getDisplay());
+                    logger.debug("- system={}, code={}, display={}", c.getSystem(), c.getCode(), c.getDisplay());
                 }
                 logger.debug("diastolicCodings:");
                 for (Coding c : diastolicCodings) {
-                    logger.debug("- system=" + c.getSystem() + ", code=" + c.getCode() + ", display=" + c.getDisplay());
+                    logger.debug("- system={}, code={}, display={}", c.getSystem(), c.getCode(), c.getDisplay());
                 }
 
             } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " writing debug logs - " + e.getMessage(), e);
+                logger.error("caught {} writing debug logs - {}", e.getClass().getName(), e.getMessage(), e);
             }
         }
 
@@ -291,27 +291,27 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         List<BloodPressureModel> list = new ArrayList<>();
 
         for (Encounter encounter : getAllEncounters(bundle)) {
-            logger.debug("processing Encounter: " + encounter.getId());
+            logger.debug("processing Encounter: {}", encounter.getId());
 
             // these Observations get popped / removed from the map
             List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
 
             if (encounterObservations == null) {
-                logger.debug("no Observations found for Encounter " + encounter.getId() + " - skipping -");
+                logger.debug("no Observations found for Encounter {} - skipping -", encounter.getId());
                 continue;
             }
 
-            logger.debug("found " + encounterObservations.size() + " Observations for Encounter " + encounter.getId());
+            logger.debug("found {} Observations for Encounter {}", encounterObservations.size(), encounter.getId());
 
             List<Observation> bpObservationList = new ArrayList<>();            // potentially many per encounter
             Map<String, SystolicDiastolicPair> map = new LinkedHashMap<>();     // potentially many per encounter
             Observation protocol = null;
 
             for (Observation o : encounterObservations) {
-                logger.debug("processing Observation " + o.getId() + " for Encounter " + encounter.getId());
+                logger.debug("processing Observation {} for Encounter {}", o.getId(), encounter.getId());
 
                 if ( ! o.hasCode() ) {
-                    logger.warn("observation " + o.getId() + " missing code, this is unexpected - skipping -");
+                    logger.warn("observation {} missing code, this is unexpected - skipping -", o.getId());
 
                 } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings) && o.hasValueQuantity()) {
                     String key = getObservationMatchKey(o);
@@ -319,7 +319,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                         map.put(key, new SystolicDiastolicPair());
                     }
                     map.get(key).setSystolicObservation(o);
-                    logger.debug("observation " + o.getId() + " has systolic coding; added to SystolicDiastolicPair map with key=" + key);
+                    logger.debug("observation {} has systolic coding; added to SystolicDiastolicPair map with key={}", o.getId(), key);
 
                 } else if (FhirUtil.hasCoding(o.getCode(), diastolicCodings) && o.hasValueQuantity()) {
                     String key = getObservationMatchKey(o);
@@ -327,34 +327,33 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                         map.put(key, new SystolicDiastolicPair());
                     }
                     map.get(key).setDiastolicObservation(o);
-                    logger.debug("observation " + o.getId() + " has diastolic coding; added to SystolicDiastolicPair map with key=" + key);
+                    logger.debug("observation {} has diastolic coding; added to SystolicDiastolicPair map with key={}", o.getId(), key);
 
                 } else if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings) && o.hasComponent() && o.getComponent().size() >= 2) {
                     bpObservationList.add(o);
-                    logger.debug("observation " + o.getId() + " has panel coding; expecting both systolic and diastolic to be present");
+                    logger.debug("observation {} has panel coding; expecting both systolic and diastolic to be present", o.getId());
 
                 } else if (protocol == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
                     protocol = o;
-                    logger.debug("observation " + o.getId() + " has protocol coding; will associate with encounter " +
-                            encounter.getId());
+                    logger.debug("observation {} has protocol coding; will associate with encounter {}",
+                            o.getId(), encounter.getId());
 
                 } else {
-                    logger.warn("observation " + o.getId() + " has a code but did not match any codings, or encountered unexpected resource structure - skipping -");
+                    logger.warn("observation {} has a code but did not match any codings, or encountered unexpected resource structure - skipping -", o.getId());
                 }
             }
 
             // process BP panel Observations
 
             for (Observation bp : bpObservationList) {
-                logger.debug("bpObservation = " + bp.getId() + " (encounter=" + encounter.getId() +
-                        ") (effectiveDateTime=" + bp.getEffectiveDateTimeType().getValueAsString() + ")");
+                logger.debug("bpObservation = {} (encounter={}) (effectiveDateTime={})",
+                        bp.getId(), encounter.getId(), bp.getEffectiveDateTimeType().getValueAsString());
                 try {
                     list.add(buildBloodPressureModel(encounter, bp, protocol));
 
                 } catch (DataException e) {
-                    logger.warn("caught " + e.getClass().getSimpleName() +
-                            " building BloodPressureModel from Observation with id=" + bp.getId() + " - " +
-                            e.getMessage() + " - skipping -");
+                    logger.warn("caught {} building BloodPressureModel from Observation with id={} - {} - skipping -",
+                            e.getClass().getSimpleName(), bp.getId(), e.getMessage());
                 }
             }
 
@@ -366,23 +365,21 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                     Observation systolic = sdp.getSystolicObservation();
                     Observation diastolic = sdp.getDiastolicObservation();
 
-                    logger.debug("systolicObservation = " + systolic.getId() + " (effectiveDateTime=" +
-                            systolic.getEffectiveDateTimeType().getValueAsString() + ")");
-                    logger.debug("diastolicObservation = " + diastolic.getId() + " (effectiveDateTime=" +
-                            diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
+                    logger.debug("systolicObservation = {} (effectiveDateTime={})",
+                            systolic.getId(), systolic.getEffectiveDateTimeType().getValueAsString());
+                    logger.debug("diastolicObservation = {} (effectiveDateTime={})",
+                            diastolic.getId(), diastolic.getEffectiveDateTimeType().getValueAsString());
 
                     try {
                         list.add(buildBloodPressureModel(encounter, systolic, diastolic, protocol));
 
                     } catch (DataException e) {
-                        logger.warn("caught " + e.getClass().getSimpleName() +
-                                " building BloodPressureModel from (systolic, diastolic) Observations with systolic.id=" +
-                                systolic.getId() + ", diastolic.id=" + diastolic.getId() + " - " +
-                                e.getMessage() + " - skipping -");
+                        logger.warn("caught {} building BloodPressureModel from (systolic, diastolic) Observations with systolic.id={}, diastolic.id={} - {} - skipping -",
+                                e.getClass().getSimpleName(), systolic.getId(), diastolic.getId(), e.getMessage());
                     }
 
                 } else {
-                    logger.warn("found incomplete systolic-diastolic pair for readingDate=" + entry.getKey() + " - skipping -");
+                    logger.warn("found incomplete systolic-diastolic pair for readingDate={} - skipping -", entry.getKey());
                 }
             }
         }
@@ -414,16 +411,15 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 try {
                     if (o.hasCode()) {
                         if (FhirUtil.hasCoding(o.getCode(), bpPanelCodings) && o.hasComponent() && o.getComponent().size() >= 2) {
-                            logger.debug("bpObservation = " + o.getId() + " (no encounter) (effectiveDateTime=" +
-                                    o.getEffectiveDateTimeType().getValueAsString() + ")");
+                            logger.debug("bpObservation = {} (no encounter) (effectiveDateTime={})",
+                                    o.getId(), o.getEffectiveDateTimeType().getValueAsString());
 
                             try {
                                 list.add(buildBloodPressureModel(o));
 
                             } catch (DataException e) {
-                                logger.warn("caught " + e.getClass().getSimpleName() +
-                                        " building BloodPressureModel from Observation with id=" + o.getId() + " - " +
-                                        e.getMessage() + " - skipping -");
+                                logger.warn("caught {} building BloodPressureModel from Observation with id={} - {} - skipping -",
+                                        e.getClass().getSimpleName(), o.getId(), e.getMessage());
                             }
 
                         } else if (FhirUtil.hasCoding(o.getCode(), systolicCodings) && o.hasValueQuantity()) {
@@ -441,15 +437,15 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                             sdpMap.get(key).setDiastolicObservation(o);
 
                         } else {
-                            logger.debug("did not process Observation " + o.getId() + " - invalid coding or unexpected resource structure");
+                            logger.debug("did not process Observation {} - invalid coding or unexpected resource structure", o.getId());
                         }
 
                     } else {
-                        logger.debug("did not process Observation " + o.getId() + " - no coding");
+                        logger.debug("did not process Observation {} - no coding", o.getId());
                     }
 
                 } catch (Exception e) {
-                    logger.error("caught " + e.getClass().getName() + " processing Observation with id=" + o.getId() + " - " + e.getMessage(), e);
+                    logger.error("caught {} processing Observation with id={} - {}", e.getClass().getName(), o.getId(), e.getMessage(), e);
                 }
             }
         }
@@ -462,23 +458,21 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
                 Observation systolic = sdp.getSystolicObservation();
                 Observation diastolic = sdp.getDiastolicObservation();
 
-                logger.debug("systolicObservation = " + systolic.getId() + " (effectiveDateTime=" +
-                        systolic.getEffectiveDateTimeType().getValueAsString() + ")");
-                logger.debug("diastolicObservation = " + diastolic.getId() + " (effectiveDateTime=" +
-                        diastolic.getEffectiveDateTimeType().getValueAsString() + ")");
+                logger.debug("systolicObservation = {} (effectiveDateTime={})",
+                        systolic.getId(), systolic.getEffectiveDateTimeType().getValueAsString());
+                logger.debug("diastolicObservation = {} (effectiveDateTime={})",
+                        diastolic.getId(), diastolic.getEffectiveDateTimeType().getValueAsString());
 
                 try {
                     list.add(buildBloodPressureModel(systolic, diastolic));
 
                 } catch (DataException e) {
-                    logger.warn("caught " + e.getClass().getSimpleName() +
-                            " building BloodPressureModel from (systolic, diastolic) Observations with systolic.id=" +
-                            systolic.getId() + ", diastolic.id=" + diastolic.getId() + " - " +
-                            e.getMessage() + " - skipping -");
+                    logger.warn("caught {} building BloodPressureModel from (systolic, diastolic) Observations with systolic.id={}, diastolic.id={} - {} - skipping -",
+                            e.getClass().getSimpleName(), systolic.getId(), diastolic.getId(), e.getMessage());
                 }
 
             } else {
-                logger.warn("found incomplete systolic-diastolic pair for readingDate=" + entry.getKey() + " - skipping -");
+                logger.warn("found incomplete systolic-diastolic pair for readingDate={} - skipping -", entry.getKey());
             }
         }
 
@@ -488,7 +482,7 @@ public abstract class BaseVendorTransformer implements VendorTransformer {
         while (iter.hasNext()) {
             BloodPressureModel bpm = iter.next();
             if (bpm.getSource() == ObservationSource.UNKNOWN) {
-                logger.warn("removing BloodPressureModel " + bpm + " - source is UNKNOWN");
+                logger.warn("removing BloodPressureModel {} - source is UNKNOWN", bpm);
                 iter.remove();
             }
         }

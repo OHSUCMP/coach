@@ -84,7 +84,7 @@ public class BloodPressureService extends AbstractService {
         Set<String> remoteBPKeySet = new HashSet<>();
         for (BloodPressureModel bpm : remoteList) {
             String key = bpm.getLogicalEqualityKey();
-            logger.debug("found remote BP with key: " + key);
+            logger.debug("found remote BP with key: {}", key);
             remoteBPKeySet.add(key);
         }
 
@@ -95,10 +95,10 @@ public class BloodPressureService extends AbstractService {
         for (BloodPressureModel bpm : buildLocalBloodPressureReadings(sessionId)) {
             String key = bpm.getLogicalEqualityKey();
             if (remoteBPKeySet.contains(key)) {
-                logger.debug("NOT ADDING local BP matching remote BP with key: " + key);
+                logger.debug("NOT ADDING local BP matching remote BP with key: {}", key);
 
             } else {
-                logger.debug("adding local BP with key: " + key);
+                logger.debug("adding local BP with key: {}", key);
                 list.add(bpm);
             }
         }
@@ -121,7 +121,7 @@ public class BloodPressureService extends AbstractService {
         BloodPressureModel bpm2 = null;
 
         if (writebackStrategy != FhirStrategy.DISABLED) {
-            logger.info("attempting writeback of BP " + bpm + " using strategy " + writebackStrategy);
+            logger.info("attempting writeback of BP {} using strategy {}", bpm, writebackStrategy);
             try {
                 VendorTransformer transformer = workspace.getVendorTransformer();
                 Bundle outgoingBundle = transformer.transformOutgoingBloodPressureReading(bpm);
@@ -138,9 +138,8 @@ public class BloodPressureService extends AbstractService {
 
             } catch (Exception e) {
                 // remote errors are tolerable, since we will always store locally too
-                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP remotely - " +
-                        "BP=" + bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString() +
-                        ", message=" + e.getMessage(), e);
+                logger.warn("caught {} attempting to create BP remotely - BP={}/{} at {}, message={}",
+                        e.getClass().getSimpleName(), bpm.getSystolic(), bpm.getDiastolic(), bpm.getReadingDateString(), e.getMessage(), e);
 
                 auditService.doAudit(sessionId, AuditSeverity.WARN, "failed to write BP remotely", "BP=" +
                         bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString() +
@@ -161,7 +160,7 @@ public class BloodPressureService extends AbstractService {
 
         } catch (DataException de) {
             // okay if it's failing to write locally, that's a problem.
-            logger.error("caught " + de.getClass().getName() + " attempting to create BloodPressureModel " + bpm, de);
+            logger.error("caught {} attempting to create BloodPressureModel {}", de.getClass().getName(), bpm, de);
 
             auditService.doAudit(sessionId, AuditSeverity.ERROR, "failed to create BP", "BP=" +
                     bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString() +

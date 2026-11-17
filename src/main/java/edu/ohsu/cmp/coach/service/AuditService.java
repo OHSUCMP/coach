@@ -26,8 +26,8 @@ public class AuditService {
             doAudit(new Audit(patId, severity, action));
 
         } else {
-            logger.warn("attempted to generate audit for nonexistent session " + sessionId + ": severity=" + severity +
-                    ", action=" + action);
+            logger.warn("attempted to generate audit for nonexistent session {}: severity={}, action={}",
+                    sessionId, severity, action);
         }
     }
 
@@ -37,8 +37,8 @@ public class AuditService {
             doAudit(new Audit(patId, severity, action, details));
 
         } else {
-            logger.warn("attempted to generate audit for nonexistent session " + sessionId + ": severity=" + severity +
-                    ", action=" + action + ", details=" + details);
+            logger.warn("attempted to generate audit for nonexistent session {}: severity={}, action={}, details={}",
+                    sessionId, severity, action, details);
         }
     }
 
@@ -55,14 +55,14 @@ public class AuditService {
         try {
             if (logger.isDebugEnabled()) {
                 Audit generatedAudit = repository.save(audit);
-                logger.debug("generated " + generatedAudit);
+                logger.debug("generated {}", generatedAudit);
 
             } else {
                 repository.save(audit);
             }
 
         } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " attempting to create " + audit + " - " + e.getMessage(), e);
+            logger.error("caught {} attempting to create {} - {}", e.getClass().getName(), audit, e.getMessage(), e);
         }
     }
 }

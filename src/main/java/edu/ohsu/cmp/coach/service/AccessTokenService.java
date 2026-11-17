@@ -108,7 +108,7 @@ public class AccessTokenService {
             return true;
 
         } catch (Exception e) {
-            logger.warn("caught " + e.getClass().getName() + " validating JWT - " + e.getMessage(), e);
+            logger.warn("caught {} validating JWT - {}", e.getClass().getName(), e.getMessage(), e);
             return false;
         }
     }
@@ -135,9 +135,9 @@ public class AccessTokenService {
         if (isJWTEnabled()) {
             String jwt = createJWT(tokenAuthUrl);
 
-            logger.debug("requesting access token from tokenAuthUrl=" + tokenAuthUrl + " with jwt");
+            logger.debug("requesting access token from tokenAuthUrl={} with jwt", tokenAuthUrl);
             if (logger.isDebugEnabled()) {
-                logger.debug("JWT is valid? " + isJWTValid(jwt));
+                logger.debug("JWT is valid? {}", isJWTValid(jwt));
             }
 
             params.add(new BasicNameValuePair("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
@@ -146,7 +146,7 @@ public class AccessTokenService {
         } else if (isBasicAuthEnabled()) {
             String authorization = "Basic " + Base64.encode(clientId + ":" + basicAuthSecret);
 
-            logger.debug("requesting access token from tokenAuthUrl=" + tokenAuthUrl + " with Basic authorization");
+            logger.debug("requesting access token from tokenAuthUrl={} with Basic authorization", tokenAuthUrl);
 
             requestHeaders.put("Authorization", authorization);
 
@@ -167,16 +167,16 @@ public class AccessTokenService {
         String responseBody = httpResponse.getResponseBody();
 
         if (code < 200 || code > 299) {
-            logger.error("received non-successful response to request for a access token from url=" + tokenAuthUrl +
-                    " with code " + code);
-            logger.debug("requestBody=" + requestBody);
-            logger.debug("responseBody=" + responseBody);
+            logger.error("received non-successful response to request for a access token from url={} with code {}",
+                    tokenAuthUrl, code);
+            logger.debug("requestBody={}", requestBody);
+            logger.debug("responseBody={}", responseBody);
             throw new MyHttpException(code, responseBody);
 
         } else {
             Gson gson = new GsonBuilder().create();
             AccessToken accessToken = gson.fromJson(responseBody, new TypeToken<AccessToken>() {}.getType());
-            logger.debug("received access token " + accessToken);
+            logger.debug("received access token {}", accessToken);
             return accessToken;
         }
     }
@@ -280,8 +280,8 @@ public class AccessTokenService {
             String responseBody = httpResponse.getResponseBody();
 
             if (code < 200 || code > 299) {
-                logger.error("received non-successful response to request for SMART configuration for url=" + smartConfigurationUrl + " with code " + code);
-                logger.debug("responseBody=" + responseBody);
+                logger.error("received non-successful response to request for SMART configuration for url={} with code {}", smartConfigurationUrl, code);
+                logger.debug("responseBody={}", responseBody);
                 throw new MyHttpException(code, responseBody);
 
             } else {
@@ -289,7 +289,7 @@ public class AccessTokenService {
                 JsonObject obj = gson.fromJson(responseBody, new TypeToken<JsonObject>() {}.getType());
                 if (obj.has("token_endpoint")) {
                     String tokenAuthUrl = obj.get("token_endpoint").getAsString();
-                    logger.debug("found token endpoint " + tokenAuthUrl);
+                    logger.debug("found token endpoint {}", tokenAuthUrl);
                     tokenAuthUrlMap.put(backendServerUrl, tokenAuthUrl);
                 }
             }

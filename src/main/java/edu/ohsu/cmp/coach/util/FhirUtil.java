@@ -47,7 +47,7 @@ public class FhirUtil {
      * pass the context belonging to the service that owns this endpoint's configuration.
      */
     public static IGenericClient buildClient(FhirContext ctx, String serverUrl, String bearerToken) {
-        logger.debug("building FHIR R4 client for serverUrl=" + serverUrl + ", bearerToken=" + bearerToken);
+        logger.debug("building FHIR R4 client for serverUrl={}, bearerToken={}", serverUrl, bearerToken);
 
         IGenericClient client = ctx.newRestfulGenericClient(serverUrl);
 
@@ -236,7 +236,7 @@ public class FhirUtil {
 
         String referenceId = extractIdFromReference(reference);
         if (StringUtils.isBlank(referenceId)) {
-            logger.warn("extracted blank id component from reference: '" + reference + "'");
+            logger.warn("extracted blank id component from reference: '{}'", reference);
             return false;
         }
 
@@ -246,10 +246,10 @@ public class FhirUtil {
                 if (r.hasId()) {
                     String quotedReferenceId = Pattern.quote(referenceId);
                     if (Pattern.matches("(.*/)?" + quotedReferenceId + "(/.*)?", r.getId())) {
-                        logger.debug("matched: '" + r.getId() + "' contains '" + reference + "'");
+                        logger.debug("matched: '{}' contains '{}'", r.getId(), reference);
                         return true;
                     } else {
-                        logger.debug("did not match: '" + r.getId() + "' does not contain '" + referenceId + "'");
+                        logger.debug("did not match: '{}' does not contain '{}'", r.getId(), referenceId);
                     }
                 }
             }
@@ -277,7 +277,7 @@ public class FhirUtil {
                     }
 
                 } catch (Exception e) {
-                    logger.error("caught " + e.getClass().getName() + " attempting to get resource from bundle by identifier - " + e.getMessage(), e);
+                    logger.error("caught {} attempting to get resource from bundle by identifier - {}", e.getClass().getName(), e.getMessage(), e);
                 }
             }
         }
@@ -311,7 +311,7 @@ public class FhirUtil {
             return getResourceFromBundleByReference(bundle, aClass, reference);
 
         } else {
-            logger.debug("reference " + reference + " not found in contained or bundle");
+            logger.debug("reference {} not found in contained or bundle", reference);
             return null;
         }
     }
@@ -336,8 +336,8 @@ public class FhirUtil {
             return (T) r;
 
         } else {
-            logger.warn("found contained resource with id=" + r.getId() + ", but it is a " + r.getClass().getSimpleName() +
-                    ", not " + aClass.getSimpleName() + " as expected.");
+            logger.warn("found contained resource with id={}, but it is a {}, not {} as expected.",
+                    r.getId(), r.getClass().getSimpleName(), aClass.getSimpleName());
             throw new ClassCastException("attempted to cast " + r.getClass().getSimpleName() + " to " + aClass.getSimpleName());
         }
     }
@@ -354,7 +354,7 @@ public class FhirUtil {
             }
 
         } else {
-            logger.warn("invalid contained reference: " + reference);
+            logger.warn("invalid contained reference: {}", reference);
         }
 
         return null;
@@ -385,8 +385,8 @@ public class FhirUtil {
                             return aClass.cast(entry.getResource());
                         }
                     } catch (NullPointerException npe) {
-                        logger.error("caught " + npe.getClass().getName() + " matching reference '" + reference +
-                                "' against id '" + r.getId() + "'", npe);
+                        logger.error("caught {} matching reference '{}' against id '{}'",
+                                npe.getClass().getName(), reference, r.getId(), npe);
                         throw npe;
                     }
                 }
@@ -417,7 +417,7 @@ public class FhirUtil {
                         }
 
                     } catch (Exception e) {
-                        logger.error("caught " + e.getClass().getName() + " attempting to get resource from bundle by identifier - " + e.getMessage(), e);
+                        logger.error("caught {} attempting to get resource from bundle by identifier - {}", e.getClass().getName(), e.getMessage(), e);
                     }
                 }
             }
@@ -504,7 +504,7 @@ public class FhirUtil {
         int i = 0;
         while (iter.hasNext()) {
             Bundle.BundleEntryComponent entry = iter.next();
-            logger.info(i + ": " + entry.getResource().getClass().getName() + " (" + entry.getResource().getId() + ")");
+            logger.info("{}: {} ({})", i, entry.getResource().getClass().getName(), entry.getResource().getId());
             i ++;
         }
     }
@@ -796,7 +796,7 @@ public class FhirUtil {
             }
 
         } catch (Exception e) {
-            logger.warn("caught " + e.getClass().getName() + " retrieving or parsing " + smartConfigUrl + " - " + e.getMessage(), e);
+            logger.warn("caught {} retrieving or parsing {} - {}", e.getClass().getName(), smartConfigUrl, e.getMessage(), e);
         }
 
         String metadataUrl = baseUrl + "/metadata";
@@ -832,7 +832,7 @@ public class FhirUtil {
             }
 
         } catch (Exception e) {
-            logger.warn("caught " + e.getClass().getName() + " retrieving or parsing " + metadataUrl + " - " + e.getMessage(), e);
+            logger.warn("caught {} retrieving or parsing {} - {}", e.getClass().getName(), metadataUrl, e.getMessage(), e);
         }
 
         return origins;
@@ -844,7 +844,7 @@ public class FhirUtil {
         try {
             URI uri = URI.create(url.trim());
             if (StringUtils.isBlank(uri.getScheme()) || StringUtils.isBlank(uri.getHost())) {
-                logger.debug("ignoring URL without scheme and host: " + url);
+                logger.debug("ignoring URL without scheme and host: {}", url);
                 return;
             }
 
@@ -852,7 +852,7 @@ public class FhirUtil {
             origins.add(origin);
 
         } catch (IllegalArgumentException e) {
-            logger.warn("ignoring invalid URL: " + url);
+            logger.warn("ignoring invalid URL: {}", url);
         }
     }
 

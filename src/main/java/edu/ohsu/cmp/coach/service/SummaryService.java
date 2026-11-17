@@ -112,7 +112,7 @@ public class SummaryService extends AbstractService {
             }
 
         } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " attempting to generate summary - " + e.getMessage(), e);
+            logger.error("caught {} attempting to generate summary - {}", e.getClass().getName(), e.getMessage(), e);
             auditService.doAudit(sessionId, AuditSeverity.ERROR, "failed to generate summary", e.getMessage());
             return null;
         }
@@ -138,8 +138,8 @@ public class SummaryService extends AbstractService {
                     recommendations.add(sr);
 
                 } catch (Exception e) {
-                    logger.error("caught " + e.getClass().getName() +
-                            " attempting to generate summary recommendation for " + recommendation + " - " + e.getMessage(), e);
+                    logger.error("caught {} attempting to generate summary recommendation for {} - {}",
+                            e.getClass().getName(), recommendation, e.getMessage(), e);
                     auditService.doAudit(sessionId, AuditSeverity.ERROR,
                             "failed to generate summary recommendation for " + recommendation, e.getMessage());
                 }

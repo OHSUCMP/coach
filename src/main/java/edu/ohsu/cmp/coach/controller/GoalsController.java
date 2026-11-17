@@ -38,23 +38,28 @@ public class GoalsController extends BaseController {
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
         String sessionId = session.getId();
-        setCommonViewComponents(sessionId, model);
-        UserWorkspace workspace = userWorkspaceService.get(sessionId);
-        model.addAttribute("randomizationGroup", workspace.getActiveRandomizationGroup());
-        model.addAttribute("isEnhancedView", workspace.getActiveRandomizationGroup() == RandomizationGroup.ENHANCED);
-        model.addAttribute("patient", workspace.getPatient());
-        model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
-        model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(sessionId));
-        model.addAttribute("pageStyles", new String[] { "goals.css" });
-        model.addAttribute("pageScripts", new String[] { "goals.js?v=1" });
-        model.addAttribute("pageWebjars", new String[] {
-                "jquery.inputmask/jquery.inputmask.js",
-                "jquery.inputmask/bindings/inputmask.binding.js"
-        });
+        if (userWorkspaceService.exists(sessionId)) {
+            setCommonViewComponents(sessionId, model);
+            UserWorkspace workspace = userWorkspaceService.get(sessionId);
+            model.addAttribute("randomizationGroup", workspace.getActiveRandomizationGroup());
+            model.addAttribute("isEnhancedView", workspace.getActiveRandomizationGroup() == RandomizationGroup.ENHANCED);
+            model.addAttribute("patient", workspace.getPatient());
+            model.addAttribute("bpGoal", goalService.getCurrentBPGoal(sessionId));
+            model.addAttribute("hasOtherGoals", goalService.hasAnyLocalNonBPGoals(sessionId));
+            model.addAttribute("pageStyles", new String[] { "goals.css" });
+            model.addAttribute("pageScripts", new String[] { "goals.js?v=1" });
+            model.addAttribute("pageWebjars", new String[] {
+                    "jquery.inputmask/jquery.inputmask.js",
+                    "jquery.inputmask/bindings/inputmask.binding.js"
+            });
 
-        auditService.doAudit(sessionId, AuditSeverity.INFO, "visited goals page");
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "visited goals page");
 
-        return "goals";
+            return "goals";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
 
     @PostMapping("other-goals")

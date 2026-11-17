@@ -25,12 +25,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Object handleException(HttpSession session, HttpServletRequest request, HttpServletResponse response, Exception e) {
         if (e instanceof SessionMissingException) {
-            logger.error("trapped " + e.getClass().getName() + " at " + request.getRequestURI() +
-                    " for session " + session.getId());
+            logger.error("trapped {} at {} for session {}",
+                    e.getClass().getName(), request.getRequestURI(), session.getId());
 
         } else {
-            logger.error("trapped " + e.getClass().getName() + " at " + request.getRequestURI() +
-                    " for session " + session.getId() + " - " + e.getMessage() + " (enable DEBUG logging for stack trace)");
+            logger.error("trapped {} at {} for session {} - {} (enable DEBUG logging for stack trace)",
+                    e.getClass().getName(), request.getRequestURI(), session.getId(), e.getMessage());
             logger.debug("stack trace: ", e);
 
             auditService.doAudit(session.getId(), AuditSeverity.ERROR, "application exception", "encountered " +
