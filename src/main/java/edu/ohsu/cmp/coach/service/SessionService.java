@@ -84,7 +84,7 @@ public class SessionService extends AbstractService {
 
     public void prepareSession(String sessionId, FHIRCredentials credentials, Audience audience, RandomizationGroup randomizationGroup,
                                boolean requiresEnrollment, boolean hasCompletedStudy) throws ConfigurationException {
-        logger.debug("preparing session " + sessionId + " with credentials=" + credentials);
+        logger.debug("preparing session {} with credentials={}", sessionId, credentials);
         IGenericClient client = FhirUtil.buildClient(
                 fhirContext,
                 credentials.getServerURL(),
@@ -100,7 +100,7 @@ public class SessionService extends AbstractService {
     }
 
     public void prepareProvisionalSession(String sessionId, FHIRCredentials credentials, Audience audience) {
-        logger.debug("preparing provisional session " + sessionId + " with credentials=" + credentials);
+        logger.debug("preparing provisional session {} with credentials={}", sessionId, credentials);
         ProvisionalSessionCacheData cacheData = new ProvisionalSessionCacheData(credentials, audience);
         provisionalCache.put(sessionId, cacheData);
         scheduleExpireProvisional(sessionId);
@@ -119,7 +119,7 @@ public class SessionService extends AbstractService {
     }
 
     public void expireProvisional(String sessionId) {
-        logger.info("expiring provisional credentials for session " + sessionId);
+        logger.info("expiring provisional credentials for session {}", sessionId);
         provisionalCache.remove(sessionId);
     }
 

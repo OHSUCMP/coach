@@ -48,7 +48,7 @@ public abstract class BaseController {
             try {
                 model.addAttribute("siteSpecificResources", resourceService.getSiteSpecificResources(sessionId));
             } catch (SessionMissingException sme) {
-                logger.warn("attempted to build site-specific resources for non-existent session " + sessionId);
+                logger.warn("attempted to build site-specific resources for non-existent session {}", sessionId);
             }
         }
     }

@@ -43,26 +43,26 @@ public class OmronController extends BaseController {
                     workspace.setOmronTokenData(new OmronTokenData(accessTokenResponse));
                 }
             } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " getting Omron access token - " + e.getMessage(), e);
+                logger.error("caught {} getting Omron access token - {}", e.getClass().getName(), e.getMessage(), e);
                 throw e;
             }
 
             try {
                 omronService.scheduleAccessTokenRefresh(session.getId());
             } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " scheduling Omron access token refresh - " + e.getMessage(), e);
+                logger.error("caught {} scheduling Omron access token refresh - {}", e.getClass().getName(), e.getMessage(), e);
                 throw e;
             }
 
             try {
                 workspace.initiateSynchronousOmronUpdate();
             } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " synchronizing with Omron - " + e.getMessage(), e);
+                logger.error("caught {} synchronizing with Omron - {}", e.getClass().getName(), e.getMessage(), e);
                 throw e;
             }
 
         } else if (StringUtils.isNotBlank(error)) {
-            logger.error("caught error during Omron authorization: " + error);
+            logger.error("caught error during Omron authorization: {}", error);
         }
 
         return "redirect:/";
@@ -84,7 +84,7 @@ public class OmronController extends BaseController {
             workspace.initiateSynchronousOmronUpdate();
 
         } catch (SessionMissingException sme) {
-            logger.debug("notify: no workspace found for user with Omron id=" + notification.getId());
+            logger.debug("notify: no workspace found for user with Omron id={}", notification.getId());
         }
 
         return ResponseEntity.ok().build();

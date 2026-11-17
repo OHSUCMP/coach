@@ -53,7 +53,7 @@ public class ContactController extends BaseController {
     @GetMapping("contact")
     public String view(HttpSession session, Model model, @RequestParam("token") String token) throws DataException {
         String sessionId = session.getId();
-        logger.info("showing contact form for session " + sessionId);
+        logger.info("showing contact form for session {}", sessionId);
 
         setCommonViewComponents(sessionId, model);
         model.addAttribute("patient", userWorkspaceService.get(sessionId).getPatient());

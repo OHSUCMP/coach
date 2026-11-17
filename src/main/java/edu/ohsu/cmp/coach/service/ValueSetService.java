@@ -31,7 +31,7 @@ public class ValueSetService extends AbstractService {
 
     public void refresh(String oid) {
         try {
-            logger.info("acquiring ValueSet with oid=" + oid + " from VSAC");
+            logger.info("acquiring ValueSet with oid={} from VSAC", oid);
             ValueSet fresh = vsacService.getValueSet(oid);
             if (fresh == null) return;
 
@@ -49,17 +49,17 @@ public class ValueSetService extends AbstractService {
 
             ValueSet existing = getValueSet(oid);
             if (existing != null) {
-                logger.info("updating existing ValueSet with oid=" + oid);
+                logger.info("updating existing ValueSet with oid={}", oid);
                 existing.update(fresh);
                 repository.save(existing);
 
             } else {
-                logger.info("creating new ValueSet with oid=" + oid);
+                logger.info("creating new ValueSet with oid={}", oid);
                 repository.save(fresh);
             }
 
         } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " refreshing ValueSet with oid=" + oid, e);
+            logger.error("caught {} refreshing ValueSet with oid={}", e.getClass().getName(), oid, e);
         }
     }
 }

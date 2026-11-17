@@ -52,11 +52,11 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
                         );
 
                     } catch (Exception e) {
-                        logger.error("caught " + e.getClass().getSimpleName() + " attempting to transact " +
-                                r.getClass().getSimpleName() + " - " + e.getMessage() + " - skipping -", e);
+                        logger.error("caught {} attempting to transact {} - {} - skipping -",
+                                e.getClass().getSimpleName(), r.getClass().getSimpleName(), e.getMessage(), e);
                         if (logger.isDebugEnabled()) {
-                            logger.debug("EXCEPTION DETAILS: using strategy=" + strategy + ", credentials=" + fcc.getCredentials() +
-                                    ", resourceType=" + r.getClass().getSimpleName() + ", json=" + FhirUtil.toJson(r));
+                            logger.debug("EXCEPTION DETAILS: using strategy={}, credentials={}, resourceType={}, json={}",
+                                    strategy, fcc.getCredentials(), r.getClass().getSimpleName(), FhirUtil.toJson(r));
                         }
                         if      (e instanceof IOException)              throw (IOException) e;
                         else if (e instanceof ConfigurationException)   throw (ConfigurationException) e;
@@ -226,12 +226,12 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
         List<PulseModel> list = new ArrayList<>();
 
         for (Encounter encounter : getAllEncounters(bundle)) {
-            logger.debug("processing Encounter: " + encounter.getId());
+            logger.debug("processing Encounter: {}", encounter.getId());
 
             List<Observation> encounterObservations = getObservationsFromMap(encounter, encounterObservationsMap);
 
             if (encounterObservations != null) {
-                logger.debug("building Observations for Encounter " + encounter.getId());
+                logger.debug("building Observations for Encounter {}", encounter.getId());
 
                 List<Observation> pulseObservationList = new ArrayList<>();    // potentially many per encounter
                 Observation protocolObservation = null;
@@ -240,12 +240,12 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
                 while (iter.hasNext()) {
                     Observation o = iter.next();
                     if (FhirUtil.hasCoding(o.getCode(), fcm.getPulseCodings())) {
-                        logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                        logger.debug("pulseObservation = {} (effectiveDateTime={})", o.getId(), o.getEffectiveDateTimeType().getValueAsString());
                         pulseObservationList.add(o);
                         iter.remove();
 
                     } else if (protocolObservation == null && FhirUtil.hasCoding(o.getCode(), fcm.getProtocolCoding())) {
-                        logger.debug("protocolObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                        logger.debug("protocolObservation = {} (effectiveDateTime={})", o.getId(), o.getEffectiveDateTimeType().getValueAsString());
                         protocolObservation = o;
                         iter.remove();
                     }
@@ -270,7 +270,7 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
                 pulseObservationList.clear();
 
             } else {
-                logger.debug("no Observations found for Encounter " + encounter.getId());
+                logger.debug("no Observations found for Encounter {}", encounter.getId());
             }
         }
 
@@ -281,7 +281,7 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
             if (entry.getValue() != null) {
                 for (Observation o : entry.getValue()) {
                     if (o.hasCode() && FhirUtil.hasCoding(o.getCode(), fcm.getPulseCodings())) {
-                        logger.debug("pulseObservation = " + o.getId() + " (effectiveDateTime=" + o.getEffectiveDateTimeType().getValueAsString() + ")");
+                        logger.debug("pulseObservation = {} (effectiveDateTime={})", o.getId(), o.getEffectiveDateTimeType().getValueAsString());
                         PulseModel pm = new PulseModel(o, fcm);
 
                         // for "special" vendors, protocol information is represented in a custom-serialized note on the
@@ -295,7 +295,7 @@ public abstract class SpecialVendorTransformer extends BaseVendorTransformer {
                         list.add(pm);
 
                     } else {
-                        logger.debug("did not process Observation " + o.getId());
+                        logger.debug("did not process Observation {}", o.getId());
                     }
                 }
             }

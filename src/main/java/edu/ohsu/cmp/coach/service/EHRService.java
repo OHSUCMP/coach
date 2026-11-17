@@ -50,7 +50,7 @@ public class EHRService extends AbstractService {
     private MedicationRouteRepository medicationRouteRepository;
 
     public Patient getPatient(String sessionId) throws DataException, ConfigurationException, IOException {
-        logger.info("getting Patient for session=" + sessionId);
+        logger.info("getting Patient for session={}", sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.readByReference(fcc, workspace.getFhirQueryManager().getPatientStrategy(), Patient.class,
@@ -59,7 +59,7 @@ public class EHRService extends AbstractService {
     }
 
     public List<Encounter> getEncounters(String sessionId) throws DataException, ConfigurationException, IOException {
-        logger.info("getting Encounters for session=" + sessionId);
+        logger.info("getting Encounters for session={}", sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         Bundle bundle = fhirService.search(fcc, workspace.getFhirQueryManager().getEncounterStrategy(),
@@ -74,7 +74,7 @@ public class EHRService extends AbstractService {
                                 encounter.getStatus() != Encounter.EncounterStatus.ARRIVED &&
                                 encounter.getStatus() != Encounter.EncounterStatus.TRIAGED &&
                                 encounter.getStatus() != Encounter.EncounterStatus.INPROGRESS) {
-                                logger.debug("removing Encounter " + encounter.getId() + " - invalid status");
+                                logger.debug("removing Encounter {} - invalid status", encounter.getId());
                                 return false;
                             }
 
@@ -82,11 +82,11 @@ public class EHRService extends AbstractService {
                             boolean isOffice = matcher.isOfficeEncounter(encounter);
                             boolean isHome = matcher.isHomeEncounter(encounter);
                             if ( ! isOffice && ! isHome ) {
-                                logger.debug("removing Encounter " + encounter.getId() + " - not Office or Home");
+                                logger.debug("removing Encounter {} - not Office or Home", encounter.getId());
                                 return false;
 
                             } else {
-                                logger.debug("keeping Encounter " + encounter.getId() + " (Office=" + isOffice + ", Home=" + isHome + ")");
+                                logger.debug("keeping Encounter {} (Office={}, Home={})", encounter.getId(), isOffice, isHome);
                             }
                         }
 
@@ -99,7 +99,7 @@ public class EHRService extends AbstractService {
 
         if (bundle != null) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Encounter bundle = " + FhirUtil.toJson(bundle));
+                logger.debug("Encounter bundle = {}", FhirUtil.toJson(bundle));
             }
 
             if (bundle.hasEntry()) {
@@ -125,7 +125,7 @@ public class EHRService extends AbstractService {
      */
     public Bundle getObservations(String sessionId, String code, String lookbackPeriod,
                                   @Nullable Integer limit) throws DataException, ConfigurationException, IOException {
-        logger.info("getting Observations for session=" + sessionId + " having code(s): " + code);
+        logger.info("getting Observations for session={} having code(s): {}", sessionId, code);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc, workspace.getFhirQueryManager().getObservationStrategy(),
@@ -139,13 +139,13 @@ public class EHRService extends AbstractService {
                             if (observation.getStatus() != Observation.ObservationStatus.FINAL &&
                                     observation.getStatus() != Observation.ObservationStatus.AMENDED &&
                                     observation.getStatus() != Observation.ObservationStatus.CORRECTED) {
-                                logger.debug("removing Observation " + observation.getId() + " - invalid status");
+                                logger.debug("removing Observation {} - invalid status", observation.getId());
                                 return false;
                             }
 
 // storer 2022-08-15 - can now handle observations that don't have associated encounters, as janky as that might be
 //                            if (!observation.hasEncounter()) {
-//                                logger.debug("removing Observation " + observation.getId() + " - no Encounter referenced");
+//                                logger.debug("removing Observation {} - no Encounter referenced", observation.getId());
 //                                return false;
 //                            }
                         }
@@ -165,7 +165,7 @@ public class EHRService extends AbstractService {
     }
 
     public Bundle getConditions(String sessionId, String category) throws DataException, ConfigurationException, IOException {
-        logger.info("getting " + category + " Conditions for session=" + sessionId);
+        logger.info("getting {} Conditions for session={}", category, sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc, workspace.getFhirQueryManager().getConditionStrategy(),
@@ -187,7 +187,7 @@ public class EHRService extends AbstractService {
                                 if (!cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "active") &&
                                         !cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "recurrence") &&
                                         !cc.hasCoding(CONDITION_CLINICALSTATUS_SYSTEM, "relapse")) {
-                                    logger.debug("removing Condition " + c.getId() + " - invalid clinicalStatus");
+                                    logger.debug("removing Condition {} - invalid clinicalStatus", c.getId());
                                     return false;
                                 }
                             }
@@ -195,7 +195,7 @@ public class EHRService extends AbstractService {
                             if (c.hasVerificationStatus()) {
                                 CodeableConcept cc = c.getVerificationStatus();
                                 if (!cc.hasCoding(CONDITION_VERIFICATIONSTATUS_SYSTEM, "confirmed")) {
-                                    logger.debug("removing Condition " + c.getId() + " - invalid verificationStatus");
+                                    logger.debug("removing Condition {} - invalid verificationStatus", c.getId());
                                     return false;
                                 }
                             }
@@ -208,7 +208,7 @@ public class EHRService extends AbstractService {
     }
 
     public Bundle getGoals(String sessionId) throws DataException, ConfigurationException, IOException {
-        logger.info("getting Goals for session=" + sessionId);
+        logger.info("getting Goals for session={}", sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc, workspace.getFhirQueryManager().getGoalStrategy(),
@@ -221,7 +221,7 @@ public class EHRService extends AbstractService {
                             Goal g = (Goal) resource;
 
                             if (g.getLifecycleStatus() != Goal.GoalLifecycleStatus.ACTIVE) {
-                                logger.debug("removing Goal " + g.getId() + " - invalid lifecycleStatus");
+                                logger.debug("removing Goal {} - invalid lifecycleStatus", g.getId());
                                 return false;
                             }
 
@@ -230,7 +230,7 @@ public class EHRService extends AbstractService {
                                 if (!cc.hasCoding(
                                         GoalModel.ACHIEVEMENT_STATUS_CODING_SYSTEM,
                                         GoalModel.ACHIEVEMENT_STATUS_CODING_INPROGRESS_CODE)) {
-                                    logger.debug("removing Goal " + g.getId() + " - invalid achievementStatus");
+                                    logger.debug("removing Goal {} - invalid achievementStatus", g.getId());
                                     return false;
                                 }
                             }
@@ -243,7 +243,7 @@ public class EHRService extends AbstractService {
     }
 
     public Bundle getOrderServiceRequests(String sessionId) throws DataException, ConfigurationException, IOException {
-        logger.info("getting Order ServiceRequests for session=" + sessionId);
+        logger.info("getting Order ServiceRequests for session={}", sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc, workspace.getFhirQueryManager().getServiceRequestStrategy(),
@@ -256,7 +256,7 @@ public class EHRService extends AbstractService {
                             ServiceRequest sr = (ServiceRequest) resource;
 
                             if (sr.getStatus() != ServiceRequest.ServiceRequestStatus.ACTIVE) {
-                                logger.debug("removing ServiceRequest " + sr.getId() + " - invalid Status");
+                                logger.debug("removing ServiceRequest {} - invalid Status", sr.getId());
                                 return false;
                             }
 
@@ -265,12 +265,12 @@ public class EHRService extends AbstractService {
                                     sr.getIntent() != ServiceRequest.ServiceRequestIntent.REFLEXORDER &&
                                     sr.getIntent() != ServiceRequest.ServiceRequestIntent.FILLERORDER &&
                                     sr.getIntent() != ServiceRequest.ServiceRequestIntent.INSTANCEORDER) {
-                                logger.debug("removing ServiceRequest " + sr.getId() + " - invalid Intent");
+                                logger.debug("removing ServiceRequest {} - invalid Intent", sr.getId());
                                 return false;
                             }
 
                             if (sr.hasDoNotPerform() && sr.getDoNotPerform()) {
-                                logger.debug("removing ServiceRequest " + sr.getId() + " - doNotPerform");
+                                logger.debug("removing ServiceRequest {} - doNotPerform", sr.getId());
                                 return false;
                             }
                         }
@@ -282,7 +282,7 @@ public class EHRService extends AbstractService {
     }
 
     public Bundle getMedicationStatements(String sessionId) throws DataException, ConfigurationException, IOException {
-        logger.info("getting MedicationStatements for session=" + sessionId);
+        logger.info("getting MedicationStatements for session={}", sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
 
@@ -298,7 +298,7 @@ public class EHRService extends AbstractService {
                         if (resource instanceof MedicationStatement) {
                             MedicationStatement ms = (MedicationStatement) resource;
                             if (ms.getStatus() != MedicationStatement.MedicationStatementStatus.ACTIVE) {
-                                logger.debug("removing MedicationStatement " + ms.getId() + " - invalid status");
+                                logger.debug("removing MedicationStatement {} - invalid status", ms.getId());
                                 return false;
                             }
 
@@ -315,7 +315,7 @@ public class EHRService extends AbstractService {
                             }
 
                             if ( ! hasGoodRoute && ms.hasMedicationReference()) {
-                                logger.debug("invalid or missing route for MedicationStatement " + ms.getId() + " - checking medication form");
+                                logger.debug("invalid or missing route for MedicationStatement {} - checking medication form", ms.getId());
                                 Bundle bundle = resourceWithBundle.getBundle();
 
                                 Medication m = null;
@@ -327,8 +327,8 @@ public class EHRService extends AbstractService {
                                     }
 
                                 } catch (Exception e) {
-                                    logger.error("caught " + e.getClass().getName() + " attempting to obtain Medication for MedicationStatement " +
-                                            ms.getId() + " - " + e.getMessage(), e);
+                                    logger.error("caught {} attempting to obtain Medication for MedicationStatement {} - {}",
+                                            e.getClass().getName(), ms.getId(), e.getMessage(), e);
                                 }
 
                                 if (m != null && m.hasForm() && FhirUtil.hasCoding(m.getForm(), validFormCodings)) {
@@ -337,7 +337,7 @@ public class EHRService extends AbstractService {
                             }
 
                             if ( ! hasGoodRoute && ! hasGoodForm ) {
-                                logger.debug("removing MedicationStatement " + ms.getId() + " - invalid route and form");
+                                logger.debug("removing MedicationStatement {} - invalid route and form", ms.getId());
                                 return false;
                             }
                         }
@@ -368,8 +368,8 @@ public class EHRService extends AbstractService {
                             }
 
                         } catch (Exception e) {
-                            logger.error("caught " + e.getClass().getName() + " attempting to obtain Medication for MedicationStatement " +
-                                    ms.getId() + " - " + e.getMessage(), e);
+                            logger.error("caught {} attempting to obtain Medication for MedicationStatement {} - {}",
+                                    e.getClass().getName(), ms.getId(), e.getMessage(), e);
                         }
                     }
                 }
@@ -384,7 +384,7 @@ public class EHRService extends AbstractService {
     }
 
     public Bundle getMedicationRequests(String sessionId) throws DataException, ConfigurationException, IOException {
-        logger.info("getting MedicationRequests for session=" + sessionId);
+        logger.info("getting MedicationRequests for session={}", sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
 
@@ -401,18 +401,18 @@ public class EHRService extends AbstractService {
                             MedicationRequest mr = (MedicationRequest) resource;
 
                             if (mr.getStatus() != MedicationRequest.MedicationRequestStatus.ACTIVE) {
-                                logger.debug("removing MedicationRequest " + mr.getId() + " - invalid status");
+                                logger.debug("removing MedicationRequest {} - invalid status", mr.getId());
                                 return false;
                             }
 
                             if (mr.getIntent() != MedicationRequest.MedicationRequestIntent.ORDER &&
                                     mr.getIntent() != MedicationRequest.MedicationRequestIntent.PLAN) {
-                                logger.debug("removing MedicationRequest " + mr.getId() + " - invalid intent");
+                                logger.debug("removing MedicationRequest {} - invalid intent", mr.getId());
                                 return false;
                             }
 
                             if (mr.hasDoNotPerform() && mr.getDoNotPerform()) {
-                                logger.debug("removing MedicationRequest " + mr.getId() + " - doNotPerform");
+                                logger.debug("removing MedicationRequest {} - doNotPerform", mr.getId());
                                 return false;
                             }
 
@@ -429,7 +429,7 @@ public class EHRService extends AbstractService {
                             }
 
                             if ( ! hasGoodRoute && mr.hasMedicationReference() ) {
-                                logger.debug("invalid or missing route for MedicationRequest " + mr.getId() + " - checking medication form");
+                                logger.debug("invalid or missing route for MedicationRequest {} - checking medication form", mr.getId());
                                 Bundle bundle = resourceWithBundle.getBundle();
 
                                 Medication m = null;
@@ -441,8 +441,8 @@ public class EHRService extends AbstractService {
                                     }
 
                                 } catch (Exception e) {
-                                    logger.error("caught " + e.getClass().getName() + " attempting to obtain Medication for MedicationRequest " +
-                                            mr.getId() + " - " + e.getMessage(), e);
+                                    logger.error("caught {} attempting to obtain Medication for MedicationRequest {} - {}",
+                                            e.getClass().getName(), mr.getId(), e.getMessage(), e);
                                 }
 
                                 if (m != null && m.hasForm() && FhirUtil.hasCoding(m.getForm(), validFormCodings)) {
@@ -451,7 +451,7 @@ public class EHRService extends AbstractService {
                             }
 
                             if ( ! hasGoodRoute && ! hasGoodForm ) {
-                                logger.debug("removing MedicationRequest " + mr.getId() + " - invalid route and form");
+                                logger.debug("removing MedicationRequest {} - invalid route and form", mr.getId());
                                 return false;
                             }
                         }
@@ -483,8 +483,8 @@ public class EHRService extends AbstractService {
                             }
 
                         } catch (Exception e) {
-                            logger.error("caught " + e.getClass().getName() + " attempting to obtain Medication for MedicationRequest " +
-                                    mr.getId() + " - " + e.getMessage(), e);
+                            logger.error("caught {} attempting to obtain Medication for MedicationRequest {} - {}",
+                                    e.getClass().getName(), mr.getId(), e.getMessage(), e);
                         }
                     }
                 }
@@ -499,7 +499,7 @@ public class EHRService extends AbstractService {
     }
 
     public Bundle getCounselingProcedures(String sessionId) throws DataException, ConfigurationException, IOException {
-        logger.info("getting Counseling Procedures for session=" + sessionId);
+        logger.info("getting Counseling Procedures for session={}", sessionId);
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
         FHIRCredentialsWithClient fcc = workspace.getFhirCredentialsWithClient();
         return fhirService.search(fcc, workspace.getFhirQueryManager().getProcedureStrategy(),
@@ -511,16 +511,16 @@ public class EHRService extends AbstractService {
                         if (resource instanceof Procedure) {
                             Procedure p = (Procedure) resource;
                             if (p.getStatus() != Procedure.ProcedureStatus.COMPLETED) {
-                                logger.debug("removing Procedure " + p.getId() + " - invalid status");
+                                logger.debug("removing Procedure {} - invalid status", p.getId());
                                 return false;
                             }
 
                             if ( ! p.hasCategory() ) {
-                                logger.debug("removing Procedure " + p.getId() + " - no category");
+                                logger.debug("removing Procedure {} - no category", p.getId());
                                 return false;
 
                             } else if ( ! FhirUtil.hasCoding(p.getCategory(), fcm.getProcedureCounselingCoding()) ) {
-                                logger.debug("removing Procedure " + p.getId() + " - invalid category");
+                                logger.debug("removing Procedure {} - invalid category", p.getId());
                                 return false;
                             }
                         }

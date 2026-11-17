@@ -73,7 +73,7 @@ public class PulseService extends AbstractService {
         Set<String> remotePulseKeySet = new HashSet<>();
         for (PulseModel pm : remoteList) {
             String key = pm.getLogicalEqualityKey();
-            logger.debug("found remote Pulse with key: " + key);
+            logger.debug("found remote Pulse with key: {}", key);
             remotePulseKeySet.add(key);
         }
 
@@ -84,10 +84,10 @@ public class PulseService extends AbstractService {
         for (PulseModel pm : buildLocalPulseReadings(sessionId)) {
             String key = pm.getLogicalEqualityKey();
             if (remotePulseKeySet.contains(key)) {
-                logger.debug("NOT ADDING local Pulse matching remote Pulse with key: " + key);
+                logger.debug("NOT ADDING local Pulse matching remote Pulse with key: {}", key);
 
             } else {
-                logger.debug("adding local Pulse with key: " + key);
+                logger.debug("adding local Pulse with key: {}", key);
                 list.add(pm);
             }
         }
@@ -110,7 +110,7 @@ public class PulseService extends AbstractService {
         PulseModel pm2 = null;
 
         if (writebackStrategy != FhirStrategy.DISABLED) {
-            logger.info("attempting writeback of Pulse " + pm + " using strategy " + writebackStrategy);
+            logger.info("attempting writeback of Pulse {} using strategy {}", pm, writebackStrategy);
             try {
                 VendorTransformer transformer = workspace.getVendorTransformer();
                 Bundle outgoingBundle = transformer.transformOutgoingPulseReading(pm);
@@ -127,9 +127,8 @@ public class PulseService extends AbstractService {
 
             } catch (Exception e) {
                 // remote errors are tolerable, since we will always store locally too
-                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create Pulse remotely - " +
-                        "pulse=" + pm.getPulse() + " at " + pm.getReadingDateString() +
-                        ", message=" + e.getMessage(), e);
+                logger.warn("caught {} attempting to create Pulse remotely - pulse={} at {}, message={}",
+                        e.getClass().getSimpleName(), pm.getPulse(), pm.getReadingDateString(), e.getMessage(), e);
 
                 auditService.doAudit(sessionId, AuditSeverity.WARN, "failed to write pulse remotely",
                         "pulse=" + pm.getPulse() + " at " + pm.getReadingDateString() +
@@ -150,7 +149,7 @@ public class PulseService extends AbstractService {
 
         } catch (DataException de) {
             // okay if it's failing to write locally, that's a problem.
-            logger.error("caught " + de.getClass().getName() + " attempting to create PulseModel " + pm, de);
+            logger.error("caught {} attempting to create PulseModel {}", de.getClass().getName(), pm, de);
 
             auditService.doAudit(sessionId, AuditSeverity.ERROR, "failed to create pulse", "pulse=" +
                     pm.getPulse() + " at " + pm.getReadingDateString() + ", message=" + de.getMessage());

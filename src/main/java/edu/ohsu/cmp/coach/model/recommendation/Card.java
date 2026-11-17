@@ -55,8 +55,8 @@ public class Card {
         try {
             this.suggestions = gson.fromJson(cdsCard.getSuggestions(), new TypeToken<ArrayList<Suggestion>>(){}.getType());
         } catch (JsonSyntaxException e) {
-            logger.error("caught " + e.getClass().getName() + " processing suggestions - " + e.getMessage(), e);
-            logger.error("JSON=" + cdsCard.getSuggestions());
+            logger.error("caught {} processing suggestions - {}", e.getClass().getName(), e.getMessage(), e);
+            logger.error("JSON={}", cdsCard.getSuggestions());
             throw e;
         }
 
@@ -64,8 +64,8 @@ public class Card {
             this.links = gson.fromJson(cdsCard.getLinks(), new TypeToken<ArrayList<Link>>(){}.getType());
 
         } catch (JsonSyntaxException e) {
-            logger.error("caught " + e.getClass().getName() + " processing links - " + e.getMessage(), e);
-            logger.error("JSON=" + cdsCard.getLinks());
+            logger.error("caught {} processing links - {}", e.getClass().getName(), e.getMessage(), e);
+            logger.error("JSON={}", cdsCard.getLinks());
             throw e;
         }
     }

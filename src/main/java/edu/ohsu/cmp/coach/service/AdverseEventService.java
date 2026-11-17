@@ -164,13 +164,13 @@ public class AdverseEventService extends AbstractService {
         MyAdverseEventOutcome outcome;
         if (outcomeRepository.exists(adverseEventIdHash)) {
             outcome = outcomeRepository.findOneByAdverseEventIdHash(adverseEventIdHash);
-            logger.debug("outcome with adverseEventIdHash=" + adverseEventIdHash + " exists (id=" + outcome.getId() + ")");
+            logger.debug("outcome with adverseEventIdHash={} exists (id={})", adverseEventIdHash, outcome.getId());
 
         } else {
             outcome = new MyAdverseEventOutcome(adverseEventIdHash, Outcome.ONGOING);
             outcome.setCreatedDate(new Date());
             outcome = outcomeRepository.saveAndFlush(outcome);
-            logger.debug("outcome with adverseEventIdHash=" + adverseEventIdHash + " does NOT exist.  created (id=" + outcome.getId() + ")");
+            logger.debug("outcome with adverseEventIdHash={} does NOT exist.  created (id={})", adverseEventIdHash, outcome.getId());
         }
 
         return outcome;
@@ -190,8 +190,8 @@ public class AdverseEventService extends AbstractService {
             return true;
 
         } else {
-            logger.warn("attempted to set outcome=" + outcome + " for adverseEventIdHash=" + adverseEventIdHash +
-                    " but no such record found!  this shouldn't happen.  skipping -");
+            logger.warn("attempted to set outcome={} for adverseEventIdHash={} but no such record found!  this shouldn't happen.  skipping -",
+                    outcome, adverseEventIdHash);
 
             auditService.doAudit(sessionId, AuditSeverity.WARN, "failed to register adverse-event outcome",
                     "record not found with adverseEventIdHash=" + adverseEventIdHash);

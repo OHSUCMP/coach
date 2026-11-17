@@ -86,19 +86,19 @@ public class ResourceService extends AbstractService {
             if (path.isDirectory()) {
                 File[] files = path.listFiles(PDF_FILTER);
                 if (files != null) {
-                    logger.info("build site-specific " + randomizationGroup + " resources from " + path.getAbsolutePath() + " -");
+                    logger.info("build site-specific {} resources from {} -", randomizationGroup, path.getAbsolutePath());
                     for (File file : files) {
                         if (file.isFile() && file.canRead()) {
                             SiteSpecificResource resource = new SiteSpecificResource(file);
-                            logger.info("adding site-specific " + randomizationGroup + " resource with key '" +
-                                    resource.getKey() + "': " + resource.getFilename());
+                            logger.info("adding site-specific {} resource with key '{}': {}",
+                                    randomizationGroup, resource.getKey(), resource.getFilename());
                             map.put(resource.getKey(), resource);
                         }
                     }
                 }
 
             } else {
-                logger.warn("directory not found: " + path.getAbsolutePath());
+                logger.warn("directory not found: {}", path.getAbsolutePath());
             }
         }
 

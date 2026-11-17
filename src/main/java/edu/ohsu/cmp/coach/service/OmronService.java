@@ -131,10 +131,10 @@ public class OmronService extends AbstractService {
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
-        logger.debug("got response code=" + code);     // body not logged on success; contains tokens
+        logger.debug("got response code={}", code);     // body not logged on success; contains tokens
 
         if (code < 200 || code > 299) {
-            logger.error("Omron access token request error: " + body);
+            logger.error("Omron access token request error: {}", body);
             throw new OmronException("received code " + code + " getting Omron access token");
 
         } else {
@@ -166,10 +166,10 @@ public class OmronService extends AbstractService {
         int code = httpResponse.getResponseCode();
         String body = httpResponse.getResponseBody();
 
-        logger.debug("got response code=" + code);     // body not logged on success; contains tokens
+        logger.debug("got response code={}", code);     // body not logged on success; contains tokens
 
         if (code < 200 || code > 299) {
-            logger.error("Omron access token refresh error: " + body);
+            logger.error("Omron access token refresh error: {}", body);
             throw new OmronException("received HTTP " + code + " refreshing access token");
 
         } else {
@@ -188,7 +188,7 @@ public class OmronService extends AbstractService {
 //            return;
 //        }
 //
-//        logger.debug("revoking accessToken=" + accessToken);
+//        logger.debug("revoking accessToken={}", accessToken);
 //
 //        Map<String, String> bodyParams = new LinkedHashMap<>();
 //        bodyParams.put("client_id", clientId);
@@ -203,10 +203,10 @@ public class OmronService extends AbstractService {
 //        HttpResponse httpResponse = new HttpRequest().post(oauthHostUrl + "/connect/revocation", null, headers, bodyParams);
 //        int code = httpResponse.getResponseCode();
 //
-//        logger.debug("got response code=" + code);
+//        logger.debug("got response code={}", code);
 //
 //        if (code < 200 || code > 299) {
-//            logger.error("Omron access token revocation error: " + code);
+//            logger.error("Omron access token revocation error: {}", code);
 //            throw new OmronException("received HTTP " + code + " revoking access token");
 //        }
 //    }
@@ -281,7 +281,7 @@ public class OmronService extends AbstractService {
             if (result.hasBloodPressures()) {
                 List<OmronBloodPressureModel> list = result.getBloodPressure();
                 for (int i = 0; i < list.size(); i ++) {
-                    logger.debug("processing Omron record " + i + " of " + list.size());
+                    logger.debug("processing Omron record {} of {}", i, list.size());
 
                     workspace.setOmronSynchronizationProgress(i + 1, list.size());
 
@@ -293,8 +293,8 @@ public class OmronService extends AbstractService {
                         vitals = writeToPersistentCache(workspace.getInternalPatientId(), model);
 
                     } catch (Exception e) {
-                        logger.error("caught " + e.getClass().getName() + " persisting Omron vitals - " + e.getMessage() + " - skipping -", e);
-                        logger.debug("vitals = " + model);
+                        logger.error("caught {} persisting Omron vitals - {} - skipping -", e.getClass().getName(), e.getMessage(), e);
+                        logger.debug("vitals = {}", model);
                     }
 
                     if (vitals != null) {
@@ -305,7 +305,7 @@ public class OmronService extends AbstractService {
 
                             } catch (Exception e) {
                                 // remote errors are tolerable, since we will always store locally too
-                                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create BP - " + e.getMessage(), e);
+                                logger.warn("caught {} attempting to create BP - {}", e.getClass().getSimpleName(), e.getMessage(), e);
                             }
                         }
 
@@ -316,7 +316,7 @@ public class OmronService extends AbstractService {
 
                             } catch (Exception e) {
                                 // remote errors are tolerable, since we will always store locally too
-                                logger.warn("caught " + e.getClass().getSimpleName() + " attempting to create Pulse - " + e.getMessage(), e);
+                                logger.warn("caught {} attempting to create Pulse - {}", e.getClass().getSimpleName(), e.getMessage(), e);
                             }
                         }
                     }
@@ -337,7 +337,7 @@ public class OmronService extends AbstractService {
             logger.debug("completed Omron synchronization");
 
         } catch (OmronException e) {
-            logger.error("caught " + e.getClass().getName() + " updating vitals cache - " + e.getMessage(), e);
+            logger.error("caught {} updating vitals cache - {}", e.getClass().getName(), e.getMessage(), e);
         } catch (NotAuthenticatedException nae) {
             // handle silently
         } catch (IOException e) {
@@ -360,7 +360,7 @@ public class OmronService extends AbstractService {
                     try {
                         bpModel = new BloodPressureModel(vitals, fcm);
                     } catch (DataException e) {
-                        logger.error("caught " + e.getClass().getName() + " building BloodPressureModel from MyOmronVitals - " + e.getMessage(), e);
+                        logger.error("caught {} building BloodPressureModel from MyOmronVitals - {}", e.getClass().getName(), e.getMessage(), e);
                     }
                 }
 
@@ -368,14 +368,14 @@ public class OmronService extends AbstractService {
                     try {
                         pulseModel = new PulseModel(vitals, fcm);
                     } catch (DataException e) {
-                        logger.error("caught " + e.getClass().getName() + " building PulseModel from MyOmronVitals - " + e.getMessage(), e);
+                        logger.error("caught {} building PulseModel from MyOmronVitals - {}", e.getClass().getName(), e.getMessage(), e);
                     }
                 }
 
                 list.add(new OmronVitals(bpModel, pulseModel));
 
             } catch (ParseException e) {
-                logger.error("parse error processing Omron vitals with id=" + vitals.getId() + " - skipping -");
+                logger.error("parse error processing Omron vitals with id={} - skipping -", vitals.getId());
             }
         }
         return list;
@@ -436,7 +436,7 @@ public class OmronService extends AbstractService {
         }
         bodyParams.put("since", sinceStr);
 
-        logger.info("requesting Omron measurements since " + sinceStr + " for session " + sessionId);
+        logger.info("requesting Omron measurements since {} for session {}", sinceStr, sessionId);
 
 //        bodyParams.put("limit", limit);           // optional
         bodyParams.put("type", "bloodpressure");
@@ -452,11 +452,11 @@ public class OmronService extends AbstractService {
         String body = httpResponse.getResponseBody();
 
         if (code < 200 || code > 299) {
-            logger.error("Omron measurement request error: " + body);
+            logger.error("Omron measurement request error: {}", body);
             throw new OmronException("received HTTP " + code + " building vitals for session " + sessionId);
 
         } else {
-            logger.debug("got body (PARSE THIS WITH GSON): " + body);
+            logger.debug("got body (PARSE THIS WITH GSON): {}", body);
             Gson gson = new GsonBuilder().create();
             MeasurementResponse response = gson.fromJson(body, new TypeToken<MeasurementResponse>() {}.getType());
 
@@ -468,13 +468,13 @@ public class OmronService extends AbstractService {
 
     private MyOmronVitals writeToPersistentCache(Long internalPatientId, OmronBloodPressureModel model) {
         if ( ! repository.existsByOmronId(model.getId()) ) {
-            logger.info("caching Omron vitals with id=" + model.getId() + " for patient with id=" + internalPatientId);
+            logger.info("caching Omron vitals with id={} for patient with id={}", model.getId(), internalPatientId);
             MyOmronVitals vitals = new MyOmronVitals(model);
             vitals.setPatId(internalPatientId);
             vitals.setCreatedDate(new Date());
             return repository.save(vitals);
         } else {
-            logger.debug("not caching Omron vitals with id=" + model.getId() + " - already exists!");
+            logger.debug("not caching Omron vitals with id={} - already exists!", model.getId());
             return null;
         }
     }

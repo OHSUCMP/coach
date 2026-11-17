@@ -228,7 +228,7 @@ public class UserWorkspace {
             @Override
             public void run() {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN populating workspace for session=" + sessionId);
+                logger.info("BEGIN populating workspace for session={}", sessionId);
                 getPatient();
                 getOrderServiceRequests();
                 getRemoteGoals();
@@ -246,8 +246,8 @@ public class UserWorkspace {
                 getOtherSupplementalResources();
                 refreshHypotensionAdverseEvents();
                 getAllCards();
-                logger.info("DONE populating workspace for session=" + sessionId +
-                        " (took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE populating workspace for session={} (took {}ms)",
+                        sessionId, System.currentTimeMillis() - start);
 
                 writeSummary();
             }
@@ -268,7 +268,7 @@ public class UserWorkspace {
     }
 
     public void clearCaches() {
-        logger.info("clearing caches for session=" + sessionId);
+        logger.info("clearing caches for session={}", sessionId);
         cache.invalidateAll();
         cardCache.invalidateAll();
         bundleCache.invalidateAll();
@@ -281,19 +281,19 @@ public class UserWorkspace {
             redCapService.clearCaches(redcapId);
 
         } catch (Exception e) {
-            logger.warn("caught " + e.getClass().getName() + " attempting to clear REDCap participant info cache for redcapId=" +
-                    redcapId + " - " + e.getMessage(), e);
+            logger.warn("caught {} attempting to clear REDCap participant info cache for redcapId={} - {}",
+                    e.getClass().getName(), redcapId, e.getMessage(), e);
         }
     }
 
     public void clearVitalsCaches() {
-        logger.info("clearing BP and Pulse caches for session=" + sessionId);
+        logger.info("clearing BP and Pulse caches for session={}", sessionId);
         cache.invalidate(CACHE_BP);
         cache.invalidate(CACHE_PULSE);
     }
 
     public void shutdown() {
-        logger.info("shutting down workspace for session=" + sessionId);
+        logger.info("shutting down workspace for session={}", sessionId);
         executorService.shutdown();
 
         clearCaches();
@@ -306,22 +306,22 @@ public class UserWorkspace {
     }
 
     private void shutdownJobs() {
-        logger.info("clearing triggers and jobs for session=" + sessionId);
+        logger.info("clearing triggers and jobs for session={}", sessionId);
         Scheduler scheduler = ctx.getBean(Scheduler.class);
         try {
             for (TriggerKey triggerKey : scheduler.getTriggerKeys(GroupMatcher.groupEquals(sessionId))) {
-                logger.debug("unscheduling trigger: " + triggerKey.getName());
+                logger.debug("unscheduling trigger: {}", triggerKey.getName());
                 scheduler.unscheduleJob(triggerKey);
             }
 
             for (JobKey jobKey : scheduler.getJobKeys(GroupMatcher.groupEquals(sessionId))) {
-                logger.debug("deleting job: " + jobKey.getName());
+                logger.debug("deleting job: {}", jobKey.getName());
                 scheduler.deleteJob(jobKey);
             }
 
         } catch (SchedulerException e) {
-            logger.error("caught " + e.getClass().getName() + " shutting down jobs for session " + sessionId + " - " +
-                    e.getMessage(), e);
+            logger.error("caught {} shutting down jobs for session {} - {}",
+                    e.getClass().getName(), sessionId, e.getMessage(), e);
         }
     }
 
@@ -359,13 +359,13 @@ public class UserWorkspace {
 
             if (scheduler.checkExists(jobKey)) {
                 JobDetail jobDetail = scheduler.getJobDetail(jobKey);
-                logger.warn("found pre-existing auto-shutdown job for session " + sessionId +
-                        ", but this should have been cleared earlier, it shouldn't have gotten this far.  ???");
-                logger.info("deleting job: " + jobDetail.getDescription());
+                logger.warn("found pre-existing auto-shutdown job for session {}, but this should have been cleared earlier, it shouldn't have gotten this far.  ???",
+                        sessionId);
+                logger.info("deleting job: {}", jobDetail.getDescription());
                 scheduler.deleteJob(jobKey);
             }
 
-            logger.info("scheduling job: " + job.getDescription());
+            logger.info("scheduling job: {}", job.getDescription());
             scheduler.scheduleJob(job, trigger);
 
         } catch (SchedulerException e) {
@@ -382,9 +382,9 @@ public class UserWorkspace {
             return payload.getExpiresAt();
 
         } catch (Exception e) {
-            logger.warn("couldn't parse token for session=" + sessionId + " - will auto-shutdown workspace after 1 day");
-            logger.debug("caught " + e.getClass().getName() + " parsing bearer token for session=" + sessionId + " - " +
-                    e.getMessage(), e);
+            logger.warn("couldn't parse token for session={} - will auto-shutdown workspace after 1 day", sessionId);
+            logger.debug("caught {} parsing bearer token for session={} - {}",
+                    e.getClass().getName(), sessionId, e.getMessage(), e);
 
             Calendar cal = Calendar.getInstance();
             cal.setTime(new Date());
@@ -423,7 +423,7 @@ public class UserWorkspace {
             @Override
             public Map<String, Encounter> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Encounters for session=" + sessionId);
+                logger.info("BEGIN build Encounters for session={}", sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
                 Map<String, Encounter> map = new LinkedHashMap<>();
@@ -447,8 +447,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building Encounters for session=" + sessionId +
-                        " (size=" + map.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building Encounters for session={} (size={}, took {}ms)",
+                        sessionId, map.size(), System.currentTimeMillis() - start);
 
                 return map;
             }
@@ -460,7 +460,7 @@ public class UserWorkspace {
             @Override
             public PatientModel apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Patient for session=" + sessionId);
+                logger.info("BEGIN build Patient for session={}", sessionId);
 
                 PatientService svc = ctx.getBean(PatientService.class);
                 PatientModel patient = null;
@@ -482,8 +482,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building Patient for session=" + sessionId +
-                        " (took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building Patient for session={} (took {}ms)",
+                        sessionId, System.currentTimeMillis() - start);
 
                 return patient;
             }
@@ -495,7 +495,7 @@ public class UserWorkspace {
             @Override
             public Bundle apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Protocol Observations for session=" + sessionId);
+                logger.info("BEGIN build Protocol Observations for session={}", sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
                 CompositeBundle compositeBundle = new CompositeBundle();
@@ -516,8 +516,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building Protocol Observations for session=" + sessionId +
-                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building Protocol Observations for session={} (size={}, took {}ms)",
+                        sessionId, compositeBundle.size(), System.currentTimeMillis() - start);
 
                 return compositeBundle.getBundle();
             }
@@ -530,7 +530,7 @@ public class UserWorkspace {
             @Override
             public List<BloodPressureModel> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build remote Blood Pressures for session=" + sessionId);
+                logger.info("BEGIN build remote Blood Pressures for session={}", sessionId);
 
                 BloodPressureService svc = ctx.getBean(BloodPressureService.class);
                 List<BloodPressureModel> list;
@@ -552,8 +552,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building remote Blood Pressures for session=" + sessionId +
-                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building remote Blood Pressures for session={} (size={}, took {}ms)",
+                        sessionId, list.size(), System.currentTimeMillis() - start);
 
                 return list;
             }
@@ -566,7 +566,7 @@ public class UserWorkspace {
             @Override
             public List<PulseModel> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build remote Pulses for session=" + sessionId);
+                logger.info("BEGIN build remote Pulses for session={}", sessionId);
 
                 PulseService svc = ctx.getBean(PulseService.class);
                 List<PulseModel> list;
@@ -588,8 +588,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building remote Pulses for session=" + sessionId +
-                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building remote Pulses for session={} (size={}, took {}ms)",
+                        sessionId, list.size(), System.currentTimeMillis() - start);
 
                 return list;
             }
@@ -601,7 +601,7 @@ public class UserWorkspace {
             @Override
             public Bundle apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Encounter Diagnosis Conditions for session=" + sessionId);
+                logger.info("BEGIN build Encounter Diagnosis Conditions for session={}", sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
                 CompositeBundle compositeBundle = new CompositeBundle();
@@ -622,8 +622,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building Encounter Diagnosis Conditions for session=" + sessionId +
-                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building Encounter Diagnosis Conditions for session={} (size={}, took {}ms)",
+                        sessionId, compositeBundle.size(), System.currentTimeMillis() - start);
 
                 return compositeBundle.getBundle();
             }
@@ -636,7 +636,7 @@ public class UserWorkspace {
             @Override
             public List<AdverseEventModel> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN building remote Adverse Events for session=" + sessionId);
+                logger.info("BEGIN building remote Adverse Events for session={}", sessionId);
 
                 AdverseEventService svc = ctx.getBean(AdverseEventService.class);
                 List<AdverseEventModel> list;
@@ -658,8 +658,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building remote Adverse Events for session=" + sessionId +
-                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building remote Adverse Events for session={} (size={}, took {}ms)",
+                        sessionId, list.size(), System.currentTimeMillis() - start);
 
                 return list;
             }
@@ -671,7 +671,7 @@ public class UserWorkspace {
             @Override
             public Bundle apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Order Service Requests for session=" + sessionId);
+                logger.info("BEGIN build Order Service Requests for session={}", sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
                 CompositeBundle compositeBundle = new CompositeBundle();
@@ -692,8 +692,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building Order ServiceRequests for session=" + sessionId +
-                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building Order ServiceRequests for session={} (size={}, took {}ms)",
+                        sessionId, compositeBundle.size(), System.currentTimeMillis() - start);
 
                 return compositeBundle.getBundle();
             }
@@ -706,7 +706,7 @@ public class UserWorkspace {
             @Override
             public List<GoalModel> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build remote Goals for session=" + sessionId);
+                logger.info("BEGIN build remote Goals for session={}", sessionId);
 
                 GoalService svc = ctx.getBean(GoalService.class);
                 List<GoalModel> list;
@@ -728,8 +728,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building remote Goals for session=" + sessionId +
-                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building remote Goals for session={} (size={}, took {}ms)",
+                        sessionId, list.size(), System.currentTimeMillis() - start);
 
                 return list;
             }
@@ -754,7 +754,7 @@ public class UserWorkspace {
             @Override
             public List<MedicationModel> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Medications for session=" + sessionId);
+                logger.info("BEGIN build Medications for session={}", sessionId);
 
                 MedicationService svc = ctx.getBean(MedicationService.class);
                 List<MedicationModel> list;
@@ -776,8 +776,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building Medications for session=" + sessionId +
-                        " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building Medications for session={} (size={}, took {}ms)",
+                        sessionId, list.size(), System.currentTimeMillis() - start);
 
                 return list;
             }
@@ -789,7 +789,7 @@ public class UserWorkspace {
             @Override
             public Bundle apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Problem List Conditions Resources for session=" + sessionId);
+                logger.info("BEGIN build Problem List Conditions Resources for session={}", sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
                 CompositeBundle compositeBundle = new CompositeBundle();
@@ -810,8 +810,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building Problem List Resources for session=" + sessionId +
-                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building Problem List Resources for session={} (size={}, took {}ms)",
+                        sessionId, compositeBundle.size(), System.currentTimeMillis() - start);
 
                 return compositeBundle.getBundle();
             }
@@ -823,7 +823,7 @@ public class UserWorkspace {
             @Override
             public Bundle apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Tobacco Smoking Observations for session=" + sessionId);
+                logger.info("BEGIN build Tobacco Smoking Observations for session={}", sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
                 CompositeBundle compositeBundle = new CompositeBundle();
@@ -844,8 +844,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building Tobacco Smoking Observations for session=" + sessionId +
-                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building Tobacco Smoking Observations for session={} (size={}, took {}ms)",
+                        sessionId, compositeBundle.size(), System.currentTimeMillis() - start);
 
                 return compositeBundle.getBundle();
             }
@@ -857,7 +857,7 @@ public class UserWorkspace {
             @Override
             public Bundle apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Alcohol Drinking Observations for session=" + sessionId);
+                logger.info("BEGIN build Alcohol Drinking Observations for session={}", sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
                 CompositeBundle compositeBundle = new CompositeBundle();
@@ -881,8 +881,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building Alcohol Drinking Observations for session=" + sessionId +
-                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building Alcohol Drinking Observations for session={} (size={}, took {}ms)",
+                        sessionId, compositeBundle.size(), System.currentTimeMillis() - start);
 
                 return compositeBundle.getBundle();
             }
@@ -894,7 +894,7 @@ public class UserWorkspace {
             @Override
             public Bundle apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Supplemental Resources for session=" + sessionId);
+                logger.info("BEGIN build Supplemental Resources for session={}", sessionId);
 
                 EHRService svc = ctx.getBean(EHRService.class);
                 CompositeBundle compositeBundle = new CompositeBundle();
@@ -916,8 +916,8 @@ public class UserWorkspace {
                     }
                 }
 
-                logger.info("DONE building Supplemental Resources for session=" + sessionId +
-                        " (size=" + compositeBundle.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE building Supplemental Resources for session={} (size={}, took {}ms)",
+                        sessionId, compositeBundle.size(), System.currentTimeMillis() - start);
 
                 return compositeBundle.getBundle();
             }
@@ -928,11 +928,11 @@ public class UserWorkspace {
         HypotensionAdverseEventService svc = ctx.getBean(HypotensionAdverseEventService.class);
         try {
             svc.refresh(sessionId);
-            logger.info("DONE refreshing hypotension AdverseEvent resources for session=" + sessionId);
+            logger.info("DONE refreshing hypotension AdverseEvent resources for session={}", sessionId);
 
         } catch (DataException e) {
-            logger.warn("caught " + e.getClass().getName() + " refreshing hypotension AdverseEvent resources for session=" +
-                    sessionId + " - " + e.getMessage(), e);
+            logger.warn("caught {} refreshing hypotension AdverseEvent resources for session={} - {}",
+                    e.getClass().getName(), sessionId, e.getMessage(), e);
         }
     }
 
@@ -945,8 +945,8 @@ public class UserWorkspace {
                     map.put(hook.getId(), getCards(hook.getId()));
 
                 } catch (Exception e) {
-                    logger.error("caught " + e.getClass().getName() + " getting cards for hook=" + hook.getId() + " - " +
-                            e.getMessage(), e);
+                    logger.error("caught {} getting cards for hook={} - {}",
+                            e.getClass().getName(), hook.getId(), e.getMessage(), e);
 
                     auditService.doAudit(sessionId, AuditSeverity.ERROR, "recommendation exception", "encountered " +
                             e.getClass().getSimpleName() + " getting recommendations for " + hook.getId() + " - " +
@@ -967,14 +967,14 @@ public class UserWorkspace {
             @Override
             public List<Card> apply(String s) {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN build Cards for session=" + sessionId);
+                logger.info("BEGIN build Cards for session={}", sessionId);
 
                 RecommendationService svc = ctx.getBean(RecommendationService.class);
                 try {
                     List<Card> list = svc.getCards(sessionId, s);
 
-                    logger.info("DONE building Cards for session=" + sessionId +
-                            " (size=" + list.size() + ", took " + (System.currentTimeMillis() - start) + "ms)");
+                    logger.info("DONE building Cards for session={} (size={}, took {}ms)",
+                            sessionId, list.size(), System.currentTimeMillis() - start);
 
                     return list;
 
@@ -1077,20 +1077,20 @@ public class UserWorkspace {
             @Override
             public void run() {
                 long start = System.currentTimeMillis();
-                logger.info("BEGIN Omron synchronization for session=" + sessionId);
+                logger.info("BEGIN Omron synchronization for session={}", sessionId);
                 try {
                     omronService.synchronize(sessionId);
 
                 } catch (Exception e) {
-                    logger.error("caught " + e.getClass().getName() + " synchronizing with Omron - " + e.getMessage(), e);
+                    logger.error("caught {} synchronizing with Omron - {}", e.getClass().getName(), e.getMessage(), e);
 
                 } finally {
                     omronSynchronizing.set(false);
                     omronCurrentItem = null;
                     omronTotalItems = null;
                 }
-                logger.info("DONE Omron synchronization for session=" + sessionId +
-                        " (took " + (System.currentTimeMillis() - start) + "ms)");
+                logger.info("DONE Omron synchronization for session={} (took {}ms)",
+                        sessionId, System.currentTimeMillis() - start);
             }
         };
 
@@ -1107,13 +1107,13 @@ public class UserWorkspace {
     }
 
     public void setOmronSynchronizationProgress(int current, int total) {
-        logger.debug("setting Omron sync progress: current=" + current + ", total=" + total);
+        logger.debug("setting Omron sync progress: current={}, total={}", current, total);
         if (omronSynchronizing.get()) {
             omronCurrentItem = current;
             omronTotalItems = total;
 
         } else {
-            logger.warn("not setting Omron sync progress (current=" + current + ", total=" + total + ") because omronSynchronizing=false");
+            logger.warn("not setting Omron sync progress (current={}, total={}) because omronSynchronizing=false", current, total);
         }
     }
 
@@ -1142,8 +1142,8 @@ public class UserWorkspace {
             svc.create(sessionId, summary);
 
         } catch (Exception e) {
-            logger.error("caught " + e.getClass().getName() + " writing summary for session=" + sessionId + " - " +
-                    e.getMessage(), e);
+            logger.error("caught {} writing summary for session={} - {}",
+                    e.getClass().getName(), sessionId, e.getMessage(), e);
         }
     }
 }

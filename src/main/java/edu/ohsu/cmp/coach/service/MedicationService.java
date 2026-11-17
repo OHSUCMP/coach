@@ -38,7 +38,7 @@ public class MedicationService extends AbstractService {
             try {
                 valueSetService.refresh(oid);
             } catch (Exception e) {
-                logger.error("caught " + e.getClass().getName() + " refreshing ValueSet with OID=" + oid + " - " + e.getMessage(), e);
+                logger.error("caught {} refreshing ValueSet with OID={} - {}", e.getClass().getName(), oid, e.getMessage(), e);
             }
         }
         logger.info("done refreshing anti-hypertensive medication ValueSets.");
@@ -66,10 +66,9 @@ public class MedicationService extends AbstractService {
                         list.add(new MedicationModel(medicationRequest, medicationRequestsBundle));
 
                     } catch (Exception e) {
-                        logger.error("caught " + e.getClass().getName() + " - " + e.getMessage() + " - " +
-                                " attempting to build MedicationModel for MedicationRequest:\n" +
-                                FhirUtil.toJson(medicationRequest));
-                        logger.warn("MedicationRequest " + medicationRequest.getId() + " not added to Medications list!");
+                        logger.error("caught {} - {} -  attempting to build MedicationModel for MedicationRequest:\n{}",
+                                e.getClass().getName(), e.getMessage(), FhirUtil.toJson(medicationRequest));
+                        logger.warn("MedicationRequest {} not added to Medications list!", medicationRequest.getId());
                     }
                 }
             }
@@ -87,7 +86,7 @@ public class MedicationService extends AbstractService {
     }
 
     private List<MedicationModel> getMedications(String sessionId, boolean includeAntihypertensive) {
-        logger.debug("getting Medications for session " + sessionId + ", includeAntihypertensive=" + includeAntihypertensive);
+        logger.debug("getting Medications for session {}, includeAntihypertensive={}", sessionId, includeAntihypertensive);
         return filterByValueSet(userWorkspaceService.get(sessionId).getMedications(),
                 getAntihypertensiveMedicationValueSetOIDsList(),
                 includeAntihypertensive);
@@ -102,7 +101,7 @@ public class MedicationService extends AbstractService {
 
         List<MedicationModel> filtered = new ArrayList<>();
 
-        logger.debug("in filterByValueSet(includeOnMatch=" + includeOnMatch + ") - list.size() = " + list.size());
+        logger.debug("in filterByValueSet(includeOnMatch={}) - list.size() = {}", includeOnMatch, list.size());
 
         List<Concept> concepts = new ArrayList<>();
         for (String oid : valueSetOIDList) {
@@ -110,19 +109,19 @@ public class MedicationService extends AbstractService {
             if (valueSet != null && valueSet.getConcepts() != null) {
                 concepts.addAll(valueSet.getConcepts());
             } else {
-                logger.warn("ValueSet with OID=" + oid + " does not exist and / or has no concepts!");
+                logger.warn("ValueSet with OID={} does not exist and / or has no concepts!", oid);
             }
         }
 
         logger.debug("filtering Medications -");
         for (MedicationModel item : list) {
-            logger.debug(" - processing " + item.getDescription() + " (id=" + item.getSourceId() + ") -");
+            logger.debug(" - processing {} (id={}) -", item.getDescription(), item.getSourceId());
 
             boolean matches = false;
             for (Concept c : concepts) {
                 String codeSystem = CodeSystemUtil.getUrl(c.getCodeSystem());
                 if (item.matches(codeSystem, c.getCode())) {
-                    logger.debug("   - matches codeSystem=" + codeSystem + ", code=" + c.getCode() + "!");
+                    logger.debug("   - matches codeSystem={}, code={}!", codeSystem, c.getCode());
                     matches = true;
                     break;
                 }
@@ -133,7 +132,7 @@ public class MedicationService extends AbstractService {
                 filtered.add(item);
             }
         }
-        logger.debug("done filtering Medications.  filtered.size() = " + filtered.size());
+        logger.debug("done filtering Medications.  filtered.size() = {}", filtered.size());
 
         return filtered;
     }

@@ -61,7 +61,7 @@ public abstract class AbstractVitalsModel extends AbstractModel implements Compa
         this.sourceProtocolObservation = protocolObservation;
 
 //        if (source == ObservationSource.HOME && ! FhirUtil.hasHomeSettingExtension(observation)) {
-//            logger.warn("Observation " + observation.getId() + " has HOME Encounter but is missing the Home Setting Extension");
+//            logger.warn("Observation {} has HOME Encounter but is missing the Home Setting Extension", observation.getId());
 //        }
 
         if (protocolObservation != null &&

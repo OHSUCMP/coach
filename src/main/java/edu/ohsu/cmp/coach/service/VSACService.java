@@ -55,7 +55,7 @@ public class VSACService {
 
     public ValueSet getValueSet(String oid) throws IOException, ParserConfigurationException, SAXException, ParseException, DataException {
         if ( ! isVSACEnabled() ) {
-            logger.warn("VSAC is not enabled - not getting ValueSet with oid=" + oid);
+            logger.warn("VSAC is not enabled - not getting ValueSet with oid={}", oid);
             return null;
         }
 
