@@ -28,27 +28,33 @@ public class MedicationsController extends BaseController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) {
-        setCommonViewComponents(session.getId(), model);
-        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            setCommonViewComponents(sessionId, model);
+            model.addAttribute("patient", userWorkspaceService.get(sessionId).getPatient());
 
-        List<MedicationModel> antihypertensiveMedications = filterDuplicates(medicationService.getAntihypertensiveMedications(session.getId()));
-        antihypertensiveMedications.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));
+            List<MedicationModel> antihypertensiveMedications = filterDuplicates(medicationService.getAntihypertensiveMedications(sessionId));
+            antihypertensiveMedications.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));
 
-        List<MedicationModel> otherMedications = filterDuplicates(medicationService.getOtherMedications(session.getId()));
-        otherMedications.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));
+            List<MedicationModel> otherMedications = filterDuplicates(medicationService.getOtherMedications(sessionId));
+            otherMedications.sort((o1, o2) -> StringUtils.compare(o1.getDescription(), o2.getDescription()));
 
-        model.addAttribute("antihypertensiveMedications", antihypertensiveMedications);
-        model.addAttribute("otherMedications", otherMedications);
+            model.addAttribute("antihypertensiveMedications", antihypertensiveMedications);
+            model.addAttribute("otherMedications", otherMedications);
 
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "visited medications page");
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "visited medications page");
 
-        return "medications";
+            return "medications";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
     
     private List<MedicationModel> filterDuplicates(List<MedicationModel> modelList) {
         Map<String, MedicationModel> map = new LinkedHashMap<String, MedicationModel>();
 
-        logger.debug("filtering duplicate medications - original size=" + modelList.size());
+        logger.debug("filtering duplicate medications - original size={}", modelList.size());
 
         final String delim = "|";
         for (MedicationModel m : modelList) {
@@ -59,28 +65,28 @@ public class MedicationsController extends BaseController {
                     + m.getIssues() + delim
                     + m.getPriority();
 
-            logger.debug("processing MedicationModel " + m.getDescription() + " (key=" + key + ")");
+            logger.debug("processing MedicationModel {} (key={})", m.getDescription(), key);
 
             if (map.containsKey(key)) {
                 Long tsNew = m.getEffectiveTimestamp();
 
-                logger.debug(" - found " + key + " in map - tsNew=" + tsNew);
+                logger.debug(" - found {} in map - tsNew={}", key, tsNew);
 
                 if (tsNew != null) {    // if the new one has no timestamp, keep the existing one
                     Long tsMapped = map.get(key).getEffectiveTimestamp();
                     if (tsMapped == null || tsNew > tsMapped) {
-                        logger.debug(" - tsNew > tsMapped (" + tsMapped + ") - replacing -");
+                        logger.debug(" - tsNew > tsMapped ({}) - replacing -", tsMapped);
                         map.put(key, m);
                     }
                 }
 
             } else {
-                logger.debug(" - did not find " + key + " in map.  adding -");
+                logger.debug(" - did not find {} in map.  adding -", key);
                 map.put(key, m);
             }
         }
 
-        logger.debug("done filtering duplicate medications.  new size=" + map.values().size());
+        logger.debug("done filtering duplicate medications.  new size={}", map.values().size());
 
         return new ArrayList<>(map.values());
     }

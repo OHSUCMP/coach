@@ -53,40 +53,45 @@ public class ContactController extends BaseController {
     @GetMapping("contact")
     public String view(HttpSession session, Model model, @RequestParam("token") String token) throws DataException {
         String sessionId = session.getId();
-        logger.info("showing contact form for session {}", sessionId);
+        if (userWorkspaceService.exists(sessionId)) {
+            logger.info("showing contact form for session {}", sessionId);
 
-        setCommonViewComponents(sessionId, model);
-        model.addAttribute("patient", userWorkspaceService.get(sessionId).getPatient());
+            setCommonViewComponents(sessionId, model);
+            model.addAttribute("patient", userWorkspaceService.get(sessionId).getPatient());
 
-        ContactMessage contactMessage = contactMessageService.getMessage(token);
-        String message = "";
-        String subject = "";
-        String aboveText = "";
-        String belowText = "";
-        if (contactMessage != null) {
-            Map<String, String> tokenMap = buildTokenMap(sessionId);
-            message = replaceTokens(contactMessage.getBody(), tokenMap);
-            subject = replaceTokens(contactMessage.getSubject(), tokenMap);
-            aboveText = contactMessage.getAboveText();
-            belowText = contactMessage.getBelowText();
+            ContactMessage contactMessage = contactMessageService.getMessage(token);
+            String message = "";
+            String subject = "";
+            String aboveText = "";
+            String belowText = "";
+            if (contactMessage != null) {
+                Map<String, String> tokenMap = buildTokenMap(sessionId);
+                message = replaceTokens(contactMessage.getBody(), tokenMap);
+                subject = replaceTokens(contactMessage.getSubject(), tokenMap);
+                aboveText = contactMessage.getAboveText();
+                belowText = contactMessage.getBelowText();
+            }
+            model.addAttribute("subject", subject);
+            model.addAttribute("message", message);
+            model.addAttribute("aboveText", aboveText);
+            model.addAttribute("belowText", belowText);
+
+            Map<String, String> map = new HashMap<>();
+            map.put("subject", URLEncoder.encode(subject, StandardCharsets.UTF_8));
+            String instructions = replaceTokens(contactInstructions, map);
+            if (StringUtils.isNotBlank(instructions)) {
+                model.addAttribute("instructions", instructions);
+            }
+
+            model.addAttribute("pageStyles", new String[] { "contact.css" });
+
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "visited contact page", "token=" + token);
+
+            return "contact";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
         }
-        model.addAttribute("subject", subject);
-        model.addAttribute("message", message);
-        model.addAttribute("aboveText", aboveText);
-        model.addAttribute("belowText", belowText);
-
-        Map<String, String> map = new HashMap<>();
-        map.put("subject", URLEncoder.encode(subject, StandardCharsets.UTF_8));
-        String instructions = replaceTokens(contactInstructions, map);
-        if (StringUtils.isNotBlank(instructions)) {
-            model.addAttribute("instructions", instructions);
-        }
-
-        model.addAttribute("pageStyles", new String[] { "contact.css" });
-
-        auditService.doAudit(sessionId, AuditSeverity.INFO, "visited contact page", "token=" + token);
-
-        return "contact";
     }
 
     private Map<String, String> buildTokenMap(String sessionId) throws DataException {

@@ -30,42 +30,48 @@ public class OmronController extends BaseController {
                         @RequestParam(required = false) String code,
                         @RequestParam(required = false) String error) throws Exception {
 
-        UserWorkspace workspace = userWorkspaceService.get(session.getId());
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
-        // if code exists, then success; use code to obtain a token
-        // else if error, then failure; display error in UI and abort
+            // if code exists, then success; use code to obtain a token
+            // else if error, then failure; display error in UI and abort
 
-        if (StringUtils.isNotBlank(code)) {
-            try {
-                AccessTokenResponse accessTokenResponse = omronService.requestAccessToken(code);
-                if (accessTokenResponse != null) {
-                    logger.debug("got Omron access token");
-                    workspace.setOmronTokenData(new OmronTokenData(accessTokenResponse));
+            if (StringUtils.isNotBlank(code)) {
+                try {
+                    AccessTokenResponse accessTokenResponse = omronService.requestAccessToken(code);
+                    if (accessTokenResponse != null) {
+                        logger.debug("got Omron access token");
+                        workspace.setOmronTokenData(new OmronTokenData(accessTokenResponse));
+                    }
+                } catch (Exception e) {
+                    logger.error("caught {} getting Omron access token - {}", e.getClass().getName(), e.getMessage(), e);
+                    throw e;
                 }
-            } catch (Exception e) {
-                logger.error("caught {} getting Omron access token - {}", e.getClass().getName(), e.getMessage(), e);
-                throw e;
+
+                try {
+                    omronService.scheduleAccessTokenRefresh(sessionId);
+                } catch (Exception e) {
+                    logger.error("caught {} scheduling Omron access token refresh - {}", e.getClass().getName(), e.getMessage(), e);
+                    throw e;
+                }
+
+                try {
+                    workspace.initiateSynchronousOmronUpdate();
+                } catch (Exception e) {
+                    logger.error("caught {} synchronizing with Omron - {}", e.getClass().getName(), e.getMessage(), e);
+                    throw e;
+                }
+
+            } else if (StringUtils.isNotBlank(error)) {
+                logger.error("caught error during Omron authorization: {}", error);
             }
 
-            try {
-                omronService.scheduleAccessTokenRefresh(session.getId());
-            } catch (Exception e) {
-                logger.error("caught {} scheduling Omron access token refresh - {}", e.getClass().getName(), e.getMessage(), e);
-                throw e;
-            }
+            return "redirect:/";
 
-            try {
-                workspace.initiateSynchronousOmronUpdate();
-            } catch (Exception e) {
-                logger.error("caught {} synchronizing with Omron - {}", e.getClass().getName(), e.getMessage(), e);
-                throw e;
-            }
-
-        } else if (StringUtils.isNotBlank(error)) {
-            logger.error("caught error during Omron authorization: {}", error);
+        } else {
+            return "redirect:" + getLaunchRedirect();
         }
-
-        return "redirect:/";
     }
 
     @PostMapping(value = "notify", consumes = MediaType.APPLICATION_JSON_VALUE)

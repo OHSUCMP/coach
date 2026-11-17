@@ -1,8 +1,6 @@
 package edu.ohsu.cmp.coach.controller;
 
 import edu.ohsu.cmp.coach.entity.MyPatient;
-import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
-import edu.ohsu.cmp.coach.model.redcap.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.exception.CaseNotHandledException;
 import edu.ohsu.cmp.coach.exception.ConfigurationException;
 import edu.ohsu.cmp.coach.exception.REDCapException;
@@ -10,16 +8,21 @@ import edu.ohsu.cmp.coach.model.Audience;
 import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.model.RedcapDataAccessGroup;
 import edu.ohsu.cmp.coach.model.fhir.FHIRCredentials;
+import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
+import edu.ohsu.cmp.coach.model.redcap.RedcapParticipantInfo;
 import edu.ohsu.cmp.coach.service.PatientService;
 import edu.ohsu.cmp.coach.service.REDCapService;
 import edu.ohsu.cmp.coach.service.SessionService;
 import edu.ohsu.cmp.coach.workspace.UserWorkspace;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,14 +30,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.time.Duration;
 
 @Controller
 public class SessionController extends BaseController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public static final String PATIENT_NOT_ACTIVE_RESPONSE = "PATIENT_NOT_ACTIVE";
+
+    private static final Duration AUDIENCE_COOKIE_MAX_AGE = Duration.ofDays(400);
 
     @Autowired
     private SessionService sessionService;
@@ -44,6 +49,9 @@ public class SessionController extends BaseController {
 
     @Autowired
     private REDCapService redCapService;
+
+    @Value("#{new Boolean('${security.browser.cache-credentials}')}")
+    private Boolean cacheCredentials;
 
     @Value("${smart.patient.scope}")
     private String patientScope;
@@ -77,7 +85,7 @@ public class SessionController extends BaseController {
         return "health";
     }
 
-    @GetMapping(value = {"launch-provider", "launch-ehr"}) // launch-ehr is deprecated
+    @GetMapping("launch-provider") // launch-ehr is deprecated
     public String launchProvider(HttpSession session, Model model) {
         sessionService.forceExpiration(session.getId());
         setCommonViewComponents(model);
@@ -99,13 +107,24 @@ public class SessionController extends BaseController {
         return "launch-patient";
     }
 
-    @PostMapping("prepare-session")
-    public ResponseEntity<?> prepareSession(HttpSession session,
-                                            @RequestParam String clientId,
-                                            @RequestParam String serverUrl,
-                                            @RequestParam String bearerToken,
-                                            @RequestParam String patientId,
-                                            @RequestParam String userId) throws ConfigurationException, REDCapException, IOException {
+    @GetMapping("smart-callback")
+    public String smartCallback(Model model) {
+        setCommonViewComponents(model);
+        model.addAttribute("cacheCredentials", cacheCredentials);
+        model.addAttribute("patientNotActiveEndpoint", "/patient-not-active");
+        model.addAttribute("patientNotActiveResponse", SessionController.PATIENT_NOT_ACTIVE_RESPONSE);
+        return "smart-callback";
+
+    }
+
+    @PostMapping("complete-handshake")
+    public ResponseEntity<?> completeHandshake(HttpSession session,
+                                               HttpServletResponse response,
+                                               @RequestParam String clientId,
+                                               @RequestParam String serverUrl,
+                                               @RequestParam String bearerToken,
+                                               @RequestParam String patientId,
+                                               @RequestParam String userId) throws ConfigurationException, REDCapException, IOException {
 
         Audience audience;
         if (StringUtils.equals(clientId, patientClientId)) {
@@ -116,16 +135,25 @@ public class SessionController extends BaseController {
             throw new CaseNotHandledException("couldn't determine audience from clientId=" + clientId);
         }
 
+        ResponseCookie audienceCookie = ResponseCookie.from(AUDIENCE_COOKIE_NAME, audience.name())
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(AUDIENCE_COOKIE_MAX_AGE)
+                .build();
+        response.addHeader("Set-Cookie", audienceCookie.toString());
+
         // serverUrl is supplied by the client; only permit the configured FHIR server for the resolved launch audience.
         // Use the canonical configured URL from application properties after validation, not the user-supplied value.
         String permittedServerUrl = resolvePermittedServerUrl(serverUrl, audience);
         if (permittedServerUrl == null) {
-            logger.warn("rejecting prepare-session for session " + session.getId() + " - serverUrl does not match configured issuer for " +
-                    "audience=" + audience);
+            logger.warn("rejecting prepare-session for session {} - serverUrl does not match configured issuer for audience={}",
+                    session.getId(), audience);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        logger.debug("preparing " + audience + " session " + session.getId());
+        logger.debug("preparing {} session {}", audience, session.getId());
 
         FHIRCredentials credentials = new FHIRCredentials(clientId, permittedServerUrl, bearerToken, patientId, userId);
         MyPatient myPatient = patientService.getMyPatient(patientId);
@@ -139,8 +167,8 @@ public class SessionController extends BaseController {
             RedcapParticipantInfo redcapParticipantInfo = redCapService.getParticipantInfo(myPatient.getRedcapId());
             if (redCapService.isUsersWithoutRedcapRecordBypassStudyEnabled() && ! redcapParticipantInfo.getExists()) {
                 // literally do nothing; behave as if REDCap is not enabled.  retain all defaults from above
-                logger.debug("user does not have a REDCap record, and bypass is enabled.  permitting full access for session " +
-                        session.getId() + " -");
+                logger.debug("user does not have a REDCap record, and bypass is enabled.  permitting full access for session {} -",
+                        session.getId());
 
             } else if (redcapParticipantInfo.getIsActivelyEnrolled()) {
                 randomizationGroup = redcapParticipantInfo.getRandomizationGroup();
@@ -152,7 +180,7 @@ public class SessionController extends BaseController {
             } else {
                 requiresEnrollment = true;
             }
-            logger.debug("REDCap requiresEnrollment = " + requiresEnrollment);
+            logger.debug("REDCap requiresEnrollment = {}", requiresEnrollment);
         }
 
         if (Audience.PATIENT.equals(audience)) {
@@ -232,7 +260,7 @@ public class SessionController extends BaseController {
 
     @PostMapping("validate-session")
     public ResponseEntity<?> validateSession(HttpSession session) {
-        logger.debug("validating session " + session.getId() + " - exists? --> " + userWorkspaceService.exists(session.getId()));
+        logger.debug("validating session {} - exists? --> {}", session.getId(), userWorkspaceService.exists(session.getId()));
         return userWorkspaceService.exists(session.getId()) ?
                 ResponseEntity.ok(true) :
                 ResponseEntity.ok(false);
@@ -297,8 +325,8 @@ public class SessionController extends BaseController {
 
     @PostMapping("refresh")
     public ResponseEntity<?> refresh(HttpSession session) {
-        logger.info("refreshing data for session=" + session.getId());
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
+        logger.info("refreshing data for session={}", session.getId());
         workspace.clearCaches();
         workspace.populate();
         return ResponseEntity.ok("refreshing");
@@ -309,7 +337,7 @@ public class SessionController extends BaseController {
         UserWorkspace workspace = userWorkspaceService.get(session.getId());
         boolean permitClearSupplementalData = StringUtils.equalsIgnoreCase(env.getProperty("feature.clear-supplemental-data.enabled"), "true");
         if (permitClearSupplementalData) {
-            logger.info("clearing supplemental data for session=" + session.getId());
+            logger.info("clearing supplemental data for session={}", session.getId());
             workspace.clearSupplementalData();
 
             auditService.doAudit(session.getId(), AuditSeverity.INFO, "cleared supplemental data");
@@ -317,7 +345,7 @@ public class SessionController extends BaseController {
             return ResponseEntity.ok("supplemental data cleared");
 
         } else {
-            logger.warn("attempted to clear supplemental data for session=" + session.getId() + ", but this action is not permitted.");
+            logger.warn("attempted to clear supplemental data for session={}, but this action is not permitted.", session.getId());
 
             auditService.doAudit(session.getId(), AuditSeverity.WARN, "unauthorized attempt to clear supplemental data");
 

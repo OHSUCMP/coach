@@ -43,32 +43,38 @@ public class VitalsController extends BaseController {
 
     @GetMapping(value={"", "/"})
     public String view(HttpSession session, Model model) throws DataException {
-        setCommonViewComponents(session.getId(), model);
-        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            setCommonViewComponents(sessionId, model);
+            model.addAttribute("patient", userWorkspaceService.get(sessionId).getPatient());
 
-        List<AbstractVitalsModel> homeReadings = new ArrayList<>();
-        homeReadings.addAll(bpService.getHomeBloodPressureReadings(session.getId()));
-        homeReadings.addAll(pulseService.getHomePulseReadings(session.getId()));
+            List<AbstractVitalsModel> homeReadings = new ArrayList<>();
+            homeReadings.addAll(bpService.getHomeBloodPressureReadings(sessionId));
+            homeReadings.addAll(pulseService.getHomePulseReadings(sessionId));
 
-        homeReadings.sort((o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1); // sort newest first
+            homeReadings.sort((o1, o2) -> o1.getReadingDate().compareTo(o2.getReadingDate()) * -1); // sort newest first
 
-        List<BloodPressureModel> allBPReadings = bpService.getBloodPressureReadings(session.getId());
-        Long mostRecentTS = allBPReadings.size() > 0 ?
-                allBPReadings.get(0).getReadingDate().getTime() :
-                null;
+            List<BloodPressureModel> allBPReadings = bpService.getBloodPressureReadings(sessionId);
+            Long mostRecentTS = allBPReadings.size() > 0 ?
+                    allBPReadings.get(0).getReadingDate().getTime() :
+                    null;
 
-        model.addAttribute("mostRecentBPReadingTS", mostRecentTS);
-        model.addAttribute("homeReadings", homeReadings);
-        model.addAttribute("pageStyles", new String[] { "vitals.css" });
-        model.addAttribute("pageScripts", new String[] { "vitals.js?v=1", "form.js" });
-        model.addAttribute("pageWebjars", new String[] {
-                "jquery.inputmask/jquery.inputmask.js",
-                "jquery.inputmask/bindings/inputmask.binding.js"
-        });
+            model.addAttribute("mostRecentBPReadingTS", mostRecentTS);
+            model.addAttribute("homeReadings", homeReadings);
+            model.addAttribute("pageStyles", new String[] { "vitals.css" });
+            model.addAttribute("pageScripts", new String[] { "vitals.js?v=1", "form.js" });
+            model.addAttribute("pageWebjars", new String[] {
+                    "jquery.inputmask/jquery.inputmask.js",
+                    "jquery.inputmask/bindings/inputmask.binding.js"
+            });
 
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "visited vitals page");
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "visited vitals page");
 
-        return "vitals";
+            return "vitals";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
 
     @PostMapping("create")

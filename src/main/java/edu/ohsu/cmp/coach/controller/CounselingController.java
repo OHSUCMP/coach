@@ -25,16 +25,22 @@ public class CounselingController extends BaseController {
 
     @GetMapping("{key}")
     public String view(HttpSession session, Model model, @PathVariable(value="key") String key) {
-        setCommonViewComponents(session.getId(), model);
-        model.addAttribute("patient", userWorkspaceService.get(session.getId()).getPatient());
+        String sessionId = session.getId();
+        if (userWorkspaceService.exists(sessionId)) {
+            setCommonViewComponents(sessionId, model);
+            model.addAttribute("patient", userWorkspaceService.get(sessionId).getPatient());
 
-        CounselingPageModel page = new CounselingPageModel(counselingService.getPage(key));
+            CounselingPageModel page = new CounselingPageModel(counselingService.getPage(key));
 
-        model.addAttribute("page", page);
+            model.addAttribute("page", page);
 
-        auditService.doAudit(session.getId(), AuditSeverity.INFO, "received counseling", "key=" + key);
+            auditService.doAudit(sessionId, AuditSeverity.INFO, "received counseling", "key=" + key);
 
-        return "counseling";
+            return "counseling";
+
+        } else {
+            return "redirect:" + getLaunchRedirect();
+        }
     }
 
     @PostMapping("create")
