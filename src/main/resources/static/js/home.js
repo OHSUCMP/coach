@@ -169,10 +169,12 @@ function refreshRecommendations() {
             } else {
                 $(container).closest('.recommendation').removeClass('hidden');
                 $(container).find('.bpGoal input.systolic').inputmask({
-                    regex: "1?[0-9]{2}"
+                    regex: "1?[0-9]{2}",
+                    inputmode: "numeric"    // show the numeric keypad on phones / tablets
                 });
                 $(container).find('.bpGoal input.diastolic').inputmask({
-                    regex: "1?[0-9]{2}"
+                    regex: "1?[0-9]{2}",
+                    inputmode: "numeric"
                 });
             }
         }
@@ -569,6 +571,16 @@ function isOutOfBounds(pt, minVal, maxVal) {
 function getLOESSBandwidth() {
     return Number($('#LOESSBandwidth').html());
 }
+
+// touch devices can't hover, so a tap / click also toggles the BP status tooltip; clicking elsewhere closes it
+$(document).on('click', function(e) {
+    let tip = $(e.target).closest('#bpIcon');
+    if (tip.length > 0) {
+        tip.toggleClass('tip-open');
+    } else {
+        $('#bpIcon').removeClass('tip-open');
+    }
+});
 
 function getDateRange(data) {
     let minDate = null;

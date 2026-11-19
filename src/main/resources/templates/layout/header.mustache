@@ -43,11 +43,11 @@
             window.addEventListener('load', resetBackgroundTimer);
             window.addEventListener('mousemove', resetBackgroundTimer);
             window.addEventListener('mousedown', resetBackgroundTimer);    // catches touchscreen presses as well
-            window.addEventListener('touchstart', resetBackgroundTimer);   // catches touchscreen swipes as well
-            window.addEventListener('touchmove', resetBackgroundTimer);    // required by some devices
+            window.addEventListener('touchstart', resetBackgroundTimer, { passive: true });    // catches touchscreen swipes as well
+            window.addEventListener('touchmove', resetBackgroundTimer, { passive: true });     // required by some devices
             window.addEventListener('click', resetBackgroundTimer);        // catches touchpad clicks as well
             window.addEventListener('keydown', resetBackgroundTimer);
-            window.addEventListener('scroll', resetBackgroundTimer, true); // improved; see comments
+            window.addEventListener('scroll', resetBackgroundTimer, { capture: true, passive: true });  // improved; see comments
             window.addEventListener('focus', resetBackgroundTimer);
 
             let backgroundTimer;
@@ -87,6 +87,8 @@
                 });
             });
 
+            resetBackgroundTimer();     // start counting now, rather than waiting for the first user interaction
+
             console.log("idle timeout configured.");
         };
 
@@ -112,6 +114,25 @@
 
         $(window).on('focus', function() {
             validateSession();
+        });
+
+        // window 'focus' isn't reliably fired on page load or when returning to a tab / app (notably on iOS Safari),
+        // so also validate when the page loads, when it becomes visible again, and when it's restored from the
+        // back-forward cache (e.g. pressing Back after logging out)
+        $(document).ready(function() {
+            validateSession();
+        });
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                validateSession();
+            }
+        });
+
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                validateSession();
+            }
         });
     </script>
 </head>

@@ -13,13 +13,16 @@
             casing: "lower"
         });
         $('#systolic1, #systolic2').inputmask({
-            regex: "[0-9]+"
+            regex: "[0-9]+",
+            inputmode: "numeric"    // show the numeric keypad on phones / tablets
         });
         $('#diastolic1, #diastolic2').inputmask({
-            regex: "[0-9]+"
+            regex: "[0-9]+",
+            inputmode: "numeric"
         });
         $('#pulse1, #pulse2').inputmask({
-            regex: "[0-9]+"
+            regex: "[0-9]+",
+            inputmode: "numeric"
         });
     });
 
@@ -35,6 +38,14 @@
             $(message).html("Saving...");
 
             let vitalsData = buildVitalsData();
+            if (vitalsData === null) {
+                $(message).removeClass();
+                $(message).addClass('error ms-3');
+                $(message).html("Please enter a valid date and time (e.g. 08:30 am) and try again.");
+                $(button).removeAttr('disabled');
+                return;
+            }
+
             createVitals(vitalsData, function(status, list) {
                 if (status === 200) {
                     let r = getMostRecentReading(vitalsData);

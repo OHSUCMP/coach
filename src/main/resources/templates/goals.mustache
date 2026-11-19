@@ -3,7 +3,8 @@
 <script type="text/javascript">
     $(document).ready(function () {
         $('#systolic, #diastolic').inputmask({
-            regex: "[0-9]+"
+            regex: "[0-9]+",
+            inputmode: "numeric"    // show the numeric keypad on phones / tablets
         });
     });
 </script>

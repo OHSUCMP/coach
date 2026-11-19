@@ -145,6 +145,11 @@ img.bp-icon {
     background-color: #f4f1fc;
 }
 
+/* cursor: pointer is also required for iOS Safari to deliver taps to delegated click handlers */
+.alert-clickable, #bpIcon {
+    cursor: pointer;
+}
+
 .alert-clickable:hover {
     box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24),0 17px 50px 0 rgba(0,0,0,0.19);
   }

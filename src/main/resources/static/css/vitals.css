@@ -1,4 +1,5 @@
 #showHideProtocol {
+    cursor: pointer;    /* also required for iOS Safari to deliver taps to delegated click handlers */
     font-weight: bold;
     color: #5e48a3;
 }

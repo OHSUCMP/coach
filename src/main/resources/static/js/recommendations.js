@@ -132,7 +132,7 @@ function buildAdverseEvents(suggestions) {
 
                 html += "<div class='action'>";
                 html += "<input name='action" + x + "' type='radio' id='action" + x + "_n' value='no' />";
-                html += "<label for='action" + x + "_y'>No</label></div>";
+                html += "<label for='action" + x + "_n'>No</label></div>";
                 html += "</div>";
 
                 html += "</td>";
