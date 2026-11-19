@@ -1,17 +1,30 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     {{>fragments/css}}
+    <link rel="stylesheet" type="text/css" href="{{req.contextPath}}/css/auxiliary.css?v=1">
     <title>{{applicationName}} - Patient Not Active</title>
 </head>
-<body>
-<div class="container">
-    <div class="mt-3">
-        <h2>Patient Not Active in Study</h2>
-        <p>The patient you are attempting to view is not actively enrolled in the study. This may be because they have not completed the enrollment process or because they have withdrawn from or completed the study.</p>
-        <p>If you believe you are seeing this message in error, you or the patient can contact the study staff at <a href="mailto:COACH-OHSU@ohsu.edu">COACH-OHSU@ohsu.edu</a>.</p>
-        <p>Thank you.</p>
-    </div>
-</div>
-</body>
+<body class="aux-page">
+<main class="aux-shell container">
+    <section class="aux-card" aria-labelledby="page-title">
+        <div class="row g-0">
+            <div class="col-md-4 aux-brand d-flex flex-row flex-md-column align-items-center justify-content-between justify-content-md-center">
+                <img src="{{req.contextPath}}/images/coach-logo.png" alt="{{applicationName}}" class="aux-logo">
+                <div class="aux-brand-icon" aria-hidden="true"><span class="fas fa-user-slash"></span></div>
+            </div>
+            <div class="col-md-8 aux-content">
+                <p class="aux-eyebrow">Study Enrollment</p>
+                <h1 id="page-title" class="aux-title">Patient Not Active in Study</h1>
+                <p class="aux-message">The patient you are attempting to view is not actively enrolled in the study. This may be because they have not completed the enrollment process or because they have withdrawn from or completed the study.</p>
+                <p class="aux-detail">If you believe you are seeing this message in error, you or the patient can contact the study staff at <a href="mailto:COACH-OHSU@ohsu.edu">COACH-OHSU@ohsu.edu</a>.</p>
+                <p class="aux-detail">Thank you.</p>
+            </div>
+        </div>
+    </section>
+</main>
 {{>fragments/assets}}
+</body>
 </html>

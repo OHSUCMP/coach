@@ -1,14 +1,15 @@
 {{>layout/header}}
 
 <div class="container">
-    <div class="px-2 fs-4">
+    <div class="patient-banner fs-4">
     <i class="fas fa-user color-primary"></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
     </div>
     <div class="mt-3">
         <h4 class="p-2 bgd-secondary">
             <i class="fas fa-prescription-bottle-alt color-primary"></i> My Antihypertensive Medications
         </h4>
-        <table class="table table-bordered table-sm table-striped table-responsive">
+        <div class="table-responsive">
+        <table class="table table-bordered table-sm table-striped align-middle">
             <thead class="bgd-primary text-white">
                 <tr>
                     <th>Name</th>
@@ -30,14 +31,21 @@
                         <td>{{#priority}}{{priority}}{{/priority}}</td>
                     </tr>
                 {{/antihypertensiveMedications}}
+                {{^antihypertensiveMedications}}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted fst-italic">No antihypertensive medications to display</td>
+                    </tr>
+                {{/antihypertensiveMedications}}
             </tbody>
         </table>
+        </div>
     </div>
     <div class="mt-3">
         <h4 class="p-2 bgd-secondary">
             <i class="fas fa-prescription-bottle-alt color-primary"></i> My Other Medications
         </h4>
-        <table class="table table-bordered table-striped table-sm table-responsive">
+        <div class="table-responsive">
+        <table class="table table-bordered table-striped table-sm align-middle">
             <thead class="bgd-primary text-white">
                 <tr>
                     <th>Name</th>
@@ -59,8 +67,14 @@
                         <td>{{#priority}}{{priority}}{{/priority}}</td>
                     </tr>
                 {{/otherMedications}}
+                {{^otherMedications}}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted fst-italic">No other medications to display</td>
+                    </tr>
+                {{/otherMedications}}
             </tbody>
         </table>
+        </div>
     </div>
 
 </div>

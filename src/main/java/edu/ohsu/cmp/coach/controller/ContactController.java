@@ -83,7 +83,7 @@ public class ContactController extends BaseController {
                 model.addAttribute("instructions", instructions);
             }
 
-            model.addAttribute("pageStyles", new String[] { "contact.css" });
+            model.addAttribute("pageStyles", new String[] { "contact.css?v=2" });
 
             auditService.doAudit(sessionId, AuditSeverity.INFO, "visited contact page", "token=" + token);
 

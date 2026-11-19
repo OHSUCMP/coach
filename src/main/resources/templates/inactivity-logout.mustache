@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Logged out due to inactivity</title>
+
+    {{>fragments/css}}
+    <link rel="stylesheet" type="text/css" href="{{req.contextPath}}/css/auxiliary.css?v=1">
+
     <script type="text/javascript" src="{{req.contextPath}}/webjars/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function() {
@@ -9,7 +15,33 @@
         });
     </script>
 </head>
-<body style="font-size:1.5em;">
-    You have been logged out due to inactivity.  Please close this browser window to ensure all local data is removed and session state cleared.
+<body class="aux-page">
+<main class="aux-shell container">
+    <section class="aux-card" aria-labelledby="page-title">
+        <div class="row g-0">
+            <div class="col-md-4 aux-brand d-flex flex-row flex-md-column align-items-center justify-content-between justify-content-md-center">
+                <img src="{{req.contextPath}}/images/coach-logo.png" alt="COACH" class="aux-logo">
+                <div class="aux-brand-icon" aria-hidden="true"><span class="fas fa-clock"></span></div>
+            </div>
+            <div class="col-md-8 aux-content">
+                <p class="aux-eyebrow">Session Ended</p>
+                <h1 id="page-title" class="aux-title">Logged Out Due to Inactivity</h1>
+                <p class="aux-message">You have been logged out due to inactivity.</p>
+                <p class="aux-detail">
+                    Please close this browser window to ensure all local data is removed and session state cleared.
+                </p>
+                <div class="aux-actions">
+                    <a class="btn button-primary" href="{{req.contextPath}}/">
+                        <span class="fas fa-sign-in-alt me-2" aria-hidden="true"></span>Log Back In
+                    </a>
+                </div>
+                <p class="aux-note">
+                    <span class="fas fa-shield-alt me-1" aria-hidden="true"></span>
+                    Sessions end automatically after a period of inactivity to help protect your information.
+                </p>
+            </div>
+        </div>
+    </section>
+</main>
 </body>
 </html>

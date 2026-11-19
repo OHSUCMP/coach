@@ -1,7 +1,12 @@
 {{>layout/header}}
 
 <div class="container">
-    <iframe src="{{pdfUrl}}" width="100%" height="500px" title="PDF viewer">
+    <div class="d-flex justify-content-end mt-2 mb-2">
+        <a class="btn btn-sm button-secondary" href="{{pdfUrl}}" target="_blank" rel="noopener">
+            <span class="fas fa-external-link-alt me-1" aria-hidden="true"></span> Open PDF in a new tab
+        </a>
+    </div>
+    <iframe class="embedded-pdf content-panel p-0" src="{{pdfUrl}}" width="100%" title="PDF viewer">
         <p>Unable to display PDF.  <a href="{{pdfUrl}}">Click here</a> to download it instead.</p>
     </iframe>
 </div>

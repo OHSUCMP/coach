@@ -61,7 +61,7 @@ public class VitalsController extends BaseController {
 
             model.addAttribute("mostRecentBPReadingTS", mostRecentTS);
             model.addAttribute("homeReadings", homeReadings);
-            model.addAttribute("pageStyles", new String[] { "vitals.css" });
+            model.addAttribute("pageStyles", new String[] { "vitals.css?v=2" });
             model.addAttribute("pageScripts", new String[] { "vitals.js?v=1", "form.js" });
             model.addAttribute("pageWebjars", new String[] {
                     "jquery.inputmask/jquery.inputmask.js",

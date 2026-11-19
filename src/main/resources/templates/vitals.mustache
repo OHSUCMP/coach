@@ -95,7 +95,7 @@
 </script>
 
 <div class="container">
-    <div class="px-2 fs-4">
+    <div class="patient-banner fs-4">
         <i class="fas fa-user color-primary"></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
     </div>
     <div id="mostRecentBPReadingTS" class="hidden">{{#mostRecentBPReadingTS}}{{.}}{{/mostRecentBPReadingTS}}</div>
@@ -268,7 +268,8 @@
                     <i class="fas fa-clipboard-list color-primary"></i> Historical Readings
                 </h4>
             </div>
-            <table id="vitalsTable" class="table table-bordered table-sm table-striped table-responsive">
+            <div class="table-responsive">
+            <table id="vitalsTable" class="table table-bordered table-sm table-striped">
                 <thead class="bgd-primary text-white">  
                     <tr id="vitalsTableHeader">
                         <th>Reading Timestamp</th>
@@ -287,6 +288,7 @@
                     {{/homeReadings}}
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
 

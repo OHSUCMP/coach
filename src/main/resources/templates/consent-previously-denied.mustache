@@ -1,16 +1,29 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     {{>fragments/css}}
+    <link rel="stylesheet" type="text/css" href="{{req.contextPath}}/css/auxiliary.css?v=1">
     <title>{{applicationName}} - Consent Previously Denied</title>
 </head>
-<body>
-<div class="container">
-    <div class="mt-3">
-        <h2>Consent Previously Denied</h2>
-        <p>You have previously denied consent with respect to usage of the COACH system.</p>
-        <p>If you would like to revise your consent status, please contact the COACH team for assistance.</p>
-    </div>
-</div>
-</body>
+<body class="aux-page">
+<main class="aux-shell container">
+    <section class="aux-card" aria-labelledby="page-title">
+        <div class="row g-0">
+            <div class="col-md-4 aux-brand d-flex flex-row flex-md-column align-items-center justify-content-between justify-content-md-center">
+                <img src="{{req.contextPath}}/images/coach-logo.png" alt="{{applicationName}}" class="aux-logo">
+                <div class="aux-brand-icon" aria-hidden="true"><span class="fas fa-user-shield"></span></div>
+            </div>
+            <div class="col-md-8 aux-content">
+                <p class="aux-eyebrow">Study Consent</p>
+                <h1 id="page-title" class="aux-title">Consent Previously Denied</h1>
+                <p class="aux-message">You have previously denied consent with respect to usage of the COACH system.</p>
+                <p class="aux-detail">If you would like to revise your consent status, please contact the COACH team for assistance.</p>
+            </div>
+        </div>
+    </section>
+</main>
 {{>fragments/assets}}
+</body>
 </html>

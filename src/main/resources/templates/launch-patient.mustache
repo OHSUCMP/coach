@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{applicationName}} - Loading</title>
+
+    {{>fragments/css}}
+    <link rel="stylesheet" type="text/css" href="{{req.contextPath}}/css/auxiliary.css?v=1">
+
     <script type="text/javascript" src="{{req.contextPath}}/webjars/jquery/jquery.min.js"></script>
     <script type="text/javascript" src="{{req.contextPath}}/js/coach.js?v=3"></script>
 
@@ -31,7 +36,30 @@
         });
     </script>
 </head>
-<body style="font-size:1.5em;">
-Loading...
+<body class="aux-page">
+<main class="aux-shell container">
+    <section class="aux-card" aria-labelledby="page-title">
+        <div class="row g-0">
+            <div class="col-md-4 aux-brand d-flex flex-row flex-md-column align-items-center justify-content-between justify-content-md-center">
+                <img src="{{req.contextPath}}/images/coach-logo.png" alt="{{applicationName}}" class="aux-logo">
+                <div class="aux-brand-icon">
+                    <div class="spinner-border" role="status" aria-label="Loading"></div>
+                </div>
+            </div>
+            <div class="col-md-8 aux-content">
+                <p class="aux-eyebrow">Secure Sign-In</p>
+                <h1 id="page-title" class="aux-title">Connecting to {{applicationName}}</h1>
+                <p class="aux-message">Loading...</p>
+                <p class="aux-detail">
+                    You will be redirected automatically. Please keep this browser window open.
+                </p>
+                <p class="aux-note">
+                    <span class="fas fa-shield-alt me-1" aria-hidden="true"></span>
+                    Connecting using SMART on FHIR authorization.
+                </p>
+            </div>
+        </div>
+    </section>
+</main>
 </body>
 </html>
