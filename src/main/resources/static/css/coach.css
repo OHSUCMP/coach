@@ -62,13 +62,6 @@ body {
     color: var(--coach-text);
 }
 
-.heading {
-    display: block;
-    color: black;
-    font-size: large;
-    font-weight: bold;
-}
-
 .success {
     color: green;
 }
@@ -328,9 +321,12 @@ h4.bgd-secondary {
     margin-bottom: 0.75rem;
 }
 
-.modalContent .heading {
+.modalContent > h4 {
+    margin: 0 0 0.75rem;
     color: var(--coach-violet-800);
     font-size: 1.35rem;
+    font-weight: bold;
+    line-height: inherit;
 }
 
 .modalContent .buttonContainer {

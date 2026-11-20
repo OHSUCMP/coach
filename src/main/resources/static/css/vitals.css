@@ -27,6 +27,15 @@
     background-color: #ffffff;
 }
 
+/* "First Measurement" / "Second Measurement" sub-headings */
+.validationGroup > h4 {
+    margin: 0;
+    color: black;
+    font-size: large;
+    font-weight: bold;
+    line-height: inherit;
+}
+
 div.validationMessage {
     display: block;
     color: red;

@@ -90,7 +90,7 @@ public class HomeController extends BaseController {
             setCommonViewComponents(sessionId, model);
             model.addAttribute("sessionEstablished", true);
             model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
-            model.addAttribute("pageStyles", new String[] { "home.css?v=14", "recommendations.css?v=3" });
+            model.addAttribute("pageStyles", new String[] { "home.css?v=15", "recommendations.css?v=4" });
             model.addAttribute("pageWebjars", new String[] {
                     "jquery.inputmask/jquery.inputmask.js",
                     "jquery.inputmask/bindings/inputmask.binding.js",
@@ -102,8 +102,8 @@ public class HomeController extends BaseController {
             model.addAttribute("pageScripts", new String[] {
                     "science.js/science.v1.js",
                     "science.js/lib/d3/d3.js",
-                    "home.js?v=8",
-                    "recommendations.js?v=4",
+                    "home.js?v=9",
+                    "recommendations.js?v=5",
                     "bpchart.js"
             });
             model.addAttribute("patient", workspace.getPatient());

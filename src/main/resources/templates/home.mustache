@@ -114,20 +114,29 @@
                 </div>
             </div>
         </div>
-        <div id="currentBPGoal" class="summaryCard" data-systolic="{{bpGoal.systolicTarget}}" data-diastolic="{{bpGoal.diastolicTarget}}">
-            <span class="summaryLabel"><i class="fas fa-bullseye" aria-hidden="true"></i> Your Current Blood Pressure Goal:</span>
-            <span class="summaryValue">Below {{bpGoal.systolicTarget}}/{{bpGoal.diastolicTarget}}</span>
-            <a href="/goals" class="summaryAction"><i class="fas fa-pen" aria-hidden="true"></i> update</a>
+        <div id="adverseEvents" class="summaryCard summaryPanel" role="alert"></div>
+        <div class="summaryCardGrid">
+            <div id="currentBPGoal" class="summaryCard summaryPanel" data-systolic="{{bpGoal.systolicTarget}}" data-diastolic="{{bpGoal.diastolicTarget}}">
+                <div class="summaryHeader">
+                    <h4 class="summaryLabel"><i class="fas fa-bullseye" aria-hidden="true"></i> Your Current Blood Pressure Goal</h4>
+                    <a href="/goals" class="summaryAction"><i class="fas fa-pen" aria-hidden="true"></i> Update</a>
+                </div>
+                <div class="summaryBody">
+                    <span class="summaryValue">Below {{bpGoal.systolicTarget}}/{{bpGoal.diastolicTarget}}</span>
+                </div>
+            </div>
+            <div id="currentMedications" class="summaryCard summaryPanel"></div>
         </div>
-        <div id="currentMedications" class="summaryCard"></div>
-        <div id="adverseEvents" class="summaryCard"></div>
 
     </div>
 
     {{#omronAuthRequestUrl}}
     <div id="omronSection" class="mt-3">
         <h4 class="p-2 bgd-secondary">
-            <i class="fas fa-heartbeat color-primary"></i> Omron
+            <span><i class="fas fa-heartbeat color-primary"></i> Omron</span>
+            <button type="button" id="omronAuthLink" class="summaryAction" data-target="{{omronAuthRequestUrl}}"{{#omronSynchronizing}} disabled{{/omronSynchronizing}}>
+                <i class="fas fa-sync-alt" aria-hidden="true"></i> Authenticate &amp; Synchronize
+            </button>
         </h4>
         <div class="content-panel">
             <div class="omronSummary">
@@ -144,34 +153,40 @@
                     {{/omronLastUpdated}}
                     {{/omronSynchronizing}}
                 </div>
-                <button type="button" id="omronAuthLink" class="btn btn-primary btn-sm" data-target="{{omronAuthRequestUrl}}"{{#omronSynchronizing}} disabled{{/omronSynchronizing}}>
-                    <i class="fas fa-sync-alt" aria-hidden="true"></i> Authenticate &amp; Synchronize
-                </button>
             </div>
             <div id="omronErrors"></div>
         </div>
     </div>
     {{/omronAuthRequestUrl}}
 
-    <h4 class="mt-3 p-2 bgd-secondary">
-        <i class="fas fa-clipboard-list color-primary"></i> Recommendations
-    </h4>
-
-    <div id="prefetchModifiedInfo" class="hidden">
-        <strong>Note:</strong> Source patient data contained one or more problematic characters that needed to be converted
-        before being sent to the recommendation engine.  Instances of these characters have been replaced
-        with the question mark character ("<strong>?</strong>")
-    </div>
-
-    <div id="recommendationsContainer">
-        {{#cdshooks}}
-            <div class="recommendation" data-id="{{id}}">
-                <div class="heading">{{title}}</div>
-                <div class="cardsContainer">
-                    Loading...
+    <div id="recommendationsSection" class="mt-3">
+        <h4 class="p-2 bgd-secondary">
+            <i class="fas fa-clipboard-list color-primary"></i> Recommendations
+        </h4>
+        <div class="content-panel pb-0">
+            <div id="prefetchModifiedInfo" class="alert alert-warning hidden" role="alert">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                <div>
+                    <strong>Some patient data was adjusted.</strong>
+                    The source patient data contained one or more characters that could not be sent to the
+                    recommendation engine as-is.  Each of these characters has been replaced with a question mark
+                    (<strong>?</strong>), which may appear in the recommendations below.
                 </div>
             </div>
-        {{/cdshooks}}
+
+            <div id="recommendationsContainer">
+                {{#cdshooks}}
+                    <div class="recommendation mb-3" data-id="{{id}}">
+                        <h5 class="p-2 bgd-secondary">
+                            {{title}}
+                        </h5>
+                        <div class="cardsContainer content-panel">
+                            Loading...
+                        </div>
+                    </div>
+                {{/cdshooks}}
+            </div>
+        </div>
     </div>
 
     {{#aeSurveyLink}}

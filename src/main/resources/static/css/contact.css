@@ -1,3 +1,12 @@
+/* "Pre-Populated Note Based on Recommendations" sub-heading */
+.container > h4 {
+    margin: 0;
+    color: black;
+    font-size: large;
+    font-weight: bold;
+    line-height: inherit;
+}
+
 #message {
     border: 1px solid #cdc6de;
     border-radius: 0.5rem;

@@ -1,9 +1,19 @@
+/* recommendation sub-headings; :where() keeps specificity at that of a bare "h5" so that more specific
+   rules below (e.g. .card .summary, .goalsContainer *) continue to override the size */
+:where(#recommendationsContainer) h5 {
+    margin: 0;
+    color: black;
+    font-size: large;
+    font-weight: bold;
+    line-height: inherit;
+}
+
 .recommendation {
     display: block;
     margin: 0;
 }
 
-.recommendation > .heading {
+.recommendation > h5 {
     background-color: #efeafb;
     border-left: 0.3rem solid #5e48a3;
     border-radius: 0.4rem;

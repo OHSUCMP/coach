@@ -61,7 +61,8 @@ function populateMedications() {
         });
 
         let el = $('#currentMedications');
-        let html = '<span class="summaryLabel"><i class="fas fa-pills" aria-hidden="true"></i> Your Active Antihypertensive Medications:</span> ' + arr.join(' ');
+        let html = '<div class="summaryHeader"><h4 class="summaryLabel"><i class="fas fa-pills" aria-hidden="true"></i> Your Active Antihypertensive Medications</h4></div>' +
+            '<div class="summaryBody">' + arr.join(' ') + '</div>';
 
         $(el).html(html);
     }
@@ -81,13 +82,14 @@ function populateAdverseEvents() {
 
     if (Array.isArray(data) && data.length > 0) {
         let arr = [];
-        data.forEach(function(m) {
-            arr.push('<span class="adverseEvent summaryValue" data-system="' + escapeHtml(m.system) + '" data-code="' + escapeHtml(m.code) + '">' +
-                escapeHtml(m.description) +
+        data.forEach(function(ae) {
+            arr.push('<span class="adverseEvent summaryValue" data-system="' + escapeHtml(ae.system) + '" data-code="' + escapeHtml(ae.code) + '">' +
+                escapeHtml(ae.description) +
                 '</span>');
         });
 
-        let html = '<span class="summaryLabel"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Your Adverse Events:</span> ' + arr.join(' ');
+        let html = '<div class="summaryHeader"><h4 class="summaryLabel"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Your Adverse Events</h4></div>' +
+            '<div class="summaryBody">' + arr.join(' ') + '</div>';
 
         $('#adverseEvents').html(html);
     }

@@ -5,15 +5,15 @@
     white-space: nowrap;
 }
 
-/* join the "High Blood Pressure Control" / "Omron" headings to their content panels as a single card */
-.bpControlSection > h4.bgd-secondary, #omronSection > h4.bgd-secondary {
+/* join the "High Blood Pressure Control" / "Omron" / "Recommendations" headings to their content panels as a single card */
+.bpControlSection > h4.bgd-secondary, #omronSection > h4.bgd-secondary, #recommendationsSection .bgd-secondary {
     margin-bottom: 0;
     border: 1px solid var(--coach-border);
     border-left: 0.35rem solid var(--coach-violet-600);
     border-radius: 0.75rem 0.75rem 0 0;
 }
 
-.bpControlSection > .content-panel, #omronSection > .content-panel {
+.bpControlSection > .content-panel, #omronSection > .content-panel, #recommendationsSection .content-panel {
     border-top: 0;
     border-radius: 0 0 0.75rem 0.75rem;
 }
@@ -123,11 +123,32 @@ div.chartKeyItem {
     padding-bottom: 1.5em;
 }
 
-#currentBPGoal, #currentMedications, #adverseEvents {
+#adverseEvents, .summaryCardGrid {
     margin: 0.7em 0 0.7em 0;
 }
 
-/* Omron section: status + authenticate / synchronize button, then any errors from the last synchronization */
+/* BP goal and medications cards: stacked on narrow screens, side by side (half width each) on wide screens */
+.summaryCardGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.7em 1rem;
+}
+
+@media (min-width: 992px) {
+    .summaryCardGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Omron heading: title on the left, authenticate / synchronize link right-aligned (via .summaryAction's margin-left: auto) */
+#omronSection > h4.bgd-secondary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+}
+
+/* Omron section: status, then any errors from the last synchronization */
 .omronSummary {
     display: flex;
     flex-wrap: wrap;
@@ -150,8 +171,25 @@ div.chartKeyItem {
     background-color: var(--coach-violet-600);
 }
 
+/* rendered as a link (.summaryAction), but kept a <button> so it can be disabled while synchronizing */
 #omronAuthLink {
-    white-space: nowrap;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--bs-link-color);
+    font-size: 0.9rem;      /* match the "update" link's size rather than scaling with the heading */
+    line-height: 1.5;
+}
+
+#omronAuthLink:hover:not(:disabled) {
+    color: var(--bs-link-hover-color);
+}
+
+#omronAuthLink:disabled {
+    color: var(--coach-muted);
+    text-decoration: none;
+    cursor: not-allowed;
+    opacity: 0.65;
 }
 
 .omronErrorDetails {
@@ -240,18 +278,63 @@ div.chartKeyItem {
     text-decoration: underline;
 }
 
+/* summary card with a tinted header bar above its values */
+.summaryPanel {
+    display: block;
+    padding: 0;
+    overflow: hidden;
+}
+
+.summaryHeader {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    padding: 0.5rem 0.9rem;
+    border-bottom: 1px solid var(--coach-border);
+    background-color: var(--coach-lavender-100);
+}
+
+.summaryHeader .summaryLabel {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.summaryBody {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.5rem;
+    padding: 0.6rem 0.9rem;
+}
+
+/* adverse events are shown as a warning (amber, matching Bootstrap's alert-warning palette) */
 #adverseEvents {
-    border-left-color: #b02a37;
+    border-color: #ffe69c;
+    border-left-color: #ffc107;
+    background-color: #fff3cd;
+    color: #664d03;
+}
+
+#adverseEvents .summaryHeader {
+    border-bottom-color: #ffda6a;
+    background-color: #ffe69c;
+}
+
+#adverseEvents .summaryLabel {
+    color: #664d03;
 }
 
 #adverseEvents .summaryLabel i {
-    color: #b02a37;
+    color: #997404;
 }
 
 #adverseEvents .summaryValue {
-    border-color: #f1aeb5;
-    background-color: #f8d7da;
-    color: #58151c;
+    border-color: #ffc107;
+    background-color: #ffffff;
+    color: #664d03;
 }
 
 .medication, .adverseEvent {
@@ -369,12 +452,20 @@ div.medication {
     max-width: 200px;
 }
 
+/* shown (by recommendations.js) only when source data had to be modified before being sent to the recommendation engine */
 #prefetchModifiedInfo {
-    display: block;
-    background-color: #ffffcc;
-    padding: 5px;
-    font-size: small;
-    font-style: italic;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border-left: 0.35rem solid #ffc107;
+    border-radius: 0.6rem;
+    font-size: 0.9em;
+}
+
+#prefetchModifiedInfo > i {
+    margin-top: 0.15rem;
+    color: #997404;
+    font-size: 1.25em;
 }
 
 .crisis {

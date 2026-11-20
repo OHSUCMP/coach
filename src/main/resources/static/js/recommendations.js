@@ -61,7 +61,7 @@ function renderCards(cards) {
             html += "<div class='container'><div class='row'>";
             html += "<div class='col-auto p-0 pl-1 pt-1' style='min-width:40px;'><img src='/images/" + escapeQuotes(card.indicator) + "-icon.png' class='icon' alt='" + escapeQuotes(card.indicator) + "' /></div>";
             html += "<div class='col-10 col-lg-4 content p-1'>";
-            html += "<span class='summary heading'>" + card.summary + "</span>";
+            html += "<h5 class='summary'>" + card.summary + "</h5>";
 
             if (card.rationale !== null) {
                 html += "<span class='rationale'>" + card.rationale + "</span>";
@@ -97,7 +97,7 @@ function buildCounselingHTML(suggestions) {
         suggestions.forEach(function(s) {
             if (s.type === 'counseling-link') {
                 html += "<div class='counseling' data-id='" + escapeQuotes(s.id) + "' data-reference-system='" + escapeQuotes(s.references.system) + "' data-reference-code='" + escapeQuotes(s.references.code) + "'>";
-                html += "<span class='heading'>" + s.label + "</span>";
+                html += "<h5>" + s.label + "</h5>";
                 if (s.actions !== null) {
                     html += "<ul class='actions'>";
                     s.actions.forEach(function(action) {
@@ -120,7 +120,7 @@ function buildAdverseEvents(suggestions) {
         suggestions.forEach(function(s) {
             if (s.type === 'adverse-event') {
                 html += "<div class='adverseEvent' data-id='" + escapeQuotes(s.id) + "'>";
-                html += "<span class='heading'>" + s.label + "</span>";
+                html += "<h5>" + s.label + "</h5>";
                 html += "<table><tr>";
                 html += "<td class='expand'>";
 
@@ -147,7 +147,7 @@ function buildAdverseEvents(suggestions) {
 
     if (html !== "") {
         html = "<div class='adverseEventsContainer'>" +
-            "<div class='heading'>Have you discussed any of these conditions with your care team?</div>" +
+            "<h5>Have you discussed any of these conditions with your care team?</h5>" +
             html +
             "<span class=\"note d-inline-block hidden\"></span>" +
             "</div>";
@@ -168,7 +168,7 @@ function buildGoalsHTML(suggestions) {
                     "' data-reference-code='" + escapeQuotes(s.references.code) +
                     "' + data-reference-display='" + escapeQuotes(s.references.display) + "'>";
 
-                html += "<span class='heading'>" + s.label + "</span>";
+                html += "<h5>" + s.label + "</h5>";
                 html += "<div class='row'>"
                 html += "<div class='col-lg-8 mb-2'>";
                 if (s.type === 'goal') {
@@ -254,7 +254,7 @@ function buildGoalsHTML(suggestions) {
 
             } else if (s.type === 'update-goal') {
                 html += "<div class='goal p-2' data-id='" + escapeQuotes(s.id) + "' data-reference-system='" + escapeQuotes(s.references.system) + "' data-reference-code='" + escapeQuotes(s.references.code) + "'>";
-                html += "<span class='heading'>" + s.label + "</span>";
+                html += "<h5>" + s.label + "</h5>";
                 html += "<div class='row'>";
                 html += "<div class='col-lg-8 mb-2'>";
 
@@ -349,7 +349,7 @@ function buildLinksHTML(suggestions) {
         suggestions.forEach(function(s) {
             if (s.type === 'suggestion-link') {
                 html += "<div class='slink p-2'>";      // 'slink' to differentiate from 'link'
-                html += "<span class='heading'>" + s.label + "</span>";
+                html += "<h5>" + s.label + "</h5>";
                 html += "<table><tbody>";
 
                 // Iterate through links
@@ -387,14 +387,14 @@ function buildClinicContactHTML(suggestions) {
                     html += "</table>";
 
                 } else {
-                    html += "<span class='heading p-1 ps-2'>Clinic Contact: " + s.actions[0].label + "</span>";
+                    html += "<h5 class='p-1 ps-2'>Clinic Contact: " + s.actions[0].label + "</h5>";
                     if (s.actions.length > 1) {
-                        html += "<span class='heading p-1 ps-2'>After Hours Line: " + s.actions[1].label + "</span>";
+                        html += "<h5 class='p-1 ps-2'>After Hours Line: " + s.actions[1].label + "</h5>";
                     }
                 }
 
-                html += "<span class='heading p-1 ps-2'>or</span>";
-                html += "<span class='heading p-1 ps-2'>Call 911</span>";
+                html += "<h5 class='p-1 ps-2'>or</h5>";
+                html += "<h5 class='p-1 ps-2'>Call 911</h5>";
             }
         });
     }
@@ -616,8 +616,7 @@ $(document).on('click', '.bpGoal .commitToGoal', function() {
             let el = $('#currentBPGoal');
             $(el).attr('data-systolic', g.systolicTarget);
             $(el).attr('data-diastolic', g.diastolicTarget);
-            $(el).html("<span class='summaryLabel'><i class='fas fa-bullseye' aria-hidden='true'></i> Your Current Blood Pressure Goal:</span> " +
-                "<span class='summaryValue'>Below " + g.systolicTarget + "/" + g.diastolicTarget + "</span>");
+            $(el).find('.summaryValue').text("Below " + g.systolicTarget + "/" + g.diastolicTarget);
 
             updateChart();
 
