@@ -55,13 +55,13 @@ function populateMedications() {
     if (Array.isArray(data) && data.length > 0) {
         let arr = [];
         data.forEach(function(m) {
-            arr.push('<span class="medication" data-system="' + escapeHtml(m.system) + '" data-code="' + escapeHtml(m.code) + '">' +
+            arr.push('<span class="medication summaryValue" data-system="' + escapeHtml(m.system) + '" data-code="' + escapeHtml(m.code) + '">' +
                 escapeHtml(m.description) +
                 '</span>');
         });
 
         let el = $('#currentMedications');
-        let html = 'Your Active Antihypertensive Medications: ' + arr.join(', ');
+        let html = '<span class="summaryLabel"><i class="fas fa-pills" aria-hidden="true"></i> Your Active Antihypertensive Medications:</span> ' + arr.join(' ');
 
         $(el).html(html);
     }
@@ -82,12 +82,12 @@ function populateAdverseEvents() {
     if (Array.isArray(data) && data.length > 0) {
         let arr = [];
         data.forEach(function(m) {
-            arr.push('<span class="adverseEvent" data-system="' + escapeHtml(m.system) + '" data-code="' + escapeHtml(m.code) + '">' +
+            arr.push('<span class="adverseEvent summaryValue" data-system="' + escapeHtml(m.system) + '" data-code="' + escapeHtml(m.code) + '">' +
                 escapeHtml(m.description) +
                 '</span>');
         });
 
-        let html = 'Your Adverse Events: ' + arr.join(', ');
+        let html = '<span class="summaryLabel"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Your Adverse Events:</span> ' + arr.join(' ');
 
         $('#adverseEvents').html(html);
     }
@@ -105,30 +105,59 @@ function getOmronStatus(_callback) {
 }
 
 function populateOmronStatus(data) {
-    let el = $('#omron');
-    let html = '';
-    if (data !== undefined && data.status !== 'DISABLED') {
-        if (isOmronSyncCompleted(data)) {
-            html += '<div class="alert alert-warning" role="alert">Omron data synchronization is complete.</div>';
+    let section = $('#omronSection');   // only rendered if Omron is enabled
+    if (section.length === 0) return;
 
-        } else if (data.status === 'READY') {
-            let omronAuthRequestUrl = $('#omronAuthRequestUrl').html();
-            html += '<div id="omronAuthLink" class="alert alert-warning alert-clickable" role="alert" data-target="' + omronAuthRequestUrl + 
-                '"><span class="link" >Click here</span> to authenticate and synchronize with Omron.</div>';
-            if (data.lastUpdated !== null) {
-                html += '<div class="alert alert-teal" role="alert">Omron data last synchronized <em>' + data.lastUpdatedString + '</em>.</div>';
-            }
-
-        } else if (data.status === 'INITIATING_SYNC') {
-            html += '<div class="alert alert-warning" role="alert">Initiating Omron synchronization.  Continue to use COACH as normal, but don\'t log out until this process is completed.</div>';
-
-        } else if (data.status === 'SYNCHRONIZING') {
-            let percentComplete = Math.floor(data.currentlyProcessing / data.totalToProcess * 100);
-            html += '<div class="alert alert-warning" role="alert">Omron data is synchronizing (' + percentComplete +
-                '% complete).  Continue to use COACH as normal, but don\'t log out until this process is completed.</div>';
-        }
+    if (data === undefined || data.status === 'DISABLED') {
+        $(section).addClass('hidden');
+        return;
     }
-    $(el).html(html);
+    $(section).removeClass('hidden');
+
+    let html = '';
+    let synchronizing = false;
+    if (isOmronSyncCompleted(data)) {
+        html = '<i class="fas fa-check-circle text-success" aria-hidden="true"></i> Omron data synchronization is complete.';
+
+    } else if (data.status === 'READY') {
+        if (data.lastUpdated !== null) {
+            html = '<i class="fas fa-check-circle text-success" aria-hidden="true"></i> Omron data last synchronized <em>' +
+                escapeHtml(data.lastUpdatedString) + '</em>.';
+        } else {
+            html = '<i class="fas fa-info-circle color-primary" aria-hidden="true"></i> Omron data has not been synchronized yet.';
+        }
+
+    } else if (data.status === 'INITIATING_SYNC') {
+        synchronizing = true;
+        html = '<i class="fas fa-sync-alt fa-spin color-primary" aria-hidden="true"></i> Initiating Omron synchronization.  ' +
+            'Continue to use COACH as normal, but don\'t log out until this process is completed.';
+
+    } else if (data.status === 'SYNCHRONIZING') {
+        synchronizing = true;
+        let percentComplete = Math.floor(data.currentlyProcessing / data.totalToProcess * 100);
+        html = '<i class="fas fa-sync-alt fa-spin color-primary" aria-hidden="true"></i> Omron data is synchronizing (' + percentComplete +
+            '% complete).  Continue to use COACH as normal, but don\'t log out until this process is completed.' +
+            '<div class="progress mt-2" role="progressbar" aria-label="Omron synchronization progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + percentComplete + '">' +
+            '<div class="progress-bar" style="width: ' + percentComplete + '%"></div></div>';
+    }
+    $('#omronStatus').html(html);
+    $('#omronAuthLink').prop('disabled', synchronizing);
+
+    // errors from the most recent synchronization (identical messages are grouped server-side, with a count)
+    let errorsHtml = '';
+    if ( ! synchronizing && Array.isArray(data.errors) && data.errors.length > 0) {
+        let total = 0;
+        let items = '';
+        data.errors.forEach(function(e) {
+            total += e.count;
+            items += '<li>' + escapeHtml(e.message) + (e.count > 1 ? ' <span class="omronErrorCount">(' + e.count + '&times;)</span>' : '') + '</li>';
+        });
+        errorsHtml = '<details class="omronErrorDetails">' +
+            '<summary><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> ' + total +
+            (total === 1 ? ' problem' : ' problems') + ' occurred during the last synchronization</summary>' +
+            '<ul>' + items + '</ul></details>';
+    }
+    $('#omronErrors').html(errorsHtml);
 }
 
 function refreshChart() {

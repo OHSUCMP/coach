@@ -105,6 +105,13 @@ public class PulseService extends AbstractService {
     }
 
     public PulseModel create(String sessionId, PulseModel pm) throws DataException, ConfigurationException, IOException, ScopeException {
+        return create(sessionId, pm, null);
+    }
+
+    /**
+     * @param errors if not null, receives a message for each (otherwise logged-and-tolerated) write failure
+     */
+    public PulseModel create(String sessionId, PulseModel pm, List<String> errors) throws DataException, ConfigurationException, IOException, ScopeException {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         PulseModel pm2 = null;
@@ -133,6 +140,10 @@ public class PulseService extends AbstractService {
                 auditService.doAudit(sessionId, AuditSeverity.WARN, "failed to write pulse remotely",
                         "pulse=" + pm.getPulse() + " at " + pm.getReadingDateString() +
                                 ", message=" + e.getMessage());
+
+                if (errors != null) {
+                    errors.add("Unable to write pulse to the EHR - " + e.getMessage());
+                }
             }
         }
 
@@ -153,6 +164,10 @@ public class PulseService extends AbstractService {
 
             auditService.doAudit(sessionId, AuditSeverity.ERROR, "failed to create pulse", "pulse=" +
                     pm.getPulse() + " at " + pm.getReadingDateString() + ", message=" + de.getMessage());
+
+            if (errors != null) {
+                errors.add("Unable to save pulse in COACH - " + de.getMessage());
+            }
         }
 
         return pm2;

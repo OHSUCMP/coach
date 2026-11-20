@@ -616,7 +616,8 @@ $(document).on('click', '.bpGoal .commitToGoal', function() {
             let el = $('#currentBPGoal');
             $(el).attr('data-systolic', g.systolicTarget);
             $(el).attr('data-diastolic', g.diastolicTarget);
-            $(el).html("Your Current Blood Pressure Goal: <em><strong>Below " + g.systolicTarget + "/" + g.diastolicTarget + "</strong></em>");
+            $(el).html("<span class='summaryLabel'><i class='fas fa-bullseye' aria-hidden='true'></i> Your Current Blood Pressure Goal:</span> " +
+                "<span class='summaryValue'>Below " + g.systolicTarget + "/" + g.diastolicTarget + "</span>");
 
             updateChart();
 
