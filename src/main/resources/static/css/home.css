@@ -1,10 +1,66 @@
 
 #clearSupplementalData {
-    color: red;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* join the "High Blood Pressure Control" / "Omron" / "Recommendations" headings to their content panels as a single card */
+.bpControlSection > h4.bgd-secondary, #omronSection > h4.bgd-secondary, #recommendationsSection .bgd-secondary {
+    margin-bottom: 0;
+    border: 1px solid var(--coach-border);
+    border-left: 0.35rem solid var(--coach-violet-600);
+    border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.bpControlSection > .content-panel, #omronSection > .content-panel, #recommendationsSection .content-panel {
+    border-top: 0;
+    border-radius: 0 0 0.75rem 0.75rem;
+}
+
+/* frame the chart, its key and its timeline controls together */
+.chartPanel {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    border: 1px solid var(--coach-border);
+    border-radius: 0.75rem;
+    background-color: var(--coach-lavender-50);
+}
+
+/* when the BP summary and chart stack on small screens, keep them from touching */
+@media (max-width: 767.98px) {
+    .chartPanel {
+        margin-top: 1rem;
+    }
+}
+
+.chartKey {
+    display: inline-block;
+    text-align: center;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--coach-border);
+    border-radius: 0.75rem;
+    background-color: #ffffff;
+    color: var(--coach-text);
+    font-size: 0.85em;
+}
+
+.chartKeyTitle {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: var(--coach-violet-600);
+    font-size: 0.8em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 div.chartKeyItem {
-    font-size: .9em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.15rem 0.5rem;
+    white-space: nowrap;
 }
 
 .chartKeyBP {
@@ -41,13 +97,14 @@ div.chartKeyItem {
 
 #chartTimelineContainer .btn:not(.selected).hover {
     cursor: pointer;
-    background-color: #ddd;
-    border: 1px solid #00f;
+    background-color: #efeafb;
+    border: 1px solid #5e48a3;
     color: black;
 }
 
 #chartTimelineContainer .btn.selected {
-    background-color: #004466;
+    background-color: #5e48a3;
+    border-color: #5e48a3;
     color: white;
 }
 
@@ -66,8 +123,218 @@ div.chartKeyItem {
     padding-bottom: 1.5em;
 }
 
-#currentBPGoal, #currentMedications, #adverseEvents, #omron {
+#adverseEvents, .summaryCardGrid {
     margin: 0.7em 0 0.7em 0;
+}
+
+/* BP goal and medications cards: stacked on narrow screens, side by side (half width each) on wide screens */
+.summaryCardGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.7em 1rem;
+}
+
+@media (min-width: 992px) {
+    .summaryCardGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Omron heading: title on the left, authenticate / synchronize link right-aligned (via .summaryAction's margin-left: auto) */
+#omronSection > h4.bgd-secondary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+}
+
+/* Omron section: status, then any errors from the last synchronization */
+.omronSummary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+}
+
+#omronStatus {
+    flex: 1 1 18rem;
+    color: var(--coach-text);
+}
+
+#omronStatus .progress {
+    height: 0.5rem;
+    background-color: var(--coach-lavender-100);
+}
+
+#omronStatus .progress-bar {
+    background-color: var(--coach-violet-600);
+}
+
+/* rendered as a link (.summaryAction), but kept a <button> so it can be disabled while synchronizing */
+#omronAuthLink {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--bs-link-color);
+    font-size: 0.9rem;      /* match the "update" link's size rather than scaling with the heading */
+    line-height: 1.5;
+}
+
+#omronAuthLink:hover:not(:disabled) {
+    color: var(--bs-link-hover-color);
+}
+
+#omronAuthLink:disabled {
+    color: var(--coach-muted);
+    text-decoration: none;
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.omronErrorDetails {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #f1aeb5;
+    border-left: 0.35rem solid #b02a37;
+    border-radius: 0.5rem;
+    background-color: #f8d7da;
+    color: #58151c;
+    font-size: 0.9em;
+}
+
+.omronErrorDetails summary {
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.omronErrorDetails summary i {
+    color: #b02a37;
+}
+
+.omronErrorDetails ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.25rem;
+    overflow-wrap: anywhere;    /* error messages may contain long unbroken JSON */
+}
+
+.omronErrorCount {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* BP goal / medications / adverse events summary cards */
+.summaryCard {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.5rem;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--coach-border);
+    border-left: 0.35rem solid var(--coach-violet-600);
+    border-radius: 0.6rem;
+    background-color: #ffffff;
+    box-shadow: var(--coach-shadow);
+    color: var(--coach-text);
+}
+
+/* medications and adverse events are only populated when data exists */
+.summaryCard:empty {
+    display: none;
+}
+
+.summaryLabel {
+    margin-right: 0.25rem;
+    color: var(--coach-violet-900);
+    font-weight: 600;
+}
+
+.summaryLabel i {
+    width: 1.25em;
+    color: var(--coach-violet-600);
+    text-align: center;
+}
+
+.summaryCard .summaryValue {
+    padding: 0.15rem 0.65rem;
+    border: 1px solid var(--coach-lavender-200);
+    border-radius: 999px;
+    background-color: var(--coach-lavender-100);
+    color: var(--coach-violet-900);
+    font-size: 0.9em;
+    font-style: normal;
+    font-weight: 600;
+}
+
+.summaryAction {
+    margin-left: auto;
+    font-size: 0.9em;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.summaryAction:hover {
+    text-decoration: underline;
+}
+
+/* summary card with a tinted header bar above its values */
+.summaryPanel {
+    display: block;
+    padding: 0;
+    overflow: hidden;
+}
+
+.summaryHeader {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    padding: 0.5rem 0.9rem;
+    border-bottom: 1px solid var(--coach-border);
+    background-color: var(--coach-lavender-100);
+}
+
+.summaryHeader .summaryLabel {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.summaryBody {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.5rem;
+    padding: 0.6rem 0.9rem;
+}
+
+/* adverse events are shown as a warning (amber, matching Bootstrap's alert-warning palette) */
+#adverseEvents {
+    border-color: #ffe69c;
+    border-left-color: #ffc107;
+    background-color: #fff3cd;
+    color: #664d03;
+}
+
+#adverseEvents .summaryHeader {
+    border-bottom-color: #ffda6a;
+    background-color: #ffe69c;
+}
+
+#adverseEvents .summaryLabel {
+    color: #664d03;
+}
+
+#adverseEvents .summaryLabel i {
+    color: #997404;
+}
+
+#adverseEvents .summaryValue {
+    border-color: #ffc107;
+    background-color: #ffffff;
+    color: #664d03;
 }
 
 .medication, .adverseEvent {
@@ -80,27 +347,92 @@ div.chartKeyItem {
     width: 100%;
 }
 
+.bpSummary {
+    padding: 1rem 0.75rem;
+    border: 1px solid var(--coach-border);
+    border-radius: 0.75rem;
+    background-color: var(--coach-lavender-50);
+    text-align: center;
+}
+
+.bpSummaryTitle {
+    margin-bottom: 0.75rem;
+    color: var(--coach-violet-800);
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
 #bpPlaceholder {
     text-align: center;
-    color: black;
+    color: var(--coach-muted);
     font-size: small;
     font-weight: bold;
 }
 
-#systolic, #diastolic {
-    font-size: large;
-    font-weight: bold;
+#bpContainer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem 1.25rem;
+}
+
+.bpReading {
+    color: var(--coach-violet-900);
 }
 
 #bpLabel {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--coach-muted);
     font-size: small;
-    font-weight: bold;
+    font-weight: 600;
     white-space: nowrap;
 }
 
+.bpFraction {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    column-gap: 0.4rem;
+}
+
+#systolic, #diastolic {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: right;
+}
+
+.bpUnit {
+    color: var(--coach-muted);
+    font-size: small;
+    text-align: left;
+}
+
+.bpDivider {
+    grid-column: 1 / -1;
+    height: 2px;
+    margin: 0.3rem 0;
+    border-radius: 1px;
+    background-color: var(--coach-lavender-300);
+}
+
 #bpNote {
+    flex-basis: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--coach-lavender-200);
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    color: var(--coach-violet-900);
     font-size: small;
     font-weight: bold;
+}
+
+#bpNote.crisis {
+    border-color: #f1aeb5;
+    background-color: #f8d7da;
+    color: #b02a37;
 }
 
 #medicationsContainer {
@@ -120,12 +452,20 @@ div.medication {
     max-width: 200px;
 }
 
+/* shown (by recommendations.js) only when source data had to be modified before being sent to the recommendation engine */
 #prefetchModifiedInfo {
-    display: block;
-    background-color: #ffffcc;
-    padding: 5px;
-    font-size: small;
-    font-style: italic;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border-left: 0.35rem solid #ffc107;
+    border-radius: 0.6rem;
+    font-size: 0.9em;
+}
+
+#prefetchModifiedInfo > i {
+    margin-top: 0.15rem;
+    color: #997404;
+    font-size: 1.25em;
 }
 
 .crisis {
@@ -136,8 +476,17 @@ img.bp-icon {
     width: 100px;
 }
 
+/* (class name retained for compatibility; now tinted to the COACH palette) */
 .alert-teal {
-    background-color: #d5f8f4;
+    --bs-alert-bg: #f4f1fc;
+    --bs-alert-border-color: #d6cdf1;
+    --bs-alert-color: #2a1f4a;
+    background-color: #f4f1fc;
+}
+
+/* cursor: pointer is also required for iOS Safari to deliver taps to delegated click handlers */
+.alert-clickable, #bpIcon {
+    cursor: pointer;
 }
 
 .alert-clickable:hover {
@@ -155,5 +504,5 @@ table.clinicContact thead th {
 }
 
 table.clinicContact tbody tr:nth-child(even) {
-    background-color: #cce0ff;
+    background-color: #efeafb;
 }

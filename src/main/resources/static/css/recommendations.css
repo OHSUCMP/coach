@@ -1,11 +1,24 @@
+/* recommendation sub-headings; :where() keeps specificity at that of a bare "h5" so that more specific
+   rules below (e.g. .card .summary, .goalsContainer *) continue to override the size */
+:where(#recommendationsContainer) h5 {
+    margin: 0;
+    color: black;
+    font-size: large;
+    font-weight: bold;
+    line-height: inherit;
+}
+
 .recommendation {
     display: block;
     margin: 0;
 }
 
-.recommendation > .heading {
-    background-color: #b3d9ff;
-    padding: 0.1em 0.3em 0.1em 0.3em;
+.recommendation > h5 {
+    background-color: #efeafb;
+    border-left: 0.3rem solid #5e48a3;
+    border-radius: 0.4rem;
+    color: #2a1f4a;
+    padding: 0.35em 0.6em;
 }
 
 .recommendation > .description {
@@ -21,8 +34,11 @@
 .card {
     display: block;
     background-color: #ffffff;
-    padding: 0.3em;
-    margin: 0.3em 0 0.3em 0;
+    padding: 0.5em;
+    margin: 0.5em 0 0.5em 0;
+    border: 1px solid #e3dfee;
+    border-radius: 0.6rem;
+    box-shadow: 0 0.25rem 0.75rem rgba(42, 31, 74, 0.06);
     font-size: small;
 }
 
@@ -86,7 +102,8 @@
 
 /* keep synced with goals.css */
 .goal, .linksContainer, .bpGoal {
-    background-color: #eff5ff;
+    background-color: #f8f6fd;
+    border-radius: 0.4rem;
 }
 
 span.adverseEvent {

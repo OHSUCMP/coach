@@ -12,7 +12,7 @@
 </script>
 
 <div class="container">
-    <div class="px-2 fs-4">
+    <div class="patient-banner fs-4">
         <i class="fas fa-user color-primary"></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}
     </div>
 
@@ -22,7 +22,7 @@
         </h4>
     </div>
 
-    <div class="heading">Pre-Populated Note Based on Recommendations</div>
+    <h4>Pre-Populated Note Based on Recommendations</h4>
     {{#aboveText}}
         <div id="aboveText" class="mt-3">
             {{{aboveText}}}
@@ -46,10 +46,10 @@
     <div id="myChartInstructionsContainer" class="modal">
         <div id="myChartInstructions" class="modalContent">
             {{^instructions}}
-                <div class="heading">Message Copied!</div>
+                <h4>Message Copied!</h4>
             {{/instructions}}
             {{#instructions}}
-            <div class="heading">Message Copied!  Next Steps:</div>
+            <h4>Message Copied!  Next Steps:</h4>
                 {{{instructions}}}
             {{/instructions}}
             <div class="buttonContainer">

@@ -116,6 +116,13 @@ public class BloodPressureService extends AbstractService {
     }
 
     public BloodPressureModel create(String sessionId, BloodPressureModel bpm) throws DataException, ConfigurationException, IOException, ScopeException {
+        return create(sessionId, bpm, null);
+    }
+
+    /**
+     * @param errors if not null, receives a message for each (otherwise logged-and-tolerated) write failure
+     */
+    public BloodPressureModel create(String sessionId, BloodPressureModel bpm, List<String> errors) throws DataException, ConfigurationException, IOException, ScopeException {
         UserWorkspace workspace = userWorkspaceService.get(sessionId);
 
         BloodPressureModel bpm2 = null;
@@ -144,6 +151,10 @@ public class BloodPressureService extends AbstractService {
                 auditService.doAudit(sessionId, AuditSeverity.WARN, "failed to write BP remotely", "BP=" +
                         bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString() +
                                 ", message=" + e.getMessage());
+
+                if (errors != null) {
+                    errors.add("Unable to write blood pressure to the EHR - " + e.getMessage());
+                }
             }
         }
 
@@ -165,6 +176,10 @@ public class BloodPressureService extends AbstractService {
             auditService.doAudit(sessionId, AuditSeverity.ERROR, "failed to create BP", "BP=" +
                     bpm.getSystolic() + "/" + bpm.getDiastolic() + " at " + bpm.getReadingDateString() +
                             ", message=" + de.getMessage());
+
+            if (errors != null) {
+                errors.add("Unable to save blood pressure in COACH - " + de.getMessage());
+            }
         }
 
         return bpm2;

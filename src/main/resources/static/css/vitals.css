@@ -1,6 +1,7 @@
 #showHideProtocol {
+    cursor: pointer;    /* also required for iOS Safari to deliver taps to delegated click handlers */
     font-weight: bold;
-    color: #2e6da4;
+    color: #5e48a3;
 }
 
 #showHideProtocol.hover {
@@ -10,9 +11,29 @@
 
 #protocol {
     position: relative;
-    background-color: #f4f4f3;
+    background-color: #f8f6fd;
+    border: 1px solid #e3dfee;
+    border-radius: 0.75rem;
     padding: 1em;
-    color: #29506e;
+    color: #2a1f4a;
+}
+
+/* white panel beneath the Entry / Historical tabs */
+#tab-content {
+    padding: 0 1rem 1rem;
+    border: 1px solid var(--bs-border-color);
+    border-top: 0;
+    border-radius: 0 0 0.75rem 0.75rem;
+    background-color: #ffffff;
+}
+
+/* "First Measurement" / "Second Measurement" sub-headings */
+.validationGroup > h4 {
+    margin: 0;
+    color: black;
+    font-size: large;
+    font-weight: bold;
+    line-height: inherit;
 }
 
 div.validationMessage {

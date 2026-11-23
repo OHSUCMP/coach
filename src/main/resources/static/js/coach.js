@@ -20,14 +20,34 @@ function randomChars(length) {
     return result;
 }
 
-// pulled from https://stackoverflow.com/questions/31593297/using-execcommand-javascript-to-copy-hidden-text-to-clipboard
+// prefers the async Clipboard API (requires a secure context), falling back to execCommand.  the fallback uses a
+// textarea (an input would strip line breaks) and setSelectionRange (select() alone doesn't work on iOS Safari)
 function setClipboard(value) {
-    let tempInput = document.createElement("input");
-    tempInput.style = "position: absolute; left: -1000px; top: -1000px";
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(value).catch(function() {
+            copyViaExecCommand(value);
+        });
+    } else {
+        copyViaExecCommand(value);
+    }
+}
+
+// adapted from https://stackoverflow.com/questions/31593297/using-execcommand-javascript-to-copy-hidden-text-to-clipboard
+function copyViaExecCommand(value) {
+    let tempInput = document.createElement("textarea");
+    tempInput.setAttribute("readonly", "");     // prevents the on-screen keyboard from appearing on mobile devices
+    tempInput.style.position = "absolute";
+    tempInput.style.left = "-1000px";
+    tempInput.style.top = (window.pageYOffset || document.documentElement.scrollTop) + "px";    // avoid scroll jump
     tempInput.value = value;
     document.body.appendChild(tempInput);
     tempInput.select();
-    document.execCommand("copy");
+    tempInput.setSelectionRange(0, value.length);
+    try {
+        document.execCommand("copy");
+    } catch (e) {
+        console.error("unable to copy to clipboard", e);
+    }
     document.body.removeChild(tempInput);
 }
 
@@ -133,7 +153,7 @@ $(document).ready(function() {
 });
 
 $(document).on('click', 'a', function() {
-    let href = $(this).attr('href').toLowerCase();
+    let href = ($(this).attr('href') || '').toLowerCase();    // some anchors (e.g. datepicker prev / next) have no href
     if (href.startsWith('http://') || href.startsWith('https://')) {
         $(this).attr('target', '_blank');
     }

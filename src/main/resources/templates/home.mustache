@@ -3,9 +3,6 @@
 <div id="sessionEstablished" class="hidden">{{sessionEstablished}}</div>
 <div id="randomizationGroup" class="hidden">{{randomizationGroup}}</div>
 <div id="LOESSBandwidth" class="hidden">{{loessBandwidth}}</div>
-{{#omronAuthRequestUrl}}
-    <div id="omronAuthRequestUrl" class="hidden">{{omronAuthRequestUrl}}</div>
-{{/omronAuthRequestUrl}}
 
 {{#showEndOfStudyMessage}}
     <div id="endOfStudyContainer" class="modal">
@@ -25,7 +22,7 @@
 
 <div class="container">
     {{#systemStatusMessage}}
-        <div class="row align-items-center alert alert-teal" role="alert">
+        <div class="row mx-0 align-items-center alert alert-teal" role="alert">
             <div class="col-md-auto text-center">
                 <img src="/images/info-icon.png" alt="System Status" height="50px" />
             </div>
@@ -41,104 +38,59 @@
     </div>
     {{/enrollmentBanner}}
 
-    <div class="px-2 d-flex justify-content-between">
+    <div class="patient-banner d-flex flex-wrap justify-content-between align-items-center gap-2">
         <span class="fs-4"><i class="fas fa-user color-primary"></i>&nbsp;<strong>{{patient.name}}</strong> - {{patient.age}} years {{patient.gender}}</span>
         {{#showClearSupplementalData}}
-        <span id="clearSupplementalData" class="link">Clear Supplemental Data</span>
+        <button type="button" id="clearSupplementalData" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt" aria-hidden="true"></i> Clear Supplemental Data</button>
         {{/showClearSupplementalData}}
     </div>
 
-    <div class="mt-3">
+    <div class="mt-3 bpControlSection">
         <h4 class="p-2 bgd-secondary">
             <i class="fas fa-file-medical-alt color-primary"></i> High Blood Pressure Control
         </h4>
-        <div class="container">
+        <div class="container content-panel">
             <div class="row">
                 <div id="bpIndicatorContainer" class="col-12 col-md-4 col-lg-3 align-self-center">
-                    <div class="text-center" style="font-weight: bold;">Your blood pressure:</div>
-                    <table class="table table-borderless mt-4 mx-auto w-auto">
-                        <tr>
-                            <td>
-                                <div id="bpPlaceholder">
+                    <div class="bpSummary">
+                        <div class="bpSummaryTitle">Your blood pressure:</div>
+                        <div id="bpPlaceholder">
+                        </div>
+                        <div id="bpContainer" style="display:none">
+                            <div id="bpIcon" class="tip">
+                            </div>
+                            <div class="bpReading">
+                                <span id="bpLabel"></span>
+                                <div class="bpFraction">
+                                    <span id="systolic">X</span>
+                                    <span class="bpUnit">systolic</span>
+                                    <span class="bpDivider"></span>
+                                    <span id="diastolic">Y</span>
+                                    <span class="bpUnit">diastolic</span>
                                 </div>
-                                <div id="bpContainer" style="display:none">
-                                    <table style="text-align:center">
-                                        <tr>
-                                            <td>
-                                                <div id="bpIcon" class="tip">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <table>
-                                                    <tr>
-                                                        <td colspan="3">
-                                                            <span id="bpLabel"></span>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>&nbsp;</td>
-                                                        <td>
-                                                            <table>
-                                                                <tr>
-                                                                    <td id="systolic">X</td>
-                                                                    <td style="font-size: small; padding-left: 5px">systolic</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td colspan="2"><hr style="border-top:2px solid black"/></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td id="diastolic">Y</td>
-                                                                    <td style="font-size: small; padding-left: 5px">diastolic</td>
-                                                                </tr>
-                                                            </table>
-                                                        </td>
-                                                        <td>&nbsp;</td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>&nbsp;</td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="2">
-                                                <span id="bpNote"></span>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                            </div>
+                            <span id="bpNote"></span>
+                        </div>
+                    </div>
                 </div>
                 <div id="chartContainer" class="col-12 col-md-8 col-lg-9">
-                    <div class="container">
+                    <div class="container chartPanel">
                         <div class="row">
                             <div class="col">
                                 <div id="loadingChart">Loading Chart ...</div>
                             </div>
                         </div>
-                        <div id="chartKeyContainer" class="row justify-content-center hidden" style="font-size:0.85em;">
-                            <div class="col-md-0 col-lg-1"></div>
-                            <div class="col-md-1 col-lg-auto">
-                                <span class="fw-bold">Key</span>
+                        <div id="chartKeyContainer" class="row hidden">
+                            <div class="col d-flex justify-content-center">
+                                <div class="chartKey">
+                                    <span class="chartKeyTitle">Key</span>
+                                    <div class="chartKeyItem"><i class="fas fa-square chartKeyBP" aria-hidden="true"></i> Home BP</div>
+                                    <div class="chartKeyItem"><i class="fas fa-circle chartKeyBP" aria-hidden="true"></i> Office BP</div>
+                                    <div class="chartKeyItem"><i class="fas fa-square chartKeySystolic" aria-hidden="true"></i> Systolic BP</div>
+                                    <div class="chartKeyItem"><i class="fas fa-square chartKeyDiastolic" aria-hidden="true"></i> Diastolic BP</div>
+                                    <div class="chartKeyItem"><i class="far fa-square chartKeyRecent" aria-hidden="true"></i> Data used in BP Avg</div>
+                                </div>
                             </div>
-                            <div class="col-md-auto">
-                                <i class="fas fa-square chartKeyBP"></i> Home BP
-                             </div>
-                            <div class="col-md-auto">
-                                <i class="fas fa-circle chartKeyBP"></i> Office BP
-                            </div>
-                            <div class="col-md-auto">
-                                <i class="fas fa-square chartKeySystolic"></i> Systolic BP
-                            </div>
-                            <div class="col-md-auto">
-                                <i class="fas fa-square chartKeyDiastolic"></i> Diastolic BP
-                            </div>
-                            <div class="col-md-auto">
-                                <i class="far fa-square chartKeyRecent"></i> Data used in BP Avg
-                            </div>
-                            <div class="col-md-0 col-lg-1"></div>
                         </div>
                         <div class="row mt-1">
                             <div class="col offset-sm-3 offset-md-4" style="font-size:0.85em;">
@@ -162,52 +114,79 @@
                 </div>
             </div>
         </div>
-        <div id="omron">
-            {{#omronAuthRequestUrl}}
-                <div id="omronAuthLink" class="alert alert-warning alert-clickable" data-target="{{omronAuthRequestUrl}}" role="alert">
-                    <span class="link">Click here</span> to authenticate and synchronize with Omron.
+        <div id="adverseEvents" class="summaryCard summaryPanel" role="alert"></div>
+        <div class="summaryCardGrid">
+            <div id="currentBPGoal" class="summaryCard summaryPanel" data-systolic="{{bpGoal.systolicTarget}}" data-diastolic="{{bpGoal.diastolicTarget}}">
+                <div class="summaryHeader">
+                    <h4 class="summaryLabel"><i class="fas fa-bullseye" aria-hidden="true"></i> Your Current Blood Pressure Goal</h4>
+                    <a href="/goals" class="summaryAction"><i class="fas fa-pen" aria-hidden="true"></i> Update</a>
                 </div>
-            {{/omronAuthRequestUrl}}
-            {{#omronSynchronizing}}
-                <div class="alert alert-warning" role="alert">
-                    Omron data is synchronizing. Continue to use COACH as normal, but don't log out.
-                </div>
-            {{/omronSynchronizing}}
-            {{#omronLastUpdated}}
-                <div class="alert alert-teal" role="alert">
-                    Omron data last synchronized <em>{{omronLastUpdated}}</em>
-                </div>
-            {{/omronLastUpdated}}
-        </div>
-        <div id="currentBPGoal" data-systolic="{{bpGoal.systolicTarget}}" data-diastolic="{{bpGoal.diastolicTarget}}">
-            Your Current Blood Pressure Goal: <em><strong>Below {{bpGoal.systolicTarget}} /
-            {{bpGoal.diastolicTarget}}</strong></em> (<a href="/goals">update</a>)
-        </div>
-        <div id="currentMedications">
-        </div>
-        <div id="adverseEvents"></div>
-
-    </div>
-
-    <h4 class="mt-3 p-2 bgd-secondary">
-        <i class="fas fa-clipboard-list color-primary"></i> Recommendations
-    </h4>
-
-    <div id="prefetchModifiedInfo" class="hidden">
-        <strong>Note:</strong> Source patient data contained one or more problematic characters that needed to be converted
-        before being sent to the recommendation engine.  Instances of these characters have been replaced
-        with the question mark character ("<strong>?</strong>")
-    </div>
-
-    <div id="recommendationsContainer">
-        {{#cdshooks}}
-            <div class="recommendation" data-id="{{id}}">
-                <div class="heading">{{title}}</div>
-                <div class="cardsContainer">
-                    Loading...
+                <div class="summaryBody">
+                    <span class="summaryValue">Below {{bpGoal.systolicTarget}}/{{bpGoal.diastolicTarget}}</span>
                 </div>
             </div>
-        {{/cdshooks}}
+            <div id="currentMedications" class="summaryCard summaryPanel"></div>
+        </div>
+
+    </div>
+
+    {{#omronAuthRequestUrl}}
+    <div id="omronSection" class="mt-3">
+        <h4 class="p-2 bgd-secondary">
+            <span><i class="fas fa-heartbeat color-primary"></i> Omron</span>
+            <button type="button" id="omronAuthLink" class="summaryAction" data-target="{{omronAuthRequestUrl}}"{{#omronSynchronizing}} disabled{{/omronSynchronizing}}>
+                <i class="fas fa-sync-alt" aria-hidden="true"></i> Authenticate &amp; Synchronize
+            </button>
+        </h4>
+        <div class="content-panel">
+            <div class="omronSummary">
+                <div id="omronStatus">
+                    {{#omronSynchronizing}}
+                    <i class="fas fa-sync-alt fa-spin color-primary" aria-hidden="true"></i> Omron data is synchronizing.  Continue to use COACH as normal, but don't log out until this process is completed.
+                    {{/omronSynchronizing}}
+                    {{^omronSynchronizing}}
+                    {{#omronLastUpdated}}
+                    <i class="fas fa-check-circle text-success" aria-hidden="true"></i> Omron data last synchronized <em>{{omronLastUpdated}}</em>.
+                    {{/omronLastUpdated}}
+                    {{^omronLastUpdated}}
+                    <i class="fas fa-info-circle color-primary" aria-hidden="true"></i> Omron data has not been synchronized yet.
+                    {{/omronLastUpdated}}
+                    {{/omronSynchronizing}}
+                </div>
+            </div>
+            <div id="omronErrors"></div>
+        </div>
+    </div>
+    {{/omronAuthRequestUrl}}
+
+    <div id="recommendationsSection" class="mt-3">
+        <h4 class="p-2 bgd-secondary">
+            <i class="fas fa-clipboard-list color-primary"></i> Recommendations
+        </h4>
+        <div class="content-panel pb-0">
+            <div id="prefetchModifiedInfo" class="alert alert-warning hidden" role="alert">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                <div>
+                    <strong>Some patient data was adjusted.</strong>
+                    The source patient data contained one or more characters that could not be sent to the
+                    recommendation engine as-is.  Each of these characters has been replaced with a question mark
+                    (<strong>?</strong>), which may appear in the recommendations below.
+                </div>
+            </div>
+
+            <div id="recommendationsContainer">
+                {{#cdshooks}}
+                    <div class="recommendation mb-3" data-id="{{id}}">
+                        <h5 class="p-2 bgd-secondary">
+                            {{title}}
+                        </h5>
+                        <div class="cardsContainer content-panel">
+                            Loading...
+                        </div>
+                    </div>
+                {{/cdshooks}}
+            </div>
+        </div>
     </div>
 
     {{#aeSurveyLink}}

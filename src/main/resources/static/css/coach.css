@@ -1,6 +1,29 @@
+/* COACH palette ("Twilight Violet") */
+:root {
+    --coach-violet-900: #2a1f4a;
+    --coach-violet-800: #3b2d6b;
+    --coach-violet-700: #4c3a87;
+    --coach-violet-600: #5e48a3;
+    --coach-lavender-300: #c3b6ec;
+    --coach-lavender-200: #ddd4f5;
+    --coach-lavender-100: #efeafb;
+    --coach-lavender-50: #f8f6fd;
+    --coach-page-bg: #f8f7fb;
+    --coach-text: #221f2e;
+    --coach-muted: #625d70;
+    --coach-border: #e3dfee;
+    --coach-shadow: 0 0.35rem 1rem rgba(42, 31, 74, 0.08);
+
+    /* re-tint Bootstrap's link color to match the palette */
+    --bs-link-color: #5e48a3;
+    --bs-link-color-rgb: 94, 72, 163;
+    --bs-link-hover-color: #4c3a87;
+    --bs-link-hover-color-rgb: 76, 58, 135;
+}
+
 main.container {
 	/* pad top to account for the navbar */
-	padding: 80px 10px 0;
+	padding: 88px 10px 0;
 }
 
 img.logo {
@@ -8,19 +31,19 @@ img.logo {
 }
 
 .color-primary {
-    color: #004466;
+    color: #5e48a3;
 }
 
 .bgd-primary {
-    background-color: #004466;
+    background-color: #4c3a87;
 }
 
 .color-secondary {
-    color: #b3fff0;
+    color: #c3b6ec;
 }
 
 .bgd-secondary {
-    background-color: #b3fff0;
+    background-color: #efeafb;
 }
 
 .hidden, .hidden * {
@@ -35,13 +58,8 @@ img.logo {
 body {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     height: 100%;
-}
-
-.heading {
-    display: block;
-    color: black;
-    font-size: large;
-    font-weight: bold;
+    background-color: var(--coach-page-bg);
+    color: var(--coach-text);
 }
 
 .success {
@@ -69,28 +87,260 @@ body {
     background-color: #888;
 }
 
+/* Global application navbar */
+.app-navbar {
+    min-height: 72px;
+    border-bottom: 3px solid var(--coach-lavender-300);
+    background: linear-gradient(100deg, var(--coach-violet-800) 0%, var(--coach-violet-600) 100%);
+    box-shadow: 0 0.35rem 1rem rgba(42, 31, 74, 0.25);
+}
+
+.app-navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 1.25rem;
+    padding: 0.3rem 0;
+}
+
+.app-navbar-brand:focus-visible,
+.app-nav-link.nav-link:focus-visible,
+.app-navbar-toggler:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+.app-navbar-logo {
+    width: auto;
+    height: 44px;
+}
+
+.app-nav-link.nav-link {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 2px solid transparent;
+    color: rgba(255, 255, 255, 0.88);
+    font-weight: 600;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.app-nav-link.nav-link:hover,
+.app-nav-link.nav-link:focus,
+.app-nav-link.nav-link.show {
+    border-bottom-color: var(--coach-lavender-300);
+    color: #ffffff;
+}
+
+.app-dropdown-menu {
+    --bs-dropdown-link-active-bg: var(--coach-violet-600);
+    --bs-dropdown-link-hover-bg: var(--coach-lavender-100);
+    --bs-dropdown-link-hover-color: var(--coach-violet-800);
+    margin-top: 0.5rem;
+    padding: 0.4rem 0;
+    border: 1px solid var(--coach-border);
+    border-top: 3px solid var(--coach-violet-600);
+    border-radius: 0.5rem;
+    box-shadow: 0 0.75rem 1.5rem rgba(42, 31, 74, 0.18);
+}
+
+.app-dropdown-menu .dropdown-header {
+    color: var(--coach-violet-700);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.8rem;
+}
+
+.app-nav-logout.nav-link {
+    margin-left: 0.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 0.4rem;
+}
+
+.app-nav-logout.nav-link:hover,
+.app-nav-logout.nav-link:focus {
+    border-color: #ffffff;
+    background-color: #ffffff;
+    color: var(--coach-violet-700);
+}
+
+.app-navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 991.98px) {
+    /* collapsed menu: keep long menus (e.g. Resources) scrollable on small screens */
+    .app-navbar-collapse {
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+        margin-top: 0.5rem;
+        padding: 0.5rem 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .app-nav-link.nav-link {
+        border-bottom: 0;
+        border-left: 3px solid transparent;
+    }
+
+    .app-nav-link.nav-link:hover,
+    .app-nav-link.nav-link:focus,
+    .app-nav-link.nav-link.show {
+        border-left-color: var(--coach-lavender-300);
+    }
+
+    .app-nav-logout.nav-link {
+        margin: 0.5rem 0 0.25rem;
+        border-left-width: 1px;
+        text-align: center;
+    }
+
+    .app-dropdown-menu {
+        margin-top: 0;
+        box-shadow: none;
+    }
+}
+
+/* Patient identity banner shown at the top of each page */
+.patient-banner {
+    margin-top: 0.5rem;
+    padding: 0.65rem 1rem !important;
+    border: 1px solid var(--coach-border);
+    border-left: 0.35rem solid var(--coach-violet-600);
+    border-radius: 0.6rem;
+    background-color: #ffffff;
+    box-shadow: var(--coach-shadow);
+}
+
+/* Section headings (e.g. "High Blood Pressure Control") */
+h4.bgd-secondary {
+    border-left: 0.35rem solid var(--coach-violet-600);
+    border-radius: 0.5rem;
+    color: var(--coach-violet-900);
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+/* Generic white content panel */
+.content-panel {
+    padding: 1rem;
+    border: 1px solid var(--coach-border);
+    border-radius: 0.75rem;
+    background-color: #ffffff;
+    box-shadow: var(--coach-shadow);
+}
+
+/* Embedded resources (PDF / video) sized relative to the viewport */
+.embedded-pdf {
+    display: block;
+    height: 75vh;
+    min-height: 420px;
+}
+
+.embedded-video {
+    max-width: 960px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+/* Bootstrap tables using a branded header row */
+.table > thead.bgd-primary {
+    --bs-table-bg: #4c3a87;
+    --bs-table-color: #ffffff;
+    --bs-table-border-color: #4c3a87;
+}
+
+/* Bootstrap accent overrides */
+.form-control:focus,
+.form-check-input:focus {
+    border-color: var(--coach-lavender-300);
+    box-shadow: 0 0 0 0.25rem rgba(94, 72, 163, 0.2);
+}
+
+.form-check-input:checked {
+    background-color: #5e48a3;
+    border-color: #5e48a3;
+}
+
+.accordion {
+    --bs-accordion-active-color: var(--coach-violet-800);
+    --bs-accordion-active-bg: var(--coach-lavender-100);
+    --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem rgba(94, 72, 163, 0.2);
+    --bs-accordion-btn-active-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%233b2d6b' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+.nav-tabs .nav-link {
+    font-weight: 600;
+}
+
+.nav-tabs .nav-link.active {
+    border-top: 3px solid var(--coach-violet-600);
+    color: var(--coach-violet-800);
+}
+
+/* Footer */
+.footer {
+    margin-top: 2rem;
+    padding-bottom: 1rem;
+}
+
+.footer hr {
+    border-top-color: var(--coach-lavender-300);
+    opacity: 1;
+}
+
 /* pulled from https://www.w3schools.com/howto/howto_css_modals.asp */
 /* The Modal (background) */
 .modal {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
-    z-index: 1; /* Sit on top */
+    z-index: 2000; /* Sit on top (above the fixed navbar) */
     left: 0;
     top: 0;
     width: 100%; /* Full width */
     height: 100%; /* Full height */
     overflow: auto; /* Enable scroll if needed */
     background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    background-color: rgba(27, 20, 48, 0.6); /* Dark violet w/ opacity */
 }
 
 /* Modal Content/Box */
 .modalContent {
     background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%; /* Could be more or less, depending on screen size */
+    margin: 15vh auto; /* 15% from the top and centered */
+    padding: 1.5rem;
+    border: 0;
+    border-top: 0.4rem solid var(--coach-violet-600);
+    border-radius: 0.75rem;
+    box-shadow: 0 1.25rem 3rem rgba(27, 20, 48, 0.35);
+    width: min(92%, 36rem); /* Could be more or less, depending on screen size */
+    line-height: 1.5;
+}
+
+.modalContent > div {
+    margin-bottom: 0.75rem;
+}
+
+.modalContent > h4 {
+    margin: 0 0 0.75rem;
+    color: var(--coach-violet-800);
+    font-size: 1.35rem;
+    font-weight: bold;
+    line-height: inherit;
+}
+
+.modalContent .buttonContainer {
+    display: flex;
+    justify-content: flex-end;
+    margin: 1.25rem 0 0;
+}
+
+.timeout-countdown {
+    display: inline-block;
+    padding: 0.5rem 0.85rem;
+    border-radius: 0.5rem;
+    background-color: var(--coach-lavender-100);
+    color: var(--coach-violet-800);
 }
 
 .shrink {
@@ -101,33 +351,60 @@ body {
     width: 100%;
 }
 
+/* Bootstrap .btn variables are set so hover / active / disabled states stay on-palette */
 .button-primary {
-    background-color: #2e6e9e;
+    --bs-btn-color: #ffffff;
+    --bs-btn-bg: #5e48a3;
+    --bs-btn-border-color: #5e48a3;
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: #4c3a87;
+    --bs-btn-hover-border-color: #4c3a87;
+    --bs-btn-active-color: #ffffff;
+    --bs-btn-active-bg: #3b2d6b;
+    --bs-btn-active-border-color: #3b2d6b;
+    --bs-btn-disabled-color: #ffffff;
+    --bs-btn-disabled-bg: #5e48a3;
+    --bs-btn-disabled-border-color: #5e48a3;
+    --bs-btn-focus-shadow-rgb: 94, 72, 163;
+    background-color: #5e48a3;
     color: white;
 }
 
 .button-primary:hover {
-    background-color: #7698a1;
-    color: black;
+    background-color: #4c3a87;
+    color: white;
 }
 
 .button-secondary {
-    background-color: #7698a1;
-    color: black;
+    --bs-btn-color: #3b2d6b;
+    --bs-btn-bg: #efeafb;
+    --bs-btn-border-color: #c3b6ec;
+    --bs-btn-hover-color: #2a1f4a;
+    --bs-btn-hover-bg: #ddd4f5;
+    --bs-btn-hover-border-color: #c3b6ec;
+    --bs-btn-active-color: #2a1f4a;
+    --bs-btn-active-bg: #c3b6ec;
+    --bs-btn-active-border-color: #c3b6ec;
+    --bs-btn-disabled-color: #3b2d6b;
+    --bs-btn-disabled-bg: #efeafb;
+    --bs-btn-disabled-border-color: #c3b6ec;
+    --bs-btn-focus-shadow-rgb: 94, 72, 163;
+    background-color: #efeafb;
+    color: #3b2d6b;
 }
 
 .button-secondary:hover {
-    background-color: #9bd0da;
-    color: black;
+    background-color: #ddd4f5;
+    color: #2a1f4a;
 }
 
 .link {
-    color: #004d99;
+    color: #5e48a3;
     text-decoration: none;
+    cursor: pointer;    /* also required for iOS Safari to deliver taps to delegated click handlers */
 }
 
 .link.hover, a:hover {
-    text-decoration: underline;
     cursor: pointer;
 }
 
@@ -139,7 +416,7 @@ body {
     position: relative;
     display: inline-block;
 }
-  
+
 .tip .tiptext {
     visibility: hidden;
     width: 300px;
@@ -156,7 +433,7 @@ body {
     opacity: 0;
     transition: opacity 0.3s;
 }
-  
+
 .tip .tiptext::after {
     content: "";
     position: absolute;
@@ -167,8 +444,9 @@ body {
     border-style: solid;
     border-color: #555 transparent transparent transparent;
 }
-  
-.tip:hover .tiptext {
+
+.tip:hover .tiptext,
+.tip.tip-open .tiptext {
     visibility: visible;
     opacity: 1;
 }

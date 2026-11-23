@@ -43,11 +43,11 @@
             window.addEventListener('load', resetBackgroundTimer);
             window.addEventListener('mousemove', resetBackgroundTimer);
             window.addEventListener('mousedown', resetBackgroundTimer);    // catches touchscreen presses as well
-            window.addEventListener('touchstart', resetBackgroundTimer);   // catches touchscreen swipes as well
-            window.addEventListener('touchmove', resetBackgroundTimer);    // required by some devices
+            window.addEventListener('touchstart', resetBackgroundTimer, { passive: true });    // catches touchscreen swipes as well
+            window.addEventListener('touchmove', resetBackgroundTimer, { passive: true });     // required by some devices
             window.addEventListener('click', resetBackgroundTimer);        // catches touchpad clicks as well
             window.addEventListener('keydown', resetBackgroundTimer);
-            window.addEventListener('scroll', resetBackgroundTimer, true); // improved; see comments
+            window.addEventListener('scroll', resetBackgroundTimer, { capture: true, passive: true });  // improved; see comments
             window.addEventListener('focus', resetBackgroundTimer);
 
             let backgroundTimer;
@@ -87,6 +87,8 @@
                 });
             });
 
+            resetBackgroundTimer();     // start counting now, rather than waiting for the first user interaction
+
             console.log("idle timeout configured.");
         };
 
@@ -113,40 +115,61 @@
         $(window).on('focus', function() {
             validateSession();
         });
+
+        // window 'focus' isn't reliably fired on page load or when returning to a tab / app (notably on iOS Safari),
+        // so also validate when the page loads, when it becomes visible again, and when it's restored from the
+        // back-forward cache (e.g. pressing Back after logging out)
+        $(document).ready(function() {
+            validateSession();
+        });
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                validateSession();
+            }
+        });
+
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                validateSession();
+            }
+        });
     </script>
 </head>
 <body>
-    <div id="timeoutCountdownContainer" class="modal">
+    <div id="timeoutCountdownContainer" class="modal" role="dialog" aria-modal="true" aria-labelledby="timeoutCountdownTitle">
         <div id="timeoutCountdown" class="modalContent">
-            <div class="heading">Continue Session?</div>
+            <h4 id="timeoutCountdownTitle"><span class="fas fa-clock me-2" aria-hidden="true"></span>Continue Session?</h4>
             <div>You are about to be logged out due to inactivity.  Click the button below to continue your session.</div>
-            <div><strong><span id="timeoutCountdownSeconds">SECONDS</span></strong> second(s) remaining ...</div>
+            <div class="timeout-countdown" aria-live="polite"><strong><span id="timeoutCountdownSeconds">60</span></strong> second(s) remaining ...</div>
             <div class="buttonContainer">
-                <button id="continueSession" class="btn btn-sm button-primary">Continue Session</button>
+                <button id="continueSession" type="button" class="btn button-primary">Continue Session</button>
             </div>
         </div>
     </div>
 
     <header>
-		<nav class="navbar navbar-expand-md navbar-dark fixed-top bgd-primary">
+		<nav class="navbar navbar-expand-lg navbar-dark fixed-top app-navbar">
 			<div class="container-fluid">
-				<img src="/images/coach-logo.png" alt="COACH" class="navbar-brand logo"/>
-				<button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+				<a class="navbar-brand app-navbar-brand" href="{{req.contextPath}}/" aria-label="{{applicationName}} Home">
+					<img src="{{req.contextPath}}/images/coach-logo.png" alt="{{applicationName}}" class="app-navbar-logo"/>
+				</a>
+				<button class="navbar-toggler app-navbar-toggler" type="button" data-bs-toggle="collapse"
 					data-bs-target="#navbar_collapse" aria-controls="navbar_collapse"
 					role="button" aria-expanded="false" aria-label="Toggle navigation">
 					<span class="navbar-toggler-icon"></span>
 				</button>
-				<div class="collapse navbar-collapse" id="navbar_collapse">
+				<div class="collapse navbar-collapse app-navbar-collapse" id="navbar_collapse">
 					<ul class="navbar-nav me-auto">
-						<li class="nav-item"><a class="nav-link" href="{{req.contextPath}}/">Home</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{req.contextPath}}/goals">Goals</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{req.contextPath}}/vitals">Home BP Readings</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{req.contextPath}}/medications">My Medications</a></li>
+						<li class="nav-item"><a class="nav-link app-nav-link" href="{{req.contextPath}}/">Home</a></li>
+                        <li class="nav-item"><a class="nav-link app-nav-link" href="{{req.contextPath}}/goals">Goals</a></li>
+                        <li class="nav-item"><a class="nav-link app-nav-link" href="{{req.contextPath}}/vitals">Home BP Readings</a></li>
+                        <li class="nav-item"><a class="nav-link app-nav-link" href="{{req.contextPath}}/medications">My Medications</a></li>
                         <li class="nav-item dropdown">
-							<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+							<a class="nav-link app-nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
 								Resources
 							</a>
-							<ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+							<ul class="dropdown-menu app-dropdown-menu" aria-labelledby="navbarDropdown">
                                 <li><a class="dropdown-item" href="{{req.contextPath}}/resources/faq">Frequently Asked Questions</a></li>
 								<li><a class="dropdown-item" href="{{req.contextPath}}/resources/symptoms-911">Emergency Symptoms</a></li>
 								<li><a class="dropdown-item" href="{{req.contextPath}}/resources/side-effects">Side Effects to Report</a></li>
@@ -159,7 +182,7 @@
                                 <li><a class="dropdown-item" href="{{req.contextPath}}/resources/coach-written-instructions">COACH Written Instructions</a></li>
                                 <li><a class="dropdown-item" href="{{req.contextPath}}/resources/omron-instructions">OMRON Instructions</a></li>
 								<li><hr class="dropdown-divider"></li>
-								<h6 class="px-1">Counseling</h6>
+								<li><h6 class="dropdown-header">Counseling</h6></li>
 								<li><a class="dropdown-item" href="{{req.contextPath}}/counseling/diet">Diet</a></li>
 								<li><a class="dropdown-item" href="{{req.contextPath}}/counseling/weight-loss">Weight Loss</a></li>
 								<li><a class="dropdown-item" href="{{req.contextPath}}/counseling/physical-activity">Physical Activity</a></li>
@@ -170,10 +193,10 @@
 					</ul>
 					<ul class="navbar-nav">
                         <li class="nav-item">
-                            <a id="refresh" href="#" class="nav-link">Refresh</a>
+                            <a id="refresh" href="#" class="nav-link app-nav-link"><span class="fas fa-sync-alt me-1" aria-hidden="true"></span> Refresh</a>
                         </li>
 						<li class="nav-item">
-							<a class="nav-link" href="{{req.contextPath}}/logout"><span class="fa fa-power-off"></span> Log Out</a>
+							<a class="nav-link app-nav-link app-nav-logout" href="{{req.contextPath}}/logout"><span class="fas fa-power-off me-1" aria-hidden="true"></span> Log Out</a>
 						</li>
 					</ul>
 				</div>

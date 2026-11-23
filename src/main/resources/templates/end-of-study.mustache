@@ -1,20 +1,33 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     {{>fragments/css}}
+    <link rel="stylesheet" type="text/css" href="{{req.contextPath}}/css/auxiliary.css?v=1">
     <title>{{applicationName}} - End of Study</title>
 </head>
-<body>
-<div class="container">
-    <div class="mt-3">
-        <h2>End of Study</h2>
-        {{#endOfStudyMessage}}
-            <p>{{{endOfStudyMessage}}}</p>
-        {{/endOfStudyMessage}}
-        {{^endOfStudyMessage}}
-            <p>Thank you for participating in the COACH study.  Your participation in the study has now concluded.</p>
-        {{/endOfStudyMessage}}
-    </div>
-</div>
-</body>
+<body class="aux-page">
+<main class="aux-shell container">
+    <section class="aux-card" aria-labelledby="page-title">
+        <div class="row g-0">
+            <div class="col-md-4 aux-brand d-flex flex-row flex-md-column align-items-center justify-content-between justify-content-md-center">
+                <img src="{{req.contextPath}}/images/coach-logo.png" alt="{{applicationName}}" class="aux-logo">
+                <div class="aux-brand-icon" aria-hidden="true"><span class="fas fa-flag-checkered"></span></div>
+            </div>
+            <div class="col-md-8 aux-content">
+                <p class="aux-eyebrow">Study Complete</p>
+                <h1 id="page-title" class="aux-title">End of Study</h1>
+                {{#endOfStudyMessage}}
+                    <p class="aux-message">{{{endOfStudyMessage}}}</p>
+                {{/endOfStudyMessage}}
+                {{^endOfStudyMessage}}
+                    <p class="aux-message">Thank you for participating in the COACH study.  Your participation in the study has now concluded.</p>
+                {{/endOfStudyMessage}}
+            </div>
+        </div>
+    </section>
+</main>
 {{>fragments/assets}}
+</body>
 </html>

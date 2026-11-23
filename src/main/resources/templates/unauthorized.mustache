@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Unauthorized</title>
+
+    {{>fragments/css}}
+    <link rel="stylesheet" type="text/css" href="{{req.contextPath}}/css/auxiliary.css?v=1">
+
     <script type="text/javascript" src="{{req.contextPath}}/webjars/jquery/jquery.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function() {
@@ -9,7 +15,29 @@
         });
     </script>
 </head>
-<body style="font-size:1.5em;">
-    Unauthorized
+<body class="aux-page">
+<main class="aux-shell container">
+    <section class="aux-card" aria-labelledby="page-title">
+        <div class="row g-0">
+            <div class="col-md-4 aux-brand d-flex flex-row flex-md-column align-items-center justify-content-between justify-content-md-center">
+                <img src="{{req.contextPath}}/images/coach-logo.png" alt="COACH" class="aux-logo">
+                <div class="aux-brand-icon" aria-hidden="true"><span class="fas fa-lock"></span></div>
+            </div>
+            <div class="col-md-8 aux-content">
+                <p class="aux-eyebrow">Access</p>
+                <h1 id="page-title" class="aux-title">Access Not Authorized</h1>
+                <p class="aux-message">You are not authorized to access this page.</p>
+                <p class="aux-detail">
+                    Your session could not be validated. Please return to the system you used to open COACH and
+                    launch it again. If this continues, please contact the COACH study team for assistance.
+                </p>
+                <p class="aux-note">
+                    <span class="fas fa-shield-alt me-1" aria-hidden="true"></span>
+                    For your privacy, local session data has been cleared from this browser.
+                </p>
+            </div>
+        </div>
+    </section>
+</main>
 </body>
 </html>

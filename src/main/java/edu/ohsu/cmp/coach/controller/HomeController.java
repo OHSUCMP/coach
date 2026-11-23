@@ -5,6 +5,8 @@ import edu.ohsu.cmp.coach.entity.Outcome;
 import edu.ohsu.cmp.coach.exception.DataException;
 import edu.ohsu.cmp.coach.model.*;
 import edu.ohsu.cmp.coach.model.cqfruler.CDSHook;
+import edu.ohsu.cmp.coach.model.omron.OmronStatus;
+import edu.ohsu.cmp.coach.model.omron.OmronStatusData;
 import edu.ohsu.cmp.coach.model.recommendation.Card;
 import edu.ohsu.cmp.coach.model.redcap.RandomizationGroup;
 import edu.ohsu.cmp.coach.model.redcap.RedcapParticipantInfo;
@@ -88,7 +90,7 @@ public class HomeController extends BaseController {
             setCommonViewComponents(sessionId, model);
             model.addAttribute("sessionEstablished", true);
             model.addAttribute("loessBandwidth", bandwidthOverride == null ? -1:bandwidthOverride);
-            model.addAttribute("pageStyles", new String[] { "home.css?v=4", "recommendations.css?v=2" });
+            model.addAttribute("pageStyles", new String[] { "home.css?v=15", "recommendations.css?v=4" });
             model.addAttribute("pageWebjars", new String[] {
                     "jquery.inputmask/jquery.inputmask.js",
                     "jquery.inputmask/bindings/inputmask.binding.js",
@@ -100,8 +102,8 @@ public class HomeController extends BaseController {
             model.addAttribute("pageScripts", new String[] {
                     "science.js/science.v1.js",
                     "science.js/lib/d3/d3.js",
-                    "home.js?v=5",
-                    "recommendations.js?v=2",
+                    "home.js?v=9",
+                    "recommendations.js?v=5",
                     "bpchart.js"
             });
             model.addAttribute("patient", workspace.getPatient());
@@ -113,6 +115,14 @@ public class HomeController extends BaseController {
             model.addAttribute("showClearSupplementalData", showClearSupplementalData);
 
             model.addAttribute("omronAuthRequestUrl", omronService.getAuthorizationRequestUrl());
+
+            // initial Omron status display; mirrors populateOmronStatus() in home.js, which refreshes it client-side
+            OmronStatusData omronStatus = workspace.getOmronSynchronizationStatus();
+            model.addAttribute("omronSynchronizing", omronStatus.getStatus() == OmronStatus.INITIATING_SYNC ||
+                    omronStatus.getStatus() == OmronStatus.SYNCHRONIZING);
+            if (omronStatus.getStatus() == OmronStatus.READY && omronStatus.getLastUpdated() != null) {
+                model.addAttribute("omronLastUpdated", omronStatus.getLastUpdatedString());
+            }
 
             try {
                 List<CDSHook> list = recommendationService.getOrderedCDSHooks(sessionId);

@@ -92,6 +92,7 @@ public class UserWorkspace {
     private final AtomicBoolean omronSynchronizing = new AtomicBoolean(false);
     private Integer omronCurrentItem = null;
     private Integer omronTotalItems = null;
+    private volatile List<String> omronSyncErrors = List.of();    // errors from the most recent Omron synchronization
 
     protected UserWorkspace(ApplicationContext ctx, String sessionId, Audience audience,
                             RandomizationGroup randomizationGroup,
@@ -1039,6 +1040,7 @@ public class UserWorkspace {
         omronService.deleteAll(sessionId);
         omronService.resetLastUpdated(sessionId);
         omronLastUpdated = null;
+        omronSyncErrors = List.of();
 
         // todo : clear Omron token data
         // todo : cancel any scheduled tasks that may exist for refreshing Omron token data
@@ -1117,6 +1119,10 @@ public class UserWorkspace {
         }
     }
 
+    public void setOmronSyncErrors(List<String> errors) {
+        omronSyncErrors = errors == null ? List.of() : List.copyOf(errors);     // immutable snapshot, safe to share across threads
+    }
+
     public OmronStatusData getOmronSynchronizationStatus() {
         OmronService omronService = ctx.getBean(OmronService.class);
         if (omronService.isOmronEnabled()) {
@@ -1128,10 +1134,10 @@ public class UserWorkspace {
             } else {
                 status = OmronStatus.READY;
             }
-            return new OmronStatusData(status, omronLastUpdated, omronCurrentItem, omronTotalItems);
+            return new OmronStatusData(status, omronLastUpdated, omronCurrentItem, omronTotalItems, omronSyncErrors);
 
         } else {
-            return new OmronStatusData(OmronStatus.DISABLED, null, null, null);
+            return new OmronStatusData(OmronStatus.DISABLED, null, null, null, null);
         }
     }
 

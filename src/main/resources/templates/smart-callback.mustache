@@ -2,9 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{applicationName}} - Completing Handshake</title>
+
+    {{>fragments/css}}
+    <link rel="stylesheet" type="text/css" href="{{req.contextPath}}/css/auxiliary.css?v=1">
+
     <script type="text/javascript" src="{{req.contextPath}}/webjars/jquery/jquery.min.js"></script>
-    <script type="text/javascript" src="{{req.contextPath}}/js/coach.js?v=3"></script>
+    <script type="text/javascript" src="{{req.contextPath}}/js/coach.js?v=4"></script>
 
     <!-- SMART on FHIR client library - see: https://docs.smarthealthit.org/client-js/#installation -->
     <script type="text/javascript" src="{{req.contextPath}}/js/client-js/v2-6-3/fhir-client.min.js"></script>
@@ -13,6 +18,12 @@
         const REDIRECT_URL = "/";
         const PATIENT_NOT_ACTIVE_RESPONSE = "{{patientNotActiveResponse}}";
         const PATIENT_NOT_ACTIVE_ENDPOINT = "{{patientNotActiveEndpoint}}";
+
+        function showError(message) {
+            $('.aux-brand-icon .spinner-border').addClass('d-none');
+            $('.aux-brand-icon .fa-exclamation-triangle').removeClass('d-none');
+            $('.response').addClass('aux-status-error').attr('role', 'alert').text(message);
+        }
 
         function prepareSession(client) {
             let data = {
@@ -40,9 +51,9 @@
             }).fail(function (jqXHR) {
                 try {
                     let response = JSON.parse(jqXHR.responseText);
-                    $('.response').text("Error " + jqXHR.status + ": " + (response.message ? response.message : "An error occurred. Try again later or contact study staff."));
+                    showError("Error " + jqXHR.status + ": " + (response.message ? response.message : "An error occurred. Try again later or contact study staff."));
                 } catch (e) {
-                    $('.response').html("Error " + jqXHR.status + ": An error occurred. Try again later or contact study staff.");
+                    showError("Error " + jqXHR.status + ": An error occurred. Try again later or contact study staff.");
                 }
             });
         }
@@ -63,13 +74,40 @@
                     }
                     prepareSession(client);
                 })
-                .catch(console.error);
+                .catch(function(error) {
+                    console.error(error);
+                    showError("An error occurred. Try again later or contact study staff.");
+                });
         });
     </script>
 </head>
-<body>
-<div class="response" style="font-size:1.5em;">
-Completing handshake...
-</div>
+<body class="aux-page">
+<main class="aux-shell container">
+    <section class="aux-card" aria-labelledby="page-title">
+        <div class="row g-0">
+            <div class="col-md-4 aux-brand d-flex flex-row flex-md-column align-items-center justify-content-between justify-content-md-center">
+                <img src="{{req.contextPath}}/images/coach-logo.png" alt="{{applicationName}}" class="aux-logo">
+                <div class="aux-brand-icon">
+                    <div class="spinner-border" role="status" aria-label="Loading"></div>
+                    <span class="fas fa-exclamation-triangle d-none" aria-hidden="true"></span>
+                </div>
+            </div>
+            <div class="col-md-8 aux-content">
+                <p class="aux-eyebrow">Secure Sign-In</p>
+                <h1 id="page-title" class="aux-title">Completing Authorization</h1>
+                <p class="aux-detail">
+                    You will be redirected to {{applicationName}} automatically when authorization is complete.
+                </p>
+                <div class="response aux-status" role="status">
+                    Completing handshake...
+                </div>
+                <p class="aux-note">
+                    <span class="fas fa-shield-alt me-1" aria-hidden="true"></span>
+                    Establishing your secure {{applicationName}} session.
+                </p>
+            </div>
+        </div>
+    </section>
+</main>
 </body>
 </html>

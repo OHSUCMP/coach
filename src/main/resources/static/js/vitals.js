@@ -37,6 +37,9 @@ function buildVitalsData() {
 
     let readingDate = $('#readingDate').datepicker('getDate');
     let timeArr = $('#readingTime').val().match(/(\d+):(\d+)\s+(am|pm)/);
+    if (readingDate === null || timeArr === null) {
+        return null;    // missing date or incomplete time (e.g. "1_:__ _m")
+    }
     let h = parseInt(timeArr[1]);
     let m = parseInt(timeArr[2]);
     let ampm = timeArr[3];

@@ -1,0 +1,157 @@
+/* Auxiliary (standalone status) pages: launch, handshake, logout, errors, study status */
+
+.aux-page {
+    min-height: 100vh;
+    margin: 0;
+    background:
+            radial-gradient(circle at 100% 0%, rgba(195, 182, 236, 0.35), transparent 30rem),
+            radial-gradient(circle at 0% 100%, rgba(94, 72, 163, 0.10), transparent 26rem),
+            #f8f7fb;
+    color: #221f2e;
+}
+
+.aux-shell {
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.aux-card {
+    width: 100%;
+    max-width: 760px;
+    overflow: hidden;
+    border: 1px solid #e3dfee;
+    border-radius: 1.25rem;
+    background-color: #ffffff;
+    box-shadow: 0 1.25rem 2.75rem rgba(42, 31, 74, 0.16);
+}
+
+/* brand panel: a column beside the content on md+ screens, a strip above it on small screens */
+.aux-brand {
+    gap: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    background:
+            radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.18), transparent 14rem),
+            linear-gradient(160deg, #3b2d6b 0%, #5e48a3 100%);
+    color: #ffffff;
+}
+
+.aux-logo {
+    width: auto;
+    max-width: 100%;
+    height: 56px;
+}
+
+.aux-brand-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: 3.5rem;
+    height: 3.5rem;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-size: 1.5rem;
+}
+
+.aux-brand-icon .spinner-border {
+    width: 2rem;
+    height: 2rem;
+    border-width: 0.2rem;
+}
+
+.aux-content {
+    padding: 2rem 1.75rem;
+}
+
+.aux-eyebrow {
+    margin-bottom: 0.4rem;
+    color: #5e48a3;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.aux-title {
+    margin-bottom: 1rem;
+    color: #2a1f4a;
+    font-size: clamp(1.4rem, 3.5vw, 1.85rem);
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.aux-message {
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+    line-height: 1.55;
+}
+
+.aux-detail {
+    margin-bottom: 0.75rem;
+    color: #625d70;
+    line-height: 1.55;
+}
+
+.aux-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.aux-note {
+    margin: 1.5rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px dashed #e3dfee;
+    color: #625d70;
+    font-size: 0.875rem;
+}
+
+/* status line updated by script on the launch / handshake pages */
+.aux-status {
+    margin: 1rem 0 0;
+    padding: 0.75rem 1rem;
+    border-left: 0.3rem solid #5e48a3;
+    border-radius: 0.5rem;
+    background-color: #efeafb;
+    color: #2a1f4a;
+}
+
+.aux-status.aux-status-error {
+    border-left-color: #b02a37;
+    background-color: #f8d7da;
+    color: #58151c;
+}
+
+@media (min-width: 768px) {
+    .aux-brand {
+        padding: 2rem 1.5rem;
+    }
+
+    .aux-logo {
+        height: auto;
+        width: 100%;
+        max-width: 180px;
+    }
+
+    .aux-brand-icon {
+        width: 4.5rem;
+        height: 4.5rem;
+        font-size: 2rem;
+    }
+
+    .aux-brand-icon .spinner-border {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+    .aux-content {
+        padding: 2.5rem 2.25rem;
+    }
+}

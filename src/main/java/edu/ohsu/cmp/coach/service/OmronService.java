@@ -276,6 +276,10 @@ public class OmronService extends AbstractService {
 
         auditService.doAudit(sessionId, AuditSeverity.INFO, "initiated Omron synchronization");
 
+        // errors encountered during this synchronization, published to the workspace for display when done
+        List<String> errors = new ArrayList<>();
+        workspace.setOmronSyncErrors(errors);   // reset any errors from the previous synchronization
+
         try {
             MeasurementResult result = requestMeasurements(sessionId, workspace.getOmronLastUpdated());
             if (result.hasBloodPressures()) {
@@ -295,28 +299,31 @@ public class OmronService extends AbstractService {
                     } catch (Exception e) {
                         logger.error("caught {} persisting Omron vitals - {} - skipping -", e.getClass().getName(), e.getMessage(), e);
                         logger.debug("vitals = {}", model);
+                        errors.add("Unable to save Omron reading - " + e.getMessage());
                     }
 
                     if (vitals != null) {
                         // now create this blood pressure into our home blood pressure model table (if applicable)
                         if (vitals.getSystolic() != null && vitals.getDiastolic() != null) {
                             try {
-                                bloodPressureService.create(sessionId, new BloodPressureModel(vitals, fcm));
+                                bloodPressureService.create(sessionId, new BloodPressureModel(vitals, fcm), errors);
 
                             } catch (Exception e) {
                                 // remote errors are tolerable, since we will always store locally too
                                 logger.warn("caught {} attempting to create BP - {}", e.getClass().getSimpleName(), e.getMessage(), e);
+                                errors.add("Unable to create blood pressure - " + e.getMessage());
                             }
                         }
 
                         // and also persist pulse into our home pulse model table (if applicable)
                         if (vitals.getPulse() != null) {
                             try {
-                                pulseService.create(sessionId, new PulseModel(vitals, fcm));
+                                pulseService.create(sessionId, new PulseModel(vitals, fcm), errors);
 
                             } catch (Exception e) {
                                 // remote errors are tolerable, since we will always store locally too
                                 logger.warn("caught {} attempting to create Pulse - {}", e.getClass().getSimpleName(), e.getMessage(), e);
+                                errors.add("Unable to create pulse - " + e.getMessage());
                             }
                         }
                     }
@@ -338,11 +345,15 @@ public class OmronService extends AbstractService {
 
         } catch (OmronException e) {
             logger.error("caught {} updating vitals cache - {}", e.getClass().getName(), e.getMessage(), e);
+            errors.add("Unable to retrieve Omron measurements - " + e.getMessage());
         } catch (NotAuthenticatedException nae) {
-            // handle silently
+            // handle silently (no log), but let the user know
+            errors.add("Not authenticated with Omron - please authenticate and try again");
         } catch (IOException e) {
+            errors.add("Unable to retrieve Omron measurements - " + e.getMessage());
             throw new RuntimeException(e);
         } finally {
+            workspace.setOmronSyncErrors(errors);
             workspace.clearCaches();
         }
     }
