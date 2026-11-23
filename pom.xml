@@ -82,12 +82,6 @@
             <version>13.6.2.jre11</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-
         <!-- HAPI-FHIR dependencies -->
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
