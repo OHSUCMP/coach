@@ -4,6 +4,7 @@ import edu.ohsu.cmp.coach.entity.Audit;
 import edu.ohsu.cmp.coach.entity.MyPatient;
 import edu.ohsu.cmp.coach.model.AuditSeverity;
 import edu.ohsu.cmp.coach.repository.AuditRepository;
+import edu.ohsu.cmp.coach.util.logging.LogRedactor;
 import edu.ohsu.cmp.coach.workspace.UserWorkspaceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,49 +21,50 @@ public class AuditService {
     @Autowired
     private AuditRepository repository;
 
-    public void doAudit(String sessionId, AuditSeverity severity, String action) {
+    public void doAudit(String sessionId, AuditSeverity severity, String event) {
         if (userWorkspaceService.exists(sessionId)) {
             Long patId = userWorkspaceService.get(sessionId).getInternalPatientId();
-            doAudit(new Audit(patId, severity, action));
+            doAudit(patId, severity, event, null);
 
         } else {
-            logger.warn("attempted to generate audit for nonexistent session {}: severity={}, action={}",
-                    sessionId, severity, action);
+            logger.warn("attempted to generate audit for nonexistent session {}: severity={}, event={}",
+                    sessionId, severity, event);
         }
     }
 
-    public void doAudit(String sessionId, AuditSeverity severity, String action, String details) {
+    public void doAudit(String sessionId, AuditSeverity severity, String event, String details) {
         if (userWorkspaceService.exists(sessionId)) {
             Long patId = userWorkspaceService.get(sessionId).getInternalPatientId();
-            doAudit(new Audit(patId, severity, action, details));
+            doAudit(patId, severity, event, details);
 
         } else {
-            logger.warn("attempted to generate audit for nonexistent session {}: severity={}, action={}, details={}",
-                    sessionId, severity, action, details);
+            logger.warn("attempted to generate audit for nonexistent session {}: severity={}, event={}, details={}",
+                    sessionId, severity, event, details);
         }
     }
 
-    public void doAudit(MyPatient myPatient, AuditSeverity severity, String action) {
-        doAudit(myPatient, severity, action, null);
+    public void doAudit(MyPatient myPatient, AuditSeverity severity, String event) {
+        doAudit(myPatient, severity, event, null);
     }
 
-    public void doAudit(MyPatient myPatient, AuditSeverity severity, String action, String details) {
-        doAudit(new Audit(myPatient.getId(), severity, action, details));
+    public void doAudit(MyPatient myPatient, AuditSeverity severity, String event, String details) {
+        doAudit(myPatient.getId(), severity, event, details);
     }
 
 
-    private void doAudit(Audit audit) {
+    private void doAudit(Long patientId, AuditSeverity severity, String event, String details) {
+        Audit auditData = new Audit(
+                patientId,
+                severity,
+                event,
+                LogRedactor.redact(details)
+        );
+
         try {
-            if (logger.isDebugEnabled()) {
-                Audit generatedAudit = repository.save(audit);
-                logger.debug("generated {}", generatedAudit);
-
-            } else {
-                repository.save(audit);
-            }
+            repository.save(auditData);
 
         } catch (Exception e) {
-            logger.error("caught {} attempting to create {} - {}", e.getClass().getName(), audit, e.getMessage(), e);
+            logger.error("caught " + e.getClass().getName() + " attempting to create " + auditData + " - " + e.getMessage(), e);
         }
     }
 }
