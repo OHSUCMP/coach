@@ -21,7 +21,7 @@ public class FHIRCredentials {
                 "clientId='" + clientId + '\'' +
                 ", serverURL='" + serverURL + '\'' +
                 ", bearerToken=" + (bearerToken != null ? "[REDACTED]" : null) +   // never log credentials
-                ", patientId='" + patientId + '\'' +
+                ", patientId=[REDACTED]" +
                 ", userId='" + userId + '\'' +
                 '}';
     }

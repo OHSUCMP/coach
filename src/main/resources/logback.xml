@@ -1,4 +1,11 @@
 <configuration scan="true" scanPeriod="30 seconds">
+    <conversionRule
+            conversionWord="redactedMsg"
+            converterClass="edu.ohsu.cmp.coach.util.logging.RedactingMessageConverter" />
+
+    <conversionRule
+            conversionWord="redactedEx"
+            converterClass="edu.ohsu.cmp.coach.util.logging.RedactingThrowableProxyConverter" />
 
     <!-- pulled from cqf-ruler -->
 
@@ -7,7 +14,7 @@
 <!--            <level>INFO</level>-->
 <!--        </filter>-->
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%file:%line] %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%file:%line] %redactedMsg%n%redactedEx</pattern>
         </encoder>
     </appender>
 
@@ -23,7 +30,7 @@
         </rollingPolicy>
 
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%file:%line] %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%file:%line] %redactedMsg%n%redactedEx</pattern>
         </encoder>
     </appender>
 

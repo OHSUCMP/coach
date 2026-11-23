@@ -242,7 +242,7 @@ public class HomeController extends BaseController {
                 return "end-of-study";
 
             } else {
-                logger.error("REDCap workflow: Participant {}is actively enrolled but cannot access COACH.", redcapParticipantInfo.getRecordId());
+                logger.error("REDCap workflow: Participant {} is actively enrolled but cannot access COACH.", redcapParticipantInfo.getRecordId());
 
                 auditService.doAudit(patient, AuditSeverity.ERROR, "enrolled but cannot access COACH");
 
